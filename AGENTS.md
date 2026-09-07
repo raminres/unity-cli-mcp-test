@@ -8,6 +8,8 @@ This file provides persistent context across agent sessions for this Unity proje
 - **Engine Version**: Unity 6 (6000.6.0f1)
 - **Render Pipeline**: Universal Render Pipeline (URP)
 - **Active Scene**: `Assets/Scenes/SampleScene.unity`
+- **Remote Repository**: `https://github.com/raminres/unity-cli-mcp-test.git`
+- **Active Branch**: `develop` (Git LFS enabled)
 
 ---
 
