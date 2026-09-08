@@ -13,8 +13,8 @@ namespace Arcade.BlockBreaker
         [SerializeField] private int rowsPerTier = 2; // 2 Red, 2 Green, 2 Blue = 6 rows total
         [SerializeField] private float blockSize = 1.0f;
         [SerializeField] private float horizontalSpacing = 1.25f;
-        [SerializeField] private float verticalSpacing = 1.25f;
-        [SerializeField] private float startCenterY = 9.5f;
+        [SerializeField] private float verticalSpacing = 1.3f;
+        [SerializeField] private float startCenterY = 15.5f;
 
         [Header("Materials")]
         [SerializeField] private Material matRedBlock;

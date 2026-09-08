@@ -195,7 +195,7 @@ namespace Arcade.BlockBreaker
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.CompareTag("KillZone") || other.name.Contains("KillZone"))
+            if (other.GetComponent<KillZone>() != null || other.name.Contains("KillZone"))
             {
                 if (ArcadeGameManager.Instance != null)
                 {

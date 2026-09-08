@@ -7,18 +7,17 @@
 
 /* Top Bar */
 .top-bar {
-    position: absolute;
-    top: 14px;
-    left: 20px;
-    right: 20px;
+    margin-top: 12px;
+    margin-left: 20px;
+    margin-right: 20px;
     height: 60px;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    background-color: rgba(14, 18, 30, 0.75);
+    background-color: rgba(14, 18, 30, 0.85);
     border-radius: 18px;
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.12);
     padding: 0 18px;
     pointer-events: auto;
 }

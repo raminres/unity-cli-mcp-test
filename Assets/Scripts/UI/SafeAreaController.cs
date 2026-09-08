@@ -5,6 +5,7 @@ namespace Arcade.UI
 {
     /// <summary>
     /// Applies device safe area insets (notches, dynamic islands, home bars) to UI Toolkit visual trees.
+    /// Incorporates extra breathing room margins so UI elements never sit directly against the safe area limits.
     /// Supports automatic adaptation to screen orientation and editor notch simulation.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
@@ -14,10 +15,16 @@ namespace Arcade.UI
         [Tooltip("Optional name of child VisualElement to apply padding to. If empty, applies to rootVisualElement.")]
         [SerializeField] private string targetContainerName = "";
 
+        [Header("Breathing Room (Extra Safe Margins)")]
+        [Tooltip("Extra margin percentage added on top of the physical hardware safe area.")]
+        [Range(0f, 10f)] [SerializeField] private float extraTopPercent = 2.0f;
+        [Range(0f, 10f)] [SerializeField] private float extraBottomPercent = 2.0f;
+        [Range(0f, 10f)] [SerializeField] private float extraSidePercent = 1.5f;
+
         [Header("Editor Simulation")]
         [SerializeField] private bool simulateInEditor = false;
-        [SerializeField] private float simulatedTopInsetPixels = 100f;
-        [SerializeField] private float simulatedBottomInsetPixels = 60f;
+        [SerializeField] private float simulatedTopInsetPixels = 120f;
+        [SerializeField] private float simulatedBottomInsetPixels = 70f;
         [SerializeField] private float simulatedSideInsetPixels = 0f;
 
         private UIDocument uiDocument;
@@ -74,29 +81,27 @@ namespace Arcade.UI
 
             if (screenW <= 0 || screenH <= 0) return;
 
-            // Compute insets as percentages of total screen dimensions
-            float leftPct = (safeArea.x / screenW) * 100f;
-            float rightPct = ((screenW - (safeArea.x + safeArea.width)) / screenW) * 100f;
-            float bottomPct = (safeArea.y / screenH) * 100f;
-            float topPct = ((screenH - (safeArea.y + safeArea.height)) / screenH) * 100f;
+            var (leftPct, rightPct, topPct, bottomPct) = CalculateInsets(safeArea, screenW, screenH, extraSidePercent, extraTopPercent, extraBottomPercent);
 
-            targetElement.style.paddingLeft = Length.Percent(Mathf.Max(0f, leftPct));
-            targetElement.style.paddingRight = Length.Percent(Mathf.Max(0f, rightPct));
-            targetElement.style.paddingTop = Length.Percent(Mathf.Max(0f, topPct));
-            targetElement.style.paddingBottom = Length.Percent(Mathf.Max(0f, bottomPct));
+            targetElement.style.paddingLeft = Length.Percent(leftPct);
+            targetElement.style.paddingRight = Length.Percent(rightPct);
+            targetElement.style.paddingTop = Length.Percent(topPct);
+            targetElement.style.paddingBottom = Length.Percent(bottomPct);
         }
 
         /// <summary>
-        /// Pure helper to compute safe area percentage insets from screen rects.
+        /// Pure helper to compute safe area percentage insets from screen rects with breathing margins.
         /// </summary>
-        public static (float left, float right, float top, float bottom) CalculateInsets(Rect safeArea, float screenW, float screenH)
+        public static (float left, float right, float top, float bottom) CalculateInsets(
+            Rect safeArea, float screenW, float screenH,
+            float extraSide = 0f, float extraTop = 0f, float extraBottom = 0f)
         {
             if (screenW <= 0 || screenH <= 0) return (0, 0, 0, 0);
 
-            float left = (safeArea.x / screenW) * 100f;
-            float right = ((screenW - (safeArea.x + safeArea.width)) / screenW) * 100f;
-            float bottom = (safeArea.y / screenH) * 100f;
-            float top = ((screenH - (safeArea.y + safeArea.height)) / screenH) * 100f;
+            float left = Mathf.Max(0f, (safeArea.x / screenW) * 100f + extraSide);
+            float right = Mathf.Max(0f, ((screenW - (safeArea.x + safeArea.width)) / screenW) * 100f + extraSide);
+            float bottom = Mathf.Max(0f, (safeArea.y / screenH) * 100f + extraBottom);
+            float top = Mathf.Max(0f, ((screenH - (safeArea.y + safeArea.height)) / screenH) * 100f + extraTop);
 
             return (left, right, top, bottom);
         }

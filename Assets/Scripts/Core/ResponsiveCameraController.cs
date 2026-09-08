@@ -12,9 +12,9 @@ namespace Arcade.Core
     public class ResponsiveCameraController : MonoBehaviour
     {
         [Header("Target Bounds To Always Keep In View")]
-        [SerializeField] private Vector2 boundsCenter = new Vector2(0f, 5.8f);
-        [SerializeField] private Vector2 boundsSize = new Vector2(23.0f, 23.5f); // Width covering +-11.5, Height covering -4.5 to 17.5
-        [SerializeField] private float paddingMargin = 1.5f;
+        [SerializeField] private Vector2 boundsCenter = new Vector2(0f, 8.5f);
+        [SerializeField] private Vector2 boundsSize = new Vector2(23.0f, 32.5f); // Width +-11.5, Height covering -7.5 to 25.0
+        [SerializeField] private float paddingMargin = 2.0f;
 
         [Header("Camera Configuration")]
         [SerializeField] private Camera targetCamera;

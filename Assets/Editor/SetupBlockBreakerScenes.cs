@@ -138,8 +138,8 @@ namespace Arcade.Editor
             var leftWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
             leftWall.name = "LeftWall";
             leftWall.transform.SetParent(boundariesRoot.transform);
-            leftWall.transform.position = new Vector3(-10.25f, 5.5f, 0f);
-            leftWall.transform.localScale = new Vector3(0.5f, 22f, 2f);
+            leftWall.transform.position = new Vector3(-10.25f, 8.5f, 0f);
+            leftWall.transform.localScale = new Vector3(0.5f, 32f, 2f);
             if (borderMat != null) leftWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
             leftWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
@@ -147,8 +147,8 @@ namespace Arcade.Editor
             var rightWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
             rightWall.name = "RightWall";
             rightWall.transform.SetParent(boundariesRoot.transform);
-            rightWall.transform.position = new Vector3(10.25f, 5.5f, 0f);
-            rightWall.transform.localScale = new Vector3(0.5f, 22f, 2f);
+            rightWall.transform.position = new Vector3(10.25f, 8.5f, 0f);
+            rightWall.transform.localScale = new Vector3(0.5f, 32f, 2f);
             if (borderMat != null) rightWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
             rightWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
@@ -156,7 +156,7 @@ namespace Arcade.Editor
             var topWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
             topWall.name = "TopWall";
             topWall.transform.SetParent(boundariesRoot.transform);
-            topWall.transform.position = new Vector3(0f, 16.25f, 0f);
+            topWall.transform.position = new Vector3(0f, 24.25f, 0f);
             topWall.transform.localScale = new Vector3(21f, 0.5f, 2f);
             if (borderMat != null) topWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
             topWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
@@ -164,16 +164,17 @@ namespace Arcade.Editor
             // Bottom Kill Zone Trigger
             var killZone = new GameObject("KillZone");
             killZone.tag = "KillZone";
+            killZone.AddComponent<KillZone>();
             killZone.transform.SetParent(boundariesRoot.transform);
-            killZone.transform.position = new Vector3(0f, -6.5f, 0f);
+            killZone.transform.position = new Vector3(0f, -9.0f, 0f);
             var killCol = killZone.AddComponent<BoxCollider>();
-            killCol.size = new Vector3(24f, 1.5f, 4f);
+            killCol.size = new Vector3(24f, 2.0f, 4f);
             killCol.isTrigger = true;
 
             // 7. Paddle Platform (5:1 ratio)
             var paddleGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
             paddleGo.name = "Paddle";
-            paddleGo.transform.position = new Vector3(0f, -3.5f, 0f);
+            paddleGo.transform.position = new Vector3(0f, -6.5f, 0f);
             paddleGo.transform.localScale = new Vector3(5.0f, 1.0f, 1.0f); // 5:1 ratio
             if (paddleMat != null) paddleGo.GetComponent<MeshRenderer>().sharedMaterial = paddleMat;
             paddleGo.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
@@ -184,7 +185,7 @@ namespace Arcade.Editor
             // 8. Ball (Sphere)
             var ballGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             ballGo.name = "Ball";
-            ballGo.transform.position = new Vector3(0f, -2.65f, 0f);
+            ballGo.transform.position = new Vector3(0f, -5.65f, 0f);
             ballGo.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
             if (ballMat != null) ballGo.GetComponent<MeshRenderer>().sharedMaterial = ballMat;
             var ballCol = ballGo.GetComponent<SphereCollider>();
