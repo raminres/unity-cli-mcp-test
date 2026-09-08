@@ -1,0 +1,63 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="MainMenuUI.uss" />
+    <ui:VisualElement name="root-container" class="root-container">
+        <!-- Ambient background gradient & glowing orbs -->
+        <ui:VisualElement name="bg-glow" class="bg-glow" />
+
+        <!-- Title Section -->
+        <ui:VisualElement name="header-container" class="header-container">
+            <ui:Label text="BLOCK" class="game-title title-highlight" />
+            <ui:Label text="BREAKER" class="game-title title-main" />
+            <ui:Label text="3D ARCADE RETRO-MODERN" class="subtitle" />
+        </ui:VisualElement>
+
+        <!-- Main Buttons Container -->
+        <ui:VisualElement name="menu-card" class="menu-card">
+            <ui:Button name="btn-new-game" text="START NEW GAME" class="arcade-button primary-btn" />
+            <ui:Button name="btn-continue" text="CONTINUE" class="arcade-button secondary-btn" />
+            <ui:Button name="btn-options" text="OPTIONS" class="arcade-button default-btn" />
+            <ui:Button name="btn-credits" text="CREDITS" class="arcade-button default-btn" />
+        </ui:VisualElement>
+
+        <!-- High Score Badge -->
+        <ui:VisualElement name="highscore-badge" class="highscore-badge">
+            <ui:Label name="menu-highscore-label" text="ALL-TIME HIGH SCORE: 0" class="highscore-text" />
+        </ui:VisualElement>
+
+        <!-- Options Modal (Hidden by default) -->
+        <ui:VisualElement name="options-modal" class="modal-backdrop modal-hidden">
+            <ui:VisualElement class="modal-card">
+                <ui:Label text="SETTINGS" class="modal-title" />
+                
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="SFX Volume" class="setting-label" />
+                    <ui:Slider name="slider-volume" low-value="0" high-value="1" value="0.8" class="setting-slider" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Mute SFX" class="setting-label" />
+                    <ui:Toggle name="toggle-mute" class="setting-toggle" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Target Frame Rate" class="setting-label" />
+                    <ui:Button name="btn-toggle-fps" text="60 FPS" class="fps-btn" />
+                </ui:VisualElement>
+
+                <ui:Button name="btn-close-options" text="BACK" class="arcade-button primary-btn modal-close-btn" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Credits Modal (Hidden by default) -->
+        <ui:VisualElement name="credits-modal" class="modal-backdrop modal-hidden">
+            <ui:VisualElement class="modal-card">
+                <ui:Label text="CREDITS" class="modal-title" />
+                <ui:Label text="Unity 6 Arcade Mini-Games" class="credit-highlight" />
+                <ui:Label text="Engine: Unity 6000.6 (URP, VFX Graph)" class="credit-body" />
+                <ui:Label text="UI: Modern UI Toolkit" class="credit-body" />
+                <ui:Label text="Target: PC / iOS / WebGPU" class="credit-body" />
+                <ui:Button name="btn-close-credits" text="BACK" class="arcade-button primary-btn modal-close-btn" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

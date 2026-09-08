@@ -1,0 +1,19 @@
+{
+    "name": "Arcade.Gameplay",
+    "rootNamespace": "Arcade",
+    "references": [
+        "Unity.InputSystem",
+        "UnityEngine.UI",
+        "UnityEngine.UIElementsModule",
+        "UnityEngine.VFXModule"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

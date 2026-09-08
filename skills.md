@@ -86,3 +86,62 @@ In Unity 6 / Cinemachine 3.x:
   - Return a serializable result (e.g., `return "Success";` or `return someValue;`).
   - Call `Undo.RegisterCreatedObjectUndo(...)` or `Undo.RecordObject(...)` for undoability.
   - Call `EditorSceneManager.MarkSceneDirty(...)` and `EditorSceneManager.SaveOpenScenes()` or `AssetDatabase.SaveAssets()` to ensure changes persist to disk.
+
+---
+
+## 7. Asset Pipeline Conventions & Preset Manager Automation
+1. **Asset Naming Conventions**:
+   - **Audio**: `AU_` prefix (e.g., `AU_Laser_01.wav`).
+   - **Static Meshes**: `SM_` prefix (e.g., `SM_Crate_01.fbx`).
+   - **Skeletal Meshes**: `SK_` prefix (e.g., `SK_Boss_01.fbx`).
+   - **Textures**: `TX_` prefix with semantic suffixes:
+     - `_BaseColor`: sRGB color map.
+     - `_MetallicSmoothness`: Linear mask map.
+     - `_Normal`: Normal map.
+     - `_AO`: Ambient occlusion mask.
+     - `_Emissive`: Emissive color map.
+2. **Platform Overrides Matrix**:
+   - **PC (`Standalone`)**:
+     - Textures: BC7 format (BC5 for Normal maps), Max Size 2048.
+     - Audio: Vorbis compression, quality 0.7, compressed in memory.
+   - **iOS (`iPhone`)**:
+     - Textures: ASTC 6x6 compression, Max Size 2048.
+     - Audio: AAC compression, quality 0.7, compressed in memory.
+3. **Preset Manager Glob Patterns & Presets (`PR_` prefix)**:
+   - All Unity Preset assets reside in `Assets/Presets/` and use the uniform `PR_` prefix.
+   - `TextureImporter`:
+     - `glob:"*_Normal*"` -> `PR_Normal.preset`
+     - `glob:"*_MetallicSmoothness*"` -> `PR_MetallicSmoothness.preset`
+     - `glob:"*_AO*"` -> `PR_AO.preset`
+     - `glob:"*_Emissive*"` -> `PR_Emissive.preset`
+     - `glob:"*BaseColor*"` -> `PR_BaseColor.preset`
+     - `glob:"*TX_*"` -> `PR_BaseColor.preset`
+   - `ModelImporter`:
+     - `glob:"*SM_*"` -> `PR_StaticMesh.preset`
+     - `glob:"*SK_*"` -> `PR_SkeletalMesh.preset`
+   - `AudioImporter`:
+     - `glob:"*AU_*"` -> `PR_Audio.preset`
+
+---
+
+## 8. Block Breaker & Mobile Arcade Workflow
+1. **Scene Conventions (`LV_` prefix)**:
+   - `LV_BlockBreaker_MainMenu.unity`: Fast-loading start scene with New Game, Continue, Settings, and Credits.
+   - `LV_BlockBreaker.unity`: Primary 3D arcade gameplay scene.
+   - Registered in `EditorBuildSettings.scenes` with indices 0 and 1.
+2. **Editor Play Mode Start Scene**:
+   - `EditorSceneManager.playModeStartScene` bound to `LV_BlockBreaker_MainMenu.unity` via `Assets/Editor/PlayModeSceneSetup.cs`, ensuring clicking Play in the Editor always starts from the Main Menu.
+3. **Mobile Safe Area & UI Toolkit**:
+   - `Assets/Scripts/UI/SafeAreaController.cs`: Dynamically injects hardware safe area percentage padding + extra breathing room margins into `UIDocument` root visual elements.
+   - Prevents HUD elements (score, lives, quick buttons) from clipping behind notches, Dynamic Island, or the iOS home indicator bar.
+4. **Responsive Camera Framing**:
+   - `Assets/Scripts/Core/ResponsiveCameraController.cs`: Dynamically recalculates 3D camera distance $Z$ to enclose both width and height within the frustum across all aspect ratios (e.g. 16:9 widescreen, 4:3 iPad, 9:19.5 iPhone portrait).
+   - Eliminates off-screen ball bounces and edge boundary clipping.
+5. **Gameplay Physics & Collision Rules**:
+   - Platform: 5:1 ratio ($5.0 \times 1.0 \times 1.0$).
+   - Blocks: 1:1 ratio ($1.0 \times 1.0 \times 1.0$ cubes).
+   - Deflection formula: $\theta = 90^\circ - (\text{hitOffset} \times 60^\circ)$.
+   - Kill Zone: Uses dedicated `KillZone.cs` component on trigger volume to eliminate `CompareTag` errors.
+6. **Automated Testing Suite**:
+   - Tests reside in `Assets/Tests/` under `Arcade.Tests.asmdef`.
+   - Run via `Assets/Editor/RunBlockBreakerTests.cs` (Menu item: `Tools/Arcade/Run Block Breaker Tests`) or `unity test . --mode EditMode`.
