@@ -136,18 +136,21 @@ This file provides persistent context across agent sessions for this Unity proje
   - `Assets/Scenes/LV_BlockBreaker_MainMenu.unity`: Fast-loading start scene with New Game, Continue, Settings, and Credits modals.
   - `Assets/Scenes/LV_BlockBreaker.unity`: Primary 3D arcade gameplay scene.
   - Both scenes registered in `EditorBuildSettings.scenes`.
-- **Camera Perspective**:
-  - Front-facing perspective camera ($38^\circ$ FOV, positioned at $(0, 6, -32)$ looking at $(0, 6, 0)$) delivering subtle 3D depth on block and paddle bevels while retaining arcade precision.
+- **Camera Perspective & Responsive Framing**:
+  - Front-facing perspective camera ($38^\circ$ FOV) with [ResponsiveCameraController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/Core/ResponsiveCameraController.cs) dynamically adjusting $Z$-distance based on device aspect ratio (e.g. $Z \approx -36.3$ for 16:9 widescreen, $Z \approx -77.1$ for narrow 9:19.5 iPhone portrait), guaranteeing all boundaries and the ball remain 100% visible on screen without edge clipping.
 - **Platform Targets**:
   - PC (Keyboard: Left/Right/A/D to move, Up/Space to launch, Esc to pause).
-  - iOS / Mobile Touch (Horizontal drag to slide, tap/swipe up to launch).
+  - iOS / Mobile Touch (Horizontal drag to slide, tap/swipe up to launch, [SafeAreaController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/SafeAreaController.cs) injecting dynamic breathing padding for notches/Dynamic Island).
   - WebGPU (Configured in `PlayerSettings` as primary graphics API for WebGL platform).
 - **Gameplay Math & Scoring**:
-  - Platform: 5:1 ratio ($5.0 \times 1.0 \times 1.0$).
-  - Blocks: 1:1 ratio ($1.0 \times 1.0 \times 1.0$ cubes), 6 rows $\times$ 8 cols = 48 blocks.
+  - Platform: 5:1 ratio ($5.0 \times 1.0 \times 1.0$), initial position $Y = -6.5$.
+  - Taller Vertical Arena: Top Wall at $Y = 24.25$, Left/Right Walls height $32.0$ ($Y \in [-7.5, 24.5]$), Kill Zone at $Y = -9.0$.
+  - Blocks: 1:1 ratio ($1.0 \times 1.0 \times 1.0$ cubes), 6 rows $\times$ 8 cols = 48 blocks with `startCenterY = 15.5`.
   - Point Multipliers: Red = 10 pts, Green = 20 pts, Blue = 30 pts.
   - Paddle Deflection: Dynamic bounce angle based on normalized impact offset $\theta = 90^\circ - (\text{offset} \times 60^\circ)$.
-  - Lives: 3 starting lives, kill zone trigger at bottom ($Y = -6.5$).
+  - Lives: 3 starting lives, trigger volume using dedicated [KillZone.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/KillZone.cs) component to eliminate `CompareTag` dependency.
+- **Editor Play Mode Routing**:
+  - [PlayModeSceneSetup.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/PlayModeSceneSetup.cs) binds `EditorSceneManager.playModeStartScene` to `LV_BlockBreaker_MainMenu.unity`, ensuring pressing Play in the Unity Editor always launches from the Main Menu.
 - **VFX & Materials**:
   - `Assets/VFX/VFX_BlockShatter.vfx`: Visual Effect Graph sub-box burst with dynamic HDR color and collision normal bias.
   - Dual-layer burst: GPU particle burst + 8 physical 3D mini-cube fragments ($2 \times 2 \times 2$ sub-box explosion) with gravity damping and rotation.
@@ -159,7 +162,7 @@ This file provides persistent context across agent sessions for this Unity proje
   - `BlockBreakerHUD.uxml` / `.uss`: Floating top bar (Score, High Score, 3 Glowing Heart Pips, subtle top-right buttons for Mute, Options, Pause), Center Launch Banner, and Level Clear / Game Over modals.
   - `ArcadePanelSettings.asset`: Reference resolution 1920x1080, Scale with Screen Size.
 - **Automated Test Suite**:
-  - `Assets/Tests/BlockBreakerCoreTests.cs`: 10 automated unit/integration tests validating score multipliers, paddle deflection math, boundary clamping, life tracking, and game state transitions.
+  - `Assets/Tests/BlockBreakerCoreTests.cs`: 17 automated unit/integration tests validating score multipliers, paddle deflection math, boundary clamping, life tracking, game state transitions, safe area insets, and multi-aspect ratio frustum framing.
 
 ---
 
