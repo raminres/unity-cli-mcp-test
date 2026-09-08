@@ -50,6 +50,7 @@ namespace Arcade.Editor
             var panelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>("Assets/UI/ArcadePanelSettings.asset");
             if (panelSettings != null) uiDoc.panelSettings = panelSettings;
             uiGo.AddComponent<MainMenuUIManager>();
+            uiGo.AddComponent<SafeAreaController>();
 
             // Save scene
             var path = "Assets/Scenes/LV_BlockBreaker_MainMenu.unity";
@@ -71,6 +72,7 @@ namespace Arcade.Editor
             cam.fieldOfView = 38f; // Perspective with tactile 3D depth and complete arena framing
             cam.transform.position = new Vector3(0f, 6.0f, -32f);
             cam.transform.rotation = Quaternion.identity;
+            camGo.AddComponent<ResponsiveCameraController>();
 
             // 2. Studio Lighting
             var keyLightGo = new GameObject("Key Light");
@@ -228,6 +230,7 @@ namespace Arcade.Editor
             var hudPanelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>("Assets/UI/ArcadePanelSettings.asset");
             if (hudPanelSettings != null) uiDoc.panelSettings = hudPanelSettings;
             uiGo.AddComponent<ArcadeUIManager>();
+            uiGo.AddComponent<SafeAreaController>();
 
             // Save Scene
             var path = "Assets/Scenes/LV_BlockBreaker.unity";

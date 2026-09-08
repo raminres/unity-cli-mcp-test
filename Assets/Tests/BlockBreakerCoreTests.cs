@@ -179,5 +179,66 @@ namespace Arcade.Tests
         }
 
         #endregion
+
+        #region 4. Mobile Safe Area & Responsive Camera Tests
+
+        [Test]
+        public void SafeArea_CalculateInsets_ComputesPercentageMarginsCorrectly()
+        {
+            // Simulate iPhone 15 Pro resolution: 1179 x 2556
+            // Top notch / dynamic island cutout: 140px, bottom home indicator: 100px
+            float screenW = 1179f;
+            float screenH = 2556f;
+            Rect safeArea = new Rect(0f, 100f, 1179f, 2556f - 240f); // y=100, h=2316
+
+            var (left, right, top, bottom) = Arcade.UI.SafeAreaController.CalculateInsets(safeArea, screenW, screenH);
+
+            Assert.AreEqual(0f, left, 0.01f);
+            Assert.AreEqual(0f, right, 0.01f);
+            Assert.AreEqual((100f / screenH) * 100f, bottom, 0.01f);
+            Assert.AreEqual((140f / screenH) * 100f, top, 0.01f);
+        }
+
+        [Test]
+        [TestCase(16f / 9f, 38f)]    // Standard PC / Web landscape
+        [TestCase(4f / 3f, 38f)]     // iPad landscape
+        [TestCase(1f, 38f)]          // Square
+        [TestCase(9f / 16f, 38f)]    // Mobile portrait
+        [TestCase(9f / 19.5f, 38f)]  // Modern iPhone narrow portrait
+        public void ResponsiveCamera_FrustumAlwaysEnclosesTargetBoundsAcrossAspectRatios(float aspectRatio, float vFov)
+        {
+            float targetWidth = 24.5f;   // Bounds covering left/right walls + padding
+            float targetHeight = 25.0f;  // Bounds covering paddle to top wall + padding
+
+            float distance = ResponsiveCameraController.CalculateRequiredDistance(targetWidth, targetHeight, vFov, aspectRatio);
+
+            // Calculate actual visible width and height at this distance
+            float vHalfRad = (vFov * 0.5f) * Mathf.Deg2Rad;
+            float visibleHeight = 2f * distance * Mathf.Tan(vHalfRad);
+            float visibleWidth = visibleHeight * aspectRatio;
+
+            Assert.GreaterOrEqual(visibleHeight, targetHeight - 0.01f,
+                $"At aspect ratio {aspectRatio:F2}, visible height ({visibleHeight:F1}) must enclose target height ({targetHeight:F1}).");
+
+            Assert.GreaterOrEqual(visibleWidth, targetWidth - 0.01f,
+                $"At aspect ratio {aspectRatio:F2}, visible width ({visibleWidth:F1}) must enclose target width ({targetWidth:F1}).");
+        }
+
+        [Test]
+        public void ResponsiveCamera_NarrowAspect_PullsBackFurtherThanWideAspect()
+        {
+            float targetW = 24.5f;
+            float targetH = 25.0f;
+            float fov = 38f;
+
+            float wideDistance = ResponsiveCameraController.CalculateRequiredDistance(targetW, targetH, fov, 16f / 9f);
+            float narrowDistance = ResponsiveCameraController.CalculateRequiredDistance(targetW, targetH, fov, 9f / 16f);
+
+            Assert.Greater(narrowDistance, wideDistance,
+                "On a narrow screen ratio, camera must pull back further so side walls and ball remain in view.");
+        }
+
+        #endregion
     }
 }
+
