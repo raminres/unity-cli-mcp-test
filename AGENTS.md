@@ -225,10 +225,31 @@ This file provides persistent context across agent sessions for this Unity proje
 
 ---
 
+### 9. iOS Build Profile & Swift Xcode Project Export
+- **Unity 6 Build Profile**:
+  - Asset: `Assets/Settings/Build Profiles/iOS.asset`
+  - Platform: `iOS` (`ad48d16a66894befa4d8181998c3cb09`)
+  - Active: Set as active build profile via `EditorUserBuildSettings.activeBuildProfile`.
+  - Override Global Scenes: `true`
+  - Scenes Included:
+    - `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0, enabled)
+    - `Assets/Scenes/LV_BlockBreaker.unity` (Build Index 1, enabled)
+- **Player Settings & Swift Xcode Project**:
+  - Company Name: `RaminRasulzade`
+  - Product Name: `BlockBreaker`
+  - iOS Application Identifier (Bundle ID): `com.RaminRasulzade.BlockBreaker`
+  - `PlayerSettings.xcodeProjectType = XcodeProjectType.Swift` (`xcodeProjectType: 1` in `ProjectSettings.asset`).
+  - Target Minimum iOS Version: `26.0`.
+  - Modern entry point generated in Swift (`MainApp/MainApp.swift` with SwiftUI lifecycle `@main struct MainApp: App`).
+  - `UnityAPI` Swift module providing `UnityPlayer.swift`, `CrashReporter.swift`, `UnityEngineLoadState.swift`, and SwiftUI `UnityView`.
+- **Exported Build Artifacts**:
+  - Output Path: `/Users/raminrasulzade/Documents/UnityProjects/Builds/BlockBreakerBuilds`
+  - Xcode Project: `BlockBreaker.xcodeproj`
+
+---
+
 ## Active Scenes & Build Index
 1. `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0)
 2. `Assets/Scenes/LV_BlockBreaker.unity` (Build Index 1)
 3. `Assets/Scenes/SampleScene.unity` (Disabled baseline)
-
-
 
