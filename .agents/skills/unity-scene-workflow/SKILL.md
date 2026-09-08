@@ -16,6 +16,10 @@ Use this skill when:
 - Managing Unity asset presets (`PR_` prefix) and Preset Manager default glob rules.
 - Setting up studio lighting, fog, and volume post-processing.
 - Configuring Cinemachine tracking cameras (Cinemachine 3.x).
+- Managing arcade game scenes (`LV_` prefix), game state, and UI Toolkit menus/HUDs.
+- Implementing responsive multi-aspect ratio camera framing (`ResponsiveCameraController`).
+- Integrating iOS Safe Area insets with extra breathing room margins (`SafeAreaController`).
+- Writing and executing automated EditMode/PlayMode tests via Unity Test Framework.
 
 ## Reference Documentation
 For complete workflow recipes, code examples, and MCP tool patterns, refer to [skills.md](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/skills.md) and [AGENTS.md](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/AGENTS.md).

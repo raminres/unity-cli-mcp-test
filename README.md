@@ -30,25 +30,40 @@ This project serves as a testing ground for:
  │       └── unity-scene-workflow/   # On-demand Antigravity skill definition
  │           └── SKILL.md
  ├── Assets/
- │   ├── Animations/                 # Generated Animation Clips & Animator Controllers
+ │   ├── Animations/                 # Procedural Animation Clips & Controllers
  │   │   ├── Moving_Object_01_Anim.anim
  │   │   └── Moving_Object_01_Controller.controller
- │   ├── Editor/                     # Editor automation tools & utilities
- │   │   └── SetupAssetPresets.cs
- │   ├── Materials/                  # Master Materials & Material Instances
+ │   ├── Editor/                     # Editor automation tools, setup scripts & test runners
+ │   │   ├── PlayModeSceneSetup.cs   # Auto-routes Play mode to Main Menu
+ │   │   ├── RunBlockBreakerTests.cs
+ │   │   ├── SetupAssetPresets.cs
+ │   │   └── SetupBlockBreakerScenes.cs
+ │   ├── Materials/                  # Master Materials (`MT_`) & Material Instances (`MI_`)
  │   │   ├── MT_Master_PBR_URP.mat
- │   │   └── MI_Moving_Object_01.mat
- │   ├── Models/                     # 3D models adhering to SM_ and SK_ conventions
+ │   │   ├── MI_Moving_Object_01.mat
+ │   │   └── BlockBreaker/           # Paddle, Ball, Playfield border & tiered block variants
+ │   ├── Models/                     # 3D meshes adhering to SM_ and SK_ conventions
  │   ├── Presets/                    # Unity .preset assets (PR_ prefix) with PC/iOS overrides
- │   ├── Scenes/
- │   │   └── SampleScene.unity       # Active demonstration scene
+ │   ├── Scenes/                     # Scene assets (LV_ prefix for playable game levels)
+ │   │   ├── LV_BlockBreaker_MainMenu.unity # Start scene with settings, continue, credits
+ │   │   ├── LV_BlockBreaker.unity   # Primary 3D arcade gameplay scene
+ │   │   └── SampleScene.unity       # Baseline reference scene
  │   ├── Screenshots/                # Editor & in-game captures (tracked by Git LFS)
+ │   ├── Scripts/                    # Modular arcade architecture (Arcade.Gameplay assembly)
+ │   │   ├── Audio/                  # Procedural SFX synthesizer (AU_)
+ │   │   ├── BlockBreaker/           # Paddle, Ball, Block, LevelGen, VFX, KillZone
+ │   │   ├── Core/                   # GameManager state machine, ResponsiveCameraController
+ │   │   ├── Input/                  # Cross-platform input coordinator (PC, iOS, WebGPU)
+ │   │   └── UI/                     # UI Toolkit controllers, SafeAreaController
  │   ├── Settings/                   # URP configuration & Global Volume profiles
- │   └── Textures/                   # Textures adhering to TX_ conventions
+ │   ├── Tests/                      # Automated NUnit test suite (Arcade.Tests assembly)
+ │   ├── Textures/                   # Textures adhering to TX_ conventions
+ │   ├── UI/                         # UI Toolkit templates (.uxml, .uss, PanelSettings)
+ │   └── VFX/                        # Visual Effect Graph assets (VFX_BlockShatter.vfx)
  ├── Packages/                       # Package manifest & lockfiles
- ├── ProjectSettings/                # Project engine configuration & PresetManager
+ ├── ProjectSettings/                # Project engine configuration & TagManager
  ├── .gitattributes                  # Git LFS rules for Unity binary assets
- ├── .gitignore                      # Standard Unity gitignore (ignores Library, Temp, etc.)
+ ├── .gitignore                      # Standard Unity gitignore
  ├── AGENTS.md                       # Persistent workspace memory for AI agent sessions
  ├── README.md                       # Project overview & architectural guide
  └── skills.md                       # Agent playbook, MCP recipes, and conventions

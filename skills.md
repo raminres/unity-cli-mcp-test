@@ -122,3 +122,26 @@ In Unity 6 / Cinemachine 3.x:
    - `AudioImporter`:
      - `glob:"*AU_*"` -> `PR_Audio.preset`
 
+---
+
+## 8. Block Breaker & Mobile Arcade Workflow
+1. **Scene Conventions (`LV_` prefix)**:
+   - `LV_BlockBreaker_MainMenu.unity`: Fast-loading start scene with New Game, Continue, Settings, and Credits.
+   - `LV_BlockBreaker.unity`: Primary 3D arcade gameplay scene.
+   - Registered in `EditorBuildSettings.scenes` with indices 0 and 1.
+2. **Editor Play Mode Start Scene**:
+   - `EditorSceneManager.playModeStartScene` bound to `LV_BlockBreaker_MainMenu.unity` via `Assets/Editor/PlayModeSceneSetup.cs`, ensuring clicking Play in the Editor always starts from the Main Menu.
+3. **Mobile Safe Area & UI Toolkit**:
+   - `Assets/Scripts/UI/SafeAreaController.cs`: Dynamically injects hardware safe area percentage padding + extra breathing room margins into `UIDocument` root visual elements.
+   - Prevents HUD elements (score, lives, quick buttons) from clipping behind notches, Dynamic Island, or the iOS home indicator bar.
+4. **Responsive Camera Framing**:
+   - `Assets/Scripts/Core/ResponsiveCameraController.cs`: Dynamically recalculates 3D camera distance $Z$ to enclose both width and height within the frustum across all aspect ratios (e.g. 16:9 widescreen, 4:3 iPad, 9:19.5 iPhone portrait).
+   - Eliminates off-screen ball bounces and edge boundary clipping.
+5. **Gameplay Physics & Collision Rules**:
+   - Platform: 5:1 ratio ($5.0 \times 1.0 \times 1.0$).
+   - Blocks: 1:1 ratio ($1.0 \times 1.0 \times 1.0$ cubes).
+   - Deflection formula: $\theta = 90^\circ - (\text{hitOffset} \times 60^\circ)$.
+   - Kill Zone: Uses dedicated `KillZone.cs` component on trigger volume to eliminate `CompareTag` errors.
+6. **Automated Testing Suite**:
+   - Tests reside in `Assets/Tests/` under `Arcade.Tests.asmdef`.
+   - Run via `Assets/Editor/RunBlockBreakerTests.cs` (Menu item: `Tools/Arcade/Run Block Breaker Tests`) or `unity test . --mode EditMode`.
