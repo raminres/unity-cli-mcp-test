@@ -225,7 +225,7 @@ This file provides persistent context across agent sessions for this Unity proje
 
 ---
 
-### 9. iOS Build Profile & Swift Xcode Project Export
+### 12. iOS Build Profile & Swift Xcode Project Export
 - **Unity 6 Build Profile**:
   - Asset: `Assets/Settings/Build Profiles/iOS.asset`
   - Platform: `iOS` (`ad48d16a66894befa4d8181998c3cb09`)
