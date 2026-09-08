@@ -23,7 +23,7 @@ namespace Arcade.UI
         [Range(0f, 10f)] [SerializeField] private float extraSidePercent = 1.5f;
 
         [Header("Editor Simulation")]
-        [SerializeField] private bool simulateInEditor = false;
+        [SerializeField] private bool simulateInEditor = true;
         [SerializeField] private float simulatedTopInsetPixels = 120f;
         [SerializeField] private float simulatedBottomInsetPixels = 70f;
         [SerializeField] private float simulatedSideInsetPixels = 0f;
@@ -59,6 +59,13 @@ namespace Arcade.UI
             ApplySafeArea();
         }
 
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            ApplySafeArea();
+        }
+#endif
+
         private void Update()
         {
             if (Screen.safeArea != lastSafeArea ||
@@ -72,6 +79,18 @@ namespace Arcade.UI
 
         public void ApplySafeArea()
         {
+            if (root == null)
+            {
+                if (panelRenderer == null) panelRenderer = GetComponent<PanelRenderer>();
+#if UNITY_EDITOR
+                if (panelRenderer != null)
+                {
+                    var prop = panelRenderer.GetType().GetProperty("rootVisualElement", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    root = prop?.GetValue(panelRenderer) as VisualElement;
+                }
+#endif
+            }
+
             if (root == null) return;
 
             targetElement = string.IsNullOrEmpty(targetContainerName)

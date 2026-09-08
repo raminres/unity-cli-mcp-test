@@ -154,7 +154,7 @@ MonoBehaviour:
   extraTopPercent: 2
   extraBottomPercent: 2
   extraSidePercent: 1.5
-  simulateInEditor: 0
+  simulateInEditor: 1
   simulatedTopInsetPixels: 120
   simulatedBottomInsetPixels: 70
   simulatedSideInsetPixels: 0
