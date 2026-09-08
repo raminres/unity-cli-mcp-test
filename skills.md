@@ -86,3 +86,38 @@ In Unity 6 / Cinemachine 3.x:
   - Return a serializable result (e.g., `return "Success";` or `return someValue;`).
   - Call `Undo.RegisterCreatedObjectUndo(...)` or `Undo.RecordObject(...)` for undoability.
   - Call `EditorSceneManager.MarkSceneDirty(...)` and `EditorSceneManager.SaveOpenScenes()` or `AssetDatabase.SaveAssets()` to ensure changes persist to disk.
+
+---
+
+## 7. Asset Pipeline Conventions & Preset Manager Automation
+1. **Asset Naming Conventions**:
+   - **Audio**: `AU_` prefix (e.g., `AU_Laser_01.wav`).
+   - **Static Meshes**: `SM_` prefix (e.g., `SM_Crate_01.fbx`).
+   - **Skeletal Meshes**: `SK_` prefix (e.g., `SK_Boss_01.fbx`).
+   - **Textures**: `TX_` prefix with semantic suffixes:
+     - `_BaseColor`: sRGB color map.
+     - `_MetallicSmoothness`: Linear mask map.
+     - `_Normal`: Normal map.
+     - `_AO`: Ambient occlusion mask.
+     - `_Emissive`: Emissive color map.
+2. **Platform Overrides Matrix**:
+   - **PC (`Standalone`)**:
+     - Textures: BC7 format (BC5 for Normal maps), Max Size 2048.
+     - Audio: Vorbis compression, quality 0.7, compressed in memory.
+   - **iOS (`iPhone`)**:
+     - Textures: ASTC 6x6 compression, Max Size 2048.
+     - Audio: AAC compression, quality 0.7, compressed in memory.
+3. **Preset Manager Glob Patterns**:
+   - `TextureImporter`:
+     - `glob:"*_Normal*"` -> `TX_Normal.preset`
+     - `glob:"*_MetallicSmoothness*"` -> `TX_MetallicSmoothness.preset`
+     - `glob:"*_AO*"` -> `TX_AO.preset`
+     - `glob:"*_Emissive*"` -> `TX_Emissive.preset`
+     - `glob:"*BaseColor*"` -> `TX_BaseColor.preset`
+     - `glob:"*TX_*"` -> `TX_BaseColor.preset`
+   - `ModelImporter`:
+     - `glob:"*SM_*"` -> `SM_StaticMesh.preset`
+     - `glob:"*SK_*"` -> `SK_SkeletalMesh.preset`
+   - `AudioImporter`:
+     - `glob:"*AU_*"` -> `AU_Audio.preset`
+

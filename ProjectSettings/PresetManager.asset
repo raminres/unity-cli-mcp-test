@@ -4,4 +4,46 @@
 PresetManager:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_DefaultPresets: {}
+  m_DefaultPresets:
+  - first:
+      m_NativeTypeID: 1006
+      m_ManagedTypePPtr: {fileID: 0}
+      m_ManagedTypeFallback: 
+    second:
+    - m_Preset: {fileID: 2655988077585873504, guid: 198d0628f2039d741bd1f8d91fc8f071, type: 2}
+      m_Filter: glob:"*_Normal*"
+      m_Disabled: 0
+    - m_Preset: {fileID: 2655988077585873504, guid: b73c763d1cc987d499e0013a6e75bb77, type: 2}
+      m_Filter: glob:"*_MetallicSmoothness*"
+      m_Disabled: 0
+    - m_Preset: {fileID: 2655988077585873504, guid: 2f3c207153f7afa4aa9e1667d4f9f2aa, type: 2}
+      m_Filter: glob:"*_AO*"
+      m_Disabled: 0
+    - m_Preset: {fileID: 2655988077585873504, guid: 50d237eca02c3c940aa7ce23d7ece28c, type: 2}
+      m_Filter: glob:"*_Emissive*"
+      m_Disabled: 0
+    - m_Preset: {fileID: 2655988077585873504, guid: a24362693a5220b419d0b6a37ea76744, type: 2}
+      m_Filter: glob:"*BaseColor*"
+      m_Disabled: 0
+    - m_Preset: {fileID: 2655988077585873504, guid: a24362693a5220b419d0b6a37ea76744, type: 2}
+      m_Filter: glob:"*TX_*"
+      m_Disabled: 0
+  - first:
+      m_NativeTypeID: 1020
+      m_ManagedTypePPtr: {fileID: 0}
+      m_ManagedTypeFallback: 
+    second:
+    - m_Preset: {fileID: 2655988077585873504, guid: 92546dab0a1cfca48956f35f8c607b04, type: 2}
+      m_Filter: glob:"*AU_*"
+      m_Disabled: 0
+  - first:
+      m_NativeTypeID: 1041
+      m_ManagedTypePPtr: {fileID: 0}
+      m_ManagedTypeFallback: 
+    second:
+    - m_Preset: {fileID: 2655988077585873504, guid: 9965a95bf315e8d409910a716a998024, type: 2}
+      m_Filter: glob:"*SM_*"
+      m_Disabled: 0
+    - m_Preset: {fileID: 2655988077585873504, guid: 13f4be227fff1504a85b032e6dbb859f, type: 2}
+      m_Filter: glob:"*SK_*"
+      m_Disabled: 0

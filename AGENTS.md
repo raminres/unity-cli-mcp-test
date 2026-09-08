@@ -9,7 +9,7 @@ This file provides persistent context across agent sessions for this Unity proje
 - **Render Pipeline**: Universal Render Pipeline (URP)
 - **Active Scene**: `Assets/Scenes/SampleScene.unity`
 - **Remote Repository**: `https://github.com/raminres/unity-cli-mcp-test.git`
-- **Active Branch**: `develop` (Git LFS enabled)
+- **Active Branch**: `tech-art/project-settings-01` (Git LFS enabled)
 
 ---
 
@@ -88,6 +88,36 @@ This file provides persistent context across agent sessions for this Unity proje
   - Position: `(0, 1, -10)`
   - Component: `CinemachineCamera` with `LookAt = Moving_Object_01.transform`.
   - Component: `CinemachineRotationComposer` with damping `(0.5, 0.5, 0.5)` for smooth dynamic tracking of the moving cube.
+
+### 6. Technical Art Asset Conventions & Preset System
+- **Folder Structure**:
+  - `Assets/Textures/`: Project textures adhering to `TX_` conventions.
+  - `Assets/Models/`: 3D meshes adhering to `SM_` and `SK_` conventions.
+  - `Assets/Presets/`: Reusable Unity `.preset` assets with PC (`Standalone`) and iOS (`iPhone`) platform overrides.
+- **Naming Conventions**:
+  - **Audio**: `AU_` prefix (e.g. `AU_Explosion_01.wav`).
+  - **Static Meshes**: `SM_` prefix (e.g. `SM_Rock_01.fbx`).
+  - **Skeletal Meshes**: `SK_` prefix (e.g. `SK_Character_01.fbx`).
+  - **Textures**: `TX_` prefix with mandatory semantic suffixes:
+    - `_BaseColor`: sRGB color map (BC7 on PC, ASTC 6x6 on iOS).
+    - `_MetallicSmoothness`: Linear mask map (BC7 on PC, ASTC 6x6 on iOS).
+    - `_Normal`: Normal map (BC5 on PC, ASTC 6x6 on iOS).
+    - `_AO`: Linear ambient occlusion map (BC7 on PC, ASTC 6x6 on iOS).
+    - `_Emissive`: sRGB emissive color map (BC7 on PC, ASTC 6x6 on iOS).
+- **Preset Manager Automation**:
+  - Configured in `ProjectSettings/PresetManager.asset` with glob patterns:
+    - `TextureImporter`: `glob:"*_Normal*"`, `glob:"*_MetallicSmoothness*"`, `glob:"*_AO*"`, `glob:"*_Emissive*"`, `glob:"*BaseColor*"`, `glob:"*TX_*"`
+    - `ModelImporter`: `glob:"*SM_*"`, `glob:"*SK_*"`
+    - `AudioImporter`: `glob:"*AU_*"`
+  - Automation tool: `Assets/Editor/SetupAssetPresets.cs` (Menu item: `Tools/TechArt/Generate Asset Presets`).
+
+### 7. Engine Packages Installed
+- `com.unity.performance.profile-analyzer` (1.4.0) - Profiling analysis and frame comparison.
+- `com.unity.project-auditor` (2.0.0) - Static analysis and project auditing.
+- `com.unity.2d.sprite` (1.0.0) - 2D Sprite management and atlasing.
+- `com.unity.memoryprofiler` (1.1.12) - Deep memory snapshot inspection.
+- `com.unity.localization` (1.5.13) - Multi-language and asset localization.
+- `com.unity.visualeffectgraph` (17.6.0) - GPU particle simulation and VFX.
 
 ---
 
