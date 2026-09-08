@@ -215,11 +215,12 @@ This file provides persistent context across agent sessions for this Unity proje
   - **Product Name**: `BlockBreaker`
   - **Company Name**: `RaminRasulzade`
   - **Application / Bundle Identifier**: `com.RaminRasulzade.BlockBreaker` (Configured across iOS, Standalone, and Android in `ProjectSettings/ProjectSettings.asset`).
+  - **Xcode Project Type**: `Swift` (`UnityEditor.XcodeProjectType.Swift`, `xcodeProjectType: 1` in Unity 6000.6.0f1), generating a modern Swift-based Xcode project structure instead of legacy Objective-C.
 - **Multi-Machine Workflow (Windows PC $\leftrightarrow$ macOS)**:
   - Remote repository branch: `feature/gameplay-improvements`.
   - The macOS machine is used for iOS device test builds and Xcode compilation.
   - The macOS environment has a local stash containing Xcode build profile and test build customizations.
-  - Both machines maintain `BlockBreaker` and `RaminRasulzade` in version-controlled `PlayerSettings.asset`, ensuring clean pulls without stash conflicts.
+  - Both machines maintain `BlockBreaker`, `RaminRasulzade`, and Swift Xcode project type in version-controlled `PlayerSettings.asset`, ensuring clean pulls without stash conflicts.
   - When testing iOS builds on macOS, apply the stashed changes (`git stash apply`).
 
 ---
