@@ -107,17 +107,18 @@ In Unity 6 / Cinemachine 3.x:
    - **iOS (`iPhone`)**:
      - Textures: ASTC 6x6 compression, Max Size 2048.
      - Audio: AAC compression, quality 0.7, compressed in memory.
-3. **Preset Manager Glob Patterns**:
+3. **Preset Manager Glob Patterns & Presets (`PR_` prefix)**:
+   - All Unity Preset assets reside in `Assets/Presets/` and use the uniform `PR_` prefix.
    - `TextureImporter`:
-     - `glob:"*_Normal*"` -> `TX_Normal.preset`
-     - `glob:"*_MetallicSmoothness*"` -> `TX_MetallicSmoothness.preset`
-     - `glob:"*_AO*"` -> `TX_AO.preset`
-     - `glob:"*_Emissive*"` -> `TX_Emissive.preset`
-     - `glob:"*BaseColor*"` -> `TX_BaseColor.preset`
-     - `glob:"*TX_*"` -> `TX_BaseColor.preset`
+     - `glob:"*_Normal*"` -> `PR_Normal.preset`
+     - `glob:"*_MetallicSmoothness*"` -> `PR_MetallicSmoothness.preset`
+     - `glob:"*_AO*"` -> `PR_AO.preset`
+     - `glob:"*_Emissive*"` -> `PR_Emissive.preset`
+     - `glob:"*BaseColor*"` -> `PR_BaseColor.preset`
+     - `glob:"*TX_*"` -> `PR_BaseColor.preset`
    - `ModelImporter`:
-     - `glob:"*SM_*"` -> `SM_StaticMesh.preset`
-     - `glob:"*SK_*"` -> `SK_SkeletalMesh.preset`
+     - `glob:"*SM_*"` -> `PR_StaticMesh.preset`
+     - `glob:"*SK_*"` -> `PR_SkeletalMesh.preset`
    - `AudioImporter`:
-     - `glob:"*AU_*"` -> `AU_Audio.preset`
+     - `glob:"*AU_*"` -> `PR_Audio.preset`
 

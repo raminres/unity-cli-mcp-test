@@ -93,8 +93,9 @@ This file provides persistent context across agent sessions for this Unity proje
 - **Folder Structure**:
   - `Assets/Textures/`: Project textures adhering to `TX_` conventions.
   - `Assets/Models/`: 3D meshes adhering to `SM_` and `SK_` conventions.
-  - `Assets/Presets/`: Reusable Unity `.preset` assets with PC (`Standalone`) and iOS (`iPhone`) platform overrides.
+  - `Assets/Presets/`: Reusable Unity `.preset` assets using the `PR_` prefix (`PR_BaseColor.preset`, `PR_Normal.preset`, `PR_MetallicSmoothness.preset`, `PR_AO.preset`, `PR_Emissive.preset`, `PR_StaticMesh.preset`, `PR_SkeletalMesh.preset`, `PR_Audio.preset`) with PC (`Standalone`) and iOS (`iPhone`) platform overrides.
 - **Naming Conventions**:
+  - **Presets**: `PR_` prefix for all `.preset` files regardless of asset target.
   - **Audio**: `AU_` prefix (e.g. `AU_Explosion_01.wav`).
   - **Static Meshes**: `SM_` prefix (e.g. `SM_Rock_01.fbx`).
   - **Skeletal Meshes**: `SK_` prefix (e.g. `SK_Character_01.fbx`).
@@ -106,9 +107,18 @@ This file provides persistent context across agent sessions for this Unity proje
     - `_Emissive`: sRGB emissive color map (BC7 on PC, ASTC 6x6 on iOS).
 - **Preset Manager Automation**:
   - Configured in `ProjectSettings/PresetManager.asset` with glob patterns:
-    - `TextureImporter`: `glob:"*_Normal*"`, `glob:"*_MetallicSmoothness*"`, `glob:"*_AO*"`, `glob:"*_Emissive*"`, `glob:"*BaseColor*"`, `glob:"*TX_*"`
-    - `ModelImporter`: `glob:"*SM_*"`, `glob:"*SK_*"`
-    - `AudioImporter`: `glob:"*AU_*"`
+    - `TextureImporter`:
+      - `glob:"*_Normal*"` -> `PR_Normal.preset`
+      - `glob:"*_MetallicSmoothness*"` -> `PR_MetallicSmoothness.preset`
+      - `glob:"*_AO*"` -> `PR_AO.preset`
+      - `glob:"*_Emissive*"` -> `PR_Emissive.preset`
+      - `glob:"*BaseColor*"` -> `PR_BaseColor.preset`
+      - `glob:"*TX_*"` -> `PR_BaseColor.preset`
+    - `ModelImporter`:
+      - `glob:"*SM_*"` -> `PR_StaticMesh.preset`
+      - `glob:"*SK_*"` -> `PR_SkeletalMesh.preset`
+    - `AudioImporter`:
+      - `glob:"*AU_*"` -> `PR_Audio.preset`
   - Automation tool: `Assets/Editor/SetupAssetPresets.cs` (Menu item: `Tools/TechArt/Generate Asset Presets`).
 
 ### 7. Engine Packages Installed

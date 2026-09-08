@@ -13,7 +13,7 @@ Use this skill when:
 - Authoring looping animation clips and animator controllers.
 - Managing URP materials using the `MT_` (Master) and `MI_` (Instance/Variant) conventions.
 - Importing and configuring 3D models (`SM_`, `SK_`), textures (`TX_` with suffixes), and audio (`AU_`).
-- Managing Unity asset presets and Preset Manager default glob rules.
+- Managing Unity asset presets (`PR_` prefix) and Preset Manager default glob rules.
 - Setting up studio lighting, fog, and volume post-processing.
 - Configuring Cinemachine tracking cameras (Cinemachine 3.x).
 

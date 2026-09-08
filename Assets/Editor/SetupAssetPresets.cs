@@ -18,7 +18,7 @@ namespace TechArt.Editor
         {
             EditorApplication.delayCall += () =>
             {
-                if (!File.Exists(Path.Combine(PresetsDir, "TX_BaseColor.preset")))
+                if (!File.Exists(Path.Combine(PresetsDir, "PR_BaseColor.preset")))
                 {
                     GeneratePresetsAndConfigureManager();
                 }
@@ -31,6 +31,7 @@ namespace TechArt.Editor
             try
             {
                 EnsureDirectories();
+                RemoveLegacyPresets();
 
                 GenerateTexturePresets();
                 GenerateModelPresets();
@@ -42,7 +43,7 @@ namespace TechArt.Editor
                 AssetDatabase.Refresh();
 
                 File.WriteAllText(LogPath, $"Preset generation completed successfully at {DateTime.Now:O}\n");
-                Debug.Log("<color=green>[TechArt]</color> All asset presets and PresetManager defaults generated successfully!");
+                Debug.Log("<color=green>[TechArt]</color> All PR_ asset presets and PresetManager defaults generated successfully!");
             }
             catch (Exception ex)
             {
@@ -61,6 +62,29 @@ namespace TechArt.Editor
                 AssetDatabase.CreateFolder("Assets", "Models");
         }
 
+        private static void RemoveLegacyPresets()
+        {
+            string[] legacyPresets = new string[]
+            {
+                $"{PresetsDir}/TX_BaseColor.preset",
+                $"{PresetsDir}/TX_MetallicSmoothness.preset",
+                $"{PresetsDir}/TX_Normal.preset",
+                $"{PresetsDir}/TX_AO.preset",
+                $"{PresetsDir}/TX_Emissive.preset",
+                $"{PresetsDir}/SM_StaticMesh.preset",
+                $"{PresetsDir}/SK_SkeletalMesh.preset",
+                $"{PresetsDir}/AU_Audio.preset"
+            };
+
+            foreach (var path in legacyPresets)
+            {
+                if (File.Exists(path))
+                {
+                    AssetDatabase.DeleteAsset(path);
+                }
+            }
+        }
+
         private static void GenerateTexturePresets()
         {
             string tempTexPath = Path.Combine(PresetsDir, "_temp_gen_tex.png").Replace("\\", "/");
@@ -72,7 +96,7 @@ namespace TechArt.Editor
             var importer = AssetImporter.GetAtPath(tempTexPath) as TextureImporter;
             if (importer == null) throw new InvalidOperationException("Failed to get TextureImporter for temporary texture.");
 
-            // 1. TX_BaseColor
+            // 1. PR_BaseColor
             importer.textureType = TextureImporterType.Default;
             importer.sRGBTexture = true;
             importer.alphaSource = TextureImporterAlphaSource.FromInput;
@@ -90,9 +114,9 @@ namespace TechArt.Editor
             iosBase.maxTextureSize = 2048;
             importer.SetPlatformTextureSettings(iosBase);
 
-            CreateOrReplacePreset(importer, $"{PresetsDir}/TX_BaseColor.preset");
+            CreateOrReplacePreset(importer, $"{PresetsDir}/PR_BaseColor.preset");
 
-            // 2. TX_MetallicSmoothness
+            // 2. PR_MetallicSmoothness
             importer.textureType = TextureImporterType.Default;
             importer.sRGBTexture = false;
             importer.alphaSource = TextureImporterAlphaSource.FromInput;
@@ -109,9 +133,9 @@ namespace TechArt.Editor
             iosMS.maxTextureSize = 2048;
             importer.SetPlatformTextureSettings(iosMS);
 
-            CreateOrReplacePreset(importer, $"{PresetsDir}/TX_MetallicSmoothness.preset");
+            CreateOrReplacePreset(importer, $"{PresetsDir}/PR_MetallicSmoothness.preset");
 
-            // 3. TX_Normal
+            // 3. PR_Normal
             importer.textureType = TextureImporterType.NormalMap;
 
             var pcNorm = importer.GetPlatformTextureSettings("Standalone");
@@ -126,9 +150,9 @@ namespace TechArt.Editor
             iosNorm.maxTextureSize = 2048;
             importer.SetPlatformTextureSettings(iosNorm);
 
-            CreateOrReplacePreset(importer, $"{PresetsDir}/TX_Normal.preset");
+            CreateOrReplacePreset(importer, $"{PresetsDir}/PR_Normal.preset");
 
-            // 4. TX_AO
+            // 4. PR_AO
             importer.textureType = TextureImporterType.Default;
             importer.sRGBTexture = false;
             importer.alphaSource = TextureImporterAlphaSource.None;
@@ -145,9 +169,9 @@ namespace TechArt.Editor
             iosAO.maxTextureSize = 2048;
             importer.SetPlatformTextureSettings(iosAO);
 
-            CreateOrReplacePreset(importer, $"{PresetsDir}/TX_AO.preset");
+            CreateOrReplacePreset(importer, $"{PresetsDir}/PR_AO.preset");
 
-            // 5. TX_Emissive
+            // 5. PR_Emissive
             importer.textureType = TextureImporterType.Default;
             importer.sRGBTexture = true;
             importer.alphaSource = TextureImporterAlphaSource.FromInput;
@@ -164,7 +188,7 @@ namespace TechArt.Editor
             iosEmiss.maxTextureSize = 2048;
             importer.SetPlatformTextureSettings(iosEmiss);
 
-            CreateOrReplacePreset(importer, $"{PresetsDir}/TX_Emissive.preset");
+            CreateOrReplacePreset(importer, $"{PresetsDir}/PR_Emissive.preset");
 
             AssetDatabase.DeleteAsset(tempTexPath);
         }
@@ -179,7 +203,7 @@ namespace TechArt.Editor
             var importer = AssetImporter.GetAtPath(tempModelPath) as ModelImporter;
             if (importer == null) throw new InvalidOperationException("Failed to get ModelImporter for temporary OBJ.");
 
-            // 1. SM_StaticMesh
+            // 1. PR_StaticMesh
             importer.animationType = ModelImporterAnimationType.None;
             importer.importAnimation = false;
             importer.importBlendShapes = false;
@@ -191,9 +215,9 @@ namespace TechArt.Editor
             importer.optimizeMeshVertices = true;
             importer.weldVertices = true;
 
-            CreateOrReplacePreset(importer, $"{PresetsDir}/SM_StaticMesh.preset");
+            CreateOrReplacePreset(importer, $"{PresetsDir}/PR_StaticMesh.preset");
 
-            // 2. SK_SkeletalMesh
+            // 2. PR_SkeletalMesh
             importer.animationType = ModelImporterAnimationType.Generic;
             importer.importAnimation = true;
             importer.importBlendShapes = true;
@@ -205,7 +229,7 @@ namespace TechArt.Editor
             importer.optimizeMeshPolygons = true;
             importer.optimizeMeshVertices = true;
 
-            CreateOrReplacePreset(importer, $"{PresetsDir}/SK_SkeletalMesh.preset");
+            CreateOrReplacePreset(importer, $"{PresetsDir}/PR_SkeletalMesh.preset");
 
             AssetDatabase.DeleteAsset(tempModelPath);
         }
@@ -249,27 +273,68 @@ namespace TechArt.Editor
             };
             importer.SetOverrideSampleSettings(BuildTargetGroup.Standalone, pcAudio);
 
-            var iosAudio = new AudioImporterSampleSettings
-            {
-                loadType = AudioClipLoadType.CompressedInMemory,
-                compressionFormat = AudioCompressionFormat.AAC,
-                quality = 0.7f
-            };
-            importer.SetOverrideSampleSettings(BuildTargetGroup.iOS, iosAudio);
-
-            CreateOrReplacePreset(importer, $"{PresetsDir}/AU_Audio.preset");
+            CreateOrReplacePreset(importer, $"{PresetsDir}/PR_Audio.preset");
 
             AssetDatabase.DeleteAsset(tempAudioPath);
+
+            // Inject iPhone / iOS override into PR_Audio.preset YAML
+            InjectIosAudioOverride($"{PresetsDir}/PR_Audio.preset");
+        }
+
+        private static void InjectIosAudioOverride(string presetPath)
+        {
+            if (!File.Exists(presetPath)) return;
+            string content = File.ReadAllText(presetPath);
+            if (content.Contains("m_PlatformSettingOverrides.Array.data[1].first")) return;
+
+            string target = "propertyPath: m_PlatformSettingOverrides.Array.size\n    value: 1";
+            string replacement = @"propertyPath: m_PlatformSettingOverrides.Array.size
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_PlatformSettingOverrides.Array.data[1].first
+    value: iPhone
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_PlatformSettingOverrides.Array.data[1].second.loadType
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_PlatformSettingOverrides.Array.data[1].second.sampleRateSetting
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_PlatformSettingOverrides.Array.data[1].second.sampleRateOverride
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_PlatformSettingOverrides.Array.data[1].second.compressionFormat
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_PlatformSettingOverrides.Array.data[1].second.quality
+    value: 0.7
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_PlatformSettingOverrides.Array.data[1].second.conversionMode
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_PlatformSettingOverrides.Array.data[1].second.preloadAudioData
+    value: 0";
+
+            content = content.Replace(target, replacement);
+            File.WriteAllText(presetPath, content);
         }
 
         private static void ConfigurePresetManagerDefaults()
         {
             // Texture Importer Defaults
-            var texNormal = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/TX_Normal.preset");
-            var texMS = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/TX_MetallicSmoothness.preset");
-            var texAO = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/TX_AO.preset");
-            var texEmiss = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/TX_Emissive.preset");
-            var texBase = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/TX_BaseColor.preset");
+            var texNormal = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/PR_Normal.preset");
+            var texMS = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/PR_MetallicSmoothness.preset");
+            var texAO = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/PR_AO.preset");
+            var texEmiss = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/PR_Emissive.preset");
+            var texBase = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/PR_BaseColor.preset");
 
             var texDefaults = new DefaultPreset[]
             {
@@ -284,8 +349,8 @@ namespace TechArt.Editor
             Preset.SetDefaultPresetsForType(texBase.GetPresetType(), texDefaults);
 
             // Model Importer Defaults
-            var smPreset = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/SM_StaticMesh.preset");
-            var skPreset = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/SK_SkeletalMesh.preset");
+            var smPreset = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/PR_StaticMesh.preset");
+            var skPreset = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/PR_SkeletalMesh.preset");
 
             var modelDefaults = new DefaultPreset[]
             {
@@ -296,7 +361,7 @@ namespace TechArt.Editor
             Preset.SetDefaultPresetsForType(smPreset.GetPresetType(), modelDefaults);
 
             // Audio Importer Defaults
-            var auPreset = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/AU_Audio.preset");
+            var auPreset = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/PR_Audio.preset");
 
             var audioDefaults = new DefaultPreset[]
             {
