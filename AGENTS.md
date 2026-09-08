@@ -7,9 +7,9 @@ This file provides persistent context across agent sessions for this Unity proje
 ## Project Overview
 - **Engine Version**: Unity 6 (6000.6.0f1)
 - **Render Pipeline**: Universal Render Pipeline (URP)
-- **Active Scene**: `Assets/Scenes/SampleScene.unity`
+- **Active Scene**: `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Play Mode Start Scene)
 - **Remote Repository**: `https://github.com/raminres/unity-cli-mcp-test.git`
-- **Active Branch**: `tech-art/project-settings-01` (Git LFS enabled)
+- **Active Branch**: `develop` (Git LFS enabled)
 
 ---
 
