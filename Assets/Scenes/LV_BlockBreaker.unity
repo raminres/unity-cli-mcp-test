@@ -1414,11 +1414,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.UI.SafeAreaController
   targetContainerName: 
-  extraTopPercent: 2
-  extraBottomPercent: 2
-  extraSidePercent: 1.5
+  extraTopPercent: 3.5
+  extraBottomPercent: 2.5
+  extraSidePercent: 2
   simulateInEditor: 1
-  simulatedTopInsetPixels: 120
+  simulatedTopInsetPixels: 160
   simulatedBottomInsetPixels: 70
   simulatedSideInsetPixels: 0
 --- !u!114 &1728547792

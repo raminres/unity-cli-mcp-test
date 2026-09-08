@@ -7,18 +7,18 @@
 
 /* Top Bar */
 .top-bar {
-    margin-top: 12px;
-    margin-left: 20px;
-    margin-right: 20px;
-    height: 60px;
+    margin-top: 14px;
+    margin-left: 18px;
+    margin-right: 18px;
+    height: 64px;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    background-color: rgba(14, 18, 30, 0.85);
-    border-radius: 18px;
+    background-color: rgba(14, 18, 30, 0.88);
+    border-radius: 20px;
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.12);
-    padding: 0 18px;
+    border-color: rgba(255, 255, 255, 0.15);
+    padding: 0 20px;
     pointer-events: auto;
 }
 
@@ -27,7 +27,7 @@
 }
 
 .score-main {
-    font-size: 18px;
+    font-size: 20px;
     -unity-font-style: bold;
     color: #21d4fd;
     letter-spacing: 1px;
@@ -35,7 +35,7 @@
 }
 
 .score-sub {
-    font-size: 11px;
+    font-size: 13px;
     color: #94a3b8;
     letter-spacing: 0.5px;
     margin: 0;
@@ -48,10 +48,10 @@
 }
 
 .life-pip {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     margin: 0 4px;
-    border-radius: 11px;
+    border-radius: 12px;
     border-width: 2px;
     border-color: #ff3b56;
     transition-duration: 0.2s;
@@ -59,56 +59,66 @@
 
 .pip-active {
     background-color: #ff3b56;
-    box-shadow: 0 0 10px rgba(255, 59, 86, 0.7);
+    box-shadow: 0 0 12px rgba(255, 59, 86, 0.8);
 }
 
 .pip-lost {
     background-color: rgba(255, 59, 86, 0.15);
     border-color: rgba(255, 59, 86, 0.3);
-    scale: 0.85;
+    scale: 0.82;
 }
 
-/* Subtle Quick Control Buttons */
+/* Bouncy Quick Control Buttons */
 .quick-controls {
     flex-direction: row;
     align-items: center;
 }
 
 .quick-btn {
-    width: 38px;
-    height: 38px;
+    width: 46px;
+    height: 46px;
     margin-left: 8px;
-    border-radius: 12px;
-    border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.15);
+    border-radius: 14px;
+    border-width: 1.5px;
+    border-color: rgba(255, 255, 255, 0.18);
     background-color: rgba(255, 255, 255, 0.08);
     color: #e2e8f0;
-    font-size: 15px;
+    font-size: 20px;
     align-items: center;
     justify-content: center;
-    transition-duration: 0.12s;
+    scale: 1 1;
+    transition-property: scale, background-color, border-color, translate;
+    transition-duration: 0.25s, 0.15s, 0.15s, 0.25s;
+    transition-timing-function: ease-out-back;
 }
 
 .quick-btn:hover {
-    background-color: rgba(255, 255, 255, 0.18);
-    scale: 1.05;
+    background-color: rgba(255, 255, 255, 0.24);
+    border-color: rgba(33, 212, 253, 0.7);
+    scale: 1.15 1.15;
+    translate: 0 -2px;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out-back;
 }
 
 .quick-btn:active {
-    background-color: rgba(255, 255, 255, 0.05);
-    scale: 0.95;
+    background-color: rgba(255, 255, 255, 0.06);
+    scale: 0.86 0.86;
+    translate: 0 2px;
+    transition-duration: 0.08s;
+    transition-timing-function: ease-in-out;
 }
 
 /* Launch Banner */
 .launch-banner {
     position: absolute;
-    bottom: 120px;
+    bottom: 130px;
     align-self: center;
     background-color: rgba(33, 212, 253, 0.15);
-    border-width: 1px;
-    border-color: rgba(33, 212, 253, 0.4);
-    border-radius: 16px;
-    padding: 10px 24px;
+    border-width: 1.5px;
+    border-color: rgba(33, 212, 253, 0.45);
+    border-radius: 18px;
+    padding: 12px 28px;
 }
 
 .launch-banner-hidden {
@@ -116,11 +126,11 @@
 }
 
 .launch-text {
-    font-size: 14px;
+    font-size: 16px;
     -unity-font-style: bold;
     color: #ffffff;
     letter-spacing: 2px;
-    text-shadow: 0 0 8px rgba(33, 212, 253, 0.8);
+    text-shadow: 0 0 10px rgba(33, 212, 253, 0.8);
 }
 
 /* Modals */
@@ -139,12 +149,12 @@
 }
 
 .modal-card {
-    width: 350px;
+    width: 360px;
     background-color: #171c2c;
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.15);
     border-radius: 24px;
-    padding: 28px 22px;
+    padding: 28px 24px;
     align-items: stretch;
 }
 
@@ -157,12 +167,12 @@
 }
 
 .modal-title {
-    font-size: 26px;
+    font-size: 28px;
     -unity-font-style: bold;
     color: #ffffff;
     letter-spacing: 2px;
     align-self: center;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .victory-title {
@@ -176,7 +186,7 @@
 }
 
 .modal-score {
-    font-size: 18px;
+    font-size: 20px;
     -unity-font-style: bold;
     color: #21d4fd;
     align-self: center;
@@ -184,23 +194,41 @@
 }
 
 .modal-subscore {
-    font-size: 13px;
+    font-size: 14px;
     color: #94a3b8;
     align-self: center;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 
+/* Bouncy Modal Arcade Buttons */
 .arcade-btn {
-    height: 48px;
-    border-radius: 14px;
-    border-width: 1px;
-    margin-top: 10px;
-    font-size: 14px;
+    height: 54px;
+    border-radius: 16px;
+    border-width: 1.5px;
+    margin-top: 12px;
+    font-size: 18px;
     -unity-font-style: bold;
-    letter-spacing: 1px;
-    transition-duration: 0.15s;
+    letter-spacing: 1.5px;
     align-items: center;
     justify-content: center;
+    scale: 1 1;
+    transition-property: scale, background-color, border-color, translate;
+    transition-duration: 0.25s, 0.15s, 0.15s, 0.25s;
+    transition-timing-function: ease-out-back;
+}
+
+.arcade-btn:hover {
+    scale: 1.05 1.05;
+    translate: 0 -2px;
+    transition-duration: 0.22s;
+    transition-timing-function: ease-out-back;
+}
+
+.arcade-btn:active {
+    scale: 0.92 0.92;
+    translate: 0 3px;
+    transition-duration: 0.08s;
+    transition-timing-function: ease-in-out;
 }
 
 .btn-primary {
@@ -211,12 +239,12 @@
 
 .btn-primary:hover {
     background-color: #ff546c;
-    scale: 1.02;
+    border-color: #ffffff;
 }
 
 .btn-primary:active {
-    background-color: #e02844;
-    scale: 0.98;
+    background-color: #d81e3a;
+    border-color: #ff3b56;
 }
 
 .btn-secondary {
@@ -226,13 +254,13 @@
 }
 
 .btn-secondary:hover {
-    background-color: #49f39d;
-    scale: 1.02;
+    background-color: #4df7a1;
+    border-color: #ffffff;
 }
 
 .btn-secondary:active {
     background-color: #17be67;
-    scale: 0.98;
+    border-color: #26e885;
 }
 
 .btn-default {
@@ -242,40 +270,54 @@
 }
 
 .btn-default:hover {
-    background-color: rgba(255, 255, 255, 0.14);
-    scale: 1.02;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.35);
 }
 
 .btn-default:active {
-    background-color: rgba(255, 255, 255, 0.05);
-    scale: 0.98;
+    background-color: rgba(255, 255, 255, 0.04);
 }
 
 .setting-row {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
 }
 
 .setting-label {
-    font-size: 14px;
+    font-size: 15px;
     color: #cbd5e1;
 }
 
 .setting-slider {
-    width: 140px;
+    width: 150px;
 }
 
 .fps-btn {
-    width: 85px;
-    height: 32px;
-    border-radius: 8px;
+    width: 95px;
+    height: 36px;
+    border-radius: 10px;
     background-color: #252e46;
     border-color: rgba(255, 255, 255, 0.2);
     color: #21d4fd;
     -unity-font-style: bold;
-    font-size: 12px;
+    font-size: 14px;
+    scale: 1 1;
+    transition-property: scale, background-color;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out-back;
+}
+
+.fps-btn:hover {
+    scale: 1.08 1.08;
+    background-color: #2e3a58;
+    transition-timing-function: ease-out-back;
+}
+
+.fps-btn:active {
+    scale: 0.92 0.92;
+    transition-duration: 0.08s;
 }
 
 .modal-close-btn {

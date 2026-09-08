@@ -13,20 +13,20 @@ namespace Arcade.UI
     public class SafeAreaController : MonoBehaviour
     {
         [Header("Target Element")]
-        [Tooltip("Optional name of child VisualElement to apply padding to. If empty, applies to root visual element.")]
+        [Tooltip("Optional name of child VisualElement to apply padding to. If empty, automatically targets the root content container (e.g. hud-root or root-container).")]
         [SerializeField] private string targetContainerName = "";
 
         [Header("Breathing Room (Extra Safe Margins)")]
         [Tooltip("Extra margin percentage added on top of the physical hardware safe area.")]
-        [Range(0f, 10f)] [SerializeField] private float extraTopPercent = 2.0f;
-        [Range(0f, 10f)] [SerializeField] private float extraBottomPercent = 2.0f;
-        [Range(0f, 10f)] [SerializeField] private float extraSidePercent = 1.5f;
+        [Range(0f, 15f)] [SerializeField] private float extraTopPercent = 3.5f;
+        [Range(0f, 15f)] [SerializeField] private float extraBottomPercent = 2.5f;
+        [Range(0f, 15f)] [SerializeField] private float extraSidePercent = 2.0f;
 
         [Header("Editor Simulation")]
         [SerializeField] private bool simulateInEditor = true;
-        [SerializeField] private float simulatedTopInsetPixels = 120f;
-        [SerializeField] private float simulatedBottomInsetPixels = 70f;
-        [SerializeField] private float simulatedSideInsetPixels = 0f;
+        [SerializeField] private float simulatedTopInsetPixels = 160f;
+        [SerializeField] private float simulatedBottomInsetPixels = 80f;
+        [SerializeField] private float simulatedSideInsetPixels = 16f;
 
         private PanelRenderer panelRenderer;
         private VisualElement root;
@@ -35,9 +35,20 @@ namespace Arcade.UI
         private ScreenOrientation lastOrientation = ScreenOrientation.AutoRotation;
         private Vector2Int lastResolution = Vector2Int.zero;
 
-        private void OnEnable()
+        private void Awake()
         {
             panelRenderer = GetComponent<PanelRenderer>();
+            if (panelRenderer != null)
+            {
+                // Toggle enabled to force PanelRenderer tree attachment across scene loads in Unity 6
+                panelRenderer.enabled = false;
+                panelRenderer.enabled = true;
+            }
+        }
+
+        private void OnEnable()
+        {
+            if (panelRenderer == null) panelRenderer = GetComponent<PanelRenderer>();
             if (panelRenderer != null)
             {
                 panelRenderer.RegisterUIReloadCallback(OnUIReload);
@@ -79,27 +90,27 @@ namespace Arcade.UI
 
         public void ApplySafeArea()
         {
-            if (root == null)
+            if (panelRenderer == null) panelRenderer = GetComponent<PanelRenderer>();
+            if (root == null && panelRenderer != null)
             {
-                if (panelRenderer == null) panelRenderer = GetComponent<PanelRenderer>();
 #if UNITY_EDITOR
-                if (panelRenderer != null)
-                {
-                    var prop = panelRenderer.GetType().GetProperty("rootVisualElement", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                    root = prop?.GetValue(panelRenderer) as VisualElement;
-                }
+                var prop = panelRenderer.GetType().GetProperty("rootVisualElement", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                root = prop?.GetValue(panelRenderer) as VisualElement;
 #endif
             }
 
             if (root == null) return;
 
-            targetElement = string.IsNullOrEmpty(targetContainerName)
-                ? root
-                : root.Q(targetContainerName) ?? root;
+            // Target the actual content container (hud-root / root-container / first child)
+            targetElement = !string.IsNullOrEmpty(targetContainerName)
+                ? root.Q(targetContainerName) ?? root
+                : (root.Q("hud-root") ?? root.Q("root-container") ?? (root.childCount > 0 ? root[0] : root));
+
+            if (targetElement == null) targetElement = root;
 
             Rect safeArea = Screen.safeArea;
-            float screenW = Screen.width;
-            float screenH = Screen.height;
+            float screenW = Screen.width > 0 ? Screen.width : 1920f;
+            float screenH = Screen.height > 0 ? Screen.height : 1080f;
 
 #if UNITY_EDITOR
             if (simulateInEditor)
@@ -121,10 +132,20 @@ namespace Arcade.UI
 
             var (leftPct, rightPct, topPct, bottomPct) = CalculateInsets(safeArea, screenW, screenH, extraSidePercent, extraTopPercent, extraBottomPercent);
 
+            // Apply padding to target container element (e.g. hud-root) so all child bars and banners shift down below notch
             targetElement.style.paddingLeft = Length.Percent(leftPct);
             targetElement.style.paddingRight = Length.Percent(rightPct);
             targetElement.style.paddingTop = Length.Percent(topPct);
             targetElement.style.paddingBottom = Length.Percent(bottomPct);
+
+            // If targetElement is a child of root, reset root's padding so layout isn't duplicated
+            if (targetElement != root)
+            {
+                root.style.paddingLeft = Length.Percent(0);
+                root.style.paddingRight = Length.Percent(0);
+                root.style.paddingTop = Length.Percent(0);
+                root.style.paddingBottom = Length.Percent(0);
+            }
         }
 
         /// <summary>

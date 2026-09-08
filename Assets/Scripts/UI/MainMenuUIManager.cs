@@ -35,9 +35,19 @@ namespace Arcade.UI
 
         private int targetFps = 60;
 
-        private void OnEnable()
+        private void Awake()
         {
             panelRenderer = GetComponent<PanelRenderer>();
+            if (panelRenderer != null)
+            {
+                panelRenderer.enabled = false;
+                panelRenderer.enabled = true;
+            }
+        }
+
+        private void OnEnable()
+        {
+            if (panelRenderer == null) panelRenderer = GetComponent<PanelRenderer>();
             if (panelRenderer != null)
             {
                 panelRenderer.RegisterUIReloadCallback(OnUIReload);
@@ -151,6 +161,7 @@ namespace Arcade.UI
 
         private void HandleNewGameClicked()
         {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
             PlayerPrefs.SetInt("Arcade_LoadSavedGameOnStart", 0);
             ArcadeGameManager.ClearSavedGame();
             SceneManager.LoadScene("LV_BlockBreaker");
@@ -158,32 +169,38 @@ namespace Arcade.UI
 
         private void HandleContinueClicked()
         {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
             PlayerPrefs.SetInt("Arcade_LoadSavedGameOnStart", 1);
             SceneManager.LoadScene("LV_BlockBreaker");
         }
 
         private void ShowOptions()
         {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
             if (optionsModal != null) optionsModal.RemoveFromClassList("modal-hidden");
         }
 
         private void HideOptions()
         {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
             if (optionsModal != null) optionsModal.AddToClassList("modal-hidden");
         }
 
         private void ShowCredits()
         {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
             if (creditsModal != null) creditsModal.RemoveFromClassList("modal-hidden");
         }
 
         private void HideCredits()
         {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
             if (creditsModal != null) creditsModal.AddToClassList("modal-hidden");
         }
 
         private void ToggleFpsSetting()
         {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
             targetFps = targetFps == 60 ? 120 : 60;
             Application.targetFrameRate = targetFps;
             PlayerPrefs.SetInt("Arcade_TargetFPS", targetFps);

@@ -41,14 +41,14 @@
 }
 
 .subtitle {
-    font-size: 13px;
+    font-size: 14px;
     color: #8fa0c0;
     letter-spacing: 3px;
     margin-top: 8px;
 }
 
 .menu-card {
-    width: 340px;
+    width: 350px;
     background-color: rgba(22, 28, 44, 0.88);
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.12);
@@ -57,17 +57,35 @@
     align-items: stretch;
 }
 
+/* Bouncy Arcade Buttons */
 .arcade-button {
-    height: 50px;
-    border-radius: 14px;
-    border-width: 1px;
+    height: 56px;
+    border-radius: 16px;
+    border-width: 1.5px;
     margin-bottom: 12px;
-    font-size: 15px;
+    font-size: 19px;
     -unity-font-style: bold;
-    letter-spacing: 1px;
-    transition-duration: 0.15s;
+    letter-spacing: 1.5px;
     align-items: center;
     justify-content: center;
+    scale: 1 1;
+    transition-property: scale, background-color, border-color, translate;
+    transition-duration: 0.25s, 0.15s, 0.15s, 0.25s;
+    transition-timing-function: ease-out-back;
+}
+
+.arcade-button:hover {
+    scale: 1.05 1.05;
+    translate: 0 -2px;
+    transition-duration: 0.22s;
+    transition-timing-function: ease-out-back;
+}
+
+.arcade-button:active {
+    scale: 0.92 0.92;
+    translate: 0 3px;
+    transition-duration: 0.08s;
+    transition-timing-function: ease-in-out;
 }
 
 .primary-btn {
@@ -78,12 +96,12 @@
 
 .primary-btn:hover {
     background-color: #ff546c;
-    scale: 1.02;
+    border-color: #ffffff;
 }
 
 .primary-btn:active {
-    background-color: #e02844;
-    scale: 0.98;
+    background-color: #d81e3a;
+    border-color: #ff3b56;
 }
 
 .secondary-btn {
@@ -93,13 +111,13 @@
 }
 
 .secondary-btn:hover {
-    background-color: #4fe0ff;
-    scale: 1.02;
+    background-color: #55e3ff;
+    border-color: #ffffff;
 }
 
 .secondary-btn:active {
     background-color: #0bb5dc;
-    scale: 0.98;
+    border-color: #21d4fd;
 }
 
 .default-btn {
@@ -109,13 +127,12 @@
 }
 
 .default-btn:hover {
-    background-color: rgba(255, 255, 255, 0.14);
-    scale: 1.02;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.35);
 }
 
 .default-btn:active {
-    background-color: rgba(255, 255, 255, 0.05);
-    scale: 0.98;
+    background-color: rgba(255, 255, 255, 0.04);
 }
 
 .highscore-badge {
@@ -123,12 +140,12 @@
     background-color: rgba(38, 232, 133, 0.12);
     border-width: 1px;
     border-color: rgba(38, 232, 133, 0.35);
-    border-radius: 12px;
-    padding: 8px 18px;
+    border-radius: 14px;
+    padding: 10px 20px;
 }
 
 .highscore-text {
-    font-size: 12px;
+    font-size: 14px;
     color: #26e885;
     -unity-font-style: bold;
     letter-spacing: 1px;
@@ -158,7 +175,7 @@
 }
 
 .modal-title {
-    font-size: 22px;
+    font-size: 24px;
     -unity-font-style: bold;
     color: #ffffff;
     letter-spacing: 2px;
@@ -174,7 +191,7 @@
 }
 
 .setting-label {
-    font-size: 14px;
+    font-size: 15px;
     color: #cbd5e1;
 }
 
@@ -183,14 +200,29 @@
 }
 
 .fps-btn {
-    width: 90px;
-    height: 32px;
-    border-radius: 8px;
+    width: 95px;
+    height: 36px;
+    border-radius: 10px;
     background-color: #252e46;
     border-color: rgba(255, 255, 255, 0.2);
     color: #21d4fd;
     -unity-font-style: bold;
-    font-size: 12px;
+    font-size: 14px;
+    scale: 1 1;
+    transition-property: scale, background-color;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out-back;
+}
+
+.fps-btn:hover {
+    scale: 1.08 1.08;
+    background-color: #2e3a58;
+    transition-timing-function: ease-out-back;
+}
+
+.fps-btn:active {
+    scale: 0.92 0.92;
+    transition-duration: 0.08s;
 }
 
 .modal-close-btn {
@@ -199,7 +231,7 @@
 }
 
 .credit-highlight {
-    font-size: 16px;
+    font-size: 17px;
     -unity-font-style: bold;
     color: #21d4fd;
     margin-bottom: 10px;
@@ -207,7 +239,7 @@
 }
 
 .credit-body {
-    font-size: 13px;
+    font-size: 14px;
     color: #94a3b8;
     margin-bottom: 6px;
     align-self: center;
