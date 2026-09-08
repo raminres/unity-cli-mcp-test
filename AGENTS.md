@@ -5,6 +5,9 @@ This file provides persistent context across agent sessions for this Unity proje
 ---
 
 ## Project Overview
+- **Product Name**: `BlockBreaker`
+- **Company Name**: `RaminRasulzade`
+- **Application / Bundle Identifier**: `com.RaminRasulzade.BlockBreaker` (iOS, Standalone, Android)
 - **Engine Version**: Unity 6 (6000.6.0f1)
 - **Render Pipeline**: Universal Render Pipeline (URP)
 - **Active Scene**: `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Play Mode Start Scene)
@@ -204,6 +207,20 @@ This file provides persistent context across agent sessions for this Unity proje
   - `BlockColorPattern.InvertedTiered`: Classic Blue top, Green middle, Red bottom.
   - `BlockColorPattern.Checkerboard`: Alternating formula $(r + c) \pmod 3$ generating diagonal geometric color waves.
   - `BlockColorPattern.Randomized`: Uniform random tier distribution across the grid.
+
+---
+
+### 11. Cross-Platform & macOS Xcode Build Configuration
+- **Project Identity & Code Signing**:
+  - **Product Name**: `BlockBreaker`
+  - **Company Name**: `RaminRasulzade`
+  - **Application / Bundle Identifier**: `com.RaminRasulzade.BlockBreaker` (Configured across iOS, Standalone, and Android in `ProjectSettings/ProjectSettings.asset`).
+- **Multi-Machine Workflow (Windows PC $\leftrightarrow$ macOS)**:
+  - Remote repository branch: `feature/gameplay-improvements`.
+  - The macOS machine is used for iOS device test builds and Xcode compilation.
+  - The macOS environment has a local stash containing Xcode build profile and test build customizations.
+  - Both machines maintain `BlockBreaker` and `RaminRasulzade` in version-controlled `PlayerSettings.asset`, ensuring clean pulls without stash conflicts.
+  - When testing iOS builds on macOS, apply the stashed changes (`git stash apply`).
 
 ---
 
