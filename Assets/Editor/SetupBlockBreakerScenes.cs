@@ -19,10 +19,68 @@ namespace Arcade.Editor
         [MenuItem("Tools/Arcade/Setup All Block Breaker Scenes")]
         public static void SetupAllScenes()
         {
+            CreateOrUpdateLevelPresets();
             BuildMainMenuScene();
             BuildGameplayScene();
             ConfigureBuildSettings();
             Debug.Log("<color=green>Block Breaker scenes constructed and registered successfully!</color>");
+        }
+
+        public static void CreateOrUpdateLevelPresets()
+        {
+            if (!Directory.Exists("Assets/Settings/Levels"))
+            {
+                Directory.CreateDirectory("Assets/Settings/Levels");
+            }
+
+            // Level 1: Classic Inverted
+            CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_01.asset", 1, "Level 1: Classic Inverted",
+                "Classic 3-tier block setup with Red on bottom, Green in middle, and Blue on top. Features random x2 multiplier and paddle expander blocks.",
+                BlockColorPattern.InvertedTiered, 8, 2, 1.0f, 5.0f, 1, 0, 1);
+
+            // Level 2: Wide Checkerboard
+            CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_02.asset", 2, "Level 2: Wide Checkerboard",
+                "Wider 9-column grid with alternating checkerboard colors, elevated speed, and both x2 and new x3 multipliers.",
+                BlockColorPattern.Checkerboard, 9, 2, 1.2f, 5.0f, 2, 1, 1);
+
+            // Level 3: Chaos Gauntlet
+            CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_03.asset", 3, "Level 3: Chaos Gauntlet",
+                "Dense 10-column, 9-row gauntlet with fully randomized color dispersion, high velocity, dual x3 multipliers, and compounding paddle expanders.",
+                BlockColorPattern.Randomized, 10, 3, 1.35f, 5.0f, 2, 2, 2);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
+        private static void CreateOrConfigureLevel(string path, int levelNumber, string name, string desc,
+            BlockColorPattern pattern, int cols, int rowsPerTier, float speed, float paddleWidth,
+            int mult2x, int mult3x, int expanders)
+        {
+            var config = AssetDatabase.LoadAssetAtPath<LevelConfiguration>(path);
+            if (config == null)
+            {
+                config = ScriptableObject.CreateInstance<LevelConfiguration>();
+                AssetDatabase.CreateAsset(config, path);
+            }
+
+            var so = new SerializedObject(config);
+            so.FindProperty("levelNumber").intValue = levelNumber;
+            so.FindProperty("levelName").stringValue = name;
+            so.FindProperty("levelDescription").stringValue = desc;
+            so.FindProperty("colorPattern").enumValueIndex = (int)pattern;
+            so.FindProperty("columns").intValue = cols;
+            so.FindProperty("rowsPerTier").intValue = rowsPerTier;
+            so.FindProperty("blockSize").floatValue = 1.0f;
+            so.FindProperty("horizontalSpacing").floatValue = 1.25f;
+            so.FindProperty("verticalSpacing").floatValue = 1.3f;
+            so.FindProperty("startCenterY").floatValue = 15.5f;
+            so.FindProperty("ballSpeedMultiplier").floatValue = speed;
+            so.FindProperty("initialPaddleWidth").floatValue = paddleWidth;
+            so.FindProperty("multiplier2xCount").intValue = mult2x;
+            so.FindProperty("multiplier3xCount").intValue = mult3x;
+            so.FindProperty("paddleExpanderCount").intValue = expanders;
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(config);
         }
 
         public static void BuildMainMenuScene()
@@ -42,13 +100,13 @@ namespace Arcade.Editor
             var audioGo = new GameObject("AudioManager");
             audioGo.AddComponent<ArcadeAudioManager>();
 
-            // 3. UI Document & Manager
+            // 3. UI Panel Renderer & Manager
             var uiGo = new GameObject("UI_MainMenu");
-            var uiDoc = uiGo.AddComponent<UIDocument>();
+            var panelRenderer = uiGo.AddComponent<PanelRenderer>();
             var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/MainMenuUI.uxml");
-            if (uxml != null) uiDoc.visualTreeAsset = uxml;
+            if (uxml != null) panelRenderer.visualTreeAsset = uxml;
             var panelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>("Assets/UI/ArcadePanelSettings.asset");
-            if (panelSettings != null) uiDoc.panelSettings = panelSettings;
+            if (panelSettings != null) panelRenderer.panelSettings = panelSettings;
             uiGo.AddComponent<MainMenuUIManager>();
             uiGo.AddComponent<SafeAreaController>();
 
@@ -221,15 +279,29 @@ namespace Arcade.Editor
             levelSo.FindProperty("matRedBlock").objectReferenceValue = redMat;
             levelSo.FindProperty("matGreenBlock").objectReferenceValue = greenMat;
             levelSo.FindProperty("matBlueBlock").objectReferenceValue = blueMat;
+
+            var lvl1 = AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset");
+            var lvl2 = AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_02.asset");
+            var lvl3 = AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_03.asset");
+            var presetsProp = levelSo.FindProperty("levelPresets");
+            presetsProp.arraySize = 3;
+            presetsProp.GetArrayElementAtIndex(0).objectReferenceValue = lvl1;
+            presetsProp.GetArrayElementAtIndex(1).objectReferenceValue = lvl2;
+            presetsProp.GetArrayElementAtIndex(2).objectReferenceValue = lvl3;
+
+            var badgeSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>("Assets/UI/BlockWorldPanelSettings.asset");
+            var badgeUxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/BlockBadgeUI.uxml");
+            levelSo.FindProperty("badgePanelSettings").objectReferenceValue = badgeSettings;
+            levelSo.FindProperty("badgeVisualTreeAsset").objectReferenceValue = badgeUxml;
             levelSo.ApplyModifiedProperties();
 
-            // 11. In-Game UI Document & Manager
+            // 11. In-Game UI Panel Renderer & Manager
             var uiGo = new GameObject("UI_HUD");
-            var uiDoc = uiGo.AddComponent<UIDocument>();
+            var panelRenderer = uiGo.AddComponent<PanelRenderer>();
             var hudUxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
-            if (hudUxml != null) uiDoc.visualTreeAsset = hudUxml;
+            if (hudUxml != null) panelRenderer.visualTreeAsset = hudUxml;
             var hudPanelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>("Assets/UI/ArcadePanelSettings.asset");
-            if (hudPanelSettings != null) uiDoc.panelSettings = hudPanelSettings;
+            if (hudPanelSettings != null) panelRenderer.panelSettings = hudPanelSettings;
             uiGo.AddComponent<ArcadeUIManager>();
             uiGo.AddComponent<SafeAreaController>();
 

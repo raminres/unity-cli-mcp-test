@@ -5,11 +5,14 @@ This file provides persistent context across agent sessions for this Unity proje
 ---
 
 ## Project Overview
+- **Product Name**: `BlockBreaker`
+- **Company Name**: `RaminRasulzade`
+- **Application / Bundle Identifier**: `com.RaminRasulzade.BlockBreaker` (iOS, Standalone, Android)
 - **Engine Version**: Unity 6 (6000.6.0f1)
 - **Render Pipeline**: Universal Render Pipeline (URP)
 - **Active Scene**: `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Play Mode Start Scene)
 - **Remote Repository**: `https://github.com/raminres/unity-cli-mcp-test.git`
-- **Active Branch**: `develop` (Git LFS enabled)
+- **Active Branch**: `feature/gameplay-improvements` (Git LFS enabled)
 
 ---
 
@@ -157,12 +160,91 @@ This file provides persistent context across agent sessions for this Unity proje
   - Material variants in `Assets/Materials/BlockBreaker/`: `MI_Paddle`, `MI_Ball`, `MI_Block_Red`, `MI_Block_Green`, `MI_Block_Blue`, `MI_Playfield_Border` (all deriving from `MT_Master_PBR_URP.mat`).
 - **Audio System (`AU_`)**:
   - `ArcadeAudioManager.cs`: Persistent singleton with procedural wave synthesis for immediate feedback (`AU_PaddleBounce`, `AU_WallBounce`, `AU_BlockHit_Red/Green/Blue`, `AU_LifeLost`, `AU_LevelClear`, `AU_GameOver`) with volume and mute persistence.
-- **UI Toolkit**:
-  - `MainMenuUI.uxml` / `.uss`: Glassmorphic cards, candy neon gradients, settings sliders, target FPS toggle.
-  - `BlockBreakerHUD.uxml` / `.uss`: Floating top bar (Score, High Score, 3 Glowing Heart Pips, subtle top-right buttons for Mute, Options, Pause), Center Launch Banner, and Level Clear / Game Over modals.
+- **UI Toolkit & Unity 6 PanelRenderer Migration**:
+  - Migrated from deprecated `UIDocument` to native Unity 6 `PanelRenderer` on `UI_HUD` ([LV_BlockBreaker.unity](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scenes/LV_BlockBreaker.unity)) and `UI_MainMenu` ([LV_BlockBreaker_MainMenu.unity](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scenes/LV_BlockBreaker_MainMenu.unity)).
+  - [ArcadeUIManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/ArcadeUIManager.cs), [MainMenuUIManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/MainMenuUIManager.cs), and [SafeAreaController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/SafeAreaController.cs) adopt `[RequireComponent(typeof(PanelRenderer))]` with version-resilient `RegisterUIReloadCallback` lifecycle binding.
+  - [SetupBlockBreakerScenes.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupBlockBreakerScenes.cs) updated to generate `PanelRenderer` components.
+  - **Safe Area Inset Fix**: [SafeAreaController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/SafeAreaController.cs) automatically resolves and applies insets directly to child content roots (`hud-root`, `root-container`) with `extraTopPercent = 3.5%` and simulated 160px top inset, ensuring the in-game top bar stays completely outside and below the hardware notch/Dynamic Island.
+  - **Typography & Bouncy Animations**:
+    - Button fonts enlarged across Main Menu (`19px`) and HUD modals (`18px`), with quick control buttons increased to `20px` (46x46px touch target).
+    - Added juicy `ease-out-back` hover pop overshoot (`scale: 1.05` to `1.15`, `translate: 0 -2px`) and tactile active compression (`scale: 0.86` to `0.92`, `translate: 0 2-3px`) paired with procedural audio clicks.
   - `ArcadePanelSettings.asset`: Reference resolution 1920x1080, Scale with Screen Size.
 - **Automated Test Suite**:
-  - `Assets/Tests/BlockBreakerCoreTests.cs`: 17 automated unit/integration tests validating score multipliers, paddle deflection math, boundary clamping, life tracking, game state transitions, safe area insets, and multi-aspect ratio frustum framing.
+  - `Assets/Tests/BlockBreakerCoreTests.cs`: 32 automated unit/integration tests validating score multipliers (2x, 3x), paddle deflection math, compounding paddle widening, boundary clamping, life tracking, game state transitions, safe area insets, multi-aspect ratio frustum framing, inverted row ordering, checkerboard alternating colors, randomized block dispersion, level advancement across configurations, and LevelConfiguration runtime cloning/clamping.
+
+---
+
+### 9. ScriptableObject Level Architecture & Gameplay Modifiers
+- **ScriptableObject Data Models (`SO_` Prefix)**:
+  - [LevelConfiguration.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelConfiguration.cs): Defines grid layout (columns, rowsPerTier, horizontal/vertical spacing, startCenterY), color patterns (`BlockColorPattern`), gameplay balance (ball speed multiplier, initial paddle width), and special modifier counts (2x, 3x score multipliers, paddle expanders). Supports deep runtime cloning and boundary-clamped runtime tuning.
+  - Assets in `Assets/Settings/Levels/`:
+    - `SO_Level_01.asset`: "Level 1: Classic Inverted" (8 cols, 2 rows/tier = 6 rows, 1.0x speed, 1x 2X block, 1x expander block, `InvertedTiered`).
+    - `SO_Level_02.asset`: "Level 2: Wide Checkerboard" (9 cols, 2 rows/tier = 6 rows, 1.2x speed, 2x 2X blocks, 1x 3X block, 1x expander block, `Checkerboard`).
+    - `SO_Level_03.asset`: "Level 3: Chaos Gauntlet" (10 cols, 3 rows/tier = 9 rows, 1.35x speed, 2x 2X blocks, 2x 3X blocks, 2x expander blocks, `Randomized`).
+- **Inverted Block Color Rows**:
+  - [LevelGenerator.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelGenerator.cs) inverts the block tier layout:
+    - Top rows ($r < rowsPerTier$): Blue blocks (Tier 3, 30 pts, `matBlueBlock`).
+    - Middle rows ($r < rowsPerTier \times 2$): Green blocks (Tier 2, 20 pts, `matGreenBlock`).
+    - Bottom rows ($r \ge rowsPerTier \times 2$): Red blocks (Tier 1, 10 pts, `matRedBlock`).
+- **Block Modifiers & World Space UI Toolkit**:
+  - [BlockModifier.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockModifier.cs): Defines `BlockSpecialType` (`Normal`, `ScoreMultiplier2x`, `ScoreMultiplier3x`, `PaddleExpander`).
+  - [Block.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/Block.cs): Multiplies awarded score points on destroy (e.g. 2x: Blue 60, Green 40, Red 20; 3x: Blue 90, Green 60, Red 30).
+  - [PaddleController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/PaddleController.cs): Implements compounding expansion ($W_n = W_{prev} \times 1.10$) with `expansionCount` tracking, maximum cap at 12.0f, and adaptive collision boundary clamping ($minX = -10.0 + \frac{W}{2}$, $maxX = 10.0 - \frac{W}{2}$).
+  - [BlockBadge.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockBadge.cs): Attached to special block faces using Unity 6 `PanelRenderer` in `PanelRenderMode.WorldSpace` mode (`Assets/UI/BlockWorldPanelSettings.asset`, `Assets/UI/BlockBadgeUI.uxml`, `Assets/UI/BlockBadgeUI.uss`) rendering glowing badges: "x2" in gold, "x3" in fiery neon red/magenta, and "+10%" in cyan.
+- **Editable Level Settings Modal & Main Menu Level Select**:
+  - `BlockBreakerHUD.uxml` & `BlockBreakerHUD.uss`: Adds wide level modal with Level 1/2/3 preset tabs, level descriptions, live sliders for Columns (4-14), Rows/Tier (1-4), Ball Speed (0.6-2.5x), 2X blocks (0-8), 3X blocks (0-8), Paddle Expanders (0-5), and an "APPLY & RESTART" button.
+  - `MainMenuUI.uxml` & `MainMenuUI.uss`: Adds "SELECT LEVEL" button and level selection modal to directly launch into any configured level.
+  - Decoupled state synchronization via [ArcadeUIManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/ArcadeUIManager.cs) and [MainMenuUIManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/MainMenuUIManager.cs).
+
+---
+
+### 10. Level Progression & Variations
+- **Level Advancing Loop**:
+  - [ArcadeGameManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/Core/ArcadeGameManager.cs) `AdvanceToNextLevel()` preserves cumulative score and remaining lives while setting game state to `ReadyToLaunch`.
+  - [LevelGenerator.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelGenerator.cs) `AdvanceToNextLevel()` selects and loads the next level configuration (Level 1 $\to$ 2 $\to$ 3 $\to$ 1 loop), resets the ball onto the paddle, and resets the paddle to the level's default width.
+  - [ArcadeUIManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/ArcadeUIManager.cs) binds the "NEXT LEVEL" button in the Victory / Level Cleared modal to advance to the next level seamlessly without reloading the entire scene.
+- **Color Distribution Patterns**:
+  - `BlockColorPattern.InvertedTiered`: Classic Blue top, Green middle, Red bottom.
+  - `BlockColorPattern.Checkerboard`: Alternating formula $(r + c) \pmod 3$ generating diagonal geometric color waves.
+  - `BlockColorPattern.Randomized`: Uniform random tier distribution across the grid.
+
+---
+
+### 11. Cross-Platform & macOS Xcode Build Configuration
+- **Project Identity & Code Signing**:
+  - **Product Name**: `BlockBreaker`
+  - **Company Name**: `RaminRasulzade`
+  - **Application / Bundle Identifier**: `com.RaminRasulzade.BlockBreaker` (Configured across iOS, Standalone, and Android in `ProjectSettings/ProjectSettings.asset`).
+  - **Xcode Project Type**: `Swift` (`UnityEditor.XcodeProjectType.Swift`, `xcodeProjectType: 1` in Unity 6000.6.0f1), generating a modern Swift-based Xcode project structure instead of legacy Objective-C.
+- **Multi-Machine Workflow (Windows PC $\leftrightarrow$ macOS)**:
+  - Remote repository branch: `feature/gameplay-improvements`.
+  - The macOS machine is used for iOS device test builds and Xcode compilation.
+  - The macOS environment has a local stash containing Xcode build profile and test build customizations.
+  - Both machines maintain `BlockBreaker`, `RaminRasulzade`, and Swift Xcode project type in version-controlled `PlayerSettings.asset`, ensuring clean pulls without stash conflicts.
+  - When testing iOS builds on macOS, apply the stashed changes (`git stash apply`).
+
+---
+
+### 12. iOS Build Profile & Swift Xcode Project Export
+- **Unity 6 Build Profile**:
+  - Asset: `Assets/Settings/Build Profiles/iOS.asset`
+  - Platform: `iOS` (`ad48d16a66894befa4d8181998c3cb09`)
+  - Active: Set as active build profile via `EditorUserBuildSettings.activeBuildProfile`.
+  - Override Global Scenes: `true`
+  - Scenes Included:
+    - `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0, enabled)
+    - `Assets/Scenes/LV_BlockBreaker.unity` (Build Index 1, enabled)
+- **Player Settings & Swift Xcode Project**:
+  - Company Name: `RaminRasulzade`
+  - Product Name: `BlockBreaker`
+  - iOS Application Identifier (Bundle ID): `com.RaminRasulzade.BlockBreaker`
+  - `PlayerSettings.xcodeProjectType = XcodeProjectType.Swift` (`xcodeProjectType: 1` in `ProjectSettings.asset`).
+  - Target Minimum iOS Version: `26.0`.
+  - Modern entry point generated in Swift (`MainApp/MainApp.swift` with SwiftUI lifecycle `@main struct MainApp: App`).
+  - `UnityAPI` Swift module providing `UnityPlayer.swift`, `CrashReporter.swift`, `UnityEngineLoadState.swift`, and SwiftUI `UnityView`.
+- **Exported Build Artifacts**:
+  - Output Path: `/Users/raminrasulzade/Documents/UnityProjects/Builds/BlockBreakerBuilds`
+  - Xcode Project: `BlockBreaker.xcodeproj`
 
 ---
 

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Arcade.BlockBreaker
 {
     /// <summary>
-    /// Controls the player platform (paddle) with 5:1 aspect ratio and boundary clamping.
+    /// Controls the player platform (paddle) with dynamic width expansion and boundary clamping.
     /// </summary>
     public class PaddleController : MonoBehaviour
     {
@@ -14,6 +14,8 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float minX = -7.5f;
         [SerializeField] private float maxX = 7.5f;
         [SerializeField] private float paddleWidth = 5.0f;
+        [SerializeField] private float arenaHalfWidth = 10.0f;
+        [SerializeField] private int expansionCount = 0;
 
         [Header("References")]
         [SerializeField] private Rigidbody rb;
@@ -21,6 +23,7 @@ namespace Arcade.BlockBreaker
         public float Width => paddleWidth;
         public float MinX => minX;
         public float MaxX => maxX;
+        public int ExpansionCount => expansionCount;
 
         private void Awake()
         {
@@ -30,6 +33,7 @@ namespace Arcade.BlockBreaker
                 rb.isKinematic = true;
                 rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
             }
+            RecalculateBounds();
         }
 
         private void Update()
@@ -45,6 +49,48 @@ namespace Arcade.BlockBreaker
                 pos.x = Mathf.Clamp(pos.x, minX, maxX);
                 transform.position = pos;
             }
+        }
+
+        /// <summary>
+        /// Updates the paddle's horizontal width and recalculates collision boundary limits.
+        /// </summary>
+        public void SetWidth(float newWidth)
+        {
+            paddleWidth = Mathf.Clamp(newWidth, 2.0f, 12.0f);
+            Vector3 scale = transform.localScale;
+            scale.x = paddleWidth;
+            transform.localScale = scale;
+            RecalculateBounds();
+
+            Vector3 pos = transform.position;
+            pos.x = Mathf.Clamp(pos.x, minX, maxX);
+            transform.position = pos;
+        }
+
+        /// <summary>
+        /// Expands the paddle width compoundingly by the specified percentage (e.g. 0.10f for +10%).
+        /// Multiple expander blocks compound: W_n = W_prev * (1 + percentage).
+        /// </summary>
+        public void ExpandWidth(float percentage = 0.10f)
+        {
+            expansionCount++;
+            SetWidth(paddleWidth * (1.0f + percentage));
+        }
+
+        /// <summary>
+        /// Resets the paddle width to initial default (e.g. 5.0f) and clears expansion count.
+        /// </summary>
+        public void ResetWidth(float defaultWidth = 5.0f)
+        {
+            expansionCount = 0;
+            SetWidth(defaultWidth);
+        }
+
+        public void RecalculateBounds()
+        {
+            float halfPaddle = paddleWidth * 0.5f;
+            minX = -arenaHalfWidth + halfPaddle;
+            maxX = arenaHalfWidth - halfPaddle;
         }
 
         /// <summary>

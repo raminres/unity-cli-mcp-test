@@ -12,14 +12,18 @@ namespace Arcade.BlockBreaker
     }
 
     /// <summary>
-    /// Represents a 1:1 3D cube block with tier scoring, audio response, and shatter VFX trigger.
+    /// Represents a 1:1 3D cube block with tier scoring, special modifiers (x2 multiplier, paddle expander),
+    /// audio response, and shatter VFX trigger.
     /// </summary>
     [RequireComponent(typeof(BoxCollider))]
     public class Block : MonoBehaviour
     {
         [Header("Block Properties")]
         [SerializeField] private BlockColorTier colorTier = BlockColorTier.Red;
+        [SerializeField] private BlockSpecialType specialType = BlockSpecialType.Normal;
         [SerializeField] private int basePoints = 10;
+        [SerializeField] private int scoreMultiplier = 1;
+        [SerializeField] private float paddleExpansionPercent = 0.10f;
         [SerializeField] private int hitPoints = 1;
         [SerializeField] private Color particleColor = new Color(1f, 0.2f, 0.3f);
 
@@ -27,7 +31,9 @@ namespace Arcade.BlockBreaker
         [SerializeField] private MeshRenderer meshRenderer;
 
         public BlockColorTier Tier => colorTier;
-        public int Points => basePoints;
+        public BlockSpecialType SpecialType => specialType;
+        public int Points => basePoints * scoreMultiplier;
+        public int ScoreMultiplier => scoreMultiplier;
         public Color ParticleColor => particleColor;
 
         private void Awake()
@@ -35,10 +41,11 @@ namespace Arcade.BlockBreaker
             if (meshRenderer == null) meshRenderer = GetComponent<MeshRenderer>();
         }
 
-        public void Initialize(BlockColorTier tier, Material material, Color vfxColor)
+        public void Initialize(BlockColorTier tier, Material material, Color vfxColor, BlockSpecialType special = BlockSpecialType.Normal)
         {
             colorTier = tier;
             particleColor = vfxColor;
+            specialType = special;
 
             basePoints = tier switch
             {
@@ -47,6 +54,12 @@ namespace Arcade.BlockBreaker
                 _ => 10
             };
 
+            scoreMultiplier = special switch
+            {
+                BlockSpecialType.ScoreMultiplier3x => 3,
+                BlockSpecialType.ScoreMultiplier2x => 2,
+                _ => 1
+            };
             hitPoints = 1;
 
             if (meshRenderer != null && material != null)
@@ -68,7 +81,7 @@ namespace Arcade.BlockBreaker
             }
         }
 
-        private void DestroyBlock(Vector3 hitNormal)
+        public void DestroyBlock(Vector3 hitNormal)
         {
             // 1. Play SFX
             if (ArcadeAudioManager.Instance != null)
@@ -82,14 +95,31 @@ namespace Arcade.BlockBreaker
                 BlockVFXManager.Instance.PlayBlockShatter(transform.position, particleColor, hitNormal);
             }
 
-            // 3. Notify Game Manager
-            if (ArcadeGameManager.Instance != null)
+            // 3. Apply Special Modifier Effects
+            if (specialType == BlockSpecialType.PaddleExpander)
             {
-                ArcadeGameManager.Instance.RecordBlockDestroyed(basePoints, (int)colorTier);
+                var paddle = FindAnyObjectByType<PaddleController>();
+                if (paddle != null)
+                {
+                    paddle.ExpandWidth(paddleExpansionPercent);
+                }
             }
 
-            // 4. Destroy block
-            Destroy(gameObject);
+            // 4. Notify Game Manager with multiplied points
+            if (ArcadeGameManager.Instance != null)
+            {
+                ArcadeGameManager.Instance.RecordBlockDestroyed(Points, (int)colorTier);
+            }
+
+            // 5. Destroy block
+            if (Application.isPlaying)
+            {
+                Destroy(gameObject);
+            }
+            else
+            {
+                DestroyImmediate(gameObject);
+            }
         }
     }
 }
