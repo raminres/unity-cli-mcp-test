@@ -221,6 +221,20 @@ namespace Arcade.Editor
             levelSo.FindProperty("matRedBlock").objectReferenceValue = redMat;
             levelSo.FindProperty("matGreenBlock").objectReferenceValue = greenMat;
             levelSo.FindProperty("matBlueBlock").objectReferenceValue = blueMat;
+
+            var lvl1 = AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset");
+            var lvl2 = AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_02.asset");
+            var lvl3 = AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_03.asset");
+            var presetsProp = levelSo.FindProperty("levelPresets");
+            presetsProp.arraySize = 3;
+            presetsProp.GetArrayElementAtIndex(0).objectReferenceValue = lvl1;
+            presetsProp.GetArrayElementAtIndex(1).objectReferenceValue = lvl2;
+            presetsProp.GetArrayElementAtIndex(2).objectReferenceValue = lvl3;
+
+            var badgeSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>("Assets/UI/BlockWorldPanelSettings.asset");
+            var badgeUxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/BlockBadgeUI.uxml");
+            levelSo.FindProperty("badgePanelSettings").objectReferenceValue = badgeSettings;
+            levelSo.FindProperty("badgeVisualTreeAsset").objectReferenceValue = badgeUxml;
             levelSo.ApplyModifiedProperties();
 
             // 11. In-Game UI Panel Renderer & Manager

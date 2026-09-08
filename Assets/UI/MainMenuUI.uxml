@@ -14,7 +14,8 @@
         <!-- Main Buttons Container -->
         <ui:VisualElement name="menu-card" class="menu-card">
             <ui:Button name="btn-new-game" text="START NEW GAME" class="arcade-button primary-btn" />
-            <ui:Button name="btn-continue" text="CONTINUE" class="arcade-button secondary-btn" />
+            <ui:Button name="btn-level-select" text="SELECT LEVEL" class="arcade-button secondary-btn" />
+            <ui:Button name="btn-continue" text="CONTINUE" class="arcade-button default-btn" />
             <ui:Button name="btn-options" text="OPTIONS" class="arcade-button default-btn" />
             <ui:Button name="btn-credits" text="CREDITS" class="arcade-button default-btn" />
         </ui:VisualElement>
@@ -22,6 +23,26 @@
         <!-- High Score Badge -->
         <ui:VisualElement name="highscore-badge" class="highscore-badge">
             <ui:Label name="menu-highscore-label" text="ALL-TIME HIGH SCORE: 0" class="highscore-text" />
+        </ui:VisualElement>
+
+        <!-- Level Select Modal (Hidden by default) -->
+        <ui:VisualElement name="level-modal" class="modal-backdrop modal-hidden">
+            <ui:VisualElement class="modal-card modal-card-wide">
+                <ui:Label text="SELECT LEVEL" class="modal-title" />
+
+                <!-- Level Tabs -->
+                <ui:VisualElement class="level-tabs-container">
+                    <ui:Button name="btn-menu-lvl-1" text="LVL 1" class="level-tab-btn level-tab-active" />
+                    <ui:Button name="btn-menu-lvl-2" text="LVL 2" class="level-tab-btn" />
+                    <ui:Button name="btn-menu-lvl-3" text="LVL 3" class="level-tab-btn" />
+                </ui:VisualElement>
+
+                <ui:Label name="menu-level-name" text="Level 1: Classic Inverted" class="level-name-display" />
+                <ui:Label name="menu-level-desc" text="Classic 3-tier block setup with Red on bottom, Green in middle, and Blue on top. Features random x2 multiplier and paddle expander blocks." class="level-desc-display" />
+
+                <ui:Button name="btn-start-selected-level" text="PLAY LEVEL" class="arcade-button primary-btn modal-action-btn" />
+                <ui:Button name="btn-close-level-modal" text="BACK" class="arcade-button default-btn modal-close-btn" />
+            </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- Options Modal (Hidden by default) -->

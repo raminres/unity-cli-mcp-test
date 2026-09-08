@@ -239,6 +239,158 @@ namespace Arcade.Tests
         }
 
         #endregion
+
+        #region 5. Gameplay Improvements & Level Configuration Tests
+
+        [Test]
+        [TestCase(BlockColorTier.Red, 10, 20)]
+        [TestCase(BlockColorTier.Green, 20, 40)]
+        [TestCase(BlockColorTier.Blue, 30, 60)]
+        public void Block_SpecialMultiplier2x_DoublesTierPoints(BlockColorTier tier, int normalPoints, int expectedDoubledPoints)
+        {
+            var normalBlockObj = new GameObject("NormalBlock");
+            var normalBlock = normalBlockObj.AddComponent<Block>();
+            normalBlock.Initialize(tier, null, Color.white, BlockSpecialType.Normal);
+            Assert.AreEqual(normalPoints, normalBlock.Points);
+
+            var multiBlockObj = new GameObject("MultiBlock");
+            var multiBlock = multiBlockObj.AddComponent<Block>();
+            multiBlock.Initialize(tier, null, Color.white, BlockSpecialType.ScoreMultiplier2x);
+            Assert.AreEqual(expectedDoubledPoints, multiBlock.Points, $"Tier {tier} with 2x multiplier must award {expectedDoubledPoints} points.");
+
+            Object.DestroyImmediate(normalBlockObj);
+            Object.DestroyImmediate(multiBlockObj);
+        }
+
+        [Test]
+        public void Paddle_ExpandWidth_IncreasesWidthByTenPercentAndRecalculatesBounds()
+        {
+            paddle.ResetWidth(5.0f);
+            Assert.AreEqual(5.0f, paddle.Width, 0.001f);
+            Assert.AreEqual(-7.5f, paddle.MinX, 0.001f);
+            Assert.AreEqual(7.5f, paddle.MaxX, 0.001f);
+
+            // Expand by 10%
+            paddle.ExpandWidth(0.10f);
+
+            float expectedWidth = 5.0f * 1.10f; // 5.5
+            Assert.AreEqual(expectedWidth, paddle.Width, 0.001f);
+
+            // With arena half width = 10, bounds must be [-10 + 2.75, 10 - 2.75] = [-7.25, 7.25]
+            float expectedHalf = expectedWidth * 0.5f;
+            Assert.AreEqual(-10.0f + expectedHalf, paddle.MinX, 0.001f);
+            Assert.AreEqual(10.0f - expectedHalf, paddle.MaxX, 0.001f);
+        }
+
+        [Test]
+        public void Block_DestroyingPaddleExpander_ElongatesPaddle()
+        {
+            paddle.ResetWidth(5.0f);
+            gameManager.LaunchBall();
+
+            var blockObj = new GameObject("ExpanderBlock");
+            var block = blockObj.AddComponent<Block>();
+            block.Initialize(BlockColorTier.Green, null, Color.white, BlockSpecialType.PaddleExpander);
+
+            block.DestroyBlock(Vector3.down);
+
+            Assert.AreEqual(5.5f, paddle.Width, 0.001f, "Destroying a PaddleExpander block must elongate paddle width by +10%.");
+        }
+
+        [Test]
+        public void LevelGenerator_DistributeSpecialBlocks_AllocatesCorrectCountsWithoutOverlap()
+        {
+            var genObj = new GameObject("Gen");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            int totalBlocks = 48;
+            int multCount = 2;
+            int expanderCount = 1;
+
+            var specialMap = gen.DistributeSpecialBlocks(totalBlocks, multCount, expanderCount);
+
+            int foundMult = 0;
+            int foundExp = 0;
+
+            foreach (var kvp in specialMap)
+            {
+                Assert.IsTrue(kvp.Key >= 0 && kvp.Key < totalBlocks, "Block index must be within valid block range.");
+                if (kvp.Value == BlockSpecialType.ScoreMultiplier2x) foundMult++;
+                if (kvp.Value == BlockSpecialType.PaddleExpander) foundExp++;
+            }
+
+            Assert.AreEqual(multCount, foundMult, "Must allocate exact count of 2X multiplier blocks.");
+            Assert.AreEqual(expanderCount, foundExp, "Must allocate exact count of Paddle Expander blocks.");
+            Assert.AreEqual(multCount + expanderCount, specialMap.Count, "Indices must be unique without collisions.");
+
+            Object.DestroyImmediate(genObj);
+        }
+
+        [Test]
+        public void LevelConfiguration_CloneAndClamping_EnforcesValidRuntimeBoundaries()
+        {
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+            var clone = config.Clone();
+
+            Assert.AreNotSame(config, clone, "Clone must create a distinct ScriptableObject instance.");
+
+            // Test clamping
+            clone.SetColumns(50);
+            Assert.AreEqual(14, clone.Columns, "Columns must clamp to max 14.");
+
+            clone.SetColumns(1);
+            Assert.AreEqual(4, clone.Columns, "Columns must clamp to min 4.");
+
+            clone.SetBallSpeedMultiplier(9.9f);
+            Assert.AreEqual(2.5f, clone.BallSpeedMultiplier, 0.001f, "Ball speed multiplier must clamp to max 2.5.");
+
+            clone.SetMultiplier2xCount(99);
+            Assert.AreEqual(8, clone.Multiplier2xCount, "Multiplier count must clamp to max 8.");
+
+            clone.SetPaddleExpanderCount(50);
+            Assert.AreEqual(5, clone.PaddleExpanderCount, "Paddle expander count must clamp to max 5.");
+
+            Object.DestroyImmediate(config);
+            Object.DestroyImmediate(clone);
+        }
+
+        [Test]
+        public void LevelGenerator_InvertedRows_AssignsBlueAtTopAndRedAtBottom()
+        {
+            var genObj = new GameObject("TestGenerator");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+            config.SetColumns(4);
+            config.SetRowsPerTier(1); // Row 0: Blue, Row 1: Green, Row 2: Red
+            config.SetMultiplier2xCount(0);
+            config.SetPaddleExpanderCount(0);
+
+            gen.LoadLevel(config);
+
+            var container = genObj.transform.Find("BlocksContainer");
+            Assert.IsNotNull(container, "Blocks container must exist.");
+
+            var blocks = container.GetComponentsInChildren<Block>();
+            Assert.AreEqual(12, blocks.Length, "Must have 4 cols * 3 rows = 12 blocks.");
+
+            // First row (row 0, highest Y) must be Blue
+            Assert.AreEqual(BlockColorTier.Blue, blocks[0].Tier, "Top row must be Blue blocks.");
+            Assert.AreEqual(30, blocks[0].Points, "Blue block must award 30 points.");
+
+            // Second row (row 1, middle Y) must be Green
+            Assert.AreEqual(BlockColorTier.Green, blocks[4].Tier, "Middle row must be Green blocks.");
+            Assert.AreEqual(20, blocks[4].Points, "Green block must award 20 points.");
+
+            // Third row (row 2, bottom Y) must be Red
+            Assert.AreEqual(BlockColorTier.Red, blocks[8].Tier, "Bottom row must be Red blocks.");
+            Assert.AreEqual(10, blocks[8].Points, "Red block must award 10 points.");
+
+            Object.DestroyImmediate(config);
+            Object.DestroyImmediate(genObj);
+        }
+
+        #endregion
     }
 }
 

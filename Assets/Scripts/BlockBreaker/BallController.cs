@@ -101,6 +101,17 @@ namespace Arcade.BlockBreaker
             lastVelocity = rb.linearVelocity;
         }
 
+        public void SetSpeedMultiplier(float multiplier)
+        {
+            float m = Mathf.Clamp(multiplier, 0.5f, 3.0f);
+            baseSpeed = 14f * m;
+            maxSpeed = 22f * m;
+            if (!isLaunched)
+            {
+                currentSpeed = baseSpeed;
+            }
+        }
+
         public void ResetBallToPaddle()
         {
             isLaunched = false;

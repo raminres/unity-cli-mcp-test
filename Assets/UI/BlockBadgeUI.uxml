@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="BlockBadgeUI.uss" />
+    <ui:VisualElement name="badge-root" class="badge-root">
+        <ui:VisualElement name="badge-plate" class="badge-plate badge-plate-x2">
+            <ui:Label name="badge-text" text="x2" class="badge-text" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

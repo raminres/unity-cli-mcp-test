@@ -17,8 +17,9 @@
                 <ui:VisualElement name="life-pip-3" class="life-pip pip-active" />
             </ui:VisualElement>
 
-            <!-- Right: 3 Subtle Quick Action Buttons -->
+            <!-- Right: Quick Action Buttons -->
             <ui:VisualElement name="quick-controls" class="quick-controls">
+                <ui:Button name="btn-quick-levels" text="🎚" class="quick-btn" tooltip="Level Settings &amp; Editor" />
                 <ui:Button name="btn-quick-mute" text="🔊" class="quick-btn" tooltip="Toggle SFX Mute" />
                 <ui:Button name="btn-quick-options" text="⚙" class="quick-btn" tooltip="Settings" />
                 <ui:Button name="btn-quick-pause" text="⏸" class="quick-btn" tooltip="Pause Game" />
@@ -35,8 +36,60 @@
             <ui:VisualElement class="modal-card">
                 <ui:Label text="PAUSED" class="modal-title" />
                 <ui:Button name="btn-resume" text="RESUME" class="arcade-btn btn-primary" />
-                <ui:Button name="btn-restart-pause" text="RESTART LEVEL" class="arcade-btn btn-secondary" />
+                <ui:Button name="btn-level-settings-pause" text="LEVEL SETTINGS" class="arcade-btn btn-secondary" />
+                <ui:Button name="btn-restart-pause" text="RESTART LEVEL" class="arcade-btn btn-default" />
                 <ui:Button name="btn-menu-pause" text="MAIN MENU" class="arcade-btn btn-default" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Editable Level Settings Modal -->
+        <ui:VisualElement name="level-settings-modal" class="modal-backdrop modal-hidden">
+            <ui:VisualElement class="modal-card modal-card-wide">
+                <ui:Label text="LEVEL SETTINGS" class="modal-title" />
+                
+                <!-- Level Selector Tabs -->
+                <ui:VisualElement class="level-tabs-container">
+                    <ui:Button name="btn-lvl-1" text="LVL 1" class="level-tab-btn level-tab-active" />
+                    <ui:Button name="btn-lvl-2" text="LVL 2" class="level-tab-btn" />
+                    <ui:Button name="btn-lvl-3" text="LVL 3" class="level-tab-btn" />
+                </ui:VisualElement>
+
+                <ui:Label name="level-name-label" text="Level 1: Classic Inverted" class="level-name-display" />
+                <ui:Label name="level-desc-label" text="Classic 3-tier block setup with Red on bottom, Green in middle, and Blue on top." class="level-desc-display" />
+
+                <!-- Editable Live Controls -->
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Columns" class="setting-label" />
+                    <ui:SliderInt name="slider-columns" low-value="4" high-value="12" value="8" class="setting-slider" />
+                    <ui:Label name="val-columns" text="8" class="setting-val-badge" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Rows / Tier" class="setting-label" />
+                    <ui:SliderInt name="slider-rows" low-value="1" high-value="4" value="2" class="setting-slider" />
+                    <ui:Label name="val-rows" text="2 (6)" class="setting-val-badge" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Ball Speed" class="setting-label" />
+                    <ui:Slider name="slider-speed" low-value="0.6" high-value="2.2" value="1.0" class="setting-slider" />
+                    <ui:Label name="val-speed" text="1.0x" class="setting-val-badge" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="x2 Multipliers" class="setting-label" />
+                    <ui:SliderInt name="slider-multiplier2x" low-value="0" high-value="8" value="1" class="setting-slider" />
+                    <ui:Label name="val-multiplier2x" text="1" class="setting-val-badge" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Paddle Expanders" class="setting-label" />
+                    <ui:SliderInt name="slider-expander" low-value="0" high-value="5" value="1" class="setting-slider" />
+                    <ui:Label name="val-expander" text="1" class="setting-val-badge" />
+                </ui:VisualElement>
+
+                <ui:Button name="btn-apply-level" text="APPLY &amp; RESTART" class="arcade-btn btn-secondary modal-action-btn" />
+                <ui:Button name="btn-close-level-settings" text="BACK" class="arcade-btn btn-default modal-close-btn" />
             </ui:VisualElement>
         </ui:VisualElement>
 

@@ -323,3 +323,88 @@
 .modal-close-btn {
     margin-top: 16px;
 }
+
+/* Level Settings Modal Extensions */
+.modal-card-wide {
+    width: 440px;
+}
+
+.level-tabs-container {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.level-tab-btn {
+    flex-grow: 1;
+    height: 38px;
+    margin-left: 3px;
+    margin-right: 3px;
+    border-radius: 12px;
+    border-width: 1.5px;
+    border-color: rgba(255, 255, 255, 0.18);
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    font-size: 14px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    align-items: center;
+    justify-content: center;
+    scale: 1 1;
+    transition-property: scale, background-color, border-color;
+    transition-duration: 0.2s, 0.15s, 0.15s;
+    transition-timing-function: ease-out-back;
+}
+
+.level-tab-btn:hover {
+    scale: 1.05 1.05;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(33, 212, 253, 0.6);
+}
+
+.level-tab-btn:active {
+    scale: 0.94 0.94;
+}
+
+.level-tab-active {
+    background-color: #21d4fd;
+    border-color: #21d4fd;
+    color: #0c0d16;
+}
+
+.level-tab-active:hover {
+    background-color: #55ddfe;
+    border-color: #55ddfe;
+    color: #0c0d16;
+}
+
+.level-name-display {
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: #21d4fd;
+    align-self: center;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+}
+
+.level-desc-display {
+    font-size: 12px;
+    color: #94a3b8;
+    align-self: center;
+    margin-bottom: 14px;
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.setting-val-badge {
+    width: 64px;
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: #21d4fd;
+    -unity-text-align: middle-right;
+    margin-left: 8px;
+}
+
+.modal-action-btn {
+    margin-top: 14px;
+}
