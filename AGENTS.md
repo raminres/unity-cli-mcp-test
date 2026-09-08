@@ -9,7 +9,7 @@ This file provides persistent context across agent sessions for this Unity proje
 - **Render Pipeline**: Universal Render Pipeline (URP)
 - **Active Scene**: `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Play Mode Start Scene)
 - **Remote Repository**: `https://github.com/raminres/unity-cli-mcp-test.git`
-- **Active Branch**: `develop` (Git LFS enabled)
+- **Active Branch**: `feature/gameplay-improvements` (Git LFS enabled)
 
 ---
 
