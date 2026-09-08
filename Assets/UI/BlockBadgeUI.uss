@@ -21,6 +21,11 @@
     box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
 }
 
+.badge-plate-x3 {
+    border-color: #ff4757;
+    box-shadow: 0 0 25px rgba(255, 71, 87, 0.85);
+}
+
 .badge-plate-expander {
     border-color: #00f2fe;
     box-shadow: 0 0 25px rgba(0, 242, 254, 0.8);
@@ -39,6 +44,11 @@
 .badge-text-x2 {
     color: #ffe066;
     text-shadow: 0 0 20px rgba(255, 215, 0, 0.9);
+}
+
+.badge-text-x3 {
+    color: #ff6b81;
+    text-shadow: 0 0 20px rgba(255, 71, 87, 0.95);
 }
 
 .badge-text-expander {

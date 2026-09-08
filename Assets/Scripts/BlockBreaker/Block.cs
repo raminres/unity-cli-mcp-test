@@ -54,7 +54,12 @@ namespace Arcade.BlockBreaker
                 _ => 10
             };
 
-            scoreMultiplier = (special == BlockSpecialType.ScoreMultiplier2x) ? 2 : 1;
+            scoreMultiplier = special switch
+            {
+                BlockSpecialType.ScoreMultiplier3x => 3,
+                BlockSpecialType.ScoreMultiplier2x => 2,
+                _ => 1
+            };
             hitPoints = 1;
 
             if (meshRenderer != null && material != null)

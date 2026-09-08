@@ -7,7 +7,7 @@ namespace Arcade.BlockBreaker
 {
     /// <summary>
     /// Procedurally generates grids of 1:1 cube blocks organized into tiered color rows,
-    /// driven by LevelConfiguration ScriptableObjects with inverted colors and special modifier blocks.
+    /// driven by LevelConfiguration ScriptableObjects with inverted colors, patterns, and special modifier blocks.
     /// </summary>
     public class LevelGenerator : MonoBehaviour
     {
@@ -44,6 +44,7 @@ namespace Arcade.BlockBreaker
 
         public LevelConfiguration CurrentConfig => currentLevelConfig;
         public LevelConfiguration[] LevelPresets => levelPresets;
+        public int TotalLevels => levelPresets != null && levelPresets.Length > 0 ? levelPresets.Length : 1;
 
         private void Awake()
         {
@@ -104,6 +105,18 @@ namespace Arcade.BlockBreaker
             }
         }
 
+        public void AdvanceToNextLevel()
+        {
+            int currentLvl = currentLevelConfig != null ? currentLevelConfig.LevelNumber : 1;
+            int nextLvl = currentLvl + 1;
+            if (GetLevelConfig(nextLvl) == null)
+            {
+                nextLvl = 1; // Loop back to level 1 for continuous arcade run
+            }
+
+            SelectAndLoadLevel(nextLvl);
+        }
+
         public void ApplyCustomConfigAndReload(LevelConfiguration customConfig)
         {
             if (customConfig == null) return;
@@ -143,7 +156,11 @@ namespace Arcade.BlockBreaker
             // Clear any existing blocks
             for (int i = blocksContainer.childCount - 1; i >= 0; i--)
             {
-                Destroy(blocksContainer.GetChild(i).gameObject);
+                var child = blocksContainer.GetChild(i).gameObject;
+                if (Application.isPlaying)
+                    Destroy(child);
+                else
+                    DestroyImmediate(child);
             }
 
             int cols = currentLevelConfig != null ? currentLevelConfig.Columns : fallbackColumns;
@@ -152,6 +169,7 @@ namespace Arcade.BlockBreaker
             float spacingY = currentLevelConfig != null ? currentLevelConfig.VerticalSpacing : verticalSpacing;
             float centerY = currentLevelConfig != null ? currentLevelConfig.StartCenterY : startCenterY;
             float size = currentLevelConfig != null ? currentLevelConfig.BlockSize : blockSize;
+            BlockColorPattern pattern = currentLevelConfig != null ? currentLevelConfig.ColorPattern : BlockColorPattern.InvertedTiered;
 
             int totalRows = rowsPerTier * 3;
             float totalWidth = (cols - 1) * spacingX;
@@ -162,45 +180,54 @@ namespace Arcade.BlockBreaker
             int totalBlocksCreated = cols * totalRows;
 
             // Determine special block placements (unique indices)
-            int multCount = currentLevelConfig != null ? currentLevelConfig.Multiplier2xCount : 1;
+            int mult2x = currentLevelConfig != null ? currentLevelConfig.Multiplier2xCount : 1;
+            int mult3x = currentLevelConfig != null ? currentLevelConfig.Multiplier3xCount : 0;
             int expCount = currentLevelConfig != null ? currentLevelConfig.PaddleExpanderCount : 1;
 
-            var specialMap = DistributeSpecialBlocks(totalBlocksCreated, multCount, expCount);
+            var specialMap = DistributeSpecialBlocks(totalBlocksCreated, mult2x, mult3x, expCount);
 
             int blockIndex = 0;
             for (int r = 0; r < totalRows; r++)
             {
                 float y = topY - (r * spacingY);
 
-                // INVERTED Row ordering per requirements:
-                // Top rows: Blue (tier 3, 30 pts)
-                // Middle rows: Green (tier 2, 20 pts)
-                // Bottom rows: Red (tier 1, 10 pts)
-                BlockColorTier tier;
-                Material mat;
-                Color vfxColor;
-
-                if (r < rowsPerTier)
-                {
-                    tier = BlockColorTier.Blue;
-                    mat = matBlueBlock;
-                    vfxColor = vfxBlueColor;
-                }
-                else if (r < rowsPerTier * 2)
-                {
-                    tier = BlockColorTier.Green;
-                    mat = matGreenBlock;
-                    vfxColor = vfxGreenColor;
-                }
-                else
-                {
-                    tier = BlockColorTier.Red;
-                    mat = matRedBlock;
-                    vfxColor = vfxRedColor;
-                }
-
                 for (int c = 0; c < cols; c++)
                 {
+                    BlockColorTier tier;
+                    if (pattern == BlockColorPattern.Randomized)
+                    {
+                        int rnd = Random.Range(0, 3);
+                        tier = rnd == 0 ? BlockColorTier.Blue : (rnd == 1 ? BlockColorTier.Green : BlockColorTier.Red);
+                    }
+                    else if (pattern == BlockColorPattern.Checkerboard)
+                    {
+                        int check = (r + c) % 3;
+                        tier = check == 0 ? BlockColorTier.Blue : (check == 1 ? BlockColorTier.Green : BlockColorTier.Red);
+                    }
+                    else // InvertedTiered (Default)
+                    {
+                        if (r < rowsPerTier)
+                            tier = BlockColorTier.Blue;
+                        else if (r < rowsPerTier * 2)
+                            tier = BlockColorTier.Green;
+                        else
+                            tier = BlockColorTier.Red;
+                    }
+
+                    Material mat = tier switch
+                    {
+                        BlockColorTier.Blue => matBlueBlock,
+                        BlockColorTier.Green => matGreenBlock,
+                        _ => matRedBlock
+                    };
+
+                    Color vfxColor = tier switch
+                    {
+                        BlockColorTier.Blue => vfxBlueColor,
+                        BlockColorTier.Green => vfxGreenColor,
+                        _ => vfxRedColor
+                    };
+
                     float x = startX + (c * spacingX);
                     Vector3 blockPos = new Vector3(x, y, 0f);
 
@@ -248,6 +275,11 @@ namespace Arcade.BlockBreaker
 
         public Dictionary<int, BlockSpecialType> DistributeSpecialBlocks(int totalBlocks, int mult2xCount, int expanderCount)
         {
+            return DistributeSpecialBlocks(totalBlocks, mult2xCount, 0, expanderCount);
+        }
+
+        public Dictionary<int, BlockSpecialType> DistributeSpecialBlocks(int totalBlocks, int mult2xCount, int mult3xCount, int expanderCount)
+        {
             var map = new Dictionary<int, BlockSpecialType>();
             if (totalBlocks <= 0) return map;
 
@@ -265,6 +297,11 @@ namespace Arcade.BlockBreaker
             for (int i = 0; i < mult2xCount && cursor < availableIndices.Count; i++, cursor++)
             {
                 map[availableIndices[cursor]] = BlockSpecialType.ScoreMultiplier2x;
+            }
+
+            for (int i = 0; i < mult3xCount && cursor < availableIndices.Count; i++, cursor++)
+            {
+                map[availableIndices[cursor]] = BlockSpecialType.ScoreMultiplier3x;
             }
 
             for (int i = 0; i < expanderCount && cursor < availableIndices.Count; i++, cursor++)

@@ -156,6 +156,13 @@ namespace Arcade.Core
             SaveCurrentGameSession();
         }
 
+        public void AdvanceToNextLevel()
+        {
+            Time.timeScale = 1f;
+            SetState(GameState.ReadyToLaunch);
+            SaveCurrentGameSession();
+        }
+
         private void OnGameOver()
         {
             SetState(GameState.GameOver);

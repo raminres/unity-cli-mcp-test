@@ -58,9 +58,12 @@ namespace Arcade.BlockBreaker
             {
                 label.text = specialType.GetBadgeText();
                 label.RemoveFromClassList("badge-text-x2");
+                label.RemoveFromClassList("badge-text-x3");
                 label.RemoveFromClassList("badge-text-expander");
                 if (specialType == BlockSpecialType.ScoreMultiplier2x)
                     label.AddToClassList("badge-text-x2");
+                else if (specialType == BlockSpecialType.ScoreMultiplier3x)
+                    label.AddToClassList("badge-text-x3");
                 else if (specialType == BlockSpecialType.PaddleExpander)
                     label.AddToClassList("badge-text-expander");
             }
@@ -68,9 +71,12 @@ namespace Arcade.BlockBreaker
             if (plate != null)
             {
                 plate.RemoveFromClassList("badge-plate-x2");
+                plate.RemoveFromClassList("badge-plate-x3");
                 plate.RemoveFromClassList("badge-plate-expander");
                 if (specialType == BlockSpecialType.ScoreMultiplier2x)
                     plate.AddToClassList("badge-plate-x2");
+                else if (specialType == BlockSpecialType.ScoreMultiplier3x)
+                    plate.AddToClassList("badge-plate-x3");
                 else if (specialType == BlockSpecialType.PaddleExpander)
                     plate.AddToClassList("badge-plate-expander");
             }

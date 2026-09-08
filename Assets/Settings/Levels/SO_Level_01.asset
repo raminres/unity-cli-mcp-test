@@ -15,6 +15,7 @@ MonoBehaviour:
   levelNumber: 1
   levelName: 'Level 1: Classic Inverted'
   levelDescription: Classic 3-tier block setup with Red on bottom, Green in middle, and Blue on top. Features random x2 multiplier and paddle expander blocks.
+  colorPattern: 0
   columns: 8
   rowsPerTier: 2
   blockSize: 1
@@ -24,4 +25,5 @@ MonoBehaviour:
   ballSpeedMultiplier: 1
   initialPaddleWidth: 5
   multiplier2xCount: 1
+  multiplier3xCount: 0
   paddleExpanderCount: 1

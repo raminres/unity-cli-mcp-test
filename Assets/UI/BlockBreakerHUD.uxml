@@ -83,6 +83,12 @@
                 </ui:VisualElement>
 
                 <ui:VisualElement class="setting-row">
+                    <ui:Label text="x3 Multipliers" class="setting-label" />
+                    <ui:SliderInt name="slider-multiplier3x" low-value="0" high-value="8" value="0" class="setting-slider" />
+                    <ui:Label name="val-multiplier3x" text="0" class="setting-val-badge" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
                     <ui:Label text="Paddle Expanders" class="setting-label" />
                     <ui:SliderInt name="slider-expander" low-value="0" high-value="5" value="1" class="setting-slider" />
                     <ui:Label name="val-expander" text="1" class="setting-val-badge" />
@@ -122,7 +128,7 @@
             <ui:VisualElement class="modal-card victory-card">
                 <ui:Label text="LEVEL CLEARED!" class="modal-title victory-title" />
                 <ui:Label name="clear-score-label" text="FINAL SCORE: 600" class="modal-score" />
-                <ui:Button name="btn-next-level" text="PLAY AGAIN" class="arcade-btn btn-secondary" />
+                <ui:Button name="btn-next-level" text="NEXT LEVEL" class="arcade-btn btn-secondary" />
                 <ui:Button name="btn-clear-menu" text="MAIN MENU" class="arcade-btn btn-default" />
             </ui:VisualElement>
         </ui:VisualElement>

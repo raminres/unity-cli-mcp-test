@@ -390,6 +390,201 @@ namespace Arcade.Tests
             Object.DestroyImmediate(genObj);
         }
 
+        [Test]
+        [TestCase(BlockColorTier.Red, 10, 30)]
+        [TestCase(BlockColorTier.Green, 20, 60)]
+        [TestCase(BlockColorTier.Blue, 30, 90)]
+        public void Block_SpecialMultiplier3x_TriplesTierPoints(BlockColorTier tier, int normalPoints, int expectedTripledPoints)
+        {
+            var normalBlockObj = new GameObject("NormalBlock");
+            var normalBlock = normalBlockObj.AddComponent<Block>();
+            normalBlock.Initialize(tier, null, Color.white, BlockSpecialType.Normal);
+            Assert.AreEqual(normalPoints, normalBlock.Points);
+
+            var multi3xBlockObj = new GameObject("Multi3xBlock");
+            var multi3xBlock = multi3xBlockObj.AddComponent<Block>();
+            multi3xBlock.Initialize(tier, null, Color.white, BlockSpecialType.ScoreMultiplier3x);
+            Assert.AreEqual(expectedTripledPoints, multi3xBlock.Points, $"Tier {tier} with 3x multiplier must award {expectedTripledPoints} points.");
+
+            Object.DestroyImmediate(normalBlockObj);
+            Object.DestroyImmediate(multi3xBlockObj);
+        }
+
+        [Test]
+        public void Paddle_CompoundingExpansion_SuccessiveExpandersCompoundWidth()
+        {
+            paddle.ResetWidth(5.0f);
+            Assert.AreEqual(5.0f, paddle.Width, 0.001f);
+            Assert.AreEqual(0, paddle.ExpansionCount);
+
+            // First expansion (+10%): 5.0 * 1.10 = 5.50
+            paddle.ExpandWidth(0.10f);
+            Assert.AreEqual(5.50f, paddle.Width, 0.001f);
+            Assert.AreEqual(1, paddle.ExpansionCount);
+
+            // Second expansion (+10% compounded): 5.50 * 1.10 = 6.05
+            paddle.ExpandWidth(0.10f);
+            Assert.AreEqual(6.05f, paddle.Width, 0.001f);
+            Assert.AreEqual(2, paddle.ExpansionCount);
+
+            // Third expansion (+10% compounded): 6.05 * 1.10 = 6.655
+            paddle.ExpandWidth(0.10f);
+            Assert.AreEqual(6.655f, paddle.Width, 0.001f);
+            Assert.AreEqual(3, paddle.ExpansionCount);
+
+            // Check boundary clamping after 3 expansions
+            float halfWidth = 6.655f * 0.5f;
+            Assert.AreEqual(-10.0f + halfWidth, paddle.MinX, 0.001f);
+            Assert.AreEqual(10.0f - halfWidth, paddle.MaxX, 0.001f);
+
+            // Reset width restores initial state
+            paddle.ResetWidth(5.0f);
+            Assert.AreEqual(5.0f, paddle.Width, 0.001f);
+            Assert.AreEqual(0, paddle.ExpansionCount);
+        }
+
+        [Test]
+        public void LevelGenerator_AdvanceToNextLevel_CyclesConfigurationsAndPreservesScore()
+        {
+            var genObj = new GameObject("TestGenerator");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            var lvl1 = ScriptableObject.CreateInstance<LevelConfiguration>();
+            lvl1.SetColumns(4);
+            lvl1.SetRowsPerTier(1);
+            var so1 = new UnityEditor.SerializedObject(lvl1);
+            so1.FindProperty("levelNumber").intValue = 1;
+            so1.ApplyModifiedProperties();
+
+            var lvl2 = ScriptableObject.CreateInstance<LevelConfiguration>();
+            lvl2.SetColumns(5);
+            lvl2.SetRowsPerTier(1);
+            var so2 = new UnityEditor.SerializedObject(lvl2);
+            so2.FindProperty("levelNumber").intValue = 2;
+            so2.ApplyModifiedProperties();
+
+            var lvl3 = ScriptableObject.CreateInstance<LevelConfiguration>();
+            lvl3.SetColumns(6);
+            lvl3.SetRowsPerTier(1);
+            var so3 = new UnityEditor.SerializedObject(lvl3);
+            so3.FindProperty("levelNumber").intValue = 3;
+            so3.ApplyModifiedProperties();
+
+            var genSo = new UnityEditor.SerializedObject(gen);
+            var presetsProp = genSo.FindProperty("levelPresets");
+            presetsProp.arraySize = 3;
+            presetsProp.GetArrayElementAtIndex(0).objectReferenceValue = lvl1;
+            presetsProp.GetArrayElementAtIndex(1).objectReferenceValue = lvl2;
+            presetsProp.GetArrayElementAtIndex(2).objectReferenceValue = lvl3;
+            genSo.ApplyModifiedProperties();
+
+            // Start at level 1
+            gen.SelectAndLoadLevel(1);
+            Assert.AreEqual(1, gen.CurrentConfig.LevelNumber);
+
+            // Score accumulated in GameManager
+            gameManager.RegisterLevelBlocks(10);
+            gameManager.LaunchBall();
+            gameManager.RecordBlockDestroyed(30, 1);
+            Assert.AreEqual(30, gameManager.Score);
+
+            // Advance to level 2
+            gen.AdvanceToNextLevel();
+            gameManager.AdvanceToNextLevel();
+            Assert.AreEqual(2, gen.CurrentConfig.LevelNumber);
+            Assert.AreEqual(30, gameManager.Score, "Score must be preserved when advancing to next level.");
+            Assert.AreEqual(GameState.ReadyToLaunch, gameManager.State);
+
+            // Advance to level 3
+            gen.AdvanceToNextLevel();
+            gameManager.AdvanceToNextLevel();
+            Assert.AreEqual(3, gen.CurrentConfig.LevelNumber);
+            Assert.AreEqual(30, gameManager.Score);
+
+            // Advance from level 3 loops back to level 1
+            gen.AdvanceToNextLevel();
+            gameManager.AdvanceToNextLevel();
+            Assert.AreEqual(1, gen.CurrentConfig.LevelNumber);
+
+            Object.DestroyImmediate(lvl1);
+            Object.DestroyImmediate(lvl2);
+            Object.DestroyImmediate(lvl3);
+            Object.DestroyImmediate(genObj);
+        }
+
+        [Test]
+        public void LevelGenerator_CheckerboardPattern_AlternatesBlockColorTiers()
+        {
+            var genObj = new GameObject("TestGenerator");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+            config.SetColumns(3);
+            config.SetRowsPerTier(1); // 3 rows * 3 cols = 9 blocks
+            config.SetColorPattern(BlockColorPattern.Checkerboard);
+            config.SetMultiplier2xCount(0);
+            config.SetMultiplier3xCount(0);
+            config.SetPaddleExpanderCount(0);
+
+            gen.LoadLevel(config);
+
+            var container = genObj.transform.Find("BlocksContainer");
+            var blocks = container.GetComponentsInChildren<Block>();
+            Assert.AreEqual(12, blocks.Length);
+
+            // (r + c) % 3:
+            // r=0, c=0 -> 0 -> Blue
+            Assert.AreEqual(BlockColorTier.Blue, blocks[0].Tier);
+            // r=0, c=1 -> 1 -> Green
+            Assert.AreEqual(BlockColorTier.Green, blocks[1].Tier);
+            // r=0, c=2 -> 2 -> Red
+            Assert.AreEqual(BlockColorTier.Red, blocks[2].Tier);
+            // r=0, c=3 -> 0 -> Blue
+            Assert.AreEqual(BlockColorTier.Blue, blocks[3].Tier);
+            // r=1, c=0 -> 1 -> Green
+            Assert.AreEqual(BlockColorTier.Green, blocks[4].Tier);
+            // r=1, c=1 -> 2 -> Red
+            Assert.AreEqual(BlockColorTier.Red, blocks[5].Tier);
+            // r=1, c=2 -> 0 -> Blue
+            Assert.AreEqual(BlockColorTier.Blue, blocks[6].Tier);
+
+            Object.DestroyImmediate(config);
+            Object.DestroyImmediate(genObj);
+        }
+
+        [Test]
+        public void LevelGenerator_DistributeSpecialBlocks_With3xMultipliers_AllocatesCorrectCounts()
+        {
+            var genObj = new GameObject("Gen");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            int totalBlocks = 48;
+            int mult2x = 2;
+            int mult3x = 3;
+            int expanders = 2;
+
+            var specialMap = gen.DistributeSpecialBlocks(totalBlocks, mult2x, mult3x, expanders);
+
+            int found2x = 0;
+            int found3x = 0;
+            int foundExp = 0;
+
+            foreach (var kvp in specialMap)
+            {
+                Assert.IsTrue(kvp.Key >= 0 && kvp.Key < totalBlocks);
+                if (kvp.Value == BlockSpecialType.ScoreMultiplier2x) found2x++;
+                if (kvp.Value == BlockSpecialType.ScoreMultiplier3x) found3x++;
+                if (kvp.Value == BlockSpecialType.PaddleExpander) foundExp++;
+            }
+
+            Assert.AreEqual(mult2x, found2x, "Must allocate exact count of 2X blocks.");
+            Assert.AreEqual(mult3x, found3x, "Must allocate exact count of 3X blocks.");
+            Assert.AreEqual(expanders, foundExp, "Must allocate exact count of paddle expanders.");
+            Assert.AreEqual(mult2x + mult3x + expanders, specialMap.Count, "All indices must be collision-free.");
+
+            Object.DestroyImmediate(genObj);
+        }
+
         #endregion
     }
 }

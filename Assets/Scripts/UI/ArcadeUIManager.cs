@@ -8,7 +8,7 @@ namespace Arcade.UI
 {
     /// <summary>
     /// Connects UI Toolkit In-Game HUD, quick action buttons, editable Level Settings modal,
-    /// and state modals to ArcadeGameManager and LevelGenerator.
+    /// next level advancement, and state modals to ArcadeGameManager and LevelGenerator.
     /// Uses Unity 6 PanelRenderer component.
     /// </summary>
     [RequireComponent(typeof(PanelRenderer))]
@@ -71,6 +71,8 @@ namespace Arcade.UI
         private Label valSpeed;
         private SliderInt sliderMultiplier2x;
         private Label valMultiplier2x;
+        private SliderInt sliderMultiplier3x;
+        private Label valMultiplier3x;
         private SliderInt sliderExpander;
         private Label valExpander;
 
@@ -140,7 +142,7 @@ namespace Arcade.UI
             if (btnRestartPause != null) btnRestartPause.clicked -= HandleRestartClicked;
             if (btnMenuPause != null) btnMenuPause.clicked -= HandleMenuClicked;
 
-            if (btnNextLevel != null) btnNextLevel.clicked -= HandleRestartClicked;
+            if (btnNextLevel != null) btnNextLevel.clicked -= HandleNextLevelClicked;
             if (btnClearMenu != null) btnClearMenu.clicked -= HandleMenuClicked;
 
             if (btnRetry != null) btnRetry.clicked -= HandleRestartClicked;
@@ -217,6 +219,8 @@ namespace Arcade.UI
             valSpeed = root.Q<Label>("val-speed");
             sliderMultiplier2x = root.Q<SliderInt>("slider-multiplier2x");
             valMultiplier2x = root.Q<Label>("val-multiplier2x");
+            sliderMultiplier3x = root.Q<SliderInt>("slider-multiplier3x");
+            valMultiplier3x = root.Q<Label>("val-multiplier3x");
             sliderExpander = root.Q<SliderInt>("slider-expander");
             valExpander = root.Q<Label>("val-expander");
 
@@ -235,7 +239,7 @@ namespace Arcade.UI
             if (btnRestartPause != null) btnRestartPause.clicked += HandleRestartClicked;
             if (btnMenuPause != null) btnMenuPause.clicked += HandleMenuClicked;
 
-            if (btnNextLevel != null) btnNextLevel.clicked += HandleRestartClicked;
+            if (btnNextLevel != null) btnNextLevel.clicked += HandleNextLevelClicked;
             if (btnClearMenu != null) btnClearMenu.clicked += HandleMenuClicked;
 
             if (btnRetry != null) btnRetry.clicked += HandleRestartClicked;
@@ -302,6 +306,15 @@ namespace Arcade.UI
                 {
                     if (activeEditableConfig != null) activeEditableConfig.SetMultiplier2xCount(evt.newValue);
                     if (valMultiplier2x != null) valMultiplier2x.text = evt.newValue.ToString();
+                });
+            }
+
+            if (sliderMultiplier3x != null)
+            {
+                sliderMultiplier3x.RegisterValueChangedCallback(evt =>
+                {
+                    if (activeEditableConfig != null) activeEditableConfig.SetMultiplier3xCount(evt.newValue);
+                    if (valMultiplier3x != null) valMultiplier3x.text = evt.newValue.ToString();
                 });
             }
 
@@ -410,6 +423,16 @@ namespace Arcade.UI
                 {
                     if (clearScoreLabel != null && ArcadeGameManager.Instance != null)
                         clearScoreLabel.text = $"FINAL SCORE: {ArcadeGameManager.Instance.Score}";
+
+                    if (btnNextLevel != null)
+                    {
+                        if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
+                        int currentLvl = levelGenerator != null && levelGenerator.CurrentConfig != null ? levelGenerator.CurrentConfig.LevelNumber : 1;
+                        int nextLvl = currentLvl + 1;
+                        int total = levelGenerator != null ? levelGenerator.TotalLevels : 3;
+                        btnNextLevel.text = nextLvl > total ? "PLAY AGAIN (LOOP)" : $"NEXT LEVEL ({nextLvl})";
+                    }
+
                     levelClearModal.RemoveFromClassList("modal-hidden");
                 }
                 else
@@ -477,6 +500,24 @@ namespace Arcade.UI
             {
                 ArcadeGameManager.Instance.RestartGame();
             }
+        }
+
+        private void HandleNextLevelClicked()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
+
+            if (levelGenerator != null)
+            {
+                levelGenerator.AdvanceToNextLevel();
+            }
+
+            if (ArcadeGameManager.Instance != null)
+            {
+                ArcadeGameManager.Instance.AdvanceToNextLevel();
+            }
+
+            if (levelClearModal != null) levelClearModal.AddToClassList("modal-hidden");
         }
 
         private void HandleMenuClicked()
@@ -571,6 +612,9 @@ namespace Arcade.UI
 
             if (sliderMultiplier2x != null) sliderMultiplier2x.value = activeEditableConfig.Multiplier2xCount;
             if (valMultiplier2x != null) valMultiplier2x.text = activeEditableConfig.Multiplier2xCount.ToString();
+
+            if (sliderMultiplier3x != null) sliderMultiplier3x.value = activeEditableConfig.Multiplier3xCount;
+            if (valMultiplier3x != null) valMultiplier3x.text = activeEditableConfig.Multiplier3xCount.ToString();
 
             if (sliderExpander != null) sliderExpander.value = activeEditableConfig.PaddleExpanderCount;
             if (valExpander != null) valExpander.text = activeEditableConfig.PaddleExpanderCount.ToString();

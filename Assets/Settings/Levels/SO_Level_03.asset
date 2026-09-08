@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: SO_Level_03
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 3
-  levelName: 'Level 3: Dense Gauntlet'
-  levelDescription: Dense 10-column, 9-row gauntlet with fast velocity and multiple power-up blocks.
+  levelName: 'Level 3: Chaos Gauntlet'
+  levelDescription: Dense 10-column, 9-row gauntlet with fully randomized color dispersion, high velocity, dual x3 multipliers, and compounding paddle expanders.
+  colorPattern: 1
   columns: 10
   rowsPerTier: 3
   blockSize: 1
@@ -23,5 +24,6 @@ MonoBehaviour:
   startCenterY: 15.5
   ballSpeedMultiplier: 1.35
   initialPaddleWidth: 5
-  multiplier2xCount: 3
+  multiplier2xCount: 2
+  multiplier3xCount: 2
   paddleExpanderCount: 2
