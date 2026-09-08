@@ -1,0 +1,89 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="BlockBreakerHUD.uss" />
+    <ui:VisualElement name="hud-root" class="hud-root">
+        
+        <!-- Top HUD Bar -->
+        <ui:VisualElement name="top-bar" class="top-bar">
+            <!-- Left: Score Info -->
+            <ui:VisualElement name="score-container" class="score-container">
+                <ui:Label name="score-label" text="SCORE: 0" class="score-main" />
+                <ui:Label name="highscore-label" text="BEST: 0" class="score-sub" />
+            </ui:VisualElement>
+
+            <!-- Center: Lives Indicator -->
+            <ui:VisualElement name="lives-container" class="lives-container">
+                <ui:VisualElement name="life-pip-1" class="life-pip pip-active" />
+                <ui:VisualElement name="life-pip-2" class="life-pip pip-active" />
+                <ui:VisualElement name="life-pip-3" class="life-pip pip-active" />
+            </ui:VisualElement>
+
+            <!-- Right: 3 Subtle Quick Action Buttons -->
+            <ui:VisualElement name="quick-controls" class="quick-controls">
+                <ui:Button name="btn-quick-mute" text="🔊" class="quick-btn" tooltip="Toggle SFX Mute" />
+                <ui:Button name="btn-quick-options" text="⚙" class="quick-btn" tooltip="Settings" />
+                <ui:Button name="btn-quick-pause" text="⏸" class="quick-btn" tooltip="Pause Game" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Center Prompt Banner (Visible before ball launch) -->
+        <ui:VisualElement name="launch-banner" class="launch-banner">
+            <ui:Label text="PRESS UP ARROW OR TAP TO LAUNCH" class="launch-text" />
+        </ui:VisualElement>
+
+        <!-- Pause Modal -->
+        <ui:VisualElement name="pause-modal" class="modal-backdrop modal-hidden">
+            <ui:VisualElement class="modal-card">
+                <ui:Label text="PAUSED" class="modal-title" />
+                <ui:Button name="btn-resume" text="RESUME" class="arcade-btn btn-primary" />
+                <ui:Button name="btn-restart-pause" text="RESTART LEVEL" class="arcade-btn btn-secondary" />
+                <ui:Button name="btn-menu-pause" text="MAIN MENU" class="arcade-btn btn-default" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- In-Game Options Modal -->
+        <ui:VisualElement name="options-modal" class="modal-backdrop modal-hidden">
+            <ui:VisualElement class="modal-card">
+                <ui:Label text="SETTINGS" class="modal-title" />
+                
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="SFX Volume" class="setting-label" />
+                    <ui:Slider name="slider-volume" low-value="0" high-value="1" value="0.8" class="setting-slider" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Mute SFX" class="setting-label" />
+                    <ui:Toggle name="toggle-mute" class="setting-toggle" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Target Frame Rate" class="setting-label" />
+                    <ui:Button name="btn-fps" text="60 FPS" class="fps-btn" />
+                </ui:VisualElement>
+
+                <ui:Button name="btn-close-options" text="BACK" class="arcade-btn btn-primary modal-close-btn" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Level Cleared Modal -->
+        <ui:VisualElement name="level-clear-modal" class="modal-backdrop modal-hidden">
+            <ui:VisualElement class="modal-card victory-card">
+                <ui:Label text="LEVEL CLEARED!" class="modal-title victory-title" />
+                <ui:Label name="clear-score-label" text="FINAL SCORE: 600" class="modal-score" />
+                <ui:Button name="btn-next-level" text="PLAY AGAIN" class="arcade-btn btn-secondary" />
+                <ui:Button name="btn-clear-menu" text="MAIN MENU" class="arcade-btn btn-default" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Game Over Modal -->
+        <ui:VisualElement name="game-over-modal" class="modal-backdrop modal-hidden">
+            <ui:VisualElement class="modal-card gameover-card">
+                <ui:Label text="GAME OVER" class="modal-title gameover-title" />
+                <ui:Label name="over-score-label" text="FINAL SCORE: 240" class="modal-score" />
+                <ui:Label name="over-high-label" text="HIGH SCORE: 1200" class="modal-subscore" />
+                <ui:Button name="btn-retry" text="TRY AGAIN" class="arcade-btn btn-primary" />
+                <ui:Button name="btn-over-menu" text="MAIN MENU" class="arcade-btn btn-default" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

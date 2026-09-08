@@ -131,10 +131,40 @@ This file provides persistent context across agent sessions for this Unity proje
 
 ---
 
-## Active Scene Hierarchy Summary
-- `/Main Camera`
-- `/Global Volume`
-- `/Moving_Object_01`
-- `/Key Light`
-- `/Fill Light`
-- `/CinemachineCamera`
+### 8. Block Breaker Game & Arcade Testbed Architecture
+- **Scenes (`LV_` Prefix)**:
+  - `Assets/Scenes/LV_BlockBreaker_MainMenu.unity`: Fast-loading start scene with New Game, Continue, Settings, and Credits modals.
+  - `Assets/Scenes/LV_BlockBreaker.unity`: Primary 3D arcade gameplay scene.
+  - Both scenes registered in `EditorBuildSettings.scenes`.
+- **Camera Perspective**:
+  - Front-facing perspective camera ($38^\circ$ FOV, positioned at $(0, 6, -32)$ looking at $(0, 6, 0)$) delivering subtle 3D depth on block and paddle bevels while retaining arcade precision.
+- **Platform Targets**:
+  - PC (Keyboard: Left/Right/A/D to move, Up/Space to launch, Esc to pause).
+  - iOS / Mobile Touch (Horizontal drag to slide, tap/swipe up to launch).
+  - WebGPU (Configured in `PlayerSettings` as primary graphics API for WebGL platform).
+- **Gameplay Math & Scoring**:
+  - Platform: 5:1 ratio ($5.0 \times 1.0 \times 1.0$).
+  - Blocks: 1:1 ratio ($1.0 \times 1.0 \times 1.0$ cubes), 6 rows $\times$ 8 cols = 48 blocks.
+  - Point Multipliers: Red = 10 pts, Green = 20 pts, Blue = 30 pts.
+  - Paddle Deflection: Dynamic bounce angle based on normalized impact offset $\theta = 90^\circ - (\text{offset} \times 60^\circ)$.
+  - Lives: 3 starting lives, kill zone trigger at bottom ($Y = -6.5$).
+- **VFX & Materials**:
+  - `Assets/VFX/VFX_BlockShatter.vfx`: Visual Effect Graph sub-box burst with dynamic HDR color and collision normal bias.
+  - Dual-layer burst: GPU particle burst + 8 physical 3D mini-cube fragments ($2 \times 2 \times 2$ sub-box explosion) with gravity damping and rotation.
+  - Material variants in `Assets/Materials/BlockBreaker/`: `MI_Paddle`, `MI_Ball`, `MI_Block_Red`, `MI_Block_Green`, `MI_Block_Blue`, `MI_Playfield_Border` (all deriving from `MT_Master_PBR_URP.mat`).
+- **Audio System (`AU_`)**:
+  - `ArcadeAudioManager.cs`: Persistent singleton with procedural wave synthesis for immediate feedback (`AU_PaddleBounce`, `AU_WallBounce`, `AU_BlockHit_Red/Green/Blue`, `AU_LifeLost`, `AU_LevelClear`, `AU_GameOver`) with volume and mute persistence.
+- **UI Toolkit**:
+  - `MainMenuUI.uxml` / `.uss`: Glassmorphic cards, candy neon gradients, settings sliders, target FPS toggle.
+  - `BlockBreakerHUD.uxml` / `.uss`: Floating top bar (Score, High Score, 3 Glowing Heart Pips, subtle top-right buttons for Mute, Options, Pause), Center Launch Banner, and Level Clear / Game Over modals.
+  - `ArcadePanelSettings.asset`: Reference resolution 1920x1080, Scale with Screen Size.
+- **Automated Test Suite**:
+  - `Assets/Tests/BlockBreakerCoreTests.cs`: 10 automated unit/integration tests validating score multipliers, paddle deflection math, boundary clamping, life tracking, and game state transitions.
+
+---
+
+## Active Scenes & Build Index
+1. `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0)
+2. `Assets/Scenes/LV_BlockBreaker.unity` (Build Index 1)
+3. `Assets/Scenes/SampleScene.unity` (Disabled baseline)
+

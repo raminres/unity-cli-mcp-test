@@ -6,6 +6,12 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/LV_BlockBreaker_MainMenu.unity
+    guid: 9eecb0242c623c24bae83e47c135214f
+  - enabled: 1
+    path: Assets/Scenes/LV_BlockBreaker.unity
+    guid: ba80f31a4bb2b5e44b97a131308c1f12
+  - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
   m_configObjects:
