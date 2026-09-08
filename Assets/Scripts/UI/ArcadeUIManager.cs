@@ -7,11 +7,12 @@ namespace Arcade.UI
 {
     /// <summary>
     /// Connects UI Toolkit In-Game HUD, quick action buttons, and state modals to ArcadeGameManager.
+    /// Uses Unity 6 PanelRenderer component.
     /// </summary>
-    [RequireComponent(typeof(UIDocument))]
+    [RequireComponent(typeof(PanelRenderer))]
     public class ArcadeUIManager : MonoBehaviour
     {
-        private UIDocument uiDocument;
+        private PanelRenderer panelRenderer;
         private VisualElement root;
 
         // Top bar elements
@@ -54,24 +55,57 @@ namespace Arcade.UI
 
         private void OnEnable()
         {
-            uiDocument = GetComponent<UIDocument>();
-            if (uiDocument == null) return;
-
-            root = uiDocument.rootVisualElement;
-            if (root == null) return;
-
-            BindElements();
+            panelRenderer = GetComponent<PanelRenderer>();
+            if (panelRenderer != null)
+            {
+                panelRenderer.RegisterUIReloadCallback(OnUIReload);
+            }
             SubscribeEvents();
-            InitializeDisplay();
         }
 
         private void OnDisable()
         {
+            if (panelRenderer != null)
+            {
+                panelRenderer.UnregisterUIReloadCallback(OnUIReload);
+            }
             UnsubscribeEvents();
+            UnbindElements();
+        }
+
+        private void OnUIReload(PanelRenderer renderer, VisualElement newRoot, int version)
+        {
+            if (newRoot == null) return;
+            root = newRoot;
+            UnbindElements();
+            BindElements();
+            InitializeDisplay();
+        }
+
+        private void UnbindElements()
+        {
+            if (btnQuickMute != null) btnQuickMute.clicked -= HandleQuickMuteClicked;
+            if (btnQuickOptions != null) btnQuickOptions.clicked -= ShowOptions;
+            if (btnQuickPause != null) btnQuickPause.clicked -= HandleQuickPauseClicked;
+
+            if (btnResume != null) btnResume.clicked -= HandleResumeClicked;
+            if (btnRestartPause != null) btnRestartPause.clicked -= HandleRestartClicked;
+            if (btnMenuPause != null) btnMenuPause.clicked -= HandleMenuClicked;
+
+            if (btnNextLevel != null) btnNextLevel.clicked -= HandleRestartClicked;
+            if (btnClearMenu != null) btnClearMenu.clicked -= HandleMenuClicked;
+
+            if (btnRetry != null) btnRetry.clicked -= HandleRestartClicked;
+            if (btnOverMenu != null) btnOverMenu.clicked -= HandleMenuClicked;
+
+            if (btnCloseOptions != null) btnCloseOptions.clicked -= HideOptions;
+            if (btnFps != null) btnFps.clicked -= ToggleFpsSetting;
         }
 
         private void BindElements()
         {
+            if (root == null) return;
+
             scoreLabel = root.Q<Label>("score-label");
             highscoreLabel = root.Q<Label>("highscore-label");
 

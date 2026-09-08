@@ -8,13 +8,14 @@ namespace Arcade.UI
 {
     /// <summary>
     /// Coordinates UI Toolkit interactions in the fast-loading Main Menu start scene.
+    /// Uses Unity 6 PanelRenderer component.
     /// </summary>
-    [RequireComponent(typeof(UIDocument))]
+    [RequireComponent(typeof(PanelRenderer))]
     public class MainMenuUIManager : MonoBehaviour
     {
-        private UIDocument uiDocument;
-
+        private PanelRenderer panelRenderer;
         private VisualElement root;
+
         private Button btnNewGame;
         private Button btnContinue;
         private Button btnOptions;
@@ -36,18 +37,48 @@ namespace Arcade.UI
 
         private void OnEnable()
         {
-            uiDocument = GetComponent<UIDocument>();
-            if (uiDocument == null) return;
+            panelRenderer = GetComponent<PanelRenderer>();
+            if (panelRenderer != null)
+            {
+                panelRenderer.RegisterUIReloadCallback(OnUIReload);
+            }
+        }
 
-            root = uiDocument.rootVisualElement;
-            if (root == null) return;
+        private void OnDisable()
+        {
+            if (panelRenderer != null)
+            {
+                panelRenderer.UnregisterUIReloadCallback(OnUIReload);
+            }
+            UnbindElements();
+        }
 
+        private void OnUIReload(PanelRenderer renderer, VisualElement newRoot, int version)
+        {
+            if (newRoot == null) return;
+            root = newRoot;
+            UnbindElements();
             BindElements();
             InitializeValues();
         }
 
+        private void UnbindElements()
+        {
+            if (btnNewGame != null) btnNewGame.clicked -= HandleNewGameClicked;
+            if (btnContinue != null) btnContinue.clicked -= HandleContinueClicked;
+            if (btnOptions != null) btnOptions.clicked -= ShowOptions;
+            if (btnCredits != null) btnCredits.clicked -= ShowCredits;
+
+            if (btnCloseOptions != null) btnCloseOptions.clicked -= HideOptions;
+            if (btnCloseCredits != null) btnCloseCredits.clicked -= HideCredits;
+
+            if (btnToggleFps != null) btnToggleFps.clicked -= ToggleFpsSetting;
+        }
+
         private void BindElements()
         {
+            if (root == null) return;
+
             btnNewGame = root.Q<Button>("btn-new-game");
             btnContinue = root.Q<Button>("btn-continue");
             btnOptions = root.Q<Button>("btn-options");

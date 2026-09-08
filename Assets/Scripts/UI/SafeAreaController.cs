@@ -7,12 +7,13 @@ namespace Arcade.UI
     /// Applies device safe area insets (notches, dynamic islands, home bars) to UI Toolkit visual trees.
     /// Incorporates extra breathing room margins so UI elements never sit directly against the safe area limits.
     /// Supports automatic adaptation to screen orientation and editor notch simulation.
+    /// Uses Unity 6 PanelRenderer component.
     /// </summary>
-    [RequireComponent(typeof(UIDocument))]
+    [RequireComponent(typeof(PanelRenderer))]
     public class SafeAreaController : MonoBehaviour
     {
         [Header("Target Element")]
-        [Tooltip("Optional name of child VisualElement to apply padding to. If empty, applies to rootVisualElement.")]
+        [Tooltip("Optional name of child VisualElement to apply padding to. If empty, applies to root visual element.")]
         [SerializeField] private string targetContainerName = "";
 
         [Header("Breathing Room (Extra Safe Margins)")]
@@ -27,7 +28,8 @@ namespace Arcade.UI
         [SerializeField] private float simulatedBottomInsetPixels = 70f;
         [SerializeField] private float simulatedSideInsetPixels = 0f;
 
-        private UIDocument uiDocument;
+        private PanelRenderer panelRenderer;
+        private VisualElement root;
         private VisualElement targetElement;
         private Rect lastSafeArea = Rect.zero;
         private ScreenOrientation lastOrientation = ScreenOrientation.AutoRotation;
@@ -35,7 +37,25 @@ namespace Arcade.UI
 
         private void OnEnable()
         {
-            uiDocument = GetComponent<UIDocument>();
+            panelRenderer = GetComponent<PanelRenderer>();
+            if (panelRenderer != null)
+            {
+                panelRenderer.RegisterUIReloadCallback(OnUIReload);
+            }
+            ApplySafeArea();
+        }
+
+        private void OnDisable()
+        {
+            if (panelRenderer != null)
+            {
+                panelRenderer.UnregisterUIReloadCallback(OnUIReload);
+            }
+        }
+
+        private void OnUIReload(PanelRenderer renderer, VisualElement newRoot, int version)
+        {
+            root = newRoot;
             ApplySafeArea();
         }
 
@@ -52,12 +72,11 @@ namespace Arcade.UI
 
         public void ApplySafeArea()
         {
-            if (uiDocument == null) uiDocument = GetComponent<UIDocument>();
-            if (uiDocument == null || uiDocument.rootVisualElement == null) return;
+            if (root == null) return;
 
             targetElement = string.IsNullOrEmpty(targetContainerName)
-                ? uiDocument.rootVisualElement
-                : uiDocument.rootVisualElement.Q(targetContainerName) ?? uiDocument.rootVisualElement;
+                ? root
+                : root.Q(targetContainerName) ?? root;
 
             Rect safeArea = Screen.safeArea;
             float screenW = Screen.width;

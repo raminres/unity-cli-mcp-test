@@ -157,12 +157,15 @@ This file provides persistent context across agent sessions for this Unity proje
   - Material variants in `Assets/Materials/BlockBreaker/`: `MI_Paddle`, `MI_Ball`, `MI_Block_Red`, `MI_Block_Green`, `MI_Block_Blue`, `MI_Playfield_Border` (all deriving from `MT_Master_PBR_URP.mat`).
 - **Audio System (`AU_`)**:
   - `ArcadeAudioManager.cs`: Persistent singleton with procedural wave synthesis for immediate feedback (`AU_PaddleBounce`, `AU_WallBounce`, `AU_BlockHit_Red/Green/Blue`, `AU_LifeLost`, `AU_LevelClear`, `AU_GameOver`) with volume and mute persistence.
-- **UI Toolkit**:
+- **UI Toolkit & Unity 6 PanelRenderer Migration**:
+  - Migrated from deprecated `UIDocument` to native Unity 6 `PanelRenderer` on `UI_HUD` ([LV_BlockBreaker.unity](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scenes/LV_BlockBreaker.unity)) and `UI_MainMenu` ([LV_BlockBreaker_MainMenu.unity](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scenes/LV_BlockBreaker_MainMenu.unity)).
+  - [ArcadeUIManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/ArcadeUIManager.cs), [MainMenuUIManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/MainMenuUIManager.cs), and [SafeAreaController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/SafeAreaController.cs) adopt `[RequireComponent(typeof(PanelRenderer))]` with version-resilient `RegisterUIReloadCallback` lifecycle binding.
+  - [SetupBlockBreakerScenes.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupBlockBreakerScenes.cs) updated to generate `PanelRenderer` components.
   - `MainMenuUI.uxml` / `.uss`: Glassmorphic cards, candy neon gradients, settings sliders, target FPS toggle.
   - `BlockBreakerHUD.uxml` / `.uss`: Floating top bar (Score, High Score, 3 Glowing Heart Pips, subtle top-right buttons for Mute, Options, Pause), Center Launch Banner, and Level Clear / Game Over modals.
   - `ArcadePanelSettings.asset`: Reference resolution 1920x1080, Scale with Screen Size.
 - **Automated Test Suite**:
-  - `Assets/Tests/BlockBreakerCoreTests.cs`: 17 automated unit/integration tests validating score multipliers, paddle deflection math, boundary clamping, life tracking, game state transitions, safe area insets, and multi-aspect ratio frustum framing.
+  - `Assets/Tests/BlockBreakerCoreTests.cs`: 18 automated unit/integration tests validating score multipliers, paddle deflection math, boundary clamping, life tracking, game state transitions, safe area insets, and multi-aspect ratio frustum framing.
 
 ---
 

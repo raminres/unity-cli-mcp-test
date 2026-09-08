@@ -42,13 +42,13 @@ namespace Arcade.Editor
             var audioGo = new GameObject("AudioManager");
             audioGo.AddComponent<ArcadeAudioManager>();
 
-            // 3. UI Document & Manager
+            // 3. UI Panel Renderer & Manager
             var uiGo = new GameObject("UI_MainMenu");
-            var uiDoc = uiGo.AddComponent<UIDocument>();
+            var panelRenderer = uiGo.AddComponent<PanelRenderer>();
             var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/MainMenuUI.uxml");
-            if (uxml != null) uiDoc.visualTreeAsset = uxml;
+            if (uxml != null) panelRenderer.visualTreeAsset = uxml;
             var panelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>("Assets/UI/ArcadePanelSettings.asset");
-            if (panelSettings != null) uiDoc.panelSettings = panelSettings;
+            if (panelSettings != null) panelRenderer.panelSettings = panelSettings;
             uiGo.AddComponent<MainMenuUIManager>();
             uiGo.AddComponent<SafeAreaController>();
 
@@ -223,13 +223,13 @@ namespace Arcade.Editor
             levelSo.FindProperty("matBlueBlock").objectReferenceValue = blueMat;
             levelSo.ApplyModifiedProperties();
 
-            // 11. In-Game UI Document & Manager
+            // 11. In-Game UI Panel Renderer & Manager
             var uiGo = new GameObject("UI_HUD");
-            var uiDoc = uiGo.AddComponent<UIDocument>();
+            var panelRenderer = uiGo.AddComponent<PanelRenderer>();
             var hudUxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
-            if (hudUxml != null) uiDoc.visualTreeAsset = hudUxml;
+            if (hudUxml != null) panelRenderer.visualTreeAsset = hudUxml;
             var hudPanelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>("Assets/UI/ArcadePanelSettings.asset");
-            if (hudPanelSettings != null) uiDoc.panelSettings = hudPanelSettings;
+            if (hudPanelSettings != null) panelRenderer.panelSettings = hudPanelSettings;
             uiGo.AddComponent<ArcadeUIManager>();
             uiGo.AddComponent<SafeAreaController>();
 
