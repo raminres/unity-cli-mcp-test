@@ -39,6 +39,22 @@ namespace Arcade.BlockBreaker
             currentSpeed = baseSpeed;
         }
 
+        private void OnEnable()
+        {
+            if (ArcadeGameManager.Instance != null)
+            {
+                ArcadeGameManager.Instance.OnStateChanged += HandleStateChanged;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (ArcadeGameManager.Instance != null)
+            {
+                ArcadeGameManager.Instance.OnStateChanged -= HandleStateChanged;
+            }
+        }
+
         private void Start()
         {
             if (paddle == null)
@@ -46,19 +62,16 @@ namespace Arcade.BlockBreaker
                 paddle = FindAnyObjectByType<PaddleController>();
             }
 
-            if (ArcadeGameManager.Instance != null)
-            {
-                ArcadeGameManager.Instance.OnStateChanged += HandleStateChanged;
-            }
-
             ResetBallToPaddle();
         }
 
-        private void OnDestroy()
+        public void Initialize(ArcadeGameManager manager, PaddleController paddleController)
         {
-            if (ArcadeGameManager.Instance != null)
+            if (paddleController != null) paddle = paddleController;
+            if (manager != null)
             {
-                ArcadeGameManager.Instance.OnStateChanged -= HandleStateChanged;
+                manager.OnStateChanged -= HandleStateChanged;
+                manager.OnStateChanged += HandleStateChanged;
             }
         }
 
@@ -112,12 +125,15 @@ namespace Arcade.BlockBreaker
             }
         }
 
-        public void ResetBallToPaddle()
+        public void StopAndDockBall()
         {
             isLaunched = false;
             currentSpeed = baseSpeed;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
 
             if (paddle != null)
             {
@@ -126,10 +142,26 @@ namespace Arcade.BlockBreaker
             }
         }
 
+        public void SetBallActive(bool active)
+        {
+            var rend = GetComponent<Renderer>();
+            if (rend != null) rend.enabled = active;
+
+            var col = GetComponent<Collider>();
+            if (col != null) col.enabled = active;
+        }
+
+        public void ResetBallToPaddle()
+        {
+            SetBallActive(true);
+            StopAndDockBall();
+        }
+
         public void Launch()
         {
             if (isLaunched) return;
 
+            SetBallActive(true);
             isLaunched = true;
             currentSpeed = baseSpeed;
 
@@ -138,7 +170,10 @@ namespace Arcade.BlockBreaker
             float launchRad = (90f + randomAngleOffset) * Mathf.Deg2Rad;
             Vector3 launchDirection = new Vector3(Mathf.Cos(launchRad), Mathf.Sin(launchRad), 0f).normalized;
 
-            rb.linearVelocity = launchDirection * currentSpeed;
+            if (rb != null)
+            {
+                rb.linearVelocity = launchDirection * currentSpeed;
+            }
         }
 
         private void HandleStateChanged(GameState state)
@@ -150,6 +185,16 @@ namespace Arcade.BlockBreaker
             else if (state == GameState.BallLost || state == GameState.ReadyToLaunch)
             {
                 ResetBallToPaddle();
+            }
+            else if (state == GameState.LevelClear)
+            {
+                StopAndDockBall();
+                SetBallActive(false);
+            }
+            else if (state == GameState.GameOver)
+            {
+                StopAndDockBall();
+                SetBallActive(false);
             }
             else if (state == GameState.Paused)
             {

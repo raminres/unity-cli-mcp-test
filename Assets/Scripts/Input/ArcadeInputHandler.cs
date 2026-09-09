@@ -15,18 +15,42 @@ namespace Arcade.Input
         public static ArcadeInputHandler Instance { get; private set; }
 
         [Header("Touch / Mouse Settings")]
-        [SerializeField] private float touchSensitivity = 1.2f;
-        [SerializeField] private float launchSwipeThreshold = 50f;
+        [SerializeField] private float touchSensitivity = 1.0f;
+        [SerializeField] private float launchSwipeThreshold = 40f;
+        [SerializeField] private float dragDeadzonePixels = 15f;
+        [SerializeField] private float tapSlopPixels = 45f;
+        [SerializeField] private float maxTapDuration = 0.40f;
 
         private float horizontalInput = 0f;
-        private Vector2 touchStartPos;
+        private Vector2 touchStartScreenPos;
+        private float touchStartTime = 0f;
+        private float touchStartPaddleX = 0f;
+        private float touchStartWorldX = 0f;
         private bool isDragging = false;
+        private bool hasDirectTargetX = false;
+        private float directTargetWorldX = 0f;
+        private bool touchStartedOverUI = false;
         private Camera mainCam;
 
         public float HorizontalAxis => horizontalInput;
+        public bool HasDirectTargetX => hasDirectTargetX;
+        public float DirectTargetWorldX => directTargetWorldX;
+        public bool IsTouchDragging => isDragging;
 
         public event Action OnLaunchTriggered;
         public event Action OnPauseTriggered;
+
+        public static void SetInstanceForTesting(ArcadeInputHandler instance)
+        {
+            Instance = instance;
+        }
+
+        public void SetDirectTargetWorldXForTesting(float targetX)
+        {
+            directTargetWorldX = targetX;
+            hasDirectTargetX = true;
+            isDragging = true;
+        }
 
         private void Awake()
         {
@@ -38,6 +62,14 @@ namespace Arcade.Input
 
             Instance = this;
             mainCam = Camera.main;
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         private void Update()
@@ -95,6 +127,7 @@ namespace Arcade.Input
             if (Mathf.Abs(axis) > 0.01f)
             {
                 horizontalInput = axis;
+                hasDirectTargetX = false;
             }
             else if (!isDragging)
             {
@@ -121,6 +154,7 @@ namespace Arcade.Input
             }
             else if (touchScreen != null && touchScreen.primaryTouch.press.wasReleasedThisFrame)
             {
+                screenPos = touchScreen.primaryTouch.position.ReadValue();
                 pointerUp = true;
             }
             else if (mouse != null && mouse.leftButton.isPressed)
@@ -131,6 +165,7 @@ namespace Arcade.Input
             }
             else if (mouse != null && mouse.leftButton.wasReleasedThisFrame)
             {
+                screenPos = mouse.position.ReadValue();
                 pointerUp = true;
             }
 #else
@@ -150,43 +185,94 @@ namespace Arcade.Input
             }
             else if (UnityEngine.Input.GetMouseButtonUp(0))
             {
+                screenPos = UnityEngine.Input.mousePosition;
                 pointerUp = true;
             }
 #endif
 
             if (pointerDown)
             {
-                touchStartPos = screenPos;
-                isDragging = true;
-            }
-            else if (pointerHeld && isDragging)
-            {
-                // In touch drag, compute target X in world coordinates
-                if (mainCam != null)
+                touchStartScreenPos = screenPos;
+                touchStartTime = Time.unscaledTime;
+                isDragging = false;
+                hasDirectTargetX = false;
+
+                // Shield gameplay input if touch originated over active UI
+                if (Arcade.UI.ArcadeUIManager.Instance != null && Arcade.UI.ArcadeUIManager.Instance.IsPointerOverUI(screenPos))
                 {
-                    Vector3 worldPos = mainCam.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, -mainCam.transform.position.z));
-                    // We can expose the world position or map to delta
-                    float deltaX = screenPos.x - touchStartPos.x;
-                    horizontalInput = Mathf.Clamp(deltaX / (Screen.width * 0.15f) * touchSensitivity, -1f, 1f);
+                    touchStartedOverUI = true;
+                    return;
                 }
 
-                // Check for upward swipe to launch
-                if (screenPos.y - touchStartPos.y > launchSwipeThreshold)
+                touchStartedOverUI = false;
+
+                // Cache start world X on Z=0 playfield plane
+                if (mainCam != null)
+                {
+                    float camZDist = Mathf.Abs(mainCam.transform.position.z);
+                    Vector3 worldPt = mainCam.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, camZDist));
+                    touchStartWorldX = worldPt.x;
+                }
+
+                // Cache initial paddle position
+                var paddle = FindAnyObjectByType<Arcade.BlockBreaker.PaddleController>();
+                touchStartPaddleX = paddle != null ? paddle.transform.position.x : 0f;
+            }
+            else if (pointerHeld && !touchStartedOverUI)
+            {
+                float screenDist = Vector2.Distance(screenPos, touchStartScreenPos);
+                if (!isDragging && screenDist > dragDeadzonePixels)
+                {
+                    isDragging = true;
+                }
+
+                if (isDragging && mainCam != null)
+                {
+                    float camZDist = Mathf.Abs(mainCam.transform.position.z);
+                    Vector3 currWorldPt = mainCam.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, camZDist));
+                    float deltaWorldX = (currWorldPt.x - touchStartWorldX) * touchSensitivity;
+                    directTargetWorldX = touchStartPaddleX + deltaWorldX;
+                    hasDirectTargetX = true;
+
+                    // Fallback relative axis for axis-based callers
+                    float screenDeltaX = screenPos.x - touchStartScreenPos.x;
+                    horizontalInput = Mathf.Clamp(screenDeltaX / (Screen.width * 0.15f) * touchSensitivity, -1f, 1f);
+                }
+
+                // Upward swipe to launch while dragging
+                if (screenPos.y - touchStartScreenPos.y > launchSwipeThreshold)
                 {
                     TriggerLaunch();
                 }
             }
             else if (pointerUp)
             {
-                // Short tap with little movement launches ball
-                if (Vector2.Distance(screenPos, touchStartPos) < 25f)
+                if (!touchStartedOverUI)
                 {
-                    TriggerLaunch();
+                    float tapDist = Vector2.Distance(screenPos, touchStartScreenPos);
+                    float duration = Time.unscaledTime - touchStartTime;
+
+                    // Adaptive tap detection: small distance moved OR quick tap (<0.40s) without large displacement
+                    bool isTap = tapDist < tapSlopPixels || (duration < maxTapDuration && tapDist < launchSwipeThreshold * 1.5f);
+                    if (isTap)
+                    {
+                        TriggerLaunch();
+                    }
                 }
 
-                isDragging = false;
-                horizontalInput = 0f;
+                ResetTouchState();
             }
+        }
+
+        public void ResetTouchState()
+        {
+            isDragging = false;
+            hasDirectTargetX = false;
+            directTargetWorldX = 0f;
+            horizontalInput = 0f;
+            touchStartedOverUI = false;
+            touchStartPaddleX = 0f;
+            touchStartWorldX = 0f;
         }
 
         public void TriggerLaunch()

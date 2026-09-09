@@ -45,6 +45,11 @@ namespace Arcade.Core
 
         public static bool HasSavedGame => PlayerPrefs.GetInt(PREF_HAS_SAVED_GAME, 0) == 1;
 
+        public static void SetInstanceForTesting(ArcadeGameManager instance)
+        {
+            Instance = instance;
+        }
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -55,6 +60,14 @@ namespace Arcade.Core
 
             Instance = this;
             highScore = PlayerPrefs.GetInt(PREF_HIGH_SCORE, 0);
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         private void Start()
@@ -174,24 +187,38 @@ namespace Arcade.Core
             }
         }
 
+        public void PauseGame()
+        {
+            if (currentState == GameState.Paused || currentState == GameState.GameOver || currentState == GameState.LevelClear) return;
+
+            previousStateBeforePause = currentState;
+            currentState = GameState.Paused;
+            Time.timeScale = 0f;
+            OnPauseToggled?.Invoke(true);
+            OnStateChanged?.Invoke(GameState.Paused);
+        }
+
+        public void ResumeGame()
+        {
+            if (currentState != GameState.Paused) return;
+
+            Time.timeScale = 1f;
+            currentState = previousStateBeforePause;
+            OnPauseToggled?.Invoke(false);
+            OnStateChanged?.Invoke(currentState);
+        }
+
         public void TogglePause()
         {
             if (currentState == GameState.GameOver || currentState == GameState.LevelClear) return;
 
             if (currentState == GameState.Paused)
             {
-                Time.timeScale = 1f;
-                currentState = previousStateBeforePause;
-                OnPauseToggled?.Invoke(false);
-                OnStateChanged?.Invoke(currentState);
+                ResumeGame();
             }
             else
             {
-                previousStateBeforePause = currentState;
-                currentState = GameState.Paused;
-                Time.timeScale = 0f;
-                OnPauseToggled?.Invoke(true);
-                OnStateChanged?.Invoke(GameState.Paused);
+                PauseGame();
             }
         }
 

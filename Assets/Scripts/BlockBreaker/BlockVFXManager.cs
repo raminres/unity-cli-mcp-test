@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.VFX;
@@ -7,6 +6,7 @@ namespace Arcade.BlockBreaker
 {
     /// <summary>
     /// Spawns GPU VFX Graph bursts and physical 3D sub-cube debris particles when blocks shatter.
+    /// Optimized for zero GC allocations per frame and instant frame-0 PSO prewarming across iOS (Metal), PC (DX12/Vulkan), and Web (WebGPU).
     /// </summary>
     public class BlockVFXManager : MonoBehaviour
     {
@@ -29,19 +29,60 @@ namespace Arcade.BlockBreaker
             debrisMaterial = mat;
         }
 
+        public static void SetInstanceForTesting(BlockVFXManager instance)
+        {
+            Instance = instance;
+        }
+
         private Material cachedFallbackMaterial;
+        private static MaterialPropertyBlock debrisPropBlock;
 
         private readonly Queue<VisualEffect> vfxPool = new Queue<VisualEffect>();
         private readonly Queue<GameObject> debrisPool = new Queue<GameObject>();
 
+        // Struct-based zero-allocation tracking for active debris particles
+        private struct ActiveDebris
+        {
+            public GameObject gameObject;
+            public Transform transform;
+            public Vector3 velocity;
+            public Vector3 rotationSpeed;
+            public Vector3 startScale;
+            public float elapsed;
+            public float duration;
+        }
+
+        // Struct-based zero-allocation tracking for active VFX Graph bursts
+        private struct ActiveVFX
+        {
+            public VisualEffect effect;
+            public float elapsed;
+            public float duration;
+        }
+
+        private readonly List<ActiveDebris> activeDebrisList = new List<ActiveDebris>(128);
+        private readonly List<ActiveVFX> activeVfxList = new List<ActiveVFX>(32);
+
         private static readonly int ColorPropertyId = Shader.PropertyToID("BlockColor");
         private static readonly int NormalPropertyId = Shader.PropertyToID("HitNormal");
+        private static readonly int BaseColorPropId = Shader.PropertyToID("_BaseColor");
+        private static readonly int ColorPropId = Shader.PropertyToID("_Color");
+        private static readonly int EmissionColorPropId = Shader.PropertyToID("_EmissionColor");
+        private static readonly Vector3 Gravity = new Vector3(0f, -14f, 0f);
+
+        public int AvailableVfxCount => vfxPool.Count;
+        public int AvailableDebrisCount => debrisPool.Count;
+        public int ActiveDebrisCount => activeDebrisList.Count;
+        public int ActiveVfxCount => activeVfxList.Count;
 
         private void Awake()
         {
             if (Instance != null && Instance != this)
             {
-                Destroy(gameObject);
+                if (Application.isPlaying)
+                    Destroy(gameObject);
+                else
+                    DestroyImmediate(gameObject);
                 return;
             }
 
@@ -49,7 +90,21 @@ namespace Arcade.BlockBreaker
             InitializePool();
         }
 
-        private void InitializePool()
+        private void Start()
+        {
+            Prewarm();
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+            ClearAllActive();
+        }
+
+        public void InitializePool()
         {
             // VFX Graph pool
             for (int i = 0; i < poolSize; i++)
@@ -62,11 +117,65 @@ namespace Arcade.BlockBreaker
             // Debris mini-cubes pool
             if (spawnPhysicalSubBoxes)
             {
-                for (int i = 0; i < poolSize * debrisPiecesPerBlock; i++)
+                int totalDebris = poolSize * debrisPiecesPerBlock;
+                for (int i = 0; i < totalDebris; i++)
                 {
                     GameObject debris = CreateDebrisPiece();
                     debris.SetActive(false);
                     debrisPool.Enqueue(debris);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Frame-0 PSO and shader prewarming to eliminate first-hit pipeline compilation hitches.
+        /// Prewarms raster shaders, compiles VFX Graph compute kernels, and prepares MaterialPropertyBlock
+        /// across Metal (iOS), DirectX 12 / Vulkan (PC), and WebGPU (Web).
+        /// </summary>
+        public void Prewarm()
+        {
+            // 1. Warm up raster shaders in memory
+            Shader.WarmupAllShaders();
+
+            // 2. Prewarm 1 VFX Graph instance to force driver compute & particle PSO compilation
+            if (vfxPool.Count > 0)
+            {
+                VisualEffect vfx = vfxPool.Peek();
+                if (vfx != null)
+                {
+                    // Move far off-camera so it does not draw on screen
+                    vfx.transform.position = new Vector3(0f, -500f, 0f);
+                    vfx.gameObject.SetActive(true);
+
+                    if (vfx.HasVector4(ColorPropertyId)) vfx.SetVector4(ColorPropertyId, Vector4.one);
+                    if (vfx.HasVector3(NormalPropertyId)) vfx.SetVector3(NormalPropertyId, Vector3.up);
+
+                    vfx.Play();
+                    vfx.Simulate(0.016f);
+                    vfx.Stop();
+                    vfx.gameObject.SetActive(false);
+                }
+            }
+
+            // 3. Prewarm debris renderer & MaterialPropertyBlock
+            if (spawnPhysicalSubBoxes && debrisPool.Count > 0)
+            {
+                GameObject debris = debrisPool.Peek();
+                if (debris != null)
+                {
+                    var mr = debris.GetComponent<MeshRenderer>();
+                    if (mr != null)
+                    {
+                        Material baseMat = GetOrCreateDebrisMaterial();
+                        if (baseMat != null) mr.sharedMaterial = baseMat;
+
+                        debrisPropBlock ??= new MaterialPropertyBlock();
+                        debrisPropBlock.Clear();
+                        debrisPropBlock.SetColor(BaseColorPropId, Color.white);
+                        debrisPropBlock.SetColor(ColorPropId, Color.white);
+                        debrisPropBlock.SetColor(EmissionColorPropId, Color.white);
+                        mr.SetPropertyBlock(debrisPropBlock);
+                    }
                 }
             }
         }
@@ -108,7 +217,13 @@ namespace Arcade.BlockBreaker
 
             // Remove default collider so particles don't interfere with ball physics
             Collider col = debris.GetComponent<Collider>();
-            if (col != null) Destroy(col);
+            if (col != null)
+            {
+                if (Application.isPlaying)
+                    Destroy(col);
+                else
+                    DestroyImmediate(col);
+            }
 
             var mr = debris.GetComponent<MeshRenderer>();
             if (mr != null)
@@ -137,7 +252,7 @@ namespace Arcade.BlockBreaker
             if (effect.HasVector3(NormalPropertyId)) effect.SetVector3(NormalPropertyId, hitNormal);
 
             effect.Play();
-            StartCoroutine(RecycleVfxRoutine(effect, 1.2f));
+            activeVfxList.Add(new ActiveVFX { effect = effect, elapsed = 0f, duration = 1.2f });
 
             // 2. Spawn physical sub-box particles exploding in 3D
             if (spawnPhysicalSubBoxes)
@@ -152,6 +267,9 @@ namespace Arcade.BlockBreaker
             float offset = 0.25f;
             float[] offsets = { -offset, offset };
 
+            Material baseMat = GetOrCreateDebrisMaterial();
+            debrisPropBlock ??= new MaterialPropertyBlock();
+
             foreach (float ox in offsets)
             {
                 foreach (float oy in offsets)
@@ -160,31 +278,25 @@ namespace Arcade.BlockBreaker
                     {
                         GameObject debris = debrisPool.Count > 0 ? debrisPool.Dequeue() : CreateDebrisPiece();
                         Vector3 subPos = centerPos + new Vector3(ox, oy, oz);
-                        debris.transform.position = subPos;
-                        debris.transform.localScale = Vector3.one * 0.42f;
-                        debris.transform.rotation = Random.rotation;
+                        Transform t = debris.transform;
+                        t.position = subPos;
+                        t.localScale = Vector3.one * 0.42f;
+                        t.rotation = Random.rotation;
 
                         MeshRenderer mr = debris.GetComponent<MeshRenderer>();
                         if (mr != null)
                         {
-                            if (mr.sharedMaterial == null || mr.sharedMaterial.shader == null || mr.sharedMaterial.shader.name == "Standard")
+                            if (mr.sharedMaterial != baseMat && baseMat != null)
                             {
-                                Material baseMat = GetOrCreateDebrisMaterial();
-                                if (baseMat != null) mr.sharedMaterial = baseMat;
+                                mr.sharedMaterial = baseMat;
                             }
 
-                            Material mat = mr.material;
-                            if (mat != null)
-                            {
-                                mat.color = blockColor;
-                                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", blockColor);
-                                if (mat.HasProperty("_Color")) mat.SetColor("_Color", blockColor);
-                                if (mat.HasProperty("_EmissionColor"))
-                                {
-                                    mat.EnableKeyword("_EMISSION");
-                                    mat.SetColor("_EmissionColor", blockColor * 1.3f);
-                                }
-                            }
+                            // Zero-allocation tinting via MaterialPropertyBlock (preserves SRP Batching)
+                            debrisPropBlock.Clear();
+                            debrisPropBlock.SetColor(BaseColorPropId, blockColor);
+                            debrisPropBlock.SetColor(ColorPropId, blockColor);
+                            debrisPropBlock.SetColor(EmissionColorPropId, blockColor * 1.3f);
+                            mr.SetPropertyBlock(debrisPropBlock);
                         }
 
                         debris.SetActive(true);
@@ -194,47 +306,112 @@ namespace Arcade.BlockBreaker
                         Vector3 burstVel = (outward * 0.7f + hitNormal * 0.3f + Random.insideUnitSphere * 0.3f).normalized * debrisExplosionForce;
                         Vector3 rotSpeed = new Vector3(Random.Range(-360f, 360f), Random.Range(-360f, 360f), Random.Range(-360f, 360f));
 
-                        StartCoroutine(AnimateDebrisPiece(debris, burstVel, rotSpeed, 0.75f));
+                        activeDebrisList.Add(new ActiveDebris
+                        {
+                            gameObject = debris,
+                            transform = t,
+                            velocity = burstVel,
+                            rotationSpeed = rotSpeed,
+                            startScale = t.localScale,
+                            elapsed = 0f,
+                            duration = 0.75f
+                        });
                     }
                 }
             }
         }
 
-        private IEnumerator AnimateDebrisPiece(GameObject debris, Vector3 velocity, Vector3 rotationSpeed, float duration)
+        private void Update()
         {
-            float elapsed = 0f;
-            Vector3 startScale = debris.transform.localScale;
-            Vector3 gravity = new Vector3(0f, -14f, 0f);
+            float dt = Time.deltaTime;
+            // Freeze simulation when game is paused
+            if (dt <= 0f) return;
 
-            while (elapsed < duration)
+            // 1. Zero-allocation update for active debris pieces
+            for (int i = activeDebrisList.Count - 1; i >= 0; i--)
             {
-                elapsed += Time.deltaTime;
-                float t = elapsed / duration;
+                ActiveDebris item = activeDebrisList[i];
+                if (item.gameObject == null || item.transform == null)
+                {
+                    activeDebrisList.RemoveAt(i);
+                    continue;
+                }
 
-                velocity += gravity * Time.deltaTime;
-                debris.transform.position += velocity * Time.deltaTime;
-                debris.transform.Rotate(rotationSpeed * Time.deltaTime);
+                item.elapsed += dt;
+                float t = item.elapsed / item.duration;
 
-                // Shrink out smoothly towards the end
-                float scaleFactor = Mathf.Lerp(1f, 0f, Mathf.Pow(t, 2f));
-                debris.transform.localScale = startScale * scaleFactor;
+                item.velocity += Gravity * dt;
+                item.transform.position += item.velocity * dt;
+                item.transform.Rotate(item.rotationSpeed * dt);
 
-                yield return null;
+                // Smooth quadratic shrink out
+                float scaleFactor = Mathf.Lerp(1f, 0f, t * t);
+                item.transform.localScale = item.startScale * scaleFactor;
+
+                if (item.elapsed >= item.duration)
+                {
+                    item.gameObject.SetActive(false);
+                    debrisPool.Enqueue(item.gameObject);
+                    activeDebrisList.RemoveAt(i);
+                }
+                else
+                {
+                    activeDebrisList[i] = item;
+                }
             }
 
-            debris.SetActive(false);
-            debrisPool.Enqueue(debris);
+            // 2. Zero-allocation update for active VFX Graph bursts
+            for (int i = activeVfxList.Count - 1; i >= 0; i--)
+            {
+                ActiveVFX item = activeVfxList[i];
+                if (item.effect == null)
+                {
+                    activeVfxList.RemoveAt(i);
+                    continue;
+                }
+
+                item.elapsed += dt;
+                if (item.elapsed >= item.duration)
+                {
+                    item.effect.Stop();
+                    item.effect.gameObject.SetActive(false);
+                    vfxPool.Enqueue(item.effect);
+                    activeVfxList.RemoveAt(i);
+                }
+                else
+                {
+                    activeVfxList[i] = item;
+                }
+            }
         }
 
-        private IEnumerator RecycleVfxRoutine(VisualEffect effect, float delay)
+        /// <summary>
+        /// Instantly recycles all active debris and VFX instances back into their pools.
+        /// </summary>
+        public void ClearAllActive()
         {
-            yield return new WaitForSeconds(delay);
-            if (effect != null)
+            for (int i = activeDebrisList.Count - 1; i >= 0; i--)
             {
-                effect.Stop();
-                effect.gameObject.SetActive(false);
-                vfxPool.Enqueue(effect);
+                ActiveDebris item = activeDebrisList[i];
+                if (item.gameObject != null)
+                {
+                    item.gameObject.SetActive(false);
+                    debrisPool.Enqueue(item.gameObject);
+                }
             }
+            activeDebrisList.Clear();
+
+            for (int i = activeVfxList.Count - 1; i >= 0; i--)
+            {
+                ActiveVFX item = activeVfxList[i];
+                if (item.effect != null)
+                {
+                    item.effect.Stop();
+                    item.effect.gameObject.SetActive(false);
+                    vfxPool.Enqueue(item.effect);
+                }
+            }
+            activeVfxList.Clear();
         }
     }
 }
