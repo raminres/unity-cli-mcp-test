@@ -197,15 +197,16 @@ namespace Arcade.UI
             }
 
             selectedLevelNumber = PlayerPrefs.GetInt("Arcade_SelectedLevel", 1);
-            SelectLevel(selectedLevelNumber);
+            SelectLevel(selectedLevelNumber, false);
 
             targetFps = PlayerPrefs.GetInt("Arcade_TargetFPS", 60);
             Application.targetFrameRate = targetFps;
             if (btnToggleFps != null) btnToggleFps.text = $"{targetFps} FPS";
         }
 
-        private void SelectLevel(int levelNumber)
+        private void SelectLevel(int levelNumber, bool playSound = true)
         {
+            if (playSound && ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             selectedLevelNumber = levelNumber;
 
             if (btnMenuLvl1 != null) { if (levelNumber == 1) btnMenuLvl1.AddToClassList("level-tab-active"); else btnMenuLvl1.RemoveFromClassList("level-tab-active"); }
@@ -231,7 +232,7 @@ namespace Arcade.UI
 
         private void HandleNewGameClicked()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             PlayerPrefs.SetInt("Arcade_LoadSavedGameOnStart", 0);
             PlayerPrefs.SetInt("Arcade_SelectedLevel", 1);
             PlayerPrefs.Save();
@@ -241,7 +242,7 @@ namespace Arcade.UI
 
         private void HandleStartSelectedLevel()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             PlayerPrefs.SetInt("Arcade_LoadSavedGameOnStart", 0);
             PlayerPrefs.SetInt("Arcade_SelectedLevel", selectedLevelNumber);
             PlayerPrefs.Save();
@@ -251,50 +252,50 @@ namespace Arcade.UI
 
         private void HandleContinueClicked()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             PlayerPrefs.SetInt("Arcade_LoadSavedGameOnStart", 1);
             SceneManager.LoadScene("LV_BlockBreaker");
         }
 
         private void ShowLevelModal()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (levelModal != null) levelModal.RemoveFromClassList("modal-hidden");
         }
 
         private void HideLevelModal()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (levelModal != null) levelModal.AddToClassList("modal-hidden");
         }
 
         private void ShowOptions()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (optionsModal != null) optionsModal.RemoveFromClassList("modal-hidden");
         }
 
         private void HideOptions()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (optionsModal != null) optionsModal.AddToClassList("modal-hidden");
         }
 
         private void ShowCredits()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (creditsModal != null) creditsModal.RemoveFromClassList("modal-hidden");
         }
 
         private void HideCredits()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (creditsModal != null) creditsModal.AddToClassList("modal-hidden");
         }
 
         private void ToggleFpsSetting()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             targetFps = targetFps == 60 ? 120 : 60;
             Application.targetFrameRate = targetFps;
             PlayerPrefs.SetInt("Arcade_TargetFPS", targetFps);

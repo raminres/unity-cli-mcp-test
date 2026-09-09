@@ -1,7 +1,10 @@
+using Arcade.Audio;
 using Arcade.BlockBreaker;
 using Arcade.Core;
+using Arcade.UI;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Arcade.Tests
 {
@@ -583,6 +586,359 @@ namespace Arcade.Tests
             Assert.AreEqual(mult2x + mult3x + expanders, specialMap.Count, "All indices must be collision-free.");
 
             Object.DestroyImmediate(genObj);
+        }
+
+        [Test]
+        public void ArcadeUIManager_UpdateLivesDisplay_UpdatesHeartPipsCorrectly()
+        {
+            var uiObj = new GameObject("UI_HUD");
+            var panelRenderer = uiObj.AddComponent<PanelRenderer>();
+            var uiMgr = uiObj.AddComponent<ArcadeUIManager>();
+
+            var root = new VisualElement();
+            var pips = new[]
+            {
+                new VisualElement { name = "life-pip-1" },
+                new VisualElement { name = "life-pip-2" },
+                new VisualElement { name = "life-pip-3" }
+            };
+            foreach (var p in pips) root.Add(p);
+
+            var rootField = typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            rootField.SetValue(uiMgr, root);
+
+            var pipsField = typeof(ArcadeUIManager).GetField("lifePips", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            pipsField.SetValue(uiMgr, pips);
+
+            var fillSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var emptySprite = Sprite.Create(Texture2D.blackTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+
+            var fillField = typeof(ArcadeUIManager).GetField("heartFillSprite", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var emptyField = typeof(ArcadeUIManager).GetField("heartEmptySprite", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            fillField.SetValue(uiMgr, fillSprite);
+            emptyField.SetValue(uiMgr, emptySprite);
+
+            // 1. Full 3 lives: all 3 should be active and have fillSprite with red tint
+            uiMgr.UpdateLivesDisplay(3);
+            for (int i = 0; i < 3; i++)
+            {
+                Assert.IsTrue(pips[i].ClassListContains("pip-active"), $"Pip {i} must have pip-active with 3 lives.");
+                Assert.IsFalse(pips[i].ClassListContains("pip-lost"), $"Pip {i} must not have pip-lost with 3 lives.");
+                Assert.AreEqual(fillSprite, pips[i].style.backgroundImage.value.sprite, $"Pip {i} must have filled heart sprite.");
+            }
+
+            // 2. Lose 1 life -> 2 remaining: pip-0 & pip-1 active, pip-2 lost with emptySprite
+            uiMgr.UpdateLivesDisplay(2);
+            Assert.IsTrue(pips[0].ClassListContains("pip-active"));
+            Assert.IsTrue(pips[1].ClassListContains("pip-active"));
+            Assert.IsTrue(pips[2].ClassListContains("pip-lost"), "Pip 2 must have pip-lost when 1 life is lost.");
+            Assert.AreEqual(emptySprite, pips[2].style.backgroundImage.value.sprite, "Pip 2 must switch to empty heart sprite.");
+
+            // 3. Lose 2 lives -> 1 remaining: pip-0 active, pip-1 & pip-2 lost
+            uiMgr.UpdateLivesDisplay(1);
+            Assert.IsTrue(pips[0].ClassListContains("pip-active"));
+            Assert.IsTrue(pips[1].ClassListContains("pip-lost"));
+            Assert.IsTrue(pips[2].ClassListContains("pip-lost"));
+            Assert.AreEqual(emptySprite, pips[1].style.backgroundImage.value.sprite);
+            Assert.AreEqual(emptySprite, pips[2].style.backgroundImage.value.sprite);
+
+            // 4. 0 lives: all 3 lost
+            uiMgr.UpdateLivesDisplay(0);
+            for (int i = 0; i < 3; i++)
+            {
+                Assert.IsTrue(pips[i].ClassListContains("pip-lost"));
+                Assert.AreEqual(emptySprite, pips[i].style.backgroundImage.value.sprite);
+            }
+
+            Object.DestroyImmediate(fillSprite);
+            Object.DestroyImmediate(emptySprite);
+            Object.DestroyImmediate(uiObj);
+        }
+
+        [Test]
+        public void UIManager_PauseButton_TogglesPauseAndPlayIcons()
+        {
+            var uiObj = new GameObject("TestUI");
+            uiObj.AddComponent<PanelRenderer>();
+            var uiMgr = uiObj.AddComponent<ArcadeUIManager>();
+
+            var root = new VisualElement();
+            var btnPause = new Button { name = "btn-quick-pause" };
+            var iconPause = new VisualElement { name = "icon-quick-pause" };
+            btnPause.Add(iconPause);
+            root.Add(btnPause);
+
+            var pauseSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var playSprite = Sprite.Create(Texture2D.blackTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+
+            var pauseField = typeof(ArcadeUIManager).GetField("pauseSprite", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var playField = typeof(ArcadeUIManager).GetField("playSprite", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var iconPauseField = typeof(ArcadeUIManager).GetField("iconQuickPause", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var btnPauseField = typeof(ArcadeUIManager).GetField("btnQuickPause", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            pauseField.SetValue(uiMgr, pauseSprite);
+            playField.SetValue(uiMgr, playSprite);
+            iconPauseField.SetValue(uiMgr, iconPause);
+            btnPauseField.SetValue(uiMgr, btnPause);
+
+            // 1. Initial / Playing state: should show pause icon
+            uiMgr.UpdatePauseButtonIcon(false);
+            Assert.IsTrue(iconPause.ClassListContains("icon-pause"), "Playing state must show icon-pause class.");
+            Assert.IsFalse(iconPause.ClassListContains("icon-play"), "Playing state must not show icon-play class.");
+            Assert.AreEqual(pauseSprite, iconPause.style.backgroundImage.value.sprite, "Playing state must show pauseSprite.");
+
+            // 2. Paused state: should show play (resume) icon
+            uiMgr.UpdatePauseButtonIcon(true);
+            Assert.IsTrue(iconPause.ClassListContains("icon-play"), "Paused state must show icon-play class.");
+            Assert.IsFalse(iconPause.ClassListContains("icon-pause"), "Paused state must not show icon-pause class.");
+            Assert.AreEqual(playSprite, iconPause.style.backgroundImage.value.sprite, "Paused state must show playSprite.");
+
+            // 3. Resume back to playing: should switch back to pause icon
+            uiMgr.UpdatePauseButtonIcon(false);
+            Assert.IsTrue(iconPause.ClassListContains("icon-pause"), "Resuming must restore icon-pause class.");
+            Assert.AreEqual(pauseSprite, iconPause.style.backgroundImage.value.sprite);
+
+            Object.DestroyImmediate(pauseSprite);
+            Object.DestroyImmediate(playSprite);
+            Object.DestroyImmediate(uiObj);
+        }
+
+        [Test]
+        public void UIManager_VolumeButton_AndToggle_SwitchBetweenMuteAndUnmuteIcons()
+        {
+            var audioObj = new GameObject("TestAudio");
+            var audioMgr = audioObj.AddComponent<ArcadeAudioManager>();
+
+            var uiObj = new GameObject("TestUI");
+            uiObj.AddComponent<PanelRenderer>();
+            var uiMgr = uiObj.AddComponent<ArcadeUIManager>();
+
+            var btnMute = new Button { name = "btn-quick-mute" };
+            var iconMute = new VisualElement { name = "icon-quick-mute" };
+            btnMute.Add(iconMute);
+
+            var toggleMute = new Toggle { name = "toggle-mute" };
+            var checkmark = toggleMute.Q(className: "unity-toggle__checkmark");
+
+            var muteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var volUpSprite = Sprite.Create(Texture2D.blackTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+
+            var muteSpriteField = typeof(ArcadeUIManager).GetField("volumeMuteSprite", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var volUpSpriteField = typeof(ArcadeUIManager).GetField("volumeUpSprite", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var iconMuteField = typeof(ArcadeUIManager).GetField("iconQuickMute", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var btnMuteField = typeof(ArcadeUIManager).GetField("btnQuickMute", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var toggleMuteField = typeof(ArcadeUIManager).GetField("toggleMute", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            muteSpriteField.SetValue(uiMgr, muteSprite);
+            volUpSpriteField.SetValue(uiMgr, volUpSprite);
+            iconMuteField.SetValue(uiMgr, iconMute);
+            btnMuteField.SetValue(uiMgr, btnMute);
+            toggleMuteField.SetValue(uiMgr, toggleMute);
+
+            // 1. Unmuted state: Quick button shows icon-volume-mute (action is to mute); Options toggle shows volumeUpSprite
+            uiMgr.UpdateMuteButtonIcon(false);
+            Assert.IsTrue(iconMute.ClassListContains("icon-volume-mute"), "Unmuted state must show icon-volume-mute to indicate ability to mute.");
+            Assert.IsFalse(iconMute.ClassListContains("icon-volume-up"));
+            Assert.AreEqual(muteSprite, iconMute.style.backgroundImage.value.sprite);
+            Assert.AreEqual(volUpSprite, checkmark.style.backgroundImage.value.sprite, "Options toggle checkmark must show volumeUp when unmuted.");
+
+            // 2. Muted state: Quick button shows icon-volume-up (action is to unmute); Options toggle shows volumeMuteSprite
+            uiMgr.UpdateMuteButtonIcon(true);
+            Assert.IsTrue(iconMute.ClassListContains("icon-volume-up"), "Muted state must show icon-volume-up to indicate ability to unmute.");
+            Assert.IsFalse(iconMute.ClassListContains("icon-volume-mute"));
+            Assert.AreEqual(volUpSprite, iconMute.style.backgroundImage.value.sprite);
+            Assert.AreEqual(muteSprite, checkmark.style.backgroundImage.value.sprite, "Options toggle checkmark must show volumeMute when muted.");
+
+            Object.DestroyImmediate(muteSprite);
+            Object.DestroyImmediate(volUpSprite);
+            Object.DestroyImmediate(uiObj);
+            Object.DestroyImmediate(audioObj);
+        }
+
+        [Test]
+        public void UIManager_SettingsButton_Spins360DegreesForwardContinously()
+        {
+            var uiObj = new GameObject("TestUI");
+            uiObj.AddComponent<PanelRenderer>();
+            var uiMgr = uiObj.AddComponent<ArcadeUIManager>();
+
+            var iconOptions = new VisualElement { name = "icon-quick-options" };
+            var iconOptionsField = typeof(ArcadeUIManager).GetField("iconQuickOptions", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            iconOptionsField.SetValue(uiMgr, iconOptions);
+
+            Assert.AreEqual(0f, uiMgr.SettingsRotationAngle, "Initial rotation angle must be 0.");
+
+            // 1st press: spins to 360°
+            uiMgr.TriggerSettingsButtonSpin();
+            Assert.AreEqual(360f, uiMgr.SettingsRotationAngle, "1st click must advance rotation by 360°.");
+
+            // 2nd press: spins forward to 720°
+            uiMgr.TriggerSettingsButtonSpin();
+            Assert.AreEqual(720f, uiMgr.SettingsRotationAngle, "2nd click must advance rotation to 720°.");
+
+            // 3rd press: spins forward to 1080°
+            uiMgr.TriggerSettingsButtonSpin();
+            Assert.AreEqual(1080f, uiMgr.SettingsRotationAngle, "3rd click must advance rotation to 1080°.");
+
+            Object.DestroyImmediate(uiObj);
+        }
+
+        #endregion
+
+        #region 7. Audio System (AU_*) Tests
+
+        [Test]
+        public void AudioManager_Clips_AreBoundAndFallbackLoadFromAssets()
+        {
+            var audioObj = new GameObject("TestAudio");
+            var audioMgr = audioObj.AddComponent<ArcadeAudioManager>();
+            audioMgr.LoadClipsIfEmpty();
+
+            Assert.IsNotNull(audioMgr.ClipPop, "ClipPop must not be null.");
+            Assert.IsNotNull(audioMgr.ClipBreak, "ClipBreak must not be null.");
+            Assert.IsNotNull(audioMgr.ClipPowerup, "ClipPowerup must not be null.");
+            Assert.IsNotNull(audioMgr.ClipGameOver, "ClipGameOver must not be null.");
+            Assert.IsNotNull(audioMgr.ClipLevelSuccess, "ClipLevelSuccess must not be null.");
+            Assert.IsNotNull(audioMgr.ClipButtonPress, "ClipButtonPress must not be null.");
+
+            Object.DestroyImmediate(audioObj);
+        }
+
+        [Test]
+        public void Block_DestroyBlock_PlaysBreakSound_AndPowerupSoundOnSpecial()
+        {
+            var audioObj = new GameObject("TestAudio");
+            var audioMgr = audioObj.AddComponent<ArcadeAudioManager>();
+            audioMgr.LoadClipsIfEmpty();
+
+            // 1. Normal Block
+            var normalBlockObj = new GameObject("NormalBlock");
+            var normalBlock = normalBlockObj.AddComponent<Block>();
+            normalBlock.Initialize(BlockColorTier.Red, null, Color.red, BlockSpecialType.Normal);
+
+            // Destroy normal block - should play break sound
+            Assert.DoesNotThrow(() => normalBlock.DestroyBlock(Vector3.down));
+
+            // 2. Power-up Block (Paddle Expander)
+            var powerupBlockObj = new GameObject("PowerupBlock");
+            var powerupBlock = powerupBlockObj.AddComponent<Block>();
+            powerupBlock.Initialize(BlockColorTier.Blue, null, Color.blue, BlockSpecialType.PaddleExpander);
+
+            // Destroy power-up block - should trigger both break & powerup sound without error
+            Assert.DoesNotThrow(() => powerupBlock.DestroyBlock(Vector3.down));
+
+            Object.DestroyImmediate(audioObj);
+        }
+
+        [Test]
+        public void AudioManager_ButtonPress_And_Pop_CanBeInvokedDirectly()
+        {
+            var audioObj = new GameObject("TestAudio");
+            var audioMgr = audioObj.AddComponent<ArcadeAudioManager>();
+            audioMgr.LoadClipsIfEmpty();
+
+            Assert.DoesNotThrow(() => audioMgr.PlayPop(), "PlayPop must execute without error.");
+            Assert.DoesNotThrow(() => audioMgr.PlayPaddleBounce(), "PlayPaddleBounce must execute without error.");
+            Assert.DoesNotThrow(() => audioMgr.PlayWallBounce(), "PlayWallBounce must execute without error.");
+            Assert.DoesNotThrow(() => audioMgr.PlayBreak(), "PlayBreak must execute without error.");
+            Assert.DoesNotThrow(() => audioMgr.PlayPowerup(), "PlayPowerup must execute without error.");
+            Assert.DoesNotThrow(() => audioMgr.PlayButtonPress(), "PlayButtonPress must execute without error.");
+            Assert.DoesNotThrow(() => audioMgr.PlayLevelClear(), "PlayLevelClear must execute without error.");
+            Assert.DoesNotThrow(() => audioMgr.PlayGameOver(), "PlayGameOver must execute without error.");
+
+            Object.DestroyImmediate(audioObj);
+        }
+
+        #endregion
+
+        #region 12. Powerup Icons, Badge Margins, and VFX Shader Tests
+
+        [Test]
+        public void BlockBadge_Configures_PaddleExpander_ShowsIcon_And_HidesText()
+        {
+            var badgeGo = new GameObject("TestBadge");
+            var badge = badgeGo.AddComponent<BlockBadge>();
+
+            var root = new VisualElement();
+            var plate = new VisualElement { name = "badge-plate" };
+            var icon = new VisualElement { name = "badge-icon" };
+            var label = new Label { name = "badge-text" };
+            plate.Add(icon);
+            plate.Add(label);
+            root.Add(plate);
+
+            badge.Setup(BlockSpecialType.PaddleExpander, null, null);
+            badge.UpdateUI(root);
+
+            Assert.AreEqual(Vector2.one * 0.80f, badge.WorldSpaceSize, "Badge world space size must be 0.80 to leave safety margins on the 1.0 unit brick face.");
+            Assert.AreEqual(DisplayStyle.Flex, icon.style.display.value, "Expander badge icon must be visible.");
+            Assert.IsTrue(icon.ClassListContains("badge-icon-expander"), "Icon must have badge-icon-expander class.");
+            Assert.AreEqual(DisplayStyle.None, label.style.display.value, "Expander badge text must be hidden.");
+            Assert.IsTrue(plate.ClassListContains("badge-plate-expander"), "Plate must have badge-plate-expander class.");
+
+            Object.DestroyImmediate(badgeGo);
+        }
+
+        [Test]
+        [TestCase(BlockSpecialType.ScoreMultiplier2x, "x2", "badge-text-x2", "badge-plate-x2")]
+        [TestCase(BlockSpecialType.ScoreMultiplier3x, "x3", "badge-text-x3", "badge-plate-x3")]
+        public void BlockBadge_Configures_Multiplier_ShowsIcon_And_ShowsCorrectText(BlockSpecialType type, string expectedText, string expectedTextClass, string expectedPlateClass)
+        {
+            var badgeGo = new GameObject("TestBadge");
+            var badge = badgeGo.AddComponent<BlockBadge>();
+
+            var root = new VisualElement();
+            var plate = new VisualElement { name = "badge-plate" };
+            var icon = new VisualElement { name = "badge-icon" };
+            var label = new Label { name = "badge-text" };
+            plate.Add(icon);
+            plate.Add(label);
+            root.Add(plate);
+
+            badge.Setup(type, null, null);
+            badge.UpdateUI(root);
+
+            Assert.AreEqual(Vector2.one * 0.80f, badge.WorldSpaceSize, "Badge world space size must be 0.80 to guarantee margin on brick face.");
+            Assert.AreEqual(DisplayStyle.Flex, icon.style.display.value, "Multiplier icon must be visible.");
+            Assert.IsTrue(icon.ClassListContains("badge-icon-points"), "Icon must have badge-icon-points class.");
+            Assert.AreEqual(DisplayStyle.Flex, label.style.display.value, "Multiplier text must be visible.");
+            Assert.AreEqual(expectedText, label.text, $"Label text must be '{expectedText}'.");
+            Assert.IsTrue(label.ClassListContains(expectedTextClass), $"Label must have class {expectedTextClass}.");
+            Assert.IsTrue(plate.ClassListContains(expectedPlateClass), $"Plate must have class {expectedPlateClass}.");
+
+            Object.DestroyImmediate(badgeGo);
+        }
+
+        [Test]
+        public void BlockVFXManager_DebrisMaterial_UsesValidURPShader_AndFallbackIsSafe()
+        {
+            var vfxGo = new GameObject("TestVFXManager");
+            var vfx = vfxGo.AddComponent<BlockVFXManager>();
+
+            // Check safe fallback material when unassigned
+            var fallbackMat = vfx.GetOrCreateDebrisMaterial();
+            Assert.IsNotNull(fallbackMat, "Fallback debris material must not be null.");
+            Assert.IsNotNull(fallbackMat.shader, "Fallback debris material must have a valid shader.");
+            Assert.AreNotEqual("Standard", fallbackMat.shader.name, "Fallback shader must not be legacy built-in Standard.");
+
+            // Test assigning explicit material
+            var customMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Arcade/VFX_BlockDebris"));
+            vfx.SetDebrisMaterial(customMat);
+            Assert.AreEqual(customMat, vfx.DebrisMaterial, "Explicit debris material must be assigned and accessible.");
+            Assert.AreEqual(customMat, vfx.GetOrCreateDebrisMaterial(), "GetOrCreateDebrisMaterial must return the assigned material.");
+
+            Object.DestroyImmediate(vfxGo);
+            Object.DestroyImmediate(customMat);
+        }
+
+        [Test]
+        public void Powerup_Sprites_AreConfiguredAsSprites()
+        {
+            var expanderSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
+            var pointsSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
+
+            Assert.IsNotNull(expanderSprite, "TX_Powerup_Arrows_Outward must be imported as a Sprite.");
+            Assert.IsNotNull(pointsSprite, "TX_Powerup_Extra_Points must be imported as a Sprite.");
         }
 
         #endregion

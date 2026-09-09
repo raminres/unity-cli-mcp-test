@@ -25,6 +25,12 @@ PresetManager:
     - m_Preset: {fileID: 2655988077585873504, guid: 30bfc777d86b1ee4baf676238f51678c, type: 2}
       m_Filter: glob:"*BaseColor*"
       m_Disabled: 0
+    - m_Preset: {fileID: 2655988077585873504, guid: 4f9daa0004c33d24cb046c665e194eae, type: 2}
+      m_Filter: glob:"*UI/Icons/*"
+      m_Disabled: 0
+    - m_Preset: {fileID: 2655988077585873504, guid: 4f9daa0004c33d24cb046c665e194eae, type: 2}
+      m_Filter: glob:"*Icons/*"
+      m_Disabled: 0
     - m_Preset: {fileID: 2655988077585873504, guid: 30bfc777d86b1ee4baf676238f51678c, type: 2}
       m_Filter: glob:"*TX_*"
       m_Disabled: 0

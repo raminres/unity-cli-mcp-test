@@ -26,6 +26,13 @@ namespace Arcade.UI
         private Button btnQuickOptions;
         private Button btnQuickPause;
 
+        // Quick control icon visual elements
+        private VisualElement iconQuickLevels;
+        private VisualElement iconQuickMute;
+        private VisualElement iconQuickOptions;
+        private VisualElement iconQuickPause;
+        private float settingsRotationAngle = 0f;
+
         // Banner
         private VisualElement launchBanner;
 
@@ -79,6 +86,30 @@ namespace Arcade.UI
         private Button btnApplyLevel;
         private Button btnCloseLevelSettings;
 
+        [Header("Lives Icons")]
+        [SerializeField] private Sprite heartFillSprite;
+        [SerializeField] private Sprite heartEmptySprite;
+
+        [Header("Quick Control Icons")]
+        [SerializeField] private Sprite levelSettingsSprite;
+        [SerializeField] private Sprite volumeMuteSprite;
+        [SerializeField] private Sprite volumeUpSprite;
+        [SerializeField] private Sprite settingsSprite;
+        [SerializeField] private Sprite pauseSprite;
+        [SerializeField] private Sprite playSprite;
+
+        // Public accessors for testing & verification
+        public VisualElement IconQuickPause => iconQuickPause;
+        public VisualElement IconQuickMute => iconQuickMute;
+        public VisualElement IconQuickOptions => iconQuickOptions;
+        public VisualElement IconQuickLevels => iconQuickLevels;
+        public float SettingsRotationAngle => settingsRotationAngle;
+        public Toggle ToggleMute => toggleMute;
+        public Button BtnQuickPause => btnQuickPause;
+        public Button BtnQuickMute => btnQuickMute;
+        public Button BtnQuickOptions => btnQuickOptions;
+        public Button BtnQuickLevels => btnQuickLevels;
+
         private LevelConfiguration activeEditableConfig;
         private LevelGenerator levelGenerator;
         private int targetFps = 60;
@@ -86,11 +117,6 @@ namespace Arcade.UI
         private void Awake()
         {
             panelRenderer = GetComponent<PanelRenderer>();
-            if (panelRenderer != null)
-            {
-                panelRenderer.enabled = false;
-                panelRenderer.enabled = true;
-            }
         }
 
         private void Start()
@@ -107,6 +133,8 @@ namespace Arcade.UI
             if (panelRenderer != null)
             {
                 panelRenderer.RegisterUIReloadCallback(OnUIReload);
+                panelRenderer.enabled = false;
+                panelRenderer.enabled = true;
             }
             SubscribeEvents();
         }
@@ -134,7 +162,7 @@ namespace Arcade.UI
         {
             if (btnQuickLevels != null) btnQuickLevels.clicked -= ShowLevelSettings;
             if (btnQuickMute != null) btnQuickMute.clicked -= HandleQuickMuteClicked;
-            if (btnQuickOptions != null) btnQuickOptions.clicked -= ShowOptions;
+            if (btnQuickOptions != null) btnQuickOptions.clicked -= HandleQuickOptionsClicked;
             if (btnQuickPause != null) btnQuickPause.clicked -= HandleQuickPauseClicked;
 
             if (btnResume != null) btnResume.clicked -= HandleResumeClicked;
@@ -173,10 +201,52 @@ namespace Arcade.UI
                 root.Q<VisualElement>("life-pip-3")
             };
 
+            if (heartFillSprite == null)
+            {
+#if UNITY_EDITOR
+                heartFillSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Heart_Fill.png");
+#endif
+            }
+            if (heartEmptySprite == null)
+            {
+#if UNITY_EDITOR
+                heartEmptySprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Heart_Empty.png");
+#endif
+            }
+
+#if UNITY_EDITOR
+            if (levelSettingsSprite == null)
+                levelSettingsSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Level_Settings.png");
+            if (volumeMuteSprite == null)
+                volumeMuteSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Volume_Mute.png");
+            if (volumeUpSprite == null)
+                volumeUpSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Volume_Up.png");
+            if (settingsSprite == null)
+                settingsSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Settings.png");
+            if (pauseSprite == null)
+                pauseSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Pause.png");
+            if (playSprite == null)
+                playSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Play.png");
+#endif
+
             btnQuickLevels = root.Q<Button>("btn-quick-levels");
             btnQuickMute = root.Q<Button>("btn-quick-mute");
             btnQuickOptions = root.Q<Button>("btn-quick-options");
             btnQuickPause = root.Q<Button>("btn-quick-pause");
+
+            iconQuickLevels = root.Q<VisualElement>("icon-quick-levels");
+            iconQuickMute = root.Q<VisualElement>("icon-quick-mute");
+            iconQuickOptions = root.Q<VisualElement>("icon-quick-options");
+            iconQuickPause = root.Q<VisualElement>("icon-quick-pause");
+
+            if (iconQuickLevels != null && levelSettingsSprite != null)
+                iconQuickLevels.style.backgroundImage = new StyleBackground(levelSettingsSprite);
+            if (iconQuickOptions != null && settingsSprite != null)
+                iconQuickOptions.style.backgroundImage = new StyleBackground(settingsSprite);
+
+            settingsRotationAngle = 0f;
+            if (iconQuickOptions != null)
+                iconQuickOptions.style.rotate = new StyleRotate(new Rotate(Angle.Degrees(0f)));
 
             launchBanner = root.Q<VisualElement>("launch-banner");
 
@@ -230,7 +300,7 @@ namespace Arcade.UI
             // Wire quick buttons
             if (btnQuickLevels != null) btnQuickLevels.clicked += ShowLevelSettings;
             if (btnQuickMute != null) btnQuickMute.clicked += HandleQuickMuteClicked;
-            if (btnQuickOptions != null) btnQuickOptions.clicked += ShowOptions;
+            if (btnQuickOptions != null) btnQuickOptions.clicked += HandleQuickOptionsClicked;
             if (btnQuickPause != null) btnQuickPause.clicked += HandleQuickPauseClicked;
 
             // Wire modal buttons
@@ -367,6 +437,8 @@ namespace Arcade.UI
                 UpdateMuteButtonIcon();
             }
 
+            UpdatePauseButtonIcon(ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State == GameState.Paused);
+
             targetFps = PlayerPrefs.GetInt("Arcade_TargetFPS", 60);
             Application.targetFrameRate = targetFps;
             if (btnFps != null) btnFps.text = $"{targetFps} FPS";
@@ -389,17 +461,29 @@ namespace Arcade.UI
                 {
                     lifePips[i].AddToClassList("pip-active");
                     lifePips[i].RemoveFromClassList("pip-lost");
+                    if (heartFillSprite != null)
+                    {
+                        lifePips[i].style.backgroundImage = new StyleBackground(heartFillSprite);
+                        lifePips[i].style.unityBackgroundImageTintColor = new StyleColor(new Color(1f, 0.231f, 0.337f, 1f)); // #ff3b56
+                    }
                 }
                 else
                 {
                     lifePips[i].RemoveFromClassList("pip-active");
                     lifePips[i].AddToClassList("pip-lost");
+                    if (heartEmptySprite != null)
+                    {
+                        lifePips[i].style.backgroundImage = new StyleBackground(heartEmptySprite);
+                        lifePips[i].style.unityBackgroundImageTintColor = new StyleColor(new Color(1f, 0.231f, 0.337f, 0.35f)); // dimmed red outline
+                    }
                 }
             }
         }
 
         private void HandleGameStateChanged(GameState state)
         {
+            UpdatePauseButtonIcon(state == GameState.Paused);
+
             // Banner visibility
             if (launchBanner != null)
             {
@@ -463,21 +547,133 @@ namespace Arcade.UI
         {
             if (ArcadeAudioManager.Instance != null)
             {
+                ArcadeAudioManager.Instance.PlayButtonPress();
                 ArcadeAudioManager.Instance.ToggleMute();
                 if (toggleMute != null) toggleMute.value = ArcadeAudioManager.Instance.IsMuted;
                 UpdateMuteButtonIcon();
             }
         }
 
-        private void UpdateMuteButtonIcon()
+        public void UpdateMuteButtonIcon(bool? isMutedOverride = null)
         {
-            if (btnQuickMute == null || ArcadeAudioManager.Instance == null) return;
-            btnQuickMute.text = ArcadeAudioManager.Instance.IsMuted ? "🔇" : "🔊";
+            bool isMuted = isMutedOverride ?? (ArcadeAudioManager.Instance != null && ArcadeAudioManager.Instance.IsMuted);
+
+            if (btnQuickMute != null)
+            {
+                btnQuickMute.text = string.Empty;
+                btnQuickMute.tooltip = isMuted ? "Unmute Sound" : "Mute Sound";
+            }
+
+            if (iconQuickMute != null)
+            {
+                // Unmuted -> show TX_Volume_Mute (indicates ability to mute)
+                // Muted -> show TX_Volume_Up (indicates ability to unmute)
+                iconQuickMute.RemoveFromClassList("icon-volume-mute");
+                iconQuickMute.RemoveFromClassList("icon-volume-up");
+
+                if (isMuted)
+                {
+                    iconQuickMute.AddToClassList("icon-volume-up");
+                    if (volumeUpSprite != null)
+                    {
+                        iconQuickMute.style.backgroundImage = new StyleBackground(volumeUpSprite);
+                        iconQuickMute.style.unityBackgroundImageTintColor = new StyleColor(new Color(1f, 0.231f, 0.337f, 1f)); // #ff3b56
+                    }
+                }
+                else
+                {
+                    iconQuickMute.AddToClassList("icon-volume-mute");
+                    if (volumeMuteSprite != null)
+                    {
+                        iconQuickMute.style.backgroundImage = new StyleBackground(volumeMuteSprite);
+                        iconQuickMute.style.unityBackgroundImageTintColor = new StyleColor(new Color(0.886f, 0.910f, 0.941f, 1f)); // #e2e8f0
+                    }
+                }
+            }
+
+            UpdateToggleMuteIcon(isMuted);
+        }
+
+        public void UpdateToggleMuteIcon(bool isMuted)
+        {
+            if (toggleMute == null) return;
+            var checkmark = toggleMute.Q(className: "unity-toggle__checkmark");
+            if (checkmark != null)
+            {
+                if (isMuted)
+                {
+                    if (volumeMuteSprite != null)
+                        checkmark.style.backgroundImage = new StyleBackground(volumeMuteSprite);
+                    checkmark.style.unityBackgroundImageTintColor = new StyleColor(new Color(1f, 0.231f, 0.337f, 1f)); // #ff3b56
+                }
+                else
+                {
+                    if (volumeUpSprite != null)
+                        checkmark.style.backgroundImage = new StyleBackground(volumeUpSprite);
+                    checkmark.style.unityBackgroundImageTintColor = new StyleColor(new Color(0.13f, 0.83f, 0.99f, 1f)); // #21d4fd
+                }
+            }
+        }
+
+        public void UpdatePauseButtonIcon(bool isPaused)
+        {
+            if (btnQuickPause != null)
+            {
+                btnQuickPause.text = string.Empty;
+                btnQuickPause.tooltip = isPaused ? "Resume Game" : "Pause Game";
+            }
+
+            if (iconQuickPause != null)
+            {
+                iconQuickPause.RemoveFromClassList("icon-pause");
+                iconQuickPause.RemoveFromClassList("icon-play");
+
+                if (isPaused)
+                {
+                    // Paused: show Play icon to indicate ability to resume
+                    iconQuickPause.AddToClassList("icon-play");
+                    if (playSprite != null)
+                    {
+                        iconQuickPause.style.backgroundImage = new StyleBackground(playSprite);
+                        iconQuickPause.style.unityBackgroundImageTintColor = new StyleColor(new Color(0.149f, 0.910f, 0.522f, 1f)); // #26e885
+                    }
+                }
+                else
+                {
+                    // Playing / Ready: show Pause icon to indicate ability to pause
+                    iconQuickPause.AddToClassList("icon-pause");
+                    if (pauseSprite != null)
+                    {
+                        iconQuickPause.style.backgroundImage = new StyleBackground(pauseSprite);
+                        iconQuickPause.style.unityBackgroundImageTintColor = new StyleColor(new Color(0.886f, 0.910f, 0.941f, 1f)); // #e2e8f0
+                    }
+                }
+            }
+        }
+
+        public void TriggerSettingsButtonSpin()
+        {
+            if (iconQuickOptions == null) return;
+            settingsRotationAngle += 360f;
+            iconQuickOptions.style.rotate = new StyleRotate(new Rotate(Angle.Degrees(settingsRotationAngle)));
+        }
+
+        private void HandleQuickOptionsClicked()
+        {
+            TriggerSettingsButtonSpin();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            if (optionsModal != null)
+            {
+                if (optionsModal.ClassListContains("modal-hidden"))
+                    optionsModal.RemoveFromClassList("modal-hidden");
+                else
+                    optionsModal.AddToClassList("modal-hidden");
+            }
         }
 
         private void HandleQuickPauseClicked()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (ArcadeGameManager.Instance != null)
             {
                 ArcadeGameManager.Instance.TogglePause();
@@ -486,7 +682,7 @@ namespace Arcade.UI
 
         private void HandleResumeClicked()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (ArcadeGameManager.Instance != null)
             {
                 ArcadeGameManager.Instance.TogglePause();
@@ -495,7 +691,7 @@ namespace Arcade.UI
 
         private void HandleRestartClicked()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (ArcadeGameManager.Instance != null)
             {
                 ArcadeGameManager.Instance.RestartGame();
@@ -504,7 +700,7 @@ namespace Arcade.UI
 
         private void HandleNextLevelClicked()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
 
             if (levelGenerator != null)
@@ -522,7 +718,7 @@ namespace Arcade.UI
 
         private void HandleMenuClicked()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (ArcadeGameManager.Instance != null)
             {
                 ArcadeGameManager.Instance.LoadMainMenu();
@@ -531,19 +727,20 @@ namespace Arcade.UI
 
         private void ShowOptions()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            TriggerSettingsButtonSpin();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (optionsModal != null) optionsModal.RemoveFromClassList("modal-hidden");
         }
 
         private void HideOptions()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (optionsModal != null) optionsModal.AddToClassList("modal-hidden");
         }
 
         public void ShowLevelSettings()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
 
             if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
 
@@ -564,7 +761,7 @@ namespace Arcade.UI
 
         public void HideLevelSettings()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (levelSettingsModal != null) levelSettingsModal.AddToClassList("modal-hidden");
 
             // If game was paused, show pause modal again
@@ -576,7 +773,7 @@ namespace Arcade.UI
 
         private void SelectLevelTab(int levelNumber)
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
 
             LevelConfiguration baseConfig = levelGenerator != null ? levelGenerator.GetLevelConfig(levelNumber) : null;
@@ -622,7 +819,7 @@ namespace Arcade.UI
 
         private void ApplyLevelSettingsAndRestart()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
 
             if (levelGenerator != null && activeEditableConfig != null)
@@ -641,7 +838,7 @@ namespace Arcade.UI
 
         private void ToggleFpsSetting()
         {
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayPaddleBounce();
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             targetFps = targetFps == 60 ? 120 : 60;
             Application.targetFrameRate = targetFps;
             PlayerPrefs.SetInt("Arcade_TargetFPS", targetFps);

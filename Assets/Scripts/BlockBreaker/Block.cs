@@ -83,10 +83,15 @@ namespace Arcade.BlockBreaker
 
         public void DestroyBlock(Vector3 hitNormal)
         {
-            // 1. Play SFX
+            // 1. Play Break & Power-up SFX
             if (ArcadeAudioManager.Instance != null)
             {
-                ArcadeAudioManager.Instance.PlayBlockHit((int)colorTier);
+                ArcadeAudioManager.Instance.PlayBreak();
+
+                if (specialType != BlockSpecialType.Normal)
+                {
+                    ArcadeAudioManager.Instance.PlayPowerup();
+                }
             }
 
             // 2. Trigger VFX Graph Shatter

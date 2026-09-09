@@ -95,10 +95,11 @@ namespace Arcade.Editor
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.047f, 0.051f, 0.086f, 1f); // #0c0d16
             cam.transform.position = new Vector3(0f, 0f, -10f);
+            camGo.AddComponent<AudioListener>();
 
             // 2. Audio Manager (Persistent)
             var audioGo = new GameObject("AudioManager");
-            audioGo.AddComponent<ArcadeAudioManager>();
+            ConfigureAudioManager(audioGo);
 
             // 3. UI Panel Renderer & Manager
             var uiGo = new GameObject("UI_MainMenu");
@@ -130,6 +131,7 @@ namespace Arcade.Editor
             cam.fieldOfView = 38f; // Perspective with tactile 3D depth and complete arena framing
             cam.transform.position = new Vector3(0f, 6.0f, -32f);
             cam.transform.rotation = Quaternion.identity;
+            camGo.AddComponent<AudioListener>();
             camGo.AddComponent<ResponsiveCameraController>();
 
             // 2. Studio Lighting
@@ -188,6 +190,7 @@ namespace Arcade.Editor
             var greenMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Green.mat");
             var blueMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Blue.mat");
             var vfxAsset = AssetDatabase.LoadAssetAtPath<VisualEffectAsset>("Assets/VFX/VFX_BlockShatter.vfx");
+            var debrisMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Debris.mat");
 
             // 6. Playfield Boundaries
             var boundariesRoot = new GameObject("Boundaries");
@@ -262,7 +265,7 @@ namespace Arcade.Editor
 
             // 9. Audio Manager (Fallback if entering gameplay directly)
             var audioGo = new GameObject("AudioManager");
-            audioGo.AddComponent<ArcadeAudioManager>();
+            ConfigureAudioManager(audioGo);
 
             // 10. Game Coordinators
             var gmGo = new GameObject("GameManager");
@@ -272,6 +275,7 @@ namespace Arcade.Editor
             var vfxMgr = gmGo.AddComponent<BlockVFXManager>();
             var vfxSo = new SerializedObject(vfxMgr);
             if (vfxAsset != null) vfxSo.FindProperty("shatterVfxAsset").objectReferenceValue = vfxAsset;
+            if (debrisMat != null) vfxSo.FindProperty("debrisMaterial").objectReferenceValue = debrisMat;
             vfxSo.ApplyModifiedProperties();
 
             var levelGen = gmGo.AddComponent<LevelGenerator>();
@@ -302,7 +306,28 @@ namespace Arcade.Editor
             if (hudUxml != null) panelRenderer.visualTreeAsset = hudUxml;
             var hudPanelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>("Assets/UI/ArcadePanelSettings.asset");
             if (hudPanelSettings != null) panelRenderer.panelSettings = hudPanelSettings;
-            uiGo.AddComponent<ArcadeUIManager>();
+            var uiMgr = uiGo.AddComponent<ArcadeUIManager>();
+            var uiMgrSo = new SerializedObject(uiMgr);
+            var heartFill = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Heart_Fill.png");
+            var heartEmpty = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Heart_Empty.png");
+            if (heartFill != null) uiMgrSo.FindProperty("heartFillSprite").objectReferenceValue = heartFill;
+            if (heartEmpty != null) uiMgrSo.FindProperty("heartEmptySprite").objectReferenceValue = heartEmpty;
+
+            var lvlIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Level_Settings.png");
+            var muteIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Volume_Mute.png");
+            var volUpIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Volume_Up.png");
+            var setIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Settings.png");
+            var pauseIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Pause.png");
+            var playIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Play.png");
+
+            if (lvlIcon != null) uiMgrSo.FindProperty("levelSettingsSprite").objectReferenceValue = lvlIcon;
+            if (muteIcon != null) uiMgrSo.FindProperty("volumeMuteSprite").objectReferenceValue = muteIcon;
+            if (volUpIcon != null) uiMgrSo.FindProperty("volumeUpSprite").objectReferenceValue = volUpIcon;
+            if (setIcon != null) uiMgrSo.FindProperty("settingsSprite").objectReferenceValue = setIcon;
+            if (pauseIcon != null) uiMgrSo.FindProperty("pauseSprite").objectReferenceValue = pauseIcon;
+            if (playIcon != null) uiMgrSo.FindProperty("playSprite").objectReferenceValue = playIcon;
+
+            uiMgrSo.ApplyModifiedProperties();
             uiGo.AddComponent<SafeAreaController>();
 
             // Save Scene
@@ -326,6 +351,41 @@ namespace Arcade.Editor
 
             EditorBuildSettings.scenes = scenes;
             AssetDatabase.SaveAssets();
+        }
+
+        private static void ConfigureAudioManager(GameObject audioGo)
+        {
+            var audioMgr = audioGo.AddComponent<ArcadeAudioManager>();
+            var audioSo = new SerializedObject(audioMgr);
+
+            var popClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Pop.mp3");
+            var breakClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Break.mp3");
+            var powerupClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Powerup.mp3");
+            var gameOverClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Game_Over.mp3");
+            var levelSuccessClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Level_Success.mp3");
+            var buttonPressClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Button_Press.mp3");
+
+            if (popClip != null) audioSo.FindProperty("clipPop").objectReferenceValue = popClip;
+            if (breakClip != null) audioSo.FindProperty("clipBreak").objectReferenceValue = breakClip;
+            if (powerupClip != null) audioSo.FindProperty("clipPowerup").objectReferenceValue = powerupClip;
+            if (gameOverClip != null) audioSo.FindProperty("clipGameOver").objectReferenceValue = gameOverClip;
+            if (levelSuccessClip != null) audioSo.FindProperty("clipLevelSuccess").objectReferenceValue = levelSuccessClip;
+            if (buttonPressClip != null) audioSo.FindProperty("clipButtonPress").objectReferenceValue = buttonPressClip;
+
+            if (popClip != null)
+            {
+                audioSo.FindProperty("clipPaddleBounce").objectReferenceValue = popClip;
+                audioSo.FindProperty("clipWallBounce").objectReferenceValue = popClip;
+            }
+            if (breakClip != null)
+            {
+                audioSo.FindProperty("clipBlockHitRed").objectReferenceValue = breakClip;
+                audioSo.FindProperty("clipBlockHitGreen").objectReferenceValue = breakClip;
+                audioSo.FindProperty("clipBlockHitBlue").objectReferenceValue = breakClip;
+            }
+            if (levelSuccessClip != null) audioSo.FindProperty("clipLevelClear").objectReferenceValue = levelSuccessClip;
+
+            audioSo.ApplyModifiedProperties();
         }
     }
 }

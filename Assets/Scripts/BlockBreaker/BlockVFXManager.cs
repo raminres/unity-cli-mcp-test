@@ -22,6 +22,15 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float debrisExplosionForce = 7f;
         [SerializeField] private Material debrisMaterial;
 
+        public Material DebrisMaterial => debrisMaterial;
+
+        public void SetDebrisMaterial(Material mat)
+        {
+            debrisMaterial = mat;
+        }
+
+        private Material cachedFallbackMaterial;
+
         private readonly Queue<VisualEffect> vfxPool = new Queue<VisualEffect>();
         private readonly Queue<GameObject> debrisPool = new Queue<GameObject>();
 
@@ -75,6 +84,21 @@ namespace Arcade.BlockBreaker
             return vfx;
         }
 
+        public Material GetOrCreateDebrisMaterial()
+        {
+            if (debrisMaterial != null) return debrisMaterial;
+
+            if (cachedFallbackMaterial == null)
+            {
+                var shader = Shader.Find("Arcade/VFX_BlockDebris") ?? Shader.Find("Universal Render Pipeline/Lit");
+                if (shader != null)
+                {
+                    cachedFallbackMaterial = new Material(shader) { name = "M_BlockDebris_Fallback" };
+                }
+            }
+            return cachedFallbackMaterial;
+        }
+
         private GameObject CreateDebrisPiece()
         {
             GameObject debris = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -85,6 +109,16 @@ namespace Arcade.BlockBreaker
             // Remove default collider so particles don't interfere with ball physics
             Collider col = debris.GetComponent<Collider>();
             if (col != null) Destroy(col);
+
+            var mr = debris.GetComponent<MeshRenderer>();
+            if (mr != null)
+            {
+                Material mat = GetOrCreateDebrisMaterial();
+                if (mat != null)
+                {
+                    mr.sharedMaterial = mat;
+                }
+            }
 
             return debris;
         }
@@ -133,11 +167,23 @@ namespace Arcade.BlockBreaker
                         MeshRenderer mr = debris.GetComponent<MeshRenderer>();
                         if (mr != null)
                         {
-                            mr.material.color = blockColor;
-                            if (mr.material.HasProperty("_EmissionColor"))
+                            if (mr.sharedMaterial == null || mr.sharedMaterial.shader == null || mr.sharedMaterial.shader.name == "Standard")
                             {
-                                mr.material.EnableKeyword("_EMISSION");
-                                mr.material.SetColor("_EmissionColor", blockColor * 1.3f);
+                                Material baseMat = GetOrCreateDebrisMaterial();
+                                if (baseMat != null) mr.sharedMaterial = baseMat;
+                            }
+
+                            Material mat = mr.material;
+                            if (mat != null)
+                            {
+                                mat.color = blockColor;
+                                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", blockColor);
+                                if (mat.HasProperty("_Color")) mat.SetColor("_Color", blockColor);
+                                if (mat.HasProperty("_EmissionColor"))
+                                {
+                                    mat.EnableKeyword("_EMISSION");
+                                    mat.SetColor("_EmissionColor", blockColor * 1.3f);
+                                }
                             }
                         }
 
