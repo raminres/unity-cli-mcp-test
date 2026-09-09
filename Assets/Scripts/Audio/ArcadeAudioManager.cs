@@ -16,7 +16,15 @@ namespace Arcade.Audio
         [Range(0f, 1f)] [SerializeField] private float sfxVolume = 0.8f;
         [SerializeField] private bool isMuted = false;
 
-        [Header("Optional Clip Overrides (AU_*)")]
+        [Header("Audio Clips (AU_*)")]
+        [SerializeField] private AudioClip clipPop;            // AU_Pop.mp3 (paddle and wall bounces)
+        [SerializeField] private AudioClip clipBreak;          // AU_Break.mp3 (block break)
+        [SerializeField] private AudioClip clipPowerup;        // AU_Powerup.mp3 (power-up collected)
+        [SerializeField] private AudioClip clipLevelSuccess;    // AU_Level_Success.mp3 (level clear)
+        [SerializeField] private AudioClip clipGameOver;       // AU_Game_Over.mp3 (game over)
+        [SerializeField] private AudioClip clipButtonPress;    // AU_Button_Press.mp3 (UI button click)
+
+        [Header("Legacy / Fallback Clip Overrides")]
         [SerializeField] private AudioClip clipPaddleBounce;
         [SerializeField] private AudioClip clipWallBounce;
         [SerializeField] private AudioClip clipBlockHitRed;
@@ -24,9 +32,16 @@ namespace Arcade.Audio
         [SerializeField] private AudioClip clipBlockHitBlue;
         [SerializeField] private AudioClip clipLifeLost;
         [SerializeField] private AudioClip clipLevelClear;
-        [SerializeField] private AudioClip clipGameOver;
 
         private AudioSource audioSource;
+
+        // Public accessors for testing & verification
+        public AudioClip ClipPop => clipPop != null ? clipPop : clipPaddleBounce;
+        public AudioClip ClipBreak => clipBreak != null ? clipBreak : clipBlockHitRed;
+        public AudioClip ClipPowerup => clipPowerup;
+        public AudioClip ClipGameOver => clipGameOver;
+        public AudioClip ClipLevelSuccess => clipLevelSuccess != null ? clipLevelSuccess : clipLevelClear;
+        public AudioClip ClipButtonPress => clipButtonPress;
 
         public float Volume
         {
@@ -65,11 +80,33 @@ namespace Arcade.Audio
             DontDestroyOnLoad(gameObject);
 
             audioSource = GetComponent<AudioSource>();
+            if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.spatialBlend = 0f; // 2D flat stereo sound for crisp arcade feel
 
             sfxVolume = PlayerPrefs.GetFloat("Arcade_SFX_Volume", 0.8f);
             isMuted = PlayerPrefs.GetInt("Arcade_SFX_Muted", 0) == 1;
+
+            LoadClipsIfEmpty();
+        }
+
+        public void LoadClipsIfEmpty()
+        {
+#if UNITY_EDITOR
+            if (clipPop == null) clipPop = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Pop.mp3");
+            if (clipBreak == null) clipBreak = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Break.mp3");
+            if (clipPowerup == null) clipPowerup = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Powerup.mp3");
+            if (clipGameOver == null) clipGameOver = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Game_Over.mp3");
+            if (clipLevelSuccess == null) clipLevelSuccess = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Level_Success.mp3");
+            if (clipButtonPress == null) clipButtonPress = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Button_Press.mp3");
+#endif
+
+            if (clipPaddleBounce == null) clipPaddleBounce = clipPop;
+            if (clipWallBounce == null) clipWallBounce = clipPop;
+            if (clipBlockHitRed == null) clipBlockHitRed = clipBreak;
+            if (clipBlockHitGreen == null) clipBlockHitGreen = clipBreak;
+            if (clipBlockHitBlue == null) clipBlockHitBlue = clipBreak;
+            if (clipLevelClear == null) clipLevelClear = clipLevelSuccess;
 
             GenerateProceduralClipsIfEmpty();
         }
@@ -86,25 +123,61 @@ namespace Arcade.Audio
             OnVolumeChanged?.Invoke(Volume);
         }
 
+        /// <summary>
+        /// Plays Pop sound (AU_Pop.mp3) for ball contacting the paddle or arena boundaries.
+        /// </summary>
+        public void PlayPop()
+        {
+            PlaySound(clipPop != null ? clipPop : clipPaddleBounce, 1.0f);
+        }
+
         public void PlayPaddleBounce()
         {
-            PlaySound(clipPaddleBounce, 1.0f);
+            PlayPop();
         }
 
         public void PlayWallBounce()
         {
-            PlaySound(clipWallBounce, 0.9f);
+            PlayPop();
+        }
+
+        /// <summary>
+        /// Plays Break sound (AU_Break.mp3) when the ball hits/destroys a brick.
+        /// </summary>
+        public void PlayBreak()
+        {
+            PlaySound(clipBreak != null ? clipBreak : clipBlockHitRed, 1.0f);
         }
 
         public void PlayBlockHit(int colorTier = 1)
         {
-            AudioClip clip = colorTier switch
+            PlayBreak();
+        }
+
+        /// <summary>
+        /// Plays Power-up sound (AU_Powerup.mp3) when special modifier block is collected.
+        /// </summary>
+        public void PlayPowerup()
+        {
+            if (clipPowerup != null)
             {
-                3 => clipBlockHitBlue,
-                2 => clipBlockHitGreen,
-                _ => clipBlockHitRed
-            };
-            PlaySound(clip, 1.0f);
+                PlaySound(clipPowerup, 1.0f);
+            }
+        }
+
+        /// <summary>
+        /// Plays tactile button click sound (AU_Button_Press.mp3) for all UI interactions.
+        /// </summary>
+        public void PlayButtonPress()
+        {
+            if (clipButtonPress != null)
+            {
+                PlaySound(clipButtonPress, 1.0f);
+            }
+            else
+            {
+                PlayPop();
+            }
         }
 
         public void PlayLifeLost()
@@ -112,11 +185,17 @@ namespace Arcade.Audio
             PlaySound(clipLifeLost, 1.0f);
         }
 
+        /// <summary>
+        /// Plays Level Success victory sound (AU_Level_Success.mp3) upon clearing all bricks.
+        /// </summary>
         public void PlayLevelClear()
         {
-            PlaySound(clipLevelClear, 1.0f);
+            PlaySound(clipLevelSuccess != null ? clipLevelSuccess : clipLevelClear, 1.0f);
         }
 
+        /// <summary>
+        /// Plays Game Over sound (AU_Game_Over.mp3) when running out of lives.
+        /// </summary>
         public void PlayGameOver()
         {
             PlaySound(clipGameOver, 1.0f);

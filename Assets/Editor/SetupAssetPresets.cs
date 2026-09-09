@@ -38,6 +38,7 @@ namespace TechArt.Editor
                 GenerateAudioPresets();
 
                 ConfigurePresetManagerDefaults();
+                ApplyIconsPresetToExisting();
 
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
@@ -60,6 +61,12 @@ namespace TechArt.Editor
                 AssetDatabase.CreateFolder("Assets", "Textures");
             if (!AssetDatabase.IsValidFolder(ModelsDir))
                 AssetDatabase.CreateFolder("Assets", "Models");
+            if (!AssetDatabase.IsValidFolder("Assets/UI/Icons"))
+            {
+                if (!AssetDatabase.IsValidFolder("Assets/UI"))
+                    AssetDatabase.CreateFolder("Assets", "UI");
+                AssetDatabase.CreateFolder("Assets/UI", "Icons");
+            }
         }
 
         private static void RemoveLegacyPresets()
@@ -189,6 +196,30 @@ namespace TechArt.Editor
             importer.SetPlatformTextureSettings(iosEmiss);
 
             CreateOrReplacePreset(importer, $"{PresetsDir}/PR_Emissive.preset");
+
+            // 6. PR_Icon (2D Sprite & UI)
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.alphaIsTransparency = true;
+            importer.mipmapEnabled = false;
+            importer.sRGBTexture = true;
+            importer.alphaSource = TextureImporterAlphaSource.FromInput;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.filterMode = FilterMode.Bilinear;
+
+            var pcIcon = importer.GetPlatformTextureSettings("Standalone");
+            pcIcon.overridden = true;
+            pcIcon.format = TextureImporterFormat.BC7;
+            pcIcon.maxTextureSize = 2048;
+            importer.SetPlatformTextureSettings(pcIcon);
+
+            var iosIcon = importer.GetPlatformTextureSettings("iPhone");
+            iosIcon.overridden = true;
+            iosIcon.format = TextureImporterFormat.ASTC_6x6;
+            iosIcon.maxTextureSize = 2048;
+            importer.SetPlatformTextureSettings(iosIcon);
+
+            CreateOrReplacePreset(importer, $"{PresetsDir}/PR_Icon.preset");
 
             AssetDatabase.DeleteAsset(tempTexPath);
         }
@@ -335,6 +366,7 @@ namespace TechArt.Editor
             var texAO = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/PR_AO.preset");
             var texEmiss = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/PR_Emissive.preset");
             var texBase = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/PR_BaseColor.preset");
+            var texIcon = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/PR_Icon.preset");
 
             var texDefaults = new DefaultPreset[]
             {
@@ -343,6 +375,8 @@ namespace TechArt.Editor
                 new DefaultPreset("glob:\"*_AO*\"", texAO, true),
                 new DefaultPreset("glob:\"*_Emissive*\"", texEmiss, true),
                 new DefaultPreset("glob:\"*BaseColor*\"", texBase, true),
+                new DefaultPreset("glob:\"*UI/Icons/*\"", texIcon, true),
+                new DefaultPreset("glob:\"*Icons/*\"", texIcon, true),
                 new DefaultPreset("glob:\"*TX_*\"", texBase, true)
             };
 
@@ -369,6 +403,24 @@ namespace TechArt.Editor
             };
 
             Preset.SetDefaultPresetsForType(auPreset.GetPresetType(), audioDefaults);
+        }
+
+        private static void ApplyIconsPresetToExisting()
+        {
+            var iconPreset = AssetDatabase.LoadAssetAtPath<Preset>($"{PresetsDir}/PR_Icon.preset");
+            if (iconPreset == null || !AssetDatabase.IsValidFolder("Assets/UI/Icons")) return;
+
+            var guids = AssetDatabase.FindAssets("t:Texture2D", new string[] { "Assets/UI/Icons" });
+            foreach (var guid in guids)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+                if (importer != null)
+                {
+                    iconPreset.ApplyTo(importer);
+                    importer.SaveAndReimport();
+                }
+            }
         }
 
         private static void CreateOrReplacePreset(UnityEngine.Object target, string path)

@@ -12,7 +12,7 @@ This file provides persistent context across agent sessions for this Unity proje
 - **Render Pipeline**: Universal Render Pipeline (URP)
 - **Active Scene**: `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Play Mode Start Scene)
 - **Remote Repository**: `https://github.com/raminres/unity-cli-mcp-test.git`
-- **Active Branch**: `feature/gameplay-improvements` (Git LFS enabled)
+- **Active Branch**: `feature/visual-and-audio-updates` (Git LFS enabled)
 
 ---
 
@@ -95,8 +95,9 @@ This file provides persistent context across agent sessions for this Unity proje
 ### 6. Technical Art Asset Conventions & Preset System
 - **Folder Structure**:
   - `Assets/Textures/`: Project textures adhering to `TX_` conventions.
+  - `Assets/UI/Icons/`: 2D UI sprites & icons adhering to `TX_` conventions.
   - `Assets/Models/`: 3D meshes adhering to `SM_` and `SK_` conventions.
-  - `Assets/Presets/`: Reusable Unity `.preset` assets using the `PR_` prefix (`PR_BaseColor.preset`, `PR_Normal.preset`, `PR_MetallicSmoothness.preset`, `PR_AO.preset`, `PR_Emissive.preset`, `PR_StaticMesh.preset`, `PR_SkeletalMesh.preset`, `PR_Audio.preset`) with PC (`Standalone`) and iOS (`iPhone`) platform overrides.
+  - `Assets/Presets/`: Reusable Unity `.preset` assets using the `PR_` prefix (`PR_BaseColor.preset`, `PR_Normal.preset`, `PR_MetallicSmoothness.preset`, `PR_AO.preset`, `PR_Emissive.preset`, `PR_Icon.preset`, `PR_StaticMesh.preset`, `PR_SkeletalMesh.preset`, `PR_Audio.preset`) with PC (`Standalone`) and iOS (`iPhone`) platform overrides.
 - **Naming Conventions**:
   - **Presets**: `PR_` prefix for all `.preset` files regardless of asset target.
   - **Audio**: `AU_` prefix (e.g. `AU_Explosion_01.wav`).
@@ -108,6 +109,7 @@ This file provides persistent context across agent sessions for this Unity proje
     - `_Normal`: Normal map (BC5 on PC, ASTC 6x6 on iOS).
     - `_AO`: Linear ambient occlusion map (BC7 on PC, ASTC 6x6 on iOS).
     - `_Emissive`: sRGB emissive color map (BC7 on PC, ASTC 6x6 on iOS).
+  - **Icons / 2D Sprites**: `TX_` prefix inside `Assets/UI/Icons/`, configured via `PR_Icon.preset` as `Sprite (Single)`, no mipmaps, alpha as transparency.
 - **Preset Manager Automation**:
   - Configured in `ProjectSettings/PresetManager.asset` with glob patterns:
     - `TextureImporter`:
@@ -116,6 +118,8 @@ This file provides persistent context across agent sessions for this Unity proje
       - `glob:"*_AO*"` -> `PR_AO.preset`
       - `glob:"*_Emissive*"` -> `PR_Emissive.preset`
       - `glob:"*BaseColor*"` -> `PR_BaseColor.preset`
+      - `glob:"*UI/Icons/*"` -> `PR_Icon.preset`
+      - `glob:"*Icons/*"` -> `PR_Icon.preset`
       - `glob:"*TX_*"` -> `PR_BaseColor.preset`
     - `ModelImporter`:
       - `glob:"*SM_*"` -> `PR_StaticMesh.preset`
@@ -159,18 +163,36 @@ This file provides persistent context across agent sessions for this Unity proje
   - Dual-layer burst: GPU particle burst + 8 physical 3D mini-cube fragments ($2 \times 2 \times 2$ sub-box explosion) with gravity damping and rotation.
   - Material variants in `Assets/Materials/BlockBreaker/`: `MI_Paddle`, `MI_Ball`, `MI_Block_Red`, `MI_Block_Green`, `MI_Block_Blue`, `MI_Playfield_Border` (all deriving from `MT_Master_PBR_URP.mat`).
 - **Audio System (`AU_`)**:
-  - `ArcadeAudioManager.cs`: Persistent singleton with procedural wave synthesis for immediate feedback (`AU_PaddleBounce`, `AU_WallBounce`, `AU_BlockHit_Red/Green/Blue`, `AU_LifeLost`, `AU_LevelClear`, `AU_GameOver`) with volume and mute persistence.
+  - `ArcadeAudioManager.cs`: Persistent singleton wired with dedicated audio clips in `Assets/Audio/`:
+    - `AU_Pop.mp3`: Ball bounces off the paddle and side boundaries / walls.
+    - `AU_Break.mp3`: Ball impacts and shatters bricks.
+    - `AU_Powerup.mp3`: Dual-triggered alongside break sound when destroying special modifier blocks (+10% paddle expander, x2 / x3 score multipliers).
+    - `AU_Button_Press.mp3`: Tactile click sound for all UI buttons across Main Menu, HUD quick actions, modals, and level tabs.
+    - `AU_Level_Success.mp3`: Triumphant fanfare upon clearing all arena blocks.
+    - `AU_Game_Over.mp3`: Game over sound when running out of lives.
+  - Supports dynamic fallback loading from `Assets/Audio/` in Editor and procedural synth synthesis as an offline safety net, with persistent volume and mute toggling.
+  - **AudioListener**: Attached to `Main Camera` in both [LV_BlockBreaker.unity](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scenes/LV_BlockBreaker.unity) and [LV_BlockBreaker_MainMenu.unity](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scenes/LV_BlockBreaker_MainMenu.unity), and configured in [SetupBlockBreakerScenes.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupBlockBreakerScenes.cs).
 - **UI Toolkit & Unity 6 PanelRenderer Migration**:
   - Migrated from deprecated `UIDocument` to native Unity 6 `PanelRenderer` on `UI_HUD` ([LV_BlockBreaker.unity](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scenes/LV_BlockBreaker.unity)) and `UI_MainMenu` ([LV_BlockBreaker_MainMenu.unity](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scenes/LV_BlockBreaker_MainMenu.unity)).
   - [ArcadeUIManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/ArcadeUIManager.cs), [MainMenuUIManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/MainMenuUIManager.cs), and [SafeAreaController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/SafeAreaController.cs) adopt `[RequireComponent(typeof(PanelRenderer))]` with version-resilient `RegisterUIReloadCallback` lifecycle binding.
-  - [SetupBlockBreakerScenes.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupBlockBreakerScenes.cs) updated to generate `PanelRenderer` components.
+  - [SetupBlockBreakerScenes.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupBlockBreakerScenes.cs) updated to generate `PanelRenderer` components and configure `ArcadeAudioManager` with serialized audio clips.
   - **Safe Area Inset Fix**: [SafeAreaController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/SafeAreaController.cs) automatically resolves and applies insets directly to child content roots (`hud-root`, `root-container`) with `extraTopPercent = 3.5%` and simulated 160px top inset, ensuring the in-game top bar stays completely outside and below the hardware notch/Dynamic Island.
   - **Typography & Bouncy Animations**:
     - Button fonts enlarged across Main Menu (`19px`) and HUD modals (`18px`), with quick control buttons increased to `20px` (46x46px touch target).
     - Added juicy `ease-out-back` hover pop overshoot (`scale: 1.05` to `1.15`, `translate: 0 -2px`) and tactile active compression (`scale: 0.86` to `0.92`, `translate: 0 2-3px`) paired with procedural audio clicks.
+  - **Heart Icon Lives System**:
+    - Replaced circle pips with `TX_Heart_Fill.png` and `TX_Heart_Empty.png` 2D Sprites in [BlockBreakerHUD.uss](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/UI/BlockBreakerHUD.uss) and [ArcadeUIManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/ArcadeUIManager.cs).
+    - Active lives render full hearts tinted in vibrant arcade red (`#ff3b56`, scale 1.0, opacity 1.0).
+    - Lost lives smoothly transition to empty heart outlines (`TX_Heart_Empty`, scale 0.86, opacity 0.35 with red tint).
+  - **Quick Action Control Icons & Dynamic Button Transitions**:
+    - **Pause / Play Toggle**: `btn-quick-pause` displays `TX_Pause` while playing; pausing dynamically swaps the icon to `TX_Play` tinted in neon arcade green (`#26e885`) to indicate resume, and vice-versa.
+    - **Settings Mechanical 360° Spin**: `btn-quick-options` hosts `TX_Settings` with USS `transition-property: rotate` (0.5s `ease-out-back`). Each press increments cumulative angle `settingsRotationAngle += 360f`, producing a continuous mechanical forward spin.
+    - **Volume / Mute Action Toggle**: `btn-quick-mute` displays `TX_Volume_Mute` when audio is unmuted (action to mute), and switches to `TX_Volume_Up` with alert red tint (`#ff3b56`) when muted (action to unmute).
+    - **Options Mute SFX Custom Checkmark**: `toggle-mute` replaces standard checkmark with `TX_Volume_Up` in glowing cyan (`#21d4fd`) when unmuted, and `TX_Volume_Mute` in alert red (`#ff3b56`) when muted.
+    - **Level Settings Icon**: Replaced default unicode text with `TX_Level_Settings.png`.
   - `ArcadePanelSettings.asset`: Reference resolution 1920x1080, Scale with Screen Size.
 - **Automated Test Suite**:
-  - `Assets/Tests/BlockBreakerCoreTests.cs`: 32 automated unit/integration tests validating score multipliers (2x, 3x), paddle deflection math, compounding paddle widening, boundary clamping, life tracking, game state transitions, safe area insets, multi-aspect ratio frustum framing, inverted row ordering, checkerboard alternating colors, randomized block dispersion, level advancement across configurations, and LevelConfiguration runtime cloning/clamping.
+  - `Assets/Tests/BlockBreakerCoreTests.cs`: 45 automated unit/integration tests (100% passing) validating score multipliers (2x, 3x), paddle deflection math, compounding paddle widening, boundary clamping, life tracking, heart icon UI transitions, pause/play icon swapping, mute/unmute button and options toggle checkmark switching, settings 360° compounding spin, game state transitions, safe area insets, multi-aspect ratio frustum framing, inverted row ordering, checkerboard alternating colors, randomized block dispersion, level advancement across configurations, LevelConfiguration runtime cloning/clamping, AU_* audio clip binding, dual break/powerup SFX triggering, powerup 2D sprite importing, BlockBadge expander icon and text hiding, BlockBadge multiplier icon and text formatting, and BlockVFXManager URP debris material assignment with fallback safety.
 
 ---
 
@@ -186,11 +208,18 @@ This file provides persistent context across agent sessions for this Unity proje
     - Top rows ($r < rowsPerTier$): Blue blocks (Tier 3, 30 pts, `matBlueBlock`).
     - Middle rows ($r < rowsPerTier \times 2$): Green blocks (Tier 2, 20 pts, `matGreenBlock`).
     - Bottom rows ($r \ge rowsPerTier \times 2$): Red blocks (Tier 1, 10 pts, `matRedBlock`).
-- **Block Modifiers & World Space UI Toolkit**:
+- **Block Modifiers, Powerup Icons & World Space UI Toolkit**:
   - [BlockModifier.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockModifier.cs): Defines `BlockSpecialType` (`Normal`, `ScoreMultiplier2x`, `ScoreMultiplier3x`, `PaddleExpander`).
   - [Block.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/Block.cs): Multiplies awarded score points on destroy (e.g. 2x: Blue 60, Green 40, Red 20; 3x: Blue 90, Green 60, Red 30).
   - [PaddleController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/PaddleController.cs): Implements compounding expansion ($W_n = W_{prev} \times 1.10$) with `expansionCount` tracking, maximum cap at 12.0f, and adaptive collision boundary clamping ($minX = -10.0 + \frac{W}{2}$, $maxX = 10.0 - \frac{W}{2}$).
-  - [BlockBadge.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockBadge.cs): Attached to special block faces using Unity 6 `PanelRenderer` in `PanelRenderMode.WorldSpace` mode (`Assets/UI/BlockWorldPanelSettings.asset`, `Assets/UI/BlockBadgeUI.uxml`, `Assets/UI/BlockBadgeUI.uss`) rendering glowing badges: "x2" in gold, "x3" in fiery neon red/magenta, and "+10%" in cyan.
+  - [BlockBadge.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockBadge.cs): Attached to special block faces using Unity 6 `PanelRenderer` in `PanelRenderMode.WorldSpace` mode (`Assets/UI/BlockWorldPanelSettings.asset`, `Assets/UI/BlockBadgeUI.uxml`, `Assets/UI/BlockBadgeUI.uss`):
+    - **Paddle Expander**: Hosts `TX_Powerup_Arrows_Outward.png` 2D sprite tinted in vibrant neon cyan (`#00f2fe`) centered in the plate with text completely hidden.
+    - **Extra Points Multipliers**: Hosts `TX_Powerup_Extra_Points.png` 2D sprite above crisp `"x2"` / `"x3"` typography tinted in glowing gold (`#ffd700`) or fiery neon orange/red (`#ff4757`).
+    - **Strict Margin Clamping & Strikethrough Elimination**: Container and plate configured with fixed 80px dimensions (`flex-shrink: 0`, 100 PPU $\implies$ 0.80 world units on a 1.0 unit cube) guaranteeing a 10% safety border on all sides. Fixed flex-shrink squashing bug that previously flattened badges into a 12px horizontal slit artifact.
+- **iOS-Compatible Block Shatter Debris Material & Shader**:
+  - Shader: `Assets/Shaders/VFX_BlockDebris.shader` (`Arcade/VFX_BlockDebris`) with Universal Render Pipeline lighting passes, instancing, `_BaseColor`, and `_EmissionColor`.
+  - Material: `Assets/Materials/BlockBreaker/MI_Block_Debris.mat`.
+  - [BlockVFXManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockVFXManager.cs): Assigns `debrisMaterial` to `SubBox_Debris` mesh renderers upon instantiation and during bursts, backed by emergency URP shader resolution fallback to eliminate iOS pink/uncompiled shader failures. Wired in [LV_BlockBreaker.unity](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scenes/LV_BlockBreaker.unity) and [SetupBlockBreakerScenes.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupBlockBreakerScenes.cs).
 - **Editable Level Settings Modal & Main Menu Level Select**:
   - `BlockBreakerHUD.uxml` & `BlockBreakerHUD.uss`: Adds wide level modal with Level 1/2/3 preset tabs, level descriptions, live sliders for Columns (4-14), Rows/Tier (1-4), Ball Speed (0.6-2.5x), 2X blocks (0-8), 3X blocks (0-8), Paddle Expanders (0-5), and an "APPLY & RESTART" button.
   - `MainMenuUI.uxml` & `MainMenuUI.uss`: Adds "SELECT LEVEL" button and level selection modal to directly launch into any configured level.
@@ -217,7 +246,7 @@ This file provides persistent context across agent sessions for this Unity proje
   - **Application / Bundle Identifier**: `com.RaminRasulzade.BlockBreaker` (Configured across iOS, Standalone, and Android in `ProjectSettings/ProjectSettings.asset`).
   - **Xcode Project Type**: `Swift` (`UnityEditor.XcodeProjectType.Swift`, `xcodeProjectType: 1` in Unity 6000.6.0f1), generating a modern Swift-based Xcode project structure instead of legacy Objective-C.
 - **Multi-Machine Workflow (Windows PC $\leftrightarrow$ macOS)**:
-  - Remote repository branch: `feature/gameplay-improvements`.
+  - Remote repository branch: `feature/visual-and-audio-updates`.
   - The macOS machine is used for iOS device test builds and Xcode compilation.
   - The macOS environment has a local stash containing Xcode build profile and test build customizations.
   - Both machines maintain `BlockBreaker`, `RaminRasulzade`, and Swift Xcode project type in version-controlled `PlayerSettings.asset`, ensuring clean pulls without stash conflicts.

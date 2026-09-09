@@ -115,6 +115,8 @@ In Unity 6 / Cinemachine 3.x:
      - `glob:"*_AO*"` -> `PR_AO.preset`
      - `glob:"*_Emissive*"` -> `PR_Emissive.preset`
      - `glob:"*BaseColor*"` -> `PR_BaseColor.preset`
+     - `glob:"*UI/Icons/*"` -> `PR_Icon.preset`
+     - `glob:"*Icons/*"` -> `PR_Icon.preset`
      - `glob:"*TX_*"` -> `PR_BaseColor.preset`
    - `ModelImporter`:
      - `glob:"*SM_*"` -> `PR_StaticMesh.preset`

@@ -41,31 +41,37 @@
     margin: 0;
 }
 
-/* Lives Pips */
+/* Lives Heart Icons */
 .lives-container {
     flex-direction: row;
     align-items: center;
 }
 
 .life-pip {
-    width: 24px;
-    height: 24px;
-    margin: 0 4px;
-    border-radius: 12px;
-    border-width: 2px;
-    border-color: #ff3b56;
-    transition-duration: 0.2s;
+    width: 32px;
+    height: 32px;
+    margin: 0 5px;
+    border-width: 0;
+    border-radius: 0;
+    background-color: transparent;
+    -unity-background-scale-mode: scale-to-fit;
+    transition-property: scale, -unity-background-image-tint-color, opacity;
+    transition-duration: 0.25s, 0.25s, 0.25s;
+    transition-timing-function: ease-out-back;
 }
 
 .pip-active {
-    background-color: #ff3b56;
-    box-shadow: 0 0 12px rgba(255, 59, 86, 0.8);
+    background-image: url("project://database/Assets/UI/Icons/TX_Heart_Fill.png?fileID=21300000&guid=5c78b93fab88e17459882a82ea8a4a6f&type=3#TX_Heart_Fill");
+    -unity-background-image-tint-color: #ff3b56;
+    opacity: 1;
+    scale: 1 1;
 }
 
 .pip-lost {
-    background-color: rgba(255, 59, 86, 0.15);
-    border-color: rgba(255, 59, 86, 0.3);
-    scale: 0.82;
+    background-image: url("project://database/Assets/UI/Icons/TX_Heart_Empty.png?fileID=21300000&guid=c9c893b5713e23449815fbcff6eb5834&type=3#TX_Heart_Empty");
+    -unity-background-image-tint-color: #ff3b56;
+    opacity: 0.35;
+    scale: 0.86 0.86;
 }
 
 /* Bouncy Quick Control Buttons */
@@ -107,6 +113,55 @@
     translate: 0 2px;
     transition-duration: 0.08s;
     transition-timing-function: ease-in-out;
+}
+
+/* Quick Control Icons */
+.quick-btn-icon {
+    width: 24px;
+    height: 24px;
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: #e2e8f0;
+    transition-property: rotate, scale, -unity-background-image-tint-color;
+    transition-duration: 0.5s, 0.2s, 0.2s;
+    transition-timing-function: ease-out-back;
+}
+
+.quick-btn:hover .quick-btn-icon {
+    -unity-background-image-tint-color: #21d4fd;
+}
+
+.quick-btn:hover .icon-volume-up {
+    -unity-background-image-tint-color: #ff6e82;
+}
+
+.quick-btn:hover .icon-play {
+    -unity-background-image-tint-color: #6ef5b2;
+}
+
+.icon-level-settings {
+    background-image: url("project://database/Assets/UI/Icons/TX_Level_Settings.png?fileID=21300000&guid=31f75bf5242ae5841843e322927f8164&type=3#TX_Level_Settings");
+}
+
+.icon-volume-mute {
+    background-image: url("project://database/Assets/UI/Icons/TX_Volume_Mute.png?fileID=21300000&guid=19323d3393a6acb4c9810de7a485552e&type=3#TX_Volume_Mute");
+}
+
+.icon-volume-up {
+    background-image: url("project://database/Assets/UI/Icons/TX_Volume_Up.png?fileID=21300000&guid=9b70a43178d3e484aaa75e906b4ade94&type=3#TX_Volume_Up");
+    -unity-background-image-tint-color: #ff3b56;
+}
+
+.icon-settings {
+    background-image: url("project://database/Assets/UI/Icons/TX_Settings.png?fileID=21300000&guid=d24cd8b25486cfe45a7731b9a5d3afce&type=3#TX_Settings");
+}
+
+.icon-pause {
+    background-image: url("project://database/Assets/UI/Icons/TX_Pause.png?fileID=21300000&guid=de14abab37824164b93573467f215b5c&type=3#TX_Pause");
+}
+
+.icon-play {
+    background-image: url("project://database/Assets/UI/Icons/TX_Play.png?fileID=21300000&guid=dd600ea38ce338d4394fa625707eaee8&type=3#TX_Play");
+    -unity-background-image-tint-color: #26e885;
 }
 
 /* Launch Banner */
@@ -292,6 +347,55 @@
 
 .setting-slider {
     width: 150px;
+}
+
+.setting-toggle {
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.setting-toggle .unity-toggle__input {
+    justify-content: flex-end;
+}
+
+.setting-toggle .unity-toggle__checkmark {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border-width: 1.5px;
+    border-color: rgba(33, 212, 253, 0.45);
+    background-color: rgba(33, 212, 253, 0.12);
+    -unity-background-scale-mode: scale-to-fit;
+    background-image: url("project://database/Assets/UI/Icons/TX_Volume_Up.png?fileID=21300000&guid=9b70a43178d3e484aaa75e906b4ade94&type=3#TX_Volume_Up");
+    -unity-background-image-tint-color: #21d4fd;
+    scale: 1 1;
+    transition-property: scale, background-color, border-color, -unity-background-image-tint-color;
+    transition-duration: 0.2s, 0.15s, 0.15s, 0.2s;
+    transition-timing-function: ease-out-back;
+}
+
+.setting-toggle:hover .unity-toggle__checkmark,
+.setting-toggle > .unity-toggle__input:hover > .unity-toggle__checkmark {
+    scale: 1.1 1.1;
+    border-color: #21d4fd;
+    background-color: rgba(33, 212, 253, 0.25);
+}
+
+.setting-toggle:checked .unity-toggle__checkmark,
+.setting-toggle > .unity-toggle__input:checked > .unity-toggle__checkmark {
+    border-color: rgba(255, 59, 86, 0.55);
+    background-color: rgba(255, 59, 86, 0.16);
+    background-image: url("project://database/Assets/UI/Icons/TX_Volume_Mute.png?fileID=21300000&guid=19323d3393a6acb4c9810de7a485552e&type=3#TX_Volume_Mute");
+    -unity-background-image-tint-color: #ff3b56;
+}
+
+.setting-toggle:checked:hover .unity-toggle__checkmark,
+.setting-toggle > .unity-toggle__input:checked:hover > .unity-toggle__checkmark {
+    scale: 1.1 1.1;
+    border-color: #ff546c;
+    background-color: rgba(255, 59, 86, 0.3);
+    -unity-background-image-tint-color: #ff6e82;
 }
 
 .fps-btn {

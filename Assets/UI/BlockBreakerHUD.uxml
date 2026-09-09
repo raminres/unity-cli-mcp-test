@@ -19,10 +19,18 @@
 
             <!-- Right: Quick Action Buttons -->
             <ui:VisualElement name="quick-controls" class="quick-controls">
-                <ui:Button name="btn-quick-levels" text="🎚" class="quick-btn" tooltip="Level Settings &amp; Editor" />
-                <ui:Button name="btn-quick-mute" text="🔊" class="quick-btn" tooltip="Toggle SFX Mute" />
-                <ui:Button name="btn-quick-options" text="⚙" class="quick-btn" tooltip="Settings" />
-                <ui:Button name="btn-quick-pause" text="⏸" class="quick-btn" tooltip="Pause Game" />
+                <ui:Button name="btn-quick-levels" text="" class="quick-btn" tooltip="Level Settings &amp; Editor">
+                    <ui:VisualElement name="icon-quick-levels" class="quick-btn-icon icon-level-settings" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:Button name="btn-quick-mute" text="" class="quick-btn" tooltip="Toggle SFX Mute">
+                    <ui:VisualElement name="icon-quick-mute" class="quick-btn-icon icon-volume-mute" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:Button name="btn-quick-options" text="" class="quick-btn" tooltip="Settings">
+                    <ui:VisualElement name="icon-quick-options" class="quick-btn-icon icon-settings" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:Button name="btn-quick-pause" text="" class="quick-btn" tooltip="Pause Game">
+                    <ui:VisualElement name="icon-quick-pause" class="quick-btn-icon icon-pause" picking-mode="Ignore" />
+                </ui:Button>
             </ui:VisualElement>
         </ui:VisualElement>
 

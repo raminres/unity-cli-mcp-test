@@ -2,7 +2,8 @@
     <Style src="BlockBadgeUI.uss" />
     <ui:VisualElement name="badge-root" class="badge-root">
         <ui:VisualElement name="badge-plate" class="badge-plate badge-plate-x2">
-            <ui:Label name="badge-text" text="x2" class="badge-text" />
+            <ui:VisualElement name="badge-icon" class="badge-icon badge-icon-points" />
+            <ui:Label name="badge-text" text="x2" class="badge-text badge-text-x2" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
