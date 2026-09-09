@@ -12,7 +12,7 @@ This file provides persistent context across agent sessions for this Unity proje
 - **Render Pipeline**: Universal Render Pipeline (URP)
 - **Active Scene**: `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Play Mode Start Scene)
 - **Remote Repository**: `https://github.com/raminres/unity-cli-mcp-test.git`
-- **Active Branch**: `feature/visual-and-audio-updates` (Git LFS enabled)
+- **Active Branch**: `develop` (Git LFS enabled)
 
 ---
 
@@ -246,7 +246,7 @@ This file provides persistent context across agent sessions for this Unity proje
   - **Application / Bundle Identifier**: `com.RaminRasulzade.BlockBreaker` (Configured across iOS, Standalone, and Android in `ProjectSettings/ProjectSettings.asset`).
   - **Xcode Project Type**: `Swift` (`UnityEditor.XcodeProjectType.Swift`, `xcodeProjectType: 1` in Unity 6000.6.0f1), generating a modern Swift-based Xcode project structure instead of legacy Objective-C.
 - **Multi-Machine Workflow (Windows PC $\leftrightarrow$ macOS)**:
-  - Remote repository branch: `feature/visual-and-audio-updates`.
+  - Remote repository branch: `develop`.
   - The macOS machine is used for iOS device test builds and Xcode compilation.
   - The macOS environment has a local stash containing Xcode build profile and test build customizations.
   - Both machines maintain `BlockBreaker`, `RaminRasulzade`, and Swift Xcode project type in version-controlled `PlayerSettings.asset`, ensuring clean pulls without stash conflicts.
