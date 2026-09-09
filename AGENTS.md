@@ -275,6 +275,29 @@ This file provides persistent context across agent sessions for this Unity proje
   - Output Path: `/Users/raminrasulzade/Documents/UnityProjects/Builds/BlockBreakerBuilds`
   - Xcode Project: `BlockBreaker.xcodeproj`
 
+### 13. iOS Controls, Modal Pausing & Gameplay Feel Optimization
+- **Active Branch**: `fix/ios-controls-and-pause`
+- **Modal Automatic Pausing & Resuming**:
+  - `ArcadeGameManager.cs`: Explicit `PauseGame()` and `ResumeGame()` APIs freezing `Time.timeScale = 0f` and cleanly managing state preservation.
+  - `ArcadeUIManager.cs`: Opening `optionsModal` or `levelSettingsModal` during active gameplay automatically invokes `PauseGame()`. Closing via close button seamlessly calls `ResumeGame()`.
+  - Closing level settings opened from the pause modal cleanly returns to the pause modal without accidental unpause.
+  - Level settings restart (`ApplyLevelSettingsAndRestart`) resets `Time.timeScale = 1f` and state to `GameState.ReadyToLaunch` so the reloaded arena is immediately launch-ready.
+- **Level Clear Ball & Paddle Lifecycle**:
+  - `BallController.cs`: Added `StopAndDockBall()` and `SetBallActive(bool)`. On `GameState.LevelClear` or `GameState.GameOver`, velocities are zeroed (`rb.linearVelocity = Vector3.zero; rb.angularVelocity = Vector3.zero;`), `isLaunched` set to false, and `MeshRenderer` / `Collider` disabled to prevent the ball careening around an empty arena while victory fanfare plays.
+  - Calling `ResetBallToPaddle()` re-enables visuals and colliders, docked stationary on the paddle.
+  - `PaddleController.cs`: `Update()` locks input while `State` is `Paused`, `LevelClear`, or `GameOver`.
+- **Snappy 1:1 Direct Touch Controls**:
+  - `ArcadeInputHandler.cs`: Replaced virtual thumbstick ratio with direct relative-delta world tracking:
+    $$\text{targetWorldX} = \text{touchStartPaddleX} + (\text{currentWorldX} - \text{touchStartWorldX}) \times \text{touchSensitivity}$$
+  - `PaddleController.cs`: When `HasDirectTargetX` is true, clamps target position and moves the paddle with zero lag and zero initial acceleration ramp.
+- **Tap-to-Launch Reliability & UI Touch Shielding**:
+  - Fixed release position reading on `wasReleasedThisFrame` in the New Input System so `screenPos` is never `(0, 0)`.
+  - Adaptive tap threshold: accepts taps within adaptive touch slop (45px) or quick taps ($< 0.40\text{s}$) with displacement $< 60\text{px}$.
+  - `IsPointerOverUI(Vector2 screenPos)`: Shields gameplay touches when contacts originate over visible modals or the top bar.
+  - `ResetTouchState()`: Clears lingering drag/touch states upon unpausing or closing menus.
+- **Automated Tests**:
+  - 52 passing tests (100%) in `Assets/Tests/BlockBreakerCoreTests.cs` validating all pause, ball lifecycle, direct touch paddle, and UI touch shield mechanisms.
+
 ---
 
 ## Active Scenes & Build Index

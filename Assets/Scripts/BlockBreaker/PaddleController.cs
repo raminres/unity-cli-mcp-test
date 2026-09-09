@@ -38,16 +38,27 @@ namespace Arcade.BlockBreaker
 
         private void Update()
         {
-            if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State == GameState.Paused)
+            if (ArcadeGameManager.Instance != null && (ArcadeGameManager.Instance.State == GameState.Paused ||
+                                                      ArcadeGameManager.Instance.State == GameState.LevelClear ||
+                                                      ArcadeGameManager.Instance.State == GameState.GameOver))
                 return;
 
-            float inputAxis = ArcadeInputHandler.Instance != null ? ArcadeInputHandler.Instance.HorizontalAxis : 0f;
-            if (Mathf.Abs(inputAxis) > 0.001f)
+            if (ArcadeInputHandler.Instance != null && ArcadeInputHandler.Instance.HasDirectTargetX)
             {
                 Vector3 pos = transform.position;
-                pos.x += inputAxis * moveSpeed * Time.deltaTime;
-                pos.x = Mathf.Clamp(pos.x, minX, maxX);
+                pos.x = Mathf.Clamp(ArcadeInputHandler.Instance.DirectTargetWorldX, minX, maxX);
                 transform.position = pos;
+            }
+            else
+            {
+                float inputAxis = ArcadeInputHandler.Instance != null ? ArcadeInputHandler.Instance.HorizontalAxis : 0f;
+                if (Mathf.Abs(inputAxis) > 0.001f)
+                {
+                    Vector3 pos = transform.position;
+                    pos.x += inputAxis * moveSpeed * Time.deltaTime;
+                    pos.x = Mathf.Clamp(pos.x, minX, maxX);
+                    transform.position = pos;
+                }
             }
         }
 

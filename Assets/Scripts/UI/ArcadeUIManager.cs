@@ -109,14 +109,34 @@ namespace Arcade.UI
         public Button BtnQuickMute => btnQuickMute;
         public Button BtnQuickOptions => btnQuickOptions;
         public Button BtnQuickLevels => btnQuickLevels;
+        public bool WasPausedByOptions => wasPausedByOptions;
+        public bool WasPausedByLevelSettings => wasPausedByLevelSettings;
 
+        private bool wasPausedByOptions = false;
+        private bool wasPausedByLevelSettings = false;
         private LevelConfiguration activeEditableConfig;
         private LevelGenerator levelGenerator;
         private int targetFps = 60;
 
+        public static ArcadeUIManager Instance { get; private set; }
+
+        public static void SetInstanceForTesting(ArcadeUIManager instance)
+        {
+            Instance = instance;
+        }
+
         private void Awake()
         {
+            Instance = this;
             panelRenderer = GetComponent<PanelRenderer>();
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         private void Start()
@@ -660,14 +680,13 @@ namespace Arcade.UI
 
         private void HandleQuickOptionsClicked()
         {
-            TriggerSettingsButtonSpin();
-            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
-            if (optionsModal != null)
+            if (optionsModal != null && !optionsModal.ClassListContains("modal-hidden"))
             {
-                if (optionsModal.ClassListContains("modal-hidden"))
-                    optionsModal.RemoveFromClassList("modal-hidden");
-                else
-                    optionsModal.AddToClassList("modal-hidden");
+                HideOptions();
+            }
+            else
+            {
+                ShowOptions();
             }
         }
 
@@ -678,6 +697,10 @@ namespace Arcade.UI
             {
                 ArcadeGameManager.Instance.TogglePause();
             }
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
         }
 
         private void HandleResumeClicked()
@@ -686,6 +709,10 @@ namespace Arcade.UI
             if (ArcadeGameManager.Instance != null)
             {
                 ArcadeGameManager.Instance.TogglePause();
+            }
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
             }
         }
 
@@ -714,6 +741,10 @@ namespace Arcade.UI
             }
 
             if (levelClearModal != null) levelClearModal.AddToClassList("modal-hidden");
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
         }
 
         private void HandleMenuClicked()
@@ -725,22 +756,67 @@ namespace Arcade.UI
             }
         }
 
-        private void ShowOptions()
+        public void ShowOptions()
         {
             TriggerSettingsButtonSpin();
             if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+
+            if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State != GameState.Paused)
+            {
+                wasPausedByOptions = true;
+                ArcadeGameManager.Instance.PauseGame();
+            }
+            else
+            {
+                wasPausedByOptions = false;
+            }
+
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
+
             if (optionsModal != null) optionsModal.RemoveFromClassList("modal-hidden");
         }
 
-        private void HideOptions()
+        public void HideOptions()
         {
             if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (optionsModal != null) optionsModal.AddToClassList("modal-hidden");
+
+            if (wasPausedByOptions)
+            {
+                wasPausedByOptions = false;
+                if (ArcadeGameManager.Instance != null)
+                {
+                    ArcadeGameManager.Instance.ResumeGame();
+                }
+            }
+
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
         }
 
         public void ShowLevelSettings()
         {
             if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+
+            if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State != GameState.Paused)
+            {
+                wasPausedByLevelSettings = true;
+                ArcadeGameManager.Instance.PauseGame();
+            }
+            else
+            {
+                wasPausedByLevelSettings = false;
+            }
+
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
 
             if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
 
@@ -764,10 +840,26 @@ namespace Arcade.UI
             if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (levelSettingsModal != null) levelSettingsModal.AddToClassList("modal-hidden");
 
-            // If game was paused, show pause modal again
-            if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State == GameState.Paused && pauseModal != null)
+            if (wasPausedByLevelSettings)
             {
-                pauseModal.RemoveFromClassList("modal-hidden");
+                wasPausedByLevelSettings = false;
+                if (ArcadeGameManager.Instance != null)
+                {
+                    ArcadeGameManager.Instance.ResumeGame();
+                }
+            }
+            else
+            {
+                // If game was paused before opening level settings (e.g. from pause modal), re-show pause modal
+                if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State == GameState.Paused && pauseModal != null)
+                {
+                    pauseModal.RemoveFromClassList("modal-hidden");
+                }
+            }
+
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
             }
         }
 
@@ -822,6 +914,9 @@ namespace Arcade.UI
             if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
 
+            wasPausedByLevelSettings = false;
+            wasPausedByOptions = false;
+
             if (levelGenerator != null && activeEditableConfig != null)
             {
                 levelGenerator.ApplyCustomConfigAndReload(activeEditableConfig);
@@ -829,10 +924,16 @@ namespace Arcade.UI
 
             if (levelSettingsModal != null) levelSettingsModal.AddToClassList("modal-hidden");
 
-            // Unpause game if paused
-            if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State == GameState.Paused)
+            // Level reloaded: unpause and transition to ReadyToLaunch so tap-to-launch works immediately
+            Time.timeScale = 1f;
+            if (ArcadeGameManager.Instance != null)
             {
-                ArcadeGameManager.Instance.TogglePause();
+                ArcadeGameManager.Instance.SetState(GameState.ReadyToLaunch);
+            }
+
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
             }
         }
 
@@ -844,6 +945,31 @@ namespace Arcade.UI
             PlayerPrefs.SetInt("Arcade_TargetFPS", targetFps);
             PlayerPrefs.Save();
             if (btnFps != null) btnFps.text = $"{targetFps} FPS";
+        }
+
+        public bool IsAnyModalVisible()
+        {
+            return (optionsModal != null && !optionsModal.ClassListContains("modal-hidden")) ||
+                   (levelSettingsModal != null && !levelSettingsModal.ClassListContains("modal-hidden")) ||
+                   (pauseModal != null && !pauseModal.ClassListContains("modal-hidden")) ||
+                   (gameOverModal != null && !gameOverModal.ClassListContains("modal-hidden")) ||
+                   (levelClearModal != null && !levelClearModal.ClassListContains("modal-hidden"));
+        }
+
+        public bool IsPointerOverUI(Vector2 screenPos)
+        {
+            if (IsAnyModalVisible()) return true;
+
+            if (root != null && root.panel != null)
+            {
+                Vector2 panelPos = RuntimePanelUtils.ScreenToPanel(root.panel, screenPos);
+                VisualElement picked = root.panel.Pick(panelPos);
+                if (picked != null && picked != root && picked.name != "hud-root")
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

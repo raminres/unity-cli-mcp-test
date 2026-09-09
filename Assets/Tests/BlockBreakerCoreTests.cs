@@ -23,6 +23,7 @@ namespace Arcade.Tests
         {
             testRoot = new GameObject("TestRoot");
             gameManager = testRoot.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(gameManager);
 
             var paddleObj = new GameObject("Paddle");
             paddleObj.transform.SetParent(testRoot.transform);
@@ -33,6 +34,11 @@ namespace Arcade.Tests
         [TearDown]
         public void TearDown()
         {
+            Time.timeScale = 1f;
+            ArcadeGameManager.SetInstanceForTesting(null);
+            ArcadeUIManager.SetInstanceForTesting(null);
+            Arcade.Input.ArcadeInputHandler.SetInstanceForTesting(null);
+
             if (testRoot != null)
             {
                 Object.DestroyImmediate(testRoot);
@@ -939,6 +945,243 @@ namespace Arcade.Tests
 
             Assert.IsNotNull(expanderSprite, "TX_Powerup_Arrows_Outward must be imported as a Sprite.");
             Assert.IsNotNull(pointsSprite, "TX_Powerup_Extra_Points must be imported as a Sprite.");
+        }
+
+        #endregion
+
+        #region 12. iOS Controls, Modal Pause & Level Clear Ball Handling Tests
+
+        [Test]
+        public void GameManager_PauseGame_And_ResumeGame_ManageStateAndTimeScaleCorrectly()
+        {
+            gameManager.LaunchBall(); // State -> Playing
+            Assert.AreEqual(GameState.Playing, gameManager.State);
+
+            // 1. Pause game
+            gameManager.PauseGame();
+            Assert.AreEqual(GameState.Paused, gameManager.State, "PauseGame must set state to Paused.");
+            Assert.AreEqual(0f, Time.timeScale, "PauseGame must set Time.timeScale to 0.");
+
+            // 2. Resume game
+            gameManager.ResumeGame();
+            Assert.AreEqual(GameState.Playing, gameManager.State, "ResumeGame must restore previous state (Playing).");
+            Assert.AreEqual(1f, Time.timeScale, "ResumeGame must restore Time.timeScale to 1.");
+
+            // 3. PauseGame should ignore already finished states (e.g. GameOver)
+            gameManager.RecordBallLost();
+            gameManager.LaunchBall();
+            gameManager.RecordBallLost();
+            gameManager.LaunchBall();
+            gameManager.RecordBallLost();
+            Assert.AreEqual(GameState.GameOver, gameManager.State);
+
+            gameManager.PauseGame();
+            Assert.AreEqual(GameState.GameOver, gameManager.State, "PauseGame must not override GameOver state.");
+
+            Time.timeScale = 1f;
+        }
+
+        [Test]
+        public void BallController_OnLevelClear_And_GameOver_StopsAndDeactivatesVisuals()
+        {
+            var ballObj = new GameObject("TestBall");
+            ballObj.transform.SetParent(testRoot.transform);
+            var rb = ballObj.AddComponent<Rigidbody>();
+            var rend = ballObj.AddComponent<MeshRenderer>();
+            var col = ballObj.AddComponent<SphereCollider>();
+            var ball = ballObj.AddComponent<BallController>();
+            ball.Initialize(gameManager, paddle);
+
+            gameManager.LaunchBall(); // Playing
+            ball.Launch();
+            Assert.IsTrue(ball.IsLaunched, "Ball must be launched.");
+            Assert.IsTrue(rend.enabled, "Renderer must be enabled.");
+            Assert.IsTrue(col.enabled, "Collider must be enabled.");
+
+            // Transition to LevelClear
+            gameManager.SetState(GameState.LevelClear);
+            Assert.IsFalse(ball.IsLaunched, "Ball must no longer be launched on LevelClear.");
+            Assert.IsFalse(rend.enabled, "Ball renderer must be disabled on LevelClear.");
+            Assert.IsFalse(col.enabled, "Ball collider must be disabled on LevelClear.");
+            Assert.AreEqual(Vector3.zero, rb.linearVelocity, "Ball velocity must be zeroed on LevelClear.");
+
+            // Transition back to ReadyToLaunch / ResetBallToPaddle
+            ball.ResetBallToPaddle();
+            Assert.IsTrue(rend.enabled, "Renderer must be re-enabled on ResetBallToPaddle.");
+            Assert.IsTrue(col.enabled, "Collider must be re-enabled on ResetBallToPaddle.");
+            Assert.IsFalse(ball.IsLaunched, "Ball must wait docked on paddle.");
+
+            // Transition to GameOver
+            gameManager.SetState(GameState.GameOver);
+            Assert.IsFalse(ball.IsLaunched);
+            Assert.IsFalse(rend.enabled);
+            Assert.IsFalse(col.enabled);
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void PaddleController_DirectTargetX_MovesPaddleInstantlyWithoutSluggishLag()
+        {
+            var inputGo = new GameObject("InputCoordinator");
+            inputGo.transform.SetParent(testRoot.transform);
+            var inputHandler = inputGo.AddComponent<Arcade.Input.ArcadeInputHandler>();
+            Arcade.Input.ArcadeInputHandler.SetInstanceForTesting(inputHandler);
+
+            inputHandler.SetDirectTargetWorldXForTesting(3.5f);
+
+            var updateMethod = typeof(PaddleController).GetMethod("Update", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            updateMethod.Invoke(paddle, null);
+
+            Assert.AreEqual(3.5f, paddle.transform.position.x, 0.001f, "Paddle must snap instantly to directTargetWorldX without lag.");
+
+            // Verify bounds clamping
+            inputHandler.SetDirectTargetWorldXForTesting(15.0f);
+            updateMethod.Invoke(paddle, null);
+            Assert.AreEqual(paddle.MaxX, paddle.transform.position.x, 0.001f, "Paddle must clamp to MaxX.");
+
+            // Reset touch state
+            inputHandler.ResetTouchState();
+            Assert.IsFalse(inputHandler.HasDirectTargetX);
+            Assert.AreEqual(0f, inputHandler.DirectTargetWorldX);
+            Assert.AreEqual(0f, inputHandler.HorizontalAxis);
+            Assert.IsFalse(inputHandler.IsTouchDragging);
+
+            Object.DestroyImmediate(inputGo);
+        }
+
+        [Test]
+        public void PaddleController_Update_IgnoresMovementWhenPausedOrLevelClear()
+        {
+            paddle.transform.position = Vector3.zero;
+
+            var inputGo = new GameObject("InputCoordinator");
+            inputGo.transform.SetParent(testRoot.transform);
+            var inputHandler = inputGo.AddComponent<Arcade.Input.ArcadeInputHandler>();
+            Arcade.Input.ArcadeInputHandler.SetInstanceForTesting(inputHandler);
+
+            inputHandler.SetDirectTargetWorldXForTesting(4.0f);
+
+            var updateMethod = typeof(PaddleController).GetMethod("Update", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            // 1. Paused
+            gameManager.SetState(GameState.Paused);
+            updateMethod.Invoke(paddle, null);
+            Assert.AreEqual(0f, paddle.transform.position.x, "Paddle must not move while paused.");
+
+            // 2. LevelClear
+            gameManager.SetState(GameState.LevelClear);
+            updateMethod.Invoke(paddle, null);
+            Assert.AreEqual(0f, paddle.transform.position.x, "Paddle must not move while LevelClear.");
+
+            // 3. GameOver
+            gameManager.SetState(GameState.GameOver);
+            updateMethod.Invoke(paddle, null);
+            Assert.AreEqual(0f, paddle.transform.position.x, "Paddle must not move while GameOver.");
+
+            Object.DestroyImmediate(inputGo);
+        }
+
+        [Test]
+        public void ArcadeUIManager_OptionsModal_PausesAndResumesGameAutomatically()
+        {
+            var uiObj = new GameObject("UI_HUD");
+            uiObj.transform.SetParent(testRoot.transform);
+            uiObj.AddComponent<PanelRenderer>();
+            var uiMgr = uiObj.AddComponent<ArcadeUIManager>();
+
+            var root = new VisualElement();
+            var optionsModal = new VisualElement { name = "options-modal" };
+            optionsModal.AddToClassList("modal-hidden");
+            root.Add(optionsModal);
+
+            var rootField = typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            rootField.SetValue(uiMgr, root);
+
+            var optionsModalField = typeof(ArcadeUIManager).GetField("optionsModal", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            optionsModalField.SetValue(uiMgr, optionsModal);
+
+            gameManager.LaunchBall(); // Playing
+            Assert.AreEqual(GameState.Playing, gameManager.State);
+
+            // Show options -> game must pause
+            uiMgr.ShowOptions();
+            Assert.AreEqual(GameState.Paused, gameManager.State, "Opening Options must pause gameplay.");
+            Assert.IsTrue(uiMgr.WasPausedByOptions, "WasPausedByOptions must be true.");
+            Assert.IsFalse(optionsModal.ClassListContains("modal-hidden"), "Options modal must be visible.");
+
+            // Hide options -> game must resume
+            uiMgr.HideOptions();
+            Assert.AreEqual(GameState.Playing, gameManager.State, "Closing Options must resume gameplay.");
+            Assert.IsFalse(uiMgr.WasPausedByOptions, "WasPausedByOptions must be cleared.");
+            Assert.IsTrue(optionsModal.ClassListContains("modal-hidden"), "Options modal must be hidden.");
+
+            Object.DestroyImmediate(uiObj);
+        }
+
+        [Test]
+        public void ArcadeUIManager_LevelSettingsModal_PausesAndResumesGameAutomatically()
+        {
+            var uiObj = new GameObject("UI_HUD");
+            uiObj.transform.SetParent(testRoot.transform);
+            uiObj.AddComponent<PanelRenderer>();
+            var uiMgr = uiObj.AddComponent<ArcadeUIManager>();
+
+            var root = new VisualElement();
+            var levelSettingsModal = new VisualElement { name = "level-settings-modal" };
+            levelSettingsModal.AddToClassList("modal-hidden");
+            root.Add(levelSettingsModal);
+
+            var rootField = typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            rootField.SetValue(uiMgr, root);
+
+            var levelModalField = typeof(ArcadeUIManager).GetField("levelSettingsModal", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            levelModalField.SetValue(uiMgr, levelSettingsModal);
+
+            gameManager.LaunchBall(); // Playing
+            Assert.AreEqual(GameState.Playing, gameManager.State);
+
+            // Show level settings -> game must pause
+            uiMgr.ShowLevelSettings();
+            Assert.AreEqual(GameState.Paused, gameManager.State, "Opening Level Settings must pause gameplay.");
+            Assert.IsTrue(uiMgr.WasPausedByLevelSettings, "WasPausedByLevelSettings must be true.");
+
+            // Hide level settings -> game must resume
+            uiMgr.HideLevelSettings();
+            Assert.AreEqual(GameState.Playing, gameManager.State, "Closing Level Settings must resume gameplay.");
+            Assert.IsFalse(uiMgr.WasPausedByLevelSettings, "WasPausedByLevelSettings must be cleared.");
+
+            Object.DestroyImmediate(uiObj);
+        }
+
+        [Test]
+        public void ArcadeUIManager_IsPointerOverUI_IdentifiesActiveModals()
+        {
+            var uiObj = new GameObject("UI_HUD");
+            uiObj.transform.SetParent(testRoot.transform);
+            uiObj.AddComponent<PanelRenderer>();
+            var uiMgr = uiObj.AddComponent<ArcadeUIManager>();
+
+            var root = new VisualElement { name = "hud-root" };
+            var optionsModal = new VisualElement { name = "options-modal" };
+            optionsModal.AddToClassList("modal-hidden");
+            root.Add(optionsModal);
+
+            var rootField = typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            rootField.SetValue(uiMgr, root);
+
+            var optionsModalField = typeof(ArcadeUIManager).GetField("optionsModal", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            optionsModalField.SetValue(uiMgr, optionsModal);
+
+            // Hidden modal -> IsAnyModalVisible false
+            Assert.IsFalse(uiMgr.IsAnyModalVisible());
+
+            // Shown modal -> IsAnyModalVisible true & IsPointerOverUI true
+            optionsModal.RemoveFromClassList("modal-hidden");
+            Assert.IsTrue(uiMgr.IsAnyModalVisible());
+            Assert.IsTrue(uiMgr.IsPointerOverUI(new Vector2(200, 200)));
+
+            Object.DestroyImmediate(uiObj);
         }
 
         #endregion
