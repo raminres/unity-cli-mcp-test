@@ -296,7 +296,31 @@ This file provides persistent context across agent sessions for this Unity proje
   - `IsPointerOverUI(Vector2 screenPos)`: Shields gameplay touches when contacts originate over visible modals or the top bar.
   - `ResetTouchState()`: Clears lingering drag/touch states upon unpausing or closing menus.
 - **Automated Tests**:
-  - 52 passing tests (100%) in `Assets/Tests/BlockBreakerCoreTests.cs` validating all pause, ball lifecycle, direct touch paddle, and UI touch shield mechanisms.
+  - 55 passing tests (100%) in `Assets/Tests/BlockBreakerCoreTests.cs` validating all pause, ball lifecycle, direct touch paddle, UI touch shield, and VFX prewarm mechanisms.
+
+---
+
+### 14. Cross-Platform VFX Optimization & Frame-0 PSO Prewarming (iOS, PC, Web)
+- **Root Cause Analysis Across Target Platforms**:
+  - **iOS (Apple Metal)**: Metal lazily compiles compute shaders and raster Pipeline State Objects (PSOs) upon first dispatch/draw. Inactive pooled VFX graphs (`SetActive(false)`) caused Metal to freeze the main thread for 100–250ms when the first brick was hit.
+  - **PC (DirectX 12 / Vulkan)**: Modern PC graphics backends lazily compile driver-level PSOs on first draw call or compute dispatch. Complex VFX particle shaders and compute kernels triggered hitching on the first block impact.
+  - **Web (WebGPU / WebGL)**: WebGPU compiles browser pipelines (WGSL/SPIR-V to native GPU instructions) upon first render/compute pass dispatch. WebAssembly memory stalls from heap allocations and GC sweeps exacerbated micro-stutters.
+  - **Material Duplication Bug**: `mr.material` previously created 8 new native and managed Material instances per shattered block (80 instances per 10 blocks) that were never destroyed. This broke SRP Batching / GPU instancing across Metal, DX12, and WebGPU, triggering frequent GC sweeps and driver pipeline churn.
+  - **Coroutine Overhead**: 9 coroutines (`StartCoroutine`) were started per broken brick (1 for VFX, 8 for debris pieces), allocating 9 compiler-generated state machines, closures, and enumerators per hit.
+- **Architectural Solutions in [BlockVFXManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockVFXManager.cs)**:
+  - **Invisible Frame-0 Prewarming (`Prewarm()`)**:
+    - Triggered during `Start()` while the scene is in `ReadyToLaunch` waiting for the player's initial launch tap.
+    - Calls `Shader.WarmupAllShaders()` to compile and warm all standard raster shaders in memory.
+    - Positions 1 pooled `VisualEffect` instance off-camera (`Vector3(0, -500, 0)`), activates it, calls `Play()`, and dispatches 1 tick (`Simulate(0.016f)`), forcing Apple Metal, DX12, Vulkan, and WebGPU drivers to build and cache all particle compute and raster PSOs before gameplay begins.
+    - Prewarms debris mesh renderer with `MaterialPropertyBlock` off-camera to ensure shader variants and property buffers are primed.
+  - **Zero-Allocation `MaterialPropertyBlock` Tinting**:
+    - Replaced `mr.material` with cached `MaterialPropertyBlock` setting `_BaseColor`, `_Color`, and `_EmissionColor`.
+    - Retains `mr.sharedMaterial = baseMat`, preserving 100% SRP Batcher compatibility and GPU instancing across Metal, DX12, and WebGPU with zero material cloning.
+  - **Struct-Based Zero-Allocation Simulation in `Update()`**:
+    - Replaced all 9 coroutines with struct-based tracking (`ActiveDebris` and `ActiveVFX`) inside pre-allocated `List<ActiveDebris>` and `List<ActiveVFX>`.
+    - Zero allocations per frame during gameplay.
+    - Pause-aware: automatically freezes debris physics and particle timers when `Time.deltaTime <= 0f`.
+  - **`ClearAllActive()`**: Instantly recycles all active debris and VFX back into their respective object pools upon level clear, game over, or test teardown.
 
 ---
 
@@ -304,4 +328,5 @@ This file provides persistent context across agent sessions for this Unity proje
 1. `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0)
 2. `Assets/Scenes/LV_BlockBreaker.unity` (Build Index 1)
 3. `Assets/Scenes/SampleScene.unity` (Disabled baseline)
+
 

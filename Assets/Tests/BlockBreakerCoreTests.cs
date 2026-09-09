@@ -38,6 +38,7 @@ namespace Arcade.Tests
             ArcadeGameManager.SetInstanceForTesting(null);
             ArcadeUIManager.SetInstanceForTesting(null);
             Arcade.Input.ArcadeInputHandler.SetInstanceForTesting(null);
+            BlockVFXManager.SetInstanceForTesting(null);
 
             if (testRoot != null)
             {
@@ -935,6 +936,83 @@ namespace Arcade.Tests
 
             Object.DestroyImmediate(vfxGo);
             Object.DestroyImmediate(customMat);
+        }
+        [Test]
+        public void BlockVFXManager_Prewarm_ExecutesSafelyWithoutExceptions()
+        {
+            var vfxGo = new GameObject("TestVFXManager");
+            var vfx = vfxGo.AddComponent<BlockVFXManager>();
+            BlockVFXManager.SetInstanceForTesting(vfx);
+
+            // Prewarm should execute safely without throwing any exceptions
+            Assert.DoesNotThrow(() => vfx.Prewarm(), "Prewarm must execute without exceptions across all platforms.");
+            Assert.AreEqual(0, vfx.ActiveDebrisCount, "Prewarm must leave 0 active debris instances.");
+            Assert.AreEqual(0, vfx.ActiveVfxCount, "Prewarm must leave 0 active VFX instances.");
+
+            Object.DestroyImmediate(vfxGo);
+        }
+
+        [Test]
+        public void BlockVFXManager_DebrisBurst_UsesSharedMaterialAndPropertyBlock_NoMaterialCloning()
+        {
+            var vfxGo = new GameObject("TestVFXManager");
+            var vfx = vfxGo.AddComponent<BlockVFXManager>();
+            BlockVFXManager.SetInstanceForTesting(vfx);
+
+            var customMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Arcade/VFX_BlockDebris"));
+            vfx.SetDebrisMaterial(customMat);
+
+            // Trigger shatter with cyan color
+            Color testColor = Color.cyan;
+            vfx.PlayBlockShatter(Vector3.zero, testColor, Vector3.up);
+
+            Assert.AreEqual(8, vfx.ActiveDebrisCount, "Shattering one block must spawn exactly 8 debris sub-boxes.");
+            Assert.AreEqual(1, vfx.ActiveVfxCount, "Shattering one block must track 1 active VFX burst.");
+
+            // Find spawned debris objects
+            var debrisPieces = vfxGo.GetComponentsInChildren<MeshRenderer>(false);
+            Assert.GreaterOrEqual(debrisPieces.Length, 8, "Debris mesh renderers must be active children.");
+
+            foreach (var mr in debrisPieces)
+            {
+                // Must use sharedMaterial without cloning
+                Assert.AreEqual(customMat, mr.sharedMaterial, "Debris piece must use sharedMaterial directly to preserve SRP Batcher.");
+
+                // Must have MaterialPropertyBlock applied with the tinted color
+                var propBlock = new MaterialPropertyBlock();
+                mr.GetPropertyBlock(propBlock);
+                Color extractedColor = propBlock.GetColor(Shader.PropertyToID("_BaseColor"));
+                Assert.AreEqual(testColor.r, extractedColor.r, 0.01f, "BaseColor in MaterialPropertyBlock must match test block color.");
+            }
+
+            vfx.ClearAllActive();
+            Assert.AreEqual(0, vfx.ActiveDebrisCount, "ClearAllActive must recycle all debris.");
+            Assert.AreEqual(0, vfx.ActiveVfxCount, "ClearAllActive must recycle all VFX.");
+
+            Object.DestroyImmediate(vfxGo);
+            Object.DestroyImmediate(customMat);
+        }
+
+        [Test]
+        public void BlockVFXManager_ClearAllActive_InstantlyRecyclesAllActiveInstances()
+        {
+            var vfxGo = new GameObject("TestVFXManager");
+            var vfx = vfxGo.AddComponent<BlockVFXManager>();
+            BlockVFXManager.SetInstanceForTesting(vfx);
+
+            // Trigger multiple block bursts
+            vfx.PlayBlockShatter(Vector3.left, Color.red, Vector3.up);
+            vfx.PlayBlockShatter(Vector3.right, Color.green, Vector3.up);
+
+            Assert.AreEqual(16, vfx.ActiveDebrisCount, "Two block bursts must spawn 16 active debris sub-boxes.");
+            Assert.AreEqual(2, vfx.ActiveVfxCount, "Two block bursts must track 2 active VFX bursts.");
+
+            vfx.ClearAllActive();
+
+            Assert.AreEqual(0, vfx.ActiveDebrisCount, "ClearAllActive must recycle all 16 debris instances.");
+            Assert.AreEqual(0, vfx.ActiveVfxCount, "ClearAllActive must recycle all 2 VFX instances.");
+
+            Object.DestroyImmediate(vfxGo);
         }
 
         [Test]
