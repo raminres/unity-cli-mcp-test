@@ -324,9 +324,36 @@ This file provides persistent context across agent sessions for this Unity proje
 
 ---
 
+### 15. Advanced Powerups & Brick Archetypes (Bomb, Glass-Enclosed & Extra Heart)
+- **Bomb Brick (`BlockSpecialType.Bomb`)**:
+  - Detonates on impact with ball or adjacent explosion.
+  - Searches blast perimeter radius of $2.5$ units across sibling blocks in `transform.parent`.
+  - Detonates all adjacent and diagonal neighbor bricks with outward impulse normal `(neighbor.position - transform.position).normalized`.
+  - Guarded with `isDestroyed` flag preventing circular recursive chain reactions.
+  - World space badge: hosts `TX_Powerup_Bomb.png` inside fiery orange glowing plate (`.badge-plate-bomb`, border `#ff5722`).
+  - Audio: plays `AU_Bomb_Explosion.mp3` with procedural explosive rumble synth fallback (120Hz sliding to 35Hz).
+- **Glass-Enclosed Brick (`BlockSpecialType.GlassEnclosed`)**:
+  - Reinforced multi-hit brick encased in a $0.25$ translucent glass box shell (`1.18x` local scale) using [MI_Block_Glass.mat](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Materials/BlockBreaker/MI_Block_Glass.mat) (URP Transparent Lit).
+  - **Hit 1**: Destroys outer glass shell, plays [AU_Glass_Break.mp3](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Audio/AU_Glass_Break.mp3) (with 1760Hz crystal shimmer synth fallback), and spawns icy crystal debris burst, leaving inner brick exposed with 1 HP remaining.
+  - **Hit 2**: Breaks inner colored brick and awards **double score** ($2\times$ base tier points: Blue 60, Green 40, Red 20).
+- **Extra Heart Powerup (`BlockSpecialType.ExtraHeart`)**:
+  - Grants $+1$ life upon destruction, clamped to expanded `ArcadeGameManager.MAX_LIVES = 5`.
+  - World space badge: hosts `TX_Powerup_Heart_Plus.png` inside glowing neon pink plate (`.badge-plate-heart-plus`, border `#ff2a6d`).
+  - Flying Heart UI Animation (`ArcadeUIManager.AnimateFlyingHeart`): spawns UI heart icon at screen-projected world position that smoothly lerps in a parabolic arc to the target HUD life pip with tactile pop scaling.
+  - HUD Hearts Expansion: `BlockBreakerHUD.uxml` and `BlockBreakerHUD.uss` updated with `life-pip-4` and `life-pip-5`, dynamically displaying when extra lives are gained.
+- **Level Configuration & Live Tuning Sliders**:
+  - [LevelConfiguration.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelConfiguration.cs) exposes `bombCount` (0-5), `glassEnclosedCount` (0-8), and `extraHeartCount` (0-3) with getters, setters, and cloning.
+  - Preset levels updated (`SO_Level_01`, `SO_Level_02`, `SO_Level_03`).
+  - In-game Level Settings modal updated with live interactive sliders for all 3 powerups (`slider-bomb`, `slider-glass`, `slider-heart`).
+- **Automated Test Suite**:
+  - 63 automated tests passing (100%), including dedicated test coverage for glass 2-hit & 2x scoring, bomb perimeter blast & recursive chain safety, extra heart HUD & life clamping, badge styling, and level configuration cloning.
+
+---
+
 ## Active Scenes & Build Index
 1. `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0)
 2. `Assets/Scenes/LV_BlockBreaker.unity` (Build Index 1)
 3. `Assets/Scenes/SampleScene.unity` (Disabled baseline)
+
 
 
