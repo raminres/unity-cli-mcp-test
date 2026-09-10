@@ -14,7 +14,7 @@ namespace Arcade.Editor
     public static class SetupIOSBuildProfile
     {
         public const string ProfilePath = "Assets/Settings/Build Profiles/iOS.asset";
-        public const string OutputBuildPath = "/Users/raminrasulzade/Documents/UnityProjects/Builds/BlockBreakerBuilds";
+        public const string OutputBuildPath = "Builds/BlockBreakerBuilds";
         public const string CompanyName = "RaminRasulzade";
         public const string ProductName = "BlockBreaker";
         public const string BundleIdentifier = "com.RaminRasulzade.BlockBreaker";

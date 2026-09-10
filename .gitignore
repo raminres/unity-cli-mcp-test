@@ -76,4 +76,17 @@ Thumbs.db
 
 # Test reports
 test-results.xml
+results.xml
 CodeCoverage/
+
+# Security & Secrets
+*.env
+*.env.*
+*.secret
+*.pem
+*.key
+*.p12
+*.keystore
+*.jks
+*.log
+*.credentials

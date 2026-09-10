@@ -22,4 +22,4 @@ Use this skill when:
 - Writing and executing automated EditMode/PlayMode tests via Unity Test Framework.
 
 ## Reference Documentation
-For complete workflow recipes, code examples, and MCP tool patterns, refer to [skills.md](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/skills.md) and [AGENTS.md](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/AGENTS.md).
+For complete workflow recipes, code examples, and MCP tool patterns, refer to [skills.md](skills.md) and [AGENTS.md](AGENTS.md).
