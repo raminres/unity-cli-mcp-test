@@ -64,9 +64,7 @@ namespace Arcade.UI
         private Button btnCloseOptions;
 
         // Level Settings controls
-        private Button btnLvl1;
-        private Button btnLvl2;
-        private Button btnLvl3;
+        private readonly System.Collections.Generic.List<Button> hudLevelTabButtons = new System.Collections.Generic.List<Button>();
         private Label levelNameLabel;
         private Label levelDescLabel;
 
@@ -88,6 +86,21 @@ namespace Arcade.UI
         private Label valGlass;
         private SliderInt sliderHeart;
         private Label valHeart;
+        private SliderInt sliderShield;
+        private Label valShield;
+        private SliderInt sliderMultiBall;
+        private Label valMultiBall;
+
+        // Active Powerup Badges
+        private VisualElement shieldStatusBadge;
+        private Label shieldTimerLabel;
+        private VisualElement multiballStatusBadge;
+        private Label multiballCountLabel;
+        private VisualElement paddleStatusBadge;
+        private Label paddleTimerLabel;
+        private VisualElement multiplierStatusBadge;
+        private Label multiplierValueLabel;
+        private Label multiplierTimerLabel;
 
         private Button btnApplyLevel;
         private Button btnCloseLevelSettings;
@@ -95,6 +108,12 @@ namespace Arcade.UI
         [Header("Lives Icons")]
         [SerializeField] private Sprite heartFillSprite;
         [SerializeField] private Sprite heartEmptySprite;
+
+        [Header("Power-Up Sprites")]
+        [SerializeField] private Sprite shieldSprite;
+        [SerializeField] private Sprite multiBallSprite;
+        [SerializeField] private Sprite paddleExpandSprite;
+        [SerializeField] private Sprite multiplierSprite;
 
         [Header("Quick Control Icons")]
         [SerializeField] private Sprite levelSettingsSprite;
@@ -117,6 +136,17 @@ namespace Arcade.UI
         public Button BtnQuickLevels => btnQuickLevels;
         public bool WasPausedByOptions => wasPausedByOptions;
         public bool WasPausedByLevelSettings => wasPausedByLevelSettings;
+        public VisualElement ShieldStatusBadge => shieldStatusBadge;
+        public Label ShieldTimerLabel => shieldTimerLabel;
+        public VisualElement MultiballStatusBadge => multiballStatusBadge;
+        public Label MultiballCountLabel => multiballCountLabel;
+        public VisualElement PaddleStatusBadge => paddleStatusBadge;
+        public Label PaddleTimerLabel => paddleTimerLabel;
+        public VisualElement MultiplierStatusBadge => multiplierStatusBadge;
+        public Label MultiplierValueLabel => multiplierValueLabel;
+        public Label MultiplierTimerLabel => multiplierTimerLabel;
+        public Sprite PaddleExpandSprite => paddleExpandSprite;
+        public Sprite MultiplierSprite => multiplierSprite;
 
         private bool wasPausedByOptions = false;
         private bool wasPausedByLevelSettings = false;
@@ -204,10 +234,7 @@ namespace Arcade.UI
 
             if (btnCloseOptions != null) btnCloseOptions.clicked -= HideOptions;
             if (btnFps != null) btnFps.clicked -= ToggleFpsSetting;
-
-            if (btnLvl1 != null) btnLvl1.clicked -= () => SelectLevelTab(1);
-            if (btnLvl2 != null) btnLvl2.clicked -= () => SelectLevelTab(2);
-            if (btnLvl3 != null) btnLvl3.clicked -= () => SelectLevelTab(3);
+            hudLevelTabButtons.Clear();
 
             if (btnApplyLevel != null) btnApplyLevel.clicked -= ApplyLevelSettingsAndRestart;
             if (btnCloseLevelSettings != null) btnCloseLevelSettings.clicked -= HideLevelSettings;
@@ -255,7 +282,41 @@ namespace Arcade.UI
                 pauseSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Pause.png");
             if (playSprite == null)
                 playSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Play.png");
+            if (shieldSprite == null)
+                shieldSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Shield.png");
+            if (multiBallSprite == null)
+                multiBallSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Multi_Ball.png");
+            if (paddleExpandSprite == null)
+                paddleExpandSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
+            if (multiplierSprite == null)
+                multiplierSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
 #endif
+
+            shieldStatusBadge = root.Q<VisualElement>("shield-status-badge");
+            shieldTimerLabel = root.Q<Label>("shield-timer-label");
+            multiballStatusBadge = root.Q<VisualElement>("multiball-status-badge");
+            multiballCountLabel = root.Q<Label>("multiball-count-label");
+            paddleStatusBadge = root.Q<VisualElement>("paddle-status-badge");
+            paddleTimerLabel = root.Q<Label>("paddle-timer-label");
+            multiplierStatusBadge = root.Q<VisualElement>("multiplier-status-badge");
+            multiplierValueLabel = root.Q<Label>("multiplier-value-label");
+            multiplierTimerLabel = root.Q<Label>("multiplier-timer-label");
+
+            var iconShield = root.Q<VisualElement>("shield-status-icon");
+            if (iconShield != null && shieldSprite != null)
+                iconShield.style.backgroundImage = new StyleBackground(shieldSprite);
+
+            var iconMulti = root.Q<VisualElement>("multiball-status-icon");
+            if (iconMulti != null && multiBallSprite != null)
+                iconMulti.style.backgroundImage = new StyleBackground(multiBallSprite);
+
+            var iconPaddle = root.Q<VisualElement>("paddle-status-icon");
+            if (iconPaddle != null && paddleExpandSprite != null)
+                iconPaddle.style.backgroundImage = new StyleBackground(paddleExpandSprite);
+
+            var iconMultiplier = root.Q<VisualElement>("multiplier-status-icon");
+            if (iconMultiplier != null && multiplierSprite != null)
+                iconMultiplier.style.backgroundImage = new StyleBackground(multiplierSprite);
 
             btnQuickLevels = root.Q<Button>("btn-quick-levels");
             btnQuickMute = root.Q<Button>("btn-quick-mute");
@@ -303,9 +364,6 @@ namespace Arcade.UI
             btnCloseOptions = root.Q<Button>("btn-close-options");
 
             // Level Settings controls
-            btnLvl1 = root.Q<Button>("btn-lvl-1");
-            btnLvl2 = root.Q<Button>("btn-lvl-2");
-            btnLvl3 = root.Q<Button>("btn-lvl-3");
             levelNameLabel = root.Q<Label>("level-name-label");
             levelDescLabel = root.Q<Label>("level-desc-label");
 
@@ -327,6 +385,10 @@ namespace Arcade.UI
             valGlass = root.Q<Label>("val-glass");
             sliderHeart = root.Q<SliderInt>("slider-heart");
             valHeart = root.Q<Label>("val-heart");
+            sliderShield = root.Q<SliderInt>("slider-shield");
+            valShield = root.Q<Label>("val-shield");
+            sliderMultiBall = root.Q<SliderInt>("slider-multiball");
+            valMultiBall = root.Q<Label>("val-multiball");
 
             btnApplyLevel = root.Q<Button>("btn-apply-level");
             btnCloseLevelSettings = root.Q<Button>("btn-close-level-settings");
@@ -373,9 +435,22 @@ namespace Arcade.UI
             if (btnFps != null) btnFps.clicked += ToggleFpsSetting;
 
             // Level settings wiring
-            if (btnLvl1 != null) btnLvl1.clicked += () => SelectLevelTab(1);
-            if (btnLvl2 != null) btnLvl2.clicked += () => SelectLevelTab(2);
-            if (btnLvl3 != null) btnLvl3.clicked += () => SelectLevelTab(3);
+            hudLevelTabButtons.Clear();
+            if (levelSettingsModal != null)
+            {
+                var tabsContainer = levelSettingsModal.Q<VisualElement>(className: "level-tabs-container");
+                if (tabsContainer != null)
+                {
+                    var buttons = tabsContainer.Query<Button>(className: "level-tab-btn").ToList();
+                    for (int i = 0; i < buttons.Count; i++)
+                    {
+                        int lvlNum = i + 1;
+                        var btn = buttons[i];
+                        hudLevelTabButtons.Add(btn);
+                        btn.clicked += () => SelectLevelTab(lvlNum);
+                    }
+                }
+            }
 
             if (sliderColumns != null)
             {
@@ -458,6 +533,24 @@ namespace Arcade.UI
                 });
             }
 
+            if (sliderShield != null)
+            {
+                sliderShield.RegisterValueChangedCallback(evt =>
+                {
+                    if (activeEditableConfig != null) activeEditableConfig.SetShieldCount(evt.newValue);
+                    if (valShield != null) valShield.text = evt.newValue.ToString();
+                });
+            }
+
+            if (sliderMultiBall != null)
+            {
+                sliderMultiBall.RegisterValueChangedCallback(evt =>
+                {
+                    if (activeEditableConfig != null) activeEditableConfig.SetMultiBallCount(evt.newValue);
+                    if (valMultiBall != null) valMultiBall.text = evt.newValue.ToString();
+                });
+            }
+
             if (btnApplyLevel != null) btnApplyLevel.clicked += ApplyLevelSettingsAndRestart;
             if (btnCloseLevelSettings != null) btnCloseLevelSettings.clicked += HideLevelSettings;
         }
@@ -469,6 +562,13 @@ namespace Arcade.UI
                 ArcadeGameManager.Instance.OnScoreChanged += UpdateScoreDisplay;
                 ArcadeGameManager.Instance.OnLivesChanged += UpdateLivesDisplay;
                 ArcadeGameManager.Instance.OnStateChanged += HandleGameStateChanged;
+                ArcadeGameManager.Instance.OnShieldStateChanged += HandleShieldStateChanged;
+                ArcadeGameManager.Instance.OnShieldTick += HandleShieldTick;
+                ArcadeGameManager.Instance.OnActiveBallCountChanged += HandleActiveBallCountChanged;
+                ArcadeGameManager.Instance.OnPaddleExpandStateChanged += HandlePaddleExpandStateChanged;
+                ArcadeGameManager.Instance.OnPaddleExpandTick += HandlePaddleExpandTick;
+                ArcadeGameManager.Instance.OnScoreMultiplierStateChanged += HandleScoreMultiplierStateChanged;
+                ArcadeGameManager.Instance.OnScoreMultiplierTick += HandleScoreMultiplierTick;
             }
         }
 
@@ -479,6 +579,13 @@ namespace Arcade.UI
                 ArcadeGameManager.Instance.OnScoreChanged -= UpdateScoreDisplay;
                 ArcadeGameManager.Instance.OnLivesChanged -= UpdateLivesDisplay;
                 ArcadeGameManager.Instance.OnStateChanged -= HandleGameStateChanged;
+                ArcadeGameManager.Instance.OnShieldStateChanged -= HandleShieldStateChanged;
+                ArcadeGameManager.Instance.OnShieldTick -= HandleShieldTick;
+                ArcadeGameManager.Instance.OnActiveBallCountChanged -= HandleActiveBallCountChanged;
+                ArcadeGameManager.Instance.OnPaddleExpandStateChanged -= HandlePaddleExpandStateChanged;
+                ArcadeGameManager.Instance.OnPaddleExpandTick -= HandlePaddleExpandTick;
+                ArcadeGameManager.Instance.OnScoreMultiplierStateChanged -= HandleScoreMultiplierStateChanged;
+                ArcadeGameManager.Instance.OnScoreMultiplierTick -= HandleScoreMultiplierTick;
             }
         }
 
@@ -489,6 +596,10 @@ namespace Arcade.UI
                 UpdateScoreDisplay(ArcadeGameManager.Instance.Score, 0);
                 UpdateLivesDisplay(ArcadeGameManager.Instance.Lives);
                 HandleGameStateChanged(ArcadeGameManager.Instance.State);
+                HandleShieldStateChanged(ArcadeGameManager.Instance.IsShieldActive, ArcadeGameManager.Instance.ShieldTimeRemaining);
+                HandleActiveBallCountChanged(ArcadeGameManager.Instance.ActiveBallCount);
+                HandlePaddleExpandStateChanged(ArcadeGameManager.Instance.IsPaddleExpanded, ArcadeGameManager.Instance.PaddleExpandTimeRemaining);
+                HandleScoreMultiplierStateChanged(ArcadeGameManager.Instance.ActiveScoreMultiplier > 1, ArcadeGameManager.Instance.ActiveScoreMultiplier, ArcadeGameManager.Instance.MultiplierTimeRemaining);
             }
 
             if (ArcadeAudioManager.Instance != null)
@@ -710,6 +821,96 @@ namespace Arcade.UI
                     gameOverModal.AddToClassList("modal-hidden");
                 }
             }
+        }
+
+        public void HandleShieldStateChanged(bool active, float remaining)
+        {
+            if (shieldStatusBadge == null) return;
+            if (active)
+            {
+                shieldStatusBadge.RemoveFromClassList("powerup-hidden");
+                shieldStatusBadge.style.display = DisplayStyle.Flex;
+                if (shieldTimerLabel != null) shieldTimerLabel.text = $"{Mathf.CeilToInt(remaining)}s";
+            }
+            else
+            {
+                shieldStatusBadge.AddToClassList("powerup-hidden");
+                shieldStatusBadge.style.display = DisplayStyle.None;
+            }
+        }
+
+        public void HandleShieldTick(float timeRemaining)
+        {
+            if (shieldTimerLabel != null)
+                shieldTimerLabel.text = $"{Mathf.CeilToInt(timeRemaining)}s";
+        }
+
+        public void HandleActiveBallCountChanged(int count)
+        {
+            if (multiballStatusBadge == null) return;
+            if (count > 1)
+            {
+                multiballStatusBadge.RemoveFromClassList("powerup-hidden");
+                multiballStatusBadge.style.display = DisplayStyle.Flex;
+                if (multiballCountLabel != null) multiballCountLabel.text = $"{count} BALLS";
+            }
+            else
+            {
+                multiballStatusBadge.AddToClassList("powerup-hidden");
+                multiballStatusBadge.style.display = DisplayStyle.None;
+            }
+        }
+
+        public void HandlePaddleExpandStateChanged(bool active, float remaining)
+        {
+            if (paddleStatusBadge == null) return;
+            if (active)
+            {
+                paddleStatusBadge.RemoveFromClassList("powerup-hidden");
+                paddleStatusBadge.style.display = DisplayStyle.Flex;
+                if (paddleTimerLabel != null) paddleTimerLabel.text = $"{Mathf.CeilToInt(remaining)}s";
+            }
+            else
+            {
+                paddleStatusBadge.AddToClassList("powerup-hidden");
+                paddleStatusBadge.style.display = DisplayStyle.None;
+            }
+        }
+
+        public void HandlePaddleExpandTick(float timeRemaining)
+        {
+            if (paddleTimerLabel != null)
+                paddleTimerLabel.text = $"{Mathf.CeilToInt(timeRemaining)}s";
+        }
+
+        public void HandleScoreMultiplierStateChanged(bool active, int multiplier, float remaining)
+        {
+            if (multiplierStatusBadge == null) return;
+            if (active && multiplier > 1)
+            {
+                multiplierStatusBadge.RemoveFromClassList("powerup-hidden");
+                multiplierStatusBadge.style.display = DisplayStyle.Flex;
+
+                multiplierStatusBadge.RemoveFromClassList("mult-tier-2x");
+                multiplierStatusBadge.RemoveFromClassList("mult-tier-3x");
+                multiplierStatusBadge.RemoveFromClassList("mult-tier-4x");
+                multiplierStatusBadge.RemoveFromClassList("mult-tier-5x");
+                multiplierStatusBadge.AddToClassList($"mult-tier-{multiplier}x");
+
+                if (multiplierValueLabel != null) multiplierValueLabel.text = $"{multiplier}X";
+                if (multiplierTimerLabel != null) multiplierTimerLabel.text = $"{Mathf.CeilToInt(remaining)}s";
+            }
+            else
+            {
+                multiplierStatusBadge.AddToClassList("powerup-hidden");
+                multiplierStatusBadge.style.display = DisplayStyle.None;
+            }
+        }
+
+        public void HandleScoreMultiplierTick(float timeRemaining)
+        {
+            if (multiplierTimerLabel != null)
+                multiplierTimerLabel.text = $"{Mathf.CeilToInt(timeRemaining)}s";
         }
 
         private void HandleQuickMuteClicked()
@@ -1032,9 +1233,13 @@ namespace Arcade.UI
 
             // Update tab button active states
             int lvl = activeEditableConfig.LevelNumber;
-            if (btnLvl1 != null) { if (lvl == 1) btnLvl1.AddToClassList("level-tab-active"); else btnLvl1.RemoveFromClassList("level-tab-active"); }
-            if (btnLvl2 != null) { if (lvl == 2) btnLvl2.AddToClassList("level-tab-active"); else btnLvl2.RemoveFromClassList("level-tab-active"); }
-            if (btnLvl3 != null) { if (lvl == 3) btnLvl3.AddToClassList("level-tab-active"); else btnLvl3.RemoveFromClassList("level-tab-active"); }
+            for (int i = 0; i < hudLevelTabButtons.Count; i++)
+            {
+                if (i + 1 == lvl)
+                    hudLevelTabButtons[i].AddToClassList("level-tab-active");
+                else
+                    hudLevelTabButtons[i].RemoveFromClassList("level-tab-active");
+            }
 
             if (levelNameLabel != null) levelNameLabel.text = activeEditableConfig.LevelName;
             if (levelDescLabel != null) levelDescLabel.text = activeEditableConfig.Description;
@@ -1065,6 +1270,12 @@ namespace Arcade.UI
 
             if (sliderHeart != null) sliderHeart.value = activeEditableConfig.ExtraHeartCount;
             if (valHeart != null) valHeart.text = activeEditableConfig.ExtraHeartCount.ToString();
+
+            if (sliderShield != null) sliderShield.value = activeEditableConfig.ShieldCount;
+            if (valShield != null) valShield.text = activeEditableConfig.ShieldCount.ToString();
+
+            if (sliderMultiBall != null) sliderMultiBall.value = activeEditableConfig.MultiBallCount;
+            if (valMultiBall != null) valMultiBall.text = activeEditableConfig.MultiBallCount.ToString();
         }
 
         private void ApplyLevelSettingsAndRestart()

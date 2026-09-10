@@ -252,23 +252,24 @@
 
 .level-tabs-container {
     flex-direction: row;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    justify-content: center;
     margin-bottom: 14px;
 }
 
 .level-tab-btn {
     flex-grow: 1;
-    height: 42px;
-    margin-left: 3px;
-    margin-right: 3px;
+    min-width: 80px;
+    height: 40px;
+    margin: 3px;
     border-radius: 12px;
     border-width: 1.5px;
     border-color: rgba(255, 255, 255, 0.18);
     background-color: rgba(255, 255, 255, 0.08);
     color: #cbd5e1;
-    font-size: 14px;
+    font-size: 13px;
     -unity-font-style: bold;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     align-items: center;
     justify-content: center;
     scale: 1 1;

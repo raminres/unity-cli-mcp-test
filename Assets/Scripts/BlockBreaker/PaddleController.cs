@@ -14,6 +14,7 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float minX = -7.5f;
         [SerializeField] private float maxX = 7.5f;
         [SerializeField] private float paddleWidth = 5.0f;
+        [SerializeField] private float basePaddleWidth = 5.0f;
         [SerializeField] private float arenaHalfWidth = 10.0f;
         [SerializeField] private int expansionCount = 0;
 
@@ -21,6 +22,7 @@ namespace Arcade.BlockBreaker
         [SerializeField] private Rigidbody rb;
 
         public float Width => paddleWidth;
+        public float BaseWidth => basePaddleWidth;
         public float MinX => minX;
         public float MaxX => maxX;
         public int ExpansionCount => expansionCount;
@@ -93,8 +95,19 @@ namespace Arcade.BlockBreaker
         /// </summary>
         public void ResetWidth(float defaultWidth = 5.0f)
         {
+            basePaddleWidth = defaultWidth;
             expansionCount = 0;
             SetWidth(defaultWidth);
+        }
+
+        /// <summary>
+        /// Resets the paddle width to the cached level base width without changing base width itself.
+        /// Used when temporary expansion buffs expire.
+        /// </summary>
+        public void ResetToBaseWidth()
+        {
+            expansionCount = 0;
+            SetWidth(basePaddleWidth);
         }
 
         public void RecalculateBounds()

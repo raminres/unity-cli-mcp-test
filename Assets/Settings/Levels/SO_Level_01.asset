@@ -13,20 +13,25 @@ MonoBehaviour:
   m_Name: SO_Level_01
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 1
-  levelName: 'Level 1: Classic Inverted'
-  levelDescription: Classic 3-tier block setup with Red on bottom, Green in middle, and Blue on top. Features random x2 multiplier and paddle expander blocks.
+  levelName: 'Level 1: First Flight'
+  levelDescription: Gentle warmup grid with comfortable ball speed. Introduces the Paddle Expander to widen your paddle and master bounce angles.
   colorPattern: 0
-  columns: 8
-  rowsPerTier: 2
+  columns: 5
+  rowsPerTier: 1
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
-  ballSpeedMultiplier: 1
-  initialPaddleWidth: 5
-  multiplier2xCount: 1
+  ballSpeedMultiplier: 0.85
+  initialPaddleWidth: 5.5
+  multiplier2xCount: 0
   multiplier3xCount: 0
+  multiplier4xCount: 0
+  multiplier5xCount: 0
   paddleExpanderCount: 1
-  bombCount: 1
-  glassEnclosedCount: 2
-  extraHeartCount: 1
+  bombCount: 0
+  glassEnclosedCount: 0
+  extraHeartCount: 0
+  shieldCount: 0
+  multiBallCount: 0
+  shieldDuration: 10

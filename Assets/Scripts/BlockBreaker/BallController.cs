@@ -24,9 +24,15 @@ namespace Arcade.BlockBreaker
         private float currentSpeed;
         private bool isLaunched = false;
         private Vector3 lastVelocity;
+        private bool isPrimaryBall = true;
 
         public bool IsLaunched => isLaunched;
         public float CurrentSpeed => currentSpeed;
+        public bool IsPrimaryBall
+        {
+            get => isPrimaryBall;
+            set => isPrimaryBall = value;
+        }
 
         private void Awake()
         {
@@ -55,6 +61,14 @@ namespace Arcade.BlockBreaker
             }
         }
 
+        private void OnDestroy()
+        {
+            if (ArcadeGameManager.Instance != null)
+            {
+                ArcadeGameManager.Instance.UnregisterBall(this);
+            }
+        }
+
         private void Start()
         {
             if (paddle == null)
@@ -62,7 +76,15 @@ namespace Arcade.BlockBreaker
                 paddle = FindAnyObjectByType<PaddleController>();
             }
 
-            ResetBallToPaddle();
+            if (ArcadeGameManager.Instance != null)
+            {
+                ArcadeGameManager.Instance.RegisterBall(this);
+            }
+
+            if (isPrimaryBall)
+            {
+                ResetBallToPaddle();
+            }
         }
 
         public void Initialize(ArcadeGameManager manager, PaddleController paddleController)
@@ -176,8 +198,32 @@ namespace Arcade.BlockBreaker
             }
         }
 
+        public void LaunchWithDirection(Vector3 direction, float speed)
+        {
+            if (rb == null) rb = GetComponent<Rigidbody>();
+            SetBallActive(true);
+            isLaunched = true;
+            currentSpeed = speed > 0f ? speed : baseSpeed;
+
+            if (rb != null)
+            {
+                rb.linearVelocity = direction.normalized * currentSpeed;
+            }
+            lastVelocity = rb != null ? rb.linearVelocity : direction.normalized * currentSpeed;
+        }
+
         private void HandleStateChanged(GameState state)
         {
+            if (!isPrimaryBall)
+            {
+                if (state != GameState.Playing && state != GameState.Paused)
+                {
+                    if (Application.isPlaying) Destroy(gameObject);
+                    else DestroyImmediate(gameObject);
+                }
+                return;
+            }
+
             if (state == GameState.Playing && !isLaunched)
             {
                 Launch();
@@ -255,7 +301,7 @@ namespace Arcade.BlockBreaker
             {
                 if (ArcadeGameManager.Instance != null)
                 {
-                    ArcadeGameManager.Instance.RecordBallLost();
+                    ArcadeGameManager.Instance.HandleBallFell(this);
                 }
             }
         }

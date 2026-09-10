@@ -807,6 +807,10 @@ namespace Arcade.Tests
             Assert.IsNotNull(audioMgr.ClipGameOver, "ClipGameOver must not be null.");
             Assert.IsNotNull(audioMgr.ClipLevelSuccess, "ClipLevelSuccess must not be null.");
             Assert.IsNotNull(audioMgr.ClipButtonPress, "ClipButtonPress must not be null.");
+            Assert.IsNotNull(audioMgr.ClipLifeLost, "ClipLifeLost must not be null.");
+            Assert.IsNotNull(audioMgr.ClipShieldDeflect, "ClipShieldDeflect must not be null.");
+            Assert.IsNotNull(audioMgr.ClipGlassBreak, "ClipGlassBreak must not be null.");
+            Assert.IsNotNull(audioMgr.ClipBombExplosion, "ClipBombExplosion must not be null.");
 
             Object.DestroyImmediate(audioObj);
         }
@@ -852,6 +856,11 @@ namespace Arcade.Tests
             Assert.DoesNotThrow(() => audioMgr.PlayButtonPress(), "PlayButtonPress must execute without error.");
             Assert.DoesNotThrow(() => audioMgr.PlayLevelClear(), "PlayLevelClear must execute without error.");
             Assert.DoesNotThrow(() => audioMgr.PlayGameOver(), "PlayGameOver must execute without error.");
+            Assert.DoesNotThrow(() => audioMgr.PlayLifeLost(), "PlayLifeLost must execute without error.");
+            Assert.DoesNotThrow(() => audioMgr.PlayShieldDeflect(), "PlayShieldDeflect must execute without error.");
+            Assert.DoesNotThrow(() => audioMgr.PlayMultiBall(), "PlayMultiBall must execute without error.");
+            Assert.DoesNotThrow(() => audioMgr.PlayGlassBreak(), "PlayGlassBreak must execute without error.");
+            Assert.DoesNotThrow(() => audioMgr.PlayBombExplosion(), "PlayBombExplosion must execute without error.");
 
             Object.DestroyImmediate(audioObj);
         }
@@ -889,6 +898,8 @@ namespace Arcade.Tests
         [Test]
         [TestCase(BlockSpecialType.ScoreMultiplier2x, "x2", "badge-text-x2", "badge-plate-x2")]
         [TestCase(BlockSpecialType.ScoreMultiplier3x, "x3", "badge-text-x3", "badge-plate-x3")]
+        [TestCase(BlockSpecialType.ScoreMultiplier4x, "x4", "badge-text-x4", "badge-plate-x4")]
+        [TestCase(BlockSpecialType.ScoreMultiplier5x, "x5", "badge-text-x5", "badge-plate-x5")]
         public void BlockBadge_Configures_Multiplier_ShowsIcon_And_ShowsCorrectText(BlockSpecialType type, string expectedText, string expectedTextClass, string expectedPlateClass)
         {
             var badgeGo = new GameObject("TestBadge");
@@ -1462,6 +1473,763 @@ namespace Arcade.Tests
 
             Object.DestroyImmediate(config);
             Object.DestroyImmediate(clone);
+        }
+
+        #endregion
+
+        #region 12. Shield & Multi-Ball Power-Up Tests
+
+        [Test]
+        public void GameManager_ActivateShield_EnablesShieldAndCountsDown()
+        {
+            bool stateEventFired = false;
+            float recordedRemaining = 0f;
+            gameManager.OnShieldStateChanged += (active, rem) =>
+            {
+                stateEventFired = true;
+                recordedRemaining = rem;
+            };
+
+            gameManager.ActivateShield(10f);
+
+            Assert.IsTrue(gameManager.IsShieldActive);
+            Assert.AreEqual(10f, gameManager.ShieldTimeRemaining, 0.01f);
+            Assert.IsTrue(stateEventFired);
+            Assert.AreEqual(10f, recordedRemaining, 0.01f);
+
+            // Tick 3 seconds
+            gameManager.TickShield(3f);
+            Assert.IsTrue(gameManager.IsShieldActive);
+            Assert.AreEqual(7f, gameManager.ShieldTimeRemaining, 0.01f);
+
+            // Tick remaining 7.5 seconds to expire
+            gameManager.TickShield(7.5f);
+            Assert.IsFalse(gameManager.IsShieldActive);
+            Assert.AreEqual(0f, gameManager.ShieldTimeRemaining, 0.01f);
+        }
+
+        [Test]
+        public void GameManager_ShieldActive_FallingBallResetsToReadyToLaunchWithoutLosingLife()
+        {
+            var ballObj = new GameObject("TestBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.AddComponent<Rigidbody>();
+            ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+
+            gameManager.RegisterBall(ball);
+            gameManager.LaunchBall(); // Playing
+            gameManager.ActivateShield(10f);
+
+            int livesBefore = gameManager.Lives;
+
+            // Ball falls into killzone while shield is active
+            gameManager.HandleBallFell(ball);
+
+            Assert.AreEqual(livesBefore, gameManager.Lives, "Shield must prevent life loss when ball falls.");
+            Assert.AreEqual(GameState.ReadyToLaunch, gameManager.State, "Game must reset to ReadyToLaunch.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void GameManager_ShieldExpired_FallingBallDecrementsLifeNormally()
+        {
+            var ballObj = new GameObject("TestBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.AddComponent<Rigidbody>();
+            ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+
+            gameManager.RegisterBall(ball);
+            gameManager.LaunchBall(); // Playing
+            gameManager.ActivateShield(10f);
+            gameManager.DeactivateShield(); // Explicitly deactivate or expire
+
+            int livesBefore = gameManager.Lives;
+
+            gameManager.HandleBallFell(ball);
+
+            Assert.AreEqual(livesBefore - 1, gameManager.Lives, "Life must decrement when shield is inactive.");
+            Assert.AreEqual(GameState.BallLost, gameManager.State, "State must transition to BallLost.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void GameManager_MultiBall_SpawnsTwoExtraBalls()
+        {
+            var ballObj = new GameObject("PrimaryBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.AddComponent<Rigidbody>();
+            ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+
+            gameManager.RegisterBall(ball);
+            gameManager.LaunchBall();
+
+            Assert.AreEqual(1, gameManager.ActiveBallCount);
+
+            gameManager.SpawnMultiBall(Vector3.zero, Vector3.up * 10f, 10f);
+
+            Assert.AreEqual(3, gameManager.ActiveBallCount, "MultiBall must add 2 extra balls for a total of 3 active balls.");
+
+            gameManager.ClearExtraBalls();
+            Assert.AreEqual(1, gameManager.ActiveBallCount);
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void GameManager_MultiBall_ExtraBallFallingDoesNotDecrementLife()
+        {
+            var ballObj = new GameObject("PrimaryBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.AddComponent<Rigidbody>();
+            ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+
+            gameManager.RegisterBall(ball);
+            gameManager.LaunchBall();
+            gameManager.SpawnMultiBall(Vector3.zero, Vector3.up * 10f, 10f);
+
+            Assert.AreEqual(3, gameManager.ActiveBallCount);
+            int livesBefore = gameManager.Lives;
+
+            var extraBall = gameManager.ActiveBalls[1];
+            gameManager.HandleBallFell(extraBall);
+
+            Assert.AreEqual(2, gameManager.ActiveBallCount, "Active ball count must decrease to 2.");
+            Assert.AreEqual(livesBefore, gameManager.Lives, "Falling extra ball must not decrement lives.");
+            Assert.AreEqual(GameState.Playing, gameManager.State, "Game must remain Playing when extra ball falls.");
+
+            // Drop second extra ball
+            var secondExtra = gameManager.ActiveBalls[1];
+            gameManager.HandleBallFell(secondExtra);
+
+            Assert.AreEqual(1, gameManager.ActiveBallCount, "Active ball count must decrease to 1.");
+            Assert.AreEqual(livesBefore, gameManager.Lives, "Second falling extra ball must not decrement lives.");
+            Assert.AreEqual(GameState.Playing, gameManager.State, "Game must remain Playing with 1 ball left.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void GameManager_MultiBall_LastRemainingBallFallingDecrementsLife()
+        {
+            var ballObj = new GameObject("PrimaryBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.AddComponent<Rigidbody>();
+            ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+
+            gameManager.RegisterBall(ball);
+            gameManager.LaunchBall();
+            gameManager.SpawnMultiBall(Vector3.zero, Vector3.up * 10f, 10f);
+
+            int livesBefore = gameManager.Lives;
+
+            // Drop 2 extra balls
+            gameManager.HandleBallFell(gameManager.ActiveBalls[2]);
+            gameManager.HandleBallFell(gameManager.ActiveBalls[1]);
+
+            Assert.AreEqual(1, gameManager.ActiveBallCount);
+
+            // Now drop the last remaining ball
+            gameManager.HandleBallFell(gameManager.ActiveBalls[0]);
+
+            Assert.AreEqual(livesBefore - 1, gameManager.Lives, "Last ball falling must decrement life.");
+            Assert.AreEqual(GameState.BallLost, gameManager.State, "Game must transition to BallLost.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void GameManager_MultiBall_LastBallWithShieldActiveResetsToReadyToLaunch()
+        {
+            var ballObj = new GameObject("PrimaryBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.AddComponent<Rigidbody>();
+            ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+
+            gameManager.RegisterBall(ball);
+            gameManager.LaunchBall();
+            gameManager.SpawnMultiBall(Vector3.zero, Vector3.up * 10f, 10f);
+            gameManager.ActivateShield(10f);
+
+            int livesBefore = gameManager.Lives;
+
+            // Drop 2 extra balls
+            gameManager.HandleBallFell(gameManager.ActiveBalls[2]);
+            gameManager.HandleBallFell(gameManager.ActiveBalls[1]);
+
+            // Now drop the last remaining ball while shield is active
+            gameManager.HandleBallFell(gameManager.ActiveBalls[0]);
+
+            Assert.AreEqual(livesBefore, gameManager.Lives, "Shield must save the last ball from life loss.");
+            Assert.AreEqual(GameState.ReadyToLaunch, gameManager.State, "Game must reset to ReadyToLaunch.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void LevelConfiguration_ShieldAndMultiBall_CloningAndClamping()
+        {
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+
+            config.SetShieldCount(2);
+            config.SetMultiBallCount(3);
+            config.SetShieldDuration(12f);
+
+            Assert.AreEqual(2, config.ShieldCount);
+            Assert.AreEqual(3, config.MultiBallCount);
+            Assert.AreEqual(12f, config.ShieldDuration);
+
+            // Test Clamping
+            config.SetShieldCount(99);
+            Assert.AreEqual(4, config.ShieldCount, "ShieldCount must clamp to 4.");
+
+            config.SetMultiBallCount(-5);
+            Assert.AreEqual(0, config.MultiBallCount, "MultiBallCount must clamp to 0.");
+
+            config.SetShieldDuration(100f);
+            Assert.AreEqual(30f, config.ShieldDuration, "ShieldDuration must clamp to 30s.");
+
+            var clone = config.Clone();
+            Assert.AreEqual(4, clone.ShieldCount);
+            Assert.AreEqual(0, clone.MultiBallCount);
+            Assert.AreEqual(30f, clone.ShieldDuration);
+
+            Object.DestroyImmediate(config);
+            Object.DestroyImmediate(clone);
+        }
+
+        [Test]
+        public void LevelGenerator_DistributeSpecialBlocks_AllocatesShieldAndMultiBall()
+        {
+            var genObj = new GameObject("LevelGen");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            int totalBlocks = 20;
+            var specials = gen.DistributeSpecialBlocks(
+                totalBlocks,
+                mult2xCount: 1,
+                mult3xCount: 1,
+                expanderCount: 1,
+                bombCount: 1,
+                glassCount: 1,
+                heartCount: 1,
+                shieldCount: 2,
+                multiBallCount: 2
+            );
+
+            Assert.AreEqual(10, specials.Count, "Must allocate 10 special blocks in dictionary.");
+
+            int shieldCount = 0;
+            int multiBallCount = 0;
+            foreach (var kvp in specials)
+            {
+                if (kvp.Value == BlockSpecialType.Shield) shieldCount++;
+                if (kvp.Value == BlockSpecialType.MultiBall) multiBallCount++;
+            }
+
+            Assert.AreEqual(2, shieldCount, "Must allocate 2 Shield blocks.");
+            Assert.AreEqual(2, multiBallCount, "Must allocate 2 MultiBall blocks.");
+
+            Object.DestroyImmediate(genObj);
+        }
+
+        [Test]
+        public void BlockBadge_ShieldAndMultiBall_SetsCorrectIconsAndClasses()
+        {
+            var badgeObj = new GameObject("Badge");
+            badgeObj.AddComponent<PanelRenderer>();
+            var badge = badgeObj.AddComponent<BlockBadge>();
+
+            var root = new VisualElement();
+            var icon = new VisualElement { name = "badge-icon" };
+            var label = new Label { name = "badge-text" };
+            var plate = new VisualElement { name = "badge-plate" };
+            root.Add(icon);
+            root.Add(label);
+            root.Add(plate);
+
+            var typeField = typeof(BlockBadge).GetField("specialType", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            // Test Shield
+            typeField.SetValue(badge, BlockSpecialType.Shield);
+            badge.UpdateUI(root);
+            Assert.IsTrue(icon.ClassListContains("badge-icon-shield"), "Must have badge-icon-shield class.");
+            Assert.IsTrue(plate.ClassListContains("badge-plate-shield"), "Must have badge-plate-shield class.");
+            Assert.AreEqual(DisplayStyle.None, label.style.display.value, "Label must be hidden for Shield badge.");
+
+            // Test MultiBall
+            typeField.SetValue(badge, BlockSpecialType.MultiBall);
+            badge.UpdateUI(root);
+            Assert.IsTrue(icon.ClassListContains("badge-icon-multiball"), "Must have badge-icon-multiball class.");
+            Assert.IsTrue(plate.ClassListContains("badge-plate-multiball"), "Must have badge-plate-multiball class.");
+            Assert.AreEqual(DisplayStyle.None, label.style.display.value, "Label must be hidden for MultiBall badge.");
+
+            Object.DestroyImmediate(badgeObj);
+        }
+
+        [Test]
+        public void Block_DestroyBlock_TriggersShieldAndMultiBall()
+        {
+            // Primary ball
+            var ballObj = new GameObject("PrimaryBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.AddComponent<Rigidbody>();
+            ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+
+            gameManager.RegisterLevelBlocks(10);
+            gameManager.RegisterBall(ball);
+            gameManager.LaunchBall();
+
+            // 1. Destroy Shield Block
+            var shieldObj = new GameObject("ShieldBlock");
+            var shieldBlock = shieldObj.AddComponent<Block>();
+            shieldBlock.Initialize(BlockColorTier.Blue, null, Color.blue, BlockSpecialType.Shield);
+
+            shieldBlock.DestroyBlock(Vector3.down);
+
+            Assert.IsTrue(gameManager.IsShieldActive, "Destroying Shield block must activate shield on GameManager.");
+
+            // 2. Destroy MultiBall Block
+            var multiObj = new GameObject("MultiBallBlock");
+            var multiBlock = multiObj.AddComponent<Block>();
+            multiBlock.Initialize(BlockColorTier.Green, null, Color.green, BlockSpecialType.MultiBall);
+
+            multiBlock.DestroyBlock(Vector3.down);
+
+            Assert.AreEqual(3, gameManager.ActiveBallCount, "Destroying MultiBall block must spawn 2 extra balls (total 3).");
+
+            gameManager.ClearExtraBalls();
+            Object.DestroyImmediate(shieldObj);
+            Object.DestroyImmediate(multiObj);
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void ArcadeUIManager_ShieldAndMultiBall_UpdatesTimerAndVisibility()
+        {
+            var uiGo = new GameObject("UI");
+            uiGo.AddComponent<PanelRenderer>();
+            var uiMgr = uiGo.AddComponent<ArcadeUIManager>();
+
+            var root = new VisualElement();
+            var shieldBadge = new VisualElement { name = "shield-status-badge" };
+            shieldBadge.AddToClassList("powerup-hidden");
+            var shieldLabel = new Label { name = "shield-timer-label" };
+            shieldBadge.Add(shieldLabel);
+
+            var multiBadge = new VisualElement { name = "multiball-status-badge" };
+            multiBadge.AddToClassList("powerup-hidden");
+            var multiLabel = new Label { name = "multiball-count-label" };
+            multiBadge.Add(multiLabel);
+
+            root.Add(shieldBadge);
+            root.Add(multiBadge);
+
+            typeof(ArcadeUIManager).GetField("shieldStatusBadge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, shieldBadge);
+            typeof(ArcadeUIManager).GetField("shieldTimerLabel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, shieldLabel);
+            typeof(ArcadeUIManager).GetField("multiballStatusBadge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, multiBadge);
+            typeof(ArcadeUIManager).GetField("multiballCountLabel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, multiLabel);
+
+            // Shield activated
+            uiMgr.HandleShieldStateChanged(true, 10f);
+            Assert.IsFalse(shieldBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual(DisplayStyle.Flex, shieldBadge.style.display.value);
+            Assert.AreEqual("10s", shieldLabel.text);
+
+            // Shield tick
+            uiMgr.HandleShieldTick(6.2f);
+            Assert.AreEqual("7s", shieldLabel.text);
+
+            // Shield deactivated
+            uiMgr.HandleShieldStateChanged(false, 0f);
+            Assert.IsTrue(shieldBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual(DisplayStyle.None, shieldBadge.style.display.value);
+
+            // MultiBall count changed to 3
+            uiMgr.HandleActiveBallCountChanged(3);
+            Assert.IsFalse(multiBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual(DisplayStyle.Flex, multiBadge.style.display.value);
+            Assert.AreEqual("3 BALLS", multiLabel.text);
+
+            // MultiBall count changed to 1 (normal)
+            uiMgr.HandleActiveBallCountChanged(1);
+            Assert.IsTrue(multiBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual(DisplayStyle.None, multiBadge.style.display.value);
+
+            Object.DestroyImmediate(uiGo);
+        }
+
+        #endregion
+
+        #region 13. Progressive 7-Level Campaign Tests
+
+        [Test]
+        public void Campaign_AllSevenLevelsExist_AndEnforceProgressiveSpeedAndBlockScaling()
+        {
+            float lastSpeed = 0f;
+            int lastBlocks = 0;
+
+            for (int i = 1; i <= 7; i++)
+            {
+                string path = $"Assets/Settings/Levels/SO_Level_{i:D2}.asset";
+                var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>(path);
+                Assert.IsNotNull(config, $"Level {i} asset must exist at {path}.");
+                Assert.AreEqual(i, config.LevelNumber, $"Level {i} must have matching LevelNumber.");
+                Assert.IsFalse(string.IsNullOrEmpty(config.LevelName), $"Level {i} must have a non-empty name.");
+                Assert.IsFalse(string.IsNullOrEmpty(config.Description), $"Level {i} must have a non-empty description.");
+
+                Assert.Greater(config.BallSpeedMultiplier, lastSpeed, $"Level {i} speed ({config.BallSpeedMultiplier}) must be strictly faster than Level {i - 1} speed ({lastSpeed}).");
+                Assert.GreaterOrEqual(config.TotalBlocks, lastBlocks, $"Level {i} blocks ({config.TotalBlocks}) must be >= Level {i - 1} blocks ({lastBlocks}).");
+
+                lastSpeed = config.BallSpeedMultiplier;
+                lastBlocks = config.TotalBlocks;
+            }
+
+            Assert.AreEqual(0.85f, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset").BallSpeedMultiplier, 0.001f);
+            Assert.AreEqual(1.38f, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_07.asset").BallSpeedMultiplier, 0.001f);
+            Assert.AreEqual(15, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset").TotalBlocks);
+            Assert.AreEqual(90, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_07.asset").TotalBlocks);
+        }
+
+        [Test]
+        public void Level1_WarmupGrid_IsAccessibleAndHasZeroHazards()
+        {
+            var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset");
+            Assert.IsNotNull(config);
+
+            // Level 1: 5 cols * 3 rows = 15 blocks
+            Assert.AreEqual(5, config.Columns);
+            Assert.AreEqual(1, config.RowsPerTier);
+            Assert.AreEqual(3, config.TotalRows);
+            Assert.AreEqual(15, config.TotalBlocks);
+
+            // Generous warmup paddle and comfortable speed
+            Assert.AreEqual(5.5f, config.InitialPaddleWidth, 0.001f);
+            Assert.AreEqual(0.85f, config.BallSpeedMultiplier, 0.001f);
+
+            // Single paddle expander reward, zero hazards
+            Assert.AreEqual(1, config.PaddleExpanderCount);
+            Assert.AreEqual(0, config.Multiplier2xCount);
+            Assert.AreEqual(0, config.Multiplier3xCount);
+            Assert.AreEqual(0, config.BombCount);
+            Assert.AreEqual(0, config.GlassEnclosedCount);
+            Assert.AreEqual(0, config.ExtraHeartCount);
+            Assert.AreEqual(0, config.ShieldCount);
+            Assert.AreEqual(0, config.MultiBallCount);
+        }
+
+        [Test]
+        public void LevelGenerator_AdvanceToNextLevel_CyclesSevenLevelsSeamlessly()
+        {
+            var genObj = new GameObject("TestGenerator");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            var levelConfigs = new LevelConfiguration[7];
+            for (int i = 0; i < 7; i++)
+            {
+                levelConfigs[i] = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i + 1:D2}.asset");
+                Assert.IsNotNull(levelConfigs[i]);
+            }
+
+            var genSo = new UnityEditor.SerializedObject(gen);
+            var presetsProp = genSo.FindProperty("levelPresets");
+            presetsProp.arraySize = 7;
+            for (int i = 0; i < 7; i++)
+            {
+                presetsProp.GetArrayElementAtIndex(i).objectReferenceValue = levelConfigs[i];
+            }
+            genSo.ApplyModifiedProperties();
+
+            // Start at Level 1
+            gen.SelectAndLoadLevel(1);
+            Assert.AreEqual(1, gen.CurrentConfig.LevelNumber);
+
+            // Advance through 2, 3, 4, 5, 6, 7
+            for (int expectedLvl = 2; expectedLvl <= 7; expectedLvl++)
+            {
+                gen.AdvanceToNextLevel();
+                Assert.AreEqual(expectedLvl, gen.CurrentConfig.LevelNumber, $"Expected advancing to Level {expectedLvl}.");
+            }
+
+            // Advancing from Level 7 must loop back to Level 1
+            gen.AdvanceToNextLevel();
+            Assert.AreEqual(1, gen.CurrentConfig.LevelNumber, "Advancing beyond Level 7 must loop back to Level 1 for endless arcade progression.");
+
+            Object.DestroyImmediate(genObj);
+        }
+
+        [Test]
+        public void LevelGenerator_SpecialBlockDistribution_MaintainsExactCountsWithoutCollisionsAcrossAll7Levels()
+        {
+            var genObj = new GameObject("TestGenerator");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            for (int i = 1; i <= 7; i++)
+            {
+                var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i:D2}.asset");
+                Assert.IsNotNull(config);
+
+                var map = gen.DistributeSpecialBlocks(
+                    config.TotalBlocks,
+                    config.Multiplier2xCount,
+                    config.Multiplier3xCount,
+                    config.Multiplier4xCount,
+                    config.Multiplier5xCount,
+                    config.PaddleExpanderCount,
+                    config.BombCount,
+                    config.GlassEnclosedCount,
+                    config.ExtraHeartCount,
+                    config.ShieldCount,
+                    config.MultiBallCount);
+
+                int expectedTotal = config.Multiplier2xCount + config.Multiplier3xCount + config.Multiplier4xCount + config.Multiplier5xCount +
+                                    config.PaddleExpanderCount + config.BombCount + config.GlassEnclosedCount + config.ExtraHeartCount +
+                                    config.ShieldCount + config.MultiBallCount;
+
+                Assert.AreEqual(expectedTotal, map.Count, $"Level {i} must allocate exact total special blocks without collision.");
+
+                int actual2x = 0, actual3x = 0, actual4x = 0, actual5x = 0, actualExp = 0, actualBomb = 0, actualGlass = 0, actualHeart = 0, actualShield = 0, actualMulti = 0;
+                foreach (var kvp in map)
+                {
+                    Assert.IsTrue(kvp.Key >= 0 && kvp.Key < config.TotalBlocks, $"Index {kvp.Key} must be valid block index for Level {i}.");
+                    switch (kvp.Value)
+                    {
+                        case BlockSpecialType.ScoreMultiplier2x: actual2x++; break;
+                        case BlockSpecialType.ScoreMultiplier3x: actual3x++; break;
+                        case BlockSpecialType.ScoreMultiplier4x: actual4x++; break;
+                        case BlockSpecialType.ScoreMultiplier5x: actual5x++; break;
+                        case BlockSpecialType.PaddleExpander: actualExp++; break;
+                        case BlockSpecialType.Bomb: actualBomb++; break;
+                        case BlockSpecialType.GlassEnclosed: actualGlass++; break;
+                        case BlockSpecialType.ExtraHeart: actualHeart++; break;
+                        case BlockSpecialType.Shield: actualShield++; break;
+                        case BlockSpecialType.MultiBall: actualMulti++; break;
+                    }
+                }
+
+                Assert.AreEqual(config.Multiplier2xCount, actual2x);
+                Assert.AreEqual(config.Multiplier3xCount, actual3x);
+                Assert.AreEqual(config.Multiplier4xCount, actual4x);
+                Assert.AreEqual(config.Multiplier5xCount, actual5x);
+                Assert.AreEqual(config.PaddleExpanderCount, actualExp);
+                Assert.AreEqual(config.BombCount, actualBomb);
+                Assert.AreEqual(config.GlassEnclosedCount, actualGlass);
+                Assert.AreEqual(config.ExtraHeartCount, actualHeart);
+                Assert.AreEqual(config.ShieldCount, actualShield);
+                Assert.AreEqual(config.MultiBallCount, actualMulti);
+            }
+
+            Object.DestroyImmediate(genObj);
+        }
+
+        #endregion
+
+        #region Region 14: Timed Buffs & Combo Multipliers Tests
+
+        [Test]
+        public void ArcadeGameManager_ActivatePaddleExpander_TicksDownAndResetsPaddle()
+        {
+            paddle.ResetWidth(5.0f);
+            Assert.AreEqual(5.0f, paddle.Width, 0.001f);
+            Assert.IsFalse(gameManager.IsPaddleExpanded);
+            Assert.AreEqual(0f, gameManager.PaddleExpandTimeRemaining);
+
+            bool stateFired = false;
+            gameManager.OnPaddleExpandStateChanged += (active, dur) => { stateFired = active; };
+
+            // Activate for 10 seconds
+            gameManager.ActivatePaddleExpander(10f);
+            Assert.IsTrue(gameManager.IsPaddleExpanded);
+            Assert.AreEqual(10f, gameManager.PaddleExpandTimeRemaining, 0.001f);
+            Assert.IsTrue(stateFired);
+            Assert.Greater(paddle.Width, 5.0f);
+
+            // Tick 5 seconds
+            gameManager.TickPaddleExpander(5f);
+            Assert.IsTrue(gameManager.IsPaddleExpanded);
+            Assert.AreEqual(5f, gameManager.PaddleExpandTimeRemaining, 0.001f);
+
+            // Tick remaining 5 seconds -> expires
+            gameManager.TickPaddleExpander(5.1f);
+            Assert.IsFalse(gameManager.IsPaddleExpanded);
+            Assert.AreEqual(0f, gameManager.PaddleExpandTimeRemaining);
+            Assert.AreEqual(5.0f, paddle.Width, 0.001f);
+            Assert.IsFalse(stateFired);
+        }
+
+        [Test]
+        public void ArcadeGameManager_ActivateScoreMultiplier_AppliesGlobalComboMultiplier()
+        {
+            gameManager.RegisterLevelBlocks(10);
+            gameManager.LaunchBall(); // State -> Playing
+
+            Assert.AreEqual(1, gameManager.ActiveScoreMultiplier);
+            Assert.AreEqual(0, gameManager.Score);
+
+            // Base destruction without multiplier (10 pts)
+            gameManager.RecordBlockDestroyed(10, 1);
+            Assert.AreEqual(10, gameManager.Score);
+
+            // Activate 3X multiplier for 10s
+            gameManager.ActivateScoreMultiplier(3, 10f);
+            Assert.AreEqual(3, gameManager.ActiveScoreMultiplier);
+            Assert.AreEqual(10f, gameManager.MultiplierTimeRemaining, 0.001f);
+
+            // Block destroyed during 3X combo awards 10 * 3 = 30 pts
+            gameManager.RecordBlockDestroyed(10, 1);
+            Assert.AreEqual(40, gameManager.Score);
+
+            // Green block (20 pts) during 3X combo awards 20 * 3 = 60 pts
+            gameManager.RecordBlockDestroyed(20, 2);
+            Assert.AreEqual(100, gameManager.Score);
+
+            // Tick down to expiration
+            gameManager.TickScoreMultiplier(10.1f);
+            Assert.AreEqual(1, gameManager.ActiveScoreMultiplier);
+            Assert.AreEqual(0f, gameManager.MultiplierTimeRemaining);
+
+            // Block after expiration awards base points
+            gameManager.RecordBlockDestroyed(10, 1);
+            Assert.AreEqual(110, gameManager.Score);
+        }
+
+        [Test]
+        public void ArcadeGameManager_ActivateScoreMultiplier_UpgradesTierAndRefreshesTimer()
+        {
+            gameManager.ActivateScoreMultiplier(2, 5f);
+            Assert.AreEqual(2, gameManager.ActiveScoreMultiplier);
+            Assert.AreEqual(5f, gameManager.MultiplierTimeRemaining, 0.001f);
+
+            // Upgrade to 4X with 10s
+            gameManager.ActivateScoreMultiplier(4, 10f);
+            Assert.AreEqual(4, gameManager.ActiveScoreMultiplier);
+            Assert.AreEqual(10f, gameManager.MultiplierTimeRemaining, 0.001f);
+
+            // Hit 3X while 4X is active -> stays 4X, duration refreshes to max
+            gameManager.TickScoreMultiplier(3f); // remaining = 7s
+            gameManager.ActivateScoreMultiplier(3, 10f);
+            Assert.AreEqual(4, gameManager.ActiveScoreMultiplier);
+            Assert.AreEqual(10f, gameManager.MultiplierTimeRemaining, 0.001f);
+
+            // Hit 5X -> upgrades to 5X
+            gameManager.ActivateScoreMultiplier(5, 10f);
+            Assert.AreEqual(5, gameManager.ActiveScoreMultiplier);
+        }
+
+        [Test]
+        public void BlockSpecialType_4xAnd5x_MetadataAndBadgesValid()
+        {
+            Assert.AreEqual("x4", BlockSpecialType.ScoreMultiplier4x.GetBadgeText());
+            Assert.AreEqual("x5", BlockSpecialType.ScoreMultiplier5x.GetBadgeText());
+
+            var block4xObj = new GameObject("Block4x");
+            var block4x = block4xObj.AddComponent<Block>();
+            block4x.Initialize(BlockColorTier.Red, null, Color.white, BlockSpecialType.ScoreMultiplier4x);
+            Assert.AreEqual(40, block4x.Points); // 10 * 4 = 40
+            Assert.AreEqual(4, block4x.ScoreMultiplier);
+
+            var block5xObj = new GameObject("Block5x");
+            var block5x = block5xObj.AddComponent<Block>();
+            block5x.Initialize(BlockColorTier.Blue, null, Color.white, BlockSpecialType.ScoreMultiplier5x);
+            Assert.AreEqual(150, block5x.Points); // 30 * 5 = 150
+            Assert.AreEqual(5, block5x.ScoreMultiplier);
+
+            Object.DestroyImmediate(block4xObj);
+            Object.DestroyImmediate(block5xObj);
+        }
+
+        [Test]
+        public void ArcadeUIManager_PaddleAndMultiplierBadges_UpdatesTimerAndVisibility()
+        {
+            var uiManagerGo = new GameObject("TestArcadeUIManager");
+            var panelRenderer = uiManagerGo.AddComponent<UnityEngine.UIElements.PanelRenderer>();
+            var uiMgr = uiManagerGo.AddComponent<ArcadeUIManager>();
+
+            var uxml = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+
+            panelRenderer.visualTreeAsset = uxml;
+            var root = uxml.CloneTree();
+
+            // Reflection-based bind for unit testing
+            var bindMethod = typeof(ArcadeUIManager).GetMethod("BindElements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, root);
+            bindMethod.Invoke(uiMgr, null);
+
+            Assert.IsNotNull(uiMgr.PaddleStatusBadge);
+            Assert.IsNotNull(uiMgr.MultiplierStatusBadge);
+            Assert.IsNotNull(uiMgr.PaddleExpandSprite, "PaddleExpandSprite must be assigned.");
+            Assert.AreEqual("TX_Powerup_Arrows_Outward", uiMgr.PaddleExpandSprite.name);
+            Assert.IsNotNull(uiMgr.MultiplierSprite, "MultiplierSprite must be assigned.");
+            Assert.AreEqual("TX_Powerup_Extra_Points", uiMgr.MultiplierSprite.name);
+
+            // Test Paddle Badge
+            uiMgr.HandlePaddleExpandStateChanged(true, 10f);
+            Assert.IsFalse(uiMgr.PaddleStatusBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual("10s", uiMgr.PaddleTimerLabel.text);
+
+            uiMgr.HandlePaddleExpandTick(6.4f);
+            Assert.AreEqual("7s", uiMgr.PaddleTimerLabel.text);
+
+            uiMgr.HandlePaddleExpandStateChanged(false, 0f);
+            Assert.IsTrue(uiMgr.PaddleStatusBadge.ClassListContains("powerup-hidden"));
+
+            // Test Multiplier Badge
+            uiMgr.HandleScoreMultiplierStateChanged(true, 4, 10f);
+            Assert.IsFalse(uiMgr.MultiplierStatusBadge.ClassListContains("powerup-hidden"));
+            Assert.IsTrue(uiMgr.MultiplierStatusBadge.ClassListContains("mult-tier-4x"));
+            Assert.AreEqual("4X", uiMgr.MultiplierValueLabel.text);
+            Assert.AreEqual("10s", uiMgr.MultiplierTimerLabel.text);
+
+            uiMgr.HandleScoreMultiplierTick(4.2f);
+            Assert.AreEqual("5s", uiMgr.MultiplierTimerLabel.text);
+
+            uiMgr.HandleScoreMultiplierStateChanged(false, 1, 0f);
+            Assert.IsTrue(uiMgr.MultiplierStatusBadge.ClassListContains("powerup-hidden"));
+
+            Object.DestroyImmediate(uiManagerGo);
+        }
+
+        [Test]
+        public void Campaign_Level6And7_Contain4xAnd5xMultipliers()
+        {
+            var lvl6 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_06.asset");
+            Assert.IsNotNull(lvl6);
+            Assert.AreEqual(1, lvl6.Multiplier4xCount, "Level 6 must introduce 1x 4X multiplier.");
+
+            var lvl7 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_07.asset");
+            Assert.IsNotNull(lvl7);
+            Assert.AreEqual(2, lvl7.Multiplier4xCount, "Level 7 must contain 2x 4X multipliers.");
+            Assert.AreEqual(1, lvl7.Multiplier5xCount, "Level 7 must introduce 1x 5X multiplier.");
         }
 
         #endregion

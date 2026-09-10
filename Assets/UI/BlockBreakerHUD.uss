@@ -93,6 +93,152 @@
     -unity-background-scale-mode: scale-to-fit;
 }
 
+/* Active Powerup Indicators */
+.powerup-status-container {
+    margin-top: 10px;
+    margin-left: 18px;
+    margin-right: 18px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+}
+
+.powerup-badge {
+    height: 42px;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 16px;
+    margin: 0 8px;
+    border-radius: 21px;
+    border-width: 1.5px;
+    background-color: rgba(14, 18, 30, 0.9);
+    transition-property: scale, opacity, translate;
+    transition-duration: 0.25s, 0.25s, 0.25s;
+    transition-timing-function: ease-out-back;
+}
+
+.shield-badge {
+    border-color: #00f2fe;
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.65);
+}
+
+.multiball-badge {
+    border-color: #e056fd;
+    box-shadow: 0 0 12px rgba(224, 86, 253, 0.65);
+}
+
+.paddle-badge {
+    border-color: #00e5ff;
+    box-shadow: 0 0 12px rgba(0, 229, 255, 0.65);
+}
+
+.multiplier-badge {
+    border-color: #ffd700;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.65);
+}
+
+.mult-tier-2x {
+    border-color: #ffd700;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.75);
+}
+
+.mult-tier-3x {
+    border-color: #ff8c00;
+    box-shadow: 0 0 12px rgba(255, 140, 0, 0.75);
+}
+
+.mult-tier-4x {
+    border-color: #ff1744;
+    box-shadow: 0 0 14px rgba(255, 23, 68, 0.85);
+}
+
+.mult-tier-5x {
+    border-color: #d500f9;
+    box-shadow: 0 0 14px rgba(213, 0, 249, 0.9);
+}
+
+.powerup-status-icon {
+    width: 26px;
+    height: 26px;
+    margin-right: 8px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.icon-shield {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Shield.png?fileID=3950488328852594513&guid=16428cb230612564080e96abe31d3eea&type=3#TX_Powerup_Shield_0");
+    -unity-background-image-tint-color: #00f2fe;
+}
+
+.icon-multiball {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Multi_Ball.png?fileID=-5547497205224055285&guid=3098a697d024c2547bdafd3878c03c4b&type=3#TX_Powerup_Multi_Ball_0");
+    -unity-background-image-tint-color: #e056fd;
+}
+
+.icon-paddle-expand {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Arrows_Outward.png?fileID=21300000&guid=a78437860f4b9b54184a24a248743a7d&type=3#TX_Powerup_Arrows_Outward");
+    -unity-background-image-tint-color: #00e5ff;
+}
+
+.icon-multiplier {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Extra_Points.png?fileID=21300000&guid=1d8d97a548b3e734687c47462e523395&type=3#TX_Powerup_Extra_Points");
+    -unity-background-image-tint-color: #ffd700;
+}
+
+.powerup-timer-label {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #ffffff;
+    letter-spacing: 1px;
+}
+
+.multiplier-val-text {
+    font-size: 16px;
+    -unity-font-style: bold;
+    margin-right: 4px;
+}
+
+.shield-badge .powerup-timer-label {
+    color: #00f2fe;
+    text-shadow: 0 0 8px rgba(0, 242, 254, 0.8);
+}
+
+.multiball-badge .powerup-timer-label {
+    color: #e056fd;
+    text-shadow: 0 0 8px rgba(224, 86, 253, 0.8);
+}
+
+.paddle-badge .powerup-timer-label {
+    color: #00e5ff;
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.8);
+}
+
+.mult-tier-2x .multiplier-val-text {
+    color: #ffd700;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+}
+
+.mult-tier-3x .multiplier-val-text {
+    color: #ff8c00;
+    text-shadow: 0 0 8px rgba(255, 140, 0, 0.8);
+}
+
+.mult-tier-4x .multiplier-val-text {
+    color: #ff1744;
+    text-shadow: 0 0 8px rgba(255, 23, 68, 0.8);
+}
+
+.mult-tier-5x .multiplier-val-text {
+    color: #d500f9;
+    text-shadow: 0 0 8px rgba(213, 0, 249, 0.8);
+}
+
+.powerup-hidden {
+    display: none;
+    opacity: 0;
+    scale: 0.8 0.8;
+}
+
 /* Bouncy Quick Control Buttons */
 .quick-controls {
     flex-direction: row;
@@ -454,23 +600,24 @@
 
 .level-tabs-container {
     flex-direction: row;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    justify-content: center;
     margin-bottom: 12px;
 }
 
 .level-tab-btn {
     flex-grow: 1;
+    min-width: 80px;
     height: 38px;
-    margin-left: 3px;
-    margin-right: 3px;
+    margin: 3px;
     border-radius: 12px;
     border-width: 1.5px;
     border-color: rgba(255, 255, 255, 0.18);
     background-color: rgba(255, 255, 255, 0.08);
     color: #cbd5e1;
-    font-size: 14px;
+    font-size: 13px;
     -unity-font-style: bold;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     align-items: center;
     justify-content: center;
     scale: 1 1;

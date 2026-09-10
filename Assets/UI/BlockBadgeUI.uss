@@ -29,6 +29,16 @@
     box-shadow: 0 0 12px rgba(255, 71, 87, 0.85);
 }
 
+.badge-plate-x4 {
+    border-color: #ff1744;
+    box-shadow: 0 0 14px rgba(255, 23, 68, 0.9);
+}
+
+.badge-plate-x5 {
+    border-color: #d500f9;
+    box-shadow: 0 0 14px rgba(213, 0, 249, 0.95);
+}
+
 .badge-plate-expander {
     border-color: #00f2fe;
     box-shadow: 0 0 12px rgba(0, 242, 254, 0.8);
@@ -42,6 +52,16 @@
 .badge-plate-heart-plus {
     border-color: #ff2a6d;
     box-shadow: 0 0 14px rgba(255, 42, 109, 0.9);
+}
+
+.badge-plate-shield {
+    border-color: #00f2fe;
+    box-shadow: 0 0 14px rgba(0, 242, 254, 0.9);
+}
+
+.badge-plate-multiball {
+    border-color: #e056fd;
+    box-shadow: 0 0 14px rgba(224, 86, 253, 0.9);
 }
 
 .badge-icon {
@@ -71,6 +91,20 @@
     -unity-background-image-tint-color: #ff3b56;
 }
 
+.badge-icon-shield {
+    width: 52px;
+    height: 52px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Shield.png?fileID=3950488328852594513&guid=16428cb230612564080e96abe31d3eea&type=3#TX_Powerup_Shield_0");
+    -unity-background-image-tint-color: #00f2fe;
+}
+
+.badge-icon-multiball {
+    width: 52px;
+    height: 52px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Multi_Ball.png?fileID=-5547497205224055285&guid=3098a697d024c2547bdafd3878c03c4b&type=3#TX_Powerup_Multi_Ball_0");
+    -unity-background-image-tint-color: #e056fd;
+}
+
 .badge-icon-points {
     width: 34px;
     height: 34px;
@@ -83,6 +117,14 @@
 
 .badge-icon-points-x3 {
     -unity-background-image-tint-color: #ff4757;
+}
+
+.badge-icon-points-x4 {
+    -unity-background-image-tint-color: #ff1744;
+}
+
+.badge-icon-points-x5 {
+    -unity-background-image-tint-color: #d500f9;
 }
 
 .badge-text {
@@ -105,6 +147,16 @@
 .badge-text-x3 {
     color: #ff6b81;
     text-shadow: 0 0 10px rgba(255, 71, 87, 0.95);
+}
+
+.badge-text-x4 {
+    color: #ff5252;
+    text-shadow: 0 0 10px rgba(255, 23, 68, 0.95);
+}
+
+.badge-text-x5 {
+    color: #ea80fc;
+    text-shadow: 0 0 10px rgba(213, 0, 249, 0.95);
 }
 
 .badge-text-expander {

@@ -36,6 +36,27 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
+        <!-- Active Powerup Indicators -->
+        <ui:VisualElement name="powerup-status-container" class="powerup-status-container">
+            <ui:VisualElement name="shield-status-badge" class="powerup-badge shield-badge powerup-hidden">
+                <ui:VisualElement name="shield-status-icon" class="powerup-status-icon icon-shield" picking-mode="Ignore" />
+                <ui:Label name="shield-timer-label" text="10s" class="powerup-timer-label" />
+            </ui:VisualElement>
+            <ui:VisualElement name="multiball-status-badge" class="powerup-badge multiball-badge powerup-hidden">
+                <ui:VisualElement name="multiball-status-icon" class="powerup-status-icon icon-multiball" picking-mode="Ignore" />
+                <ui:Label name="multiball-count-label" text="3 BALLS" class="powerup-timer-label" />
+            </ui:VisualElement>
+            <ui:VisualElement name="paddle-status-badge" class="powerup-badge paddle-badge powerup-hidden">
+                <ui:VisualElement name="paddle-status-icon" class="powerup-status-icon icon-paddle-expand" picking-mode="Ignore" />
+                <ui:Label name="paddle-timer-label" text="10s" class="powerup-timer-label" />
+            </ui:VisualElement>
+            <ui:VisualElement name="multiplier-status-badge" class="powerup-badge multiplier-badge mult-tier-2x powerup-hidden">
+                <ui:VisualElement name="multiplier-status-icon" class="powerup-status-icon icon-multiplier" picking-mode="Ignore" />
+                <ui:Label name="multiplier-value-label" text="2X" class="powerup-timer-label multiplier-val-text" />
+                <ui:Label name="multiplier-timer-label" text="10s" class="powerup-timer-label" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
         <!-- Center Prompt Banner (Visible before ball launch) -->
         <ui:VisualElement name="launch-banner" class="launch-banner">
             <ui:Label text="PRESS UP ARROW OR TAP TO LAUNCH" class="launch-text" />
@@ -62,6 +83,10 @@
                     <ui:Button name="btn-lvl-1" text="LVL 1" class="level-tab-btn level-tab-active" />
                     <ui:Button name="btn-lvl-2" text="LVL 2" class="level-tab-btn" />
                     <ui:Button name="btn-lvl-3" text="LVL 3" class="level-tab-btn" />
+                    <ui:Button name="btn-lvl-4" text="LVL 4" class="level-tab-btn" />
+                    <ui:Button name="btn-lvl-5" text="LVL 5" class="level-tab-btn" />
+                    <ui:Button name="btn-lvl-6" text="LVL 6" class="level-tab-btn" />
+                    <ui:Button name="btn-lvl-7" text="LVL 7" class="level-tab-btn" />
                 </ui:VisualElement>
 
                 <ui:Label name="level-name-label" text="Level 1: Classic Inverted" class="level-name-display" />
@@ -120,6 +145,18 @@
                     <ui:Label text="Extra Hearts (+1)" class="setting-label" />
                     <ui:SliderInt name="slider-heart" low-value="0" high-value="3" value="0" class="setting-slider" />
                     <ui:Label name="val-heart" text="0" class="setting-val-badge" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Shield Bricks" class="setting-label" />
+                    <ui:SliderInt name="slider-shield" low-value="0" high-value="4" value="0" class="setting-slider" />
+                    <ui:Label name="val-shield" text="0" class="setting-val-badge" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Multi-Ball Bricks" class="setting-label" />
+                    <ui:SliderInt name="slider-multiball" low-value="0" high-value="4" value="0" class="setting-slider" />
+                    <ui:Label name="val-multiball" text="0" class="setting-val-badge" />
                 </ui:VisualElement>
 
                 <ui:Button name="btn-apply-level" text="APPLY &amp; RESTART" class="arcade-btn btn-secondary modal-action-btn" />
