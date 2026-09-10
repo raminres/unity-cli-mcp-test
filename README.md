@@ -85,6 +85,7 @@ This restricts the reflection vector to $[30^\circ, 150^\circ]$, ensuring all de
 - **Frame-0 PSO Prewarming (`BlockVFXManager.cs`)**: Off-camera VFX priming during `Start()` while in `ReadyToLaunch` precompiles pipeline state objects upfront, preventing first-hit hitches on Apple Metal, DX12, Vulkan, and WebGPU.
 - **Zero-Allocation MaterialPropertyBlock Tinting**: Dynamically tints bricks and debris while retaining 100% SRP Batcher compatibility without cloning materials.
 - **iOS Debris Shader**: Custom `Arcade/VFX_BlockDebris` shader (`Assets/Shaders/VFX_BlockDebris.shader`) compiled specifically for Apple Metal to eliminate missing shader artifacts.
+- **iOS Binary & Package Footprint Optimization**: High managed code stripping (`ManagedStrippingLevel.High`), IL2CPP size optimization (`OptimizeSize`), LZ4HC player compression, manual shader variant stripping (lightmaps/fog), and removal of unused packages (`visualscripting`, `physics2d`, `terrain`, etc.).
 
 ### 4. Dual-Engine Audio (`ArcadeAudioManager.cs`)
 - Persistent singleton (`DontDestroyOnLoad`) wired to dedicated audio clips (`AU_Pop`, `AU_Break`, `AU_Powerup`, `AU_Powerup_Shield`, `AU_Life_Lost`, `AU_Level_Success`, `AU_Game_Over`, `AU_Button_Press`, `AU_Glass_Break`, `AU_Bomb_Explosion`).
@@ -124,7 +125,7 @@ unity-cli-mcp-test/
 │   │   ├── Build Profiles/             # iOS & Standalone build profiles
 │   │   └── Levels/                     # SO_Level_01.asset through SO_Level_07.asset
 │   ├── Shaders/                        # Custom URP shaders (VFX_BlockDebris)
-│   ├── Tests/                          # NUnit test suite (79 automated tests)
+│   ├── Tests/                          # NUnit test suite (87 automated tests)
 │   │   └── BlockBreakerCoreTests.cs
 │   ├── Textures/                       # TX_ UI icons (Hearts, Powerups, Badges)
 │   ├── UI/                             # UI Toolkit documents (.uxml, .uss, PanelSettings)
@@ -139,7 +140,7 @@ unity-cli-mcp-test/
 
 ## 🧪 Automated Test Suite
 
-The project includes an automated test suite with **86 unit and integration tests** verifying core gameplay, math formulas, and edge cases in ~130ms:
+The project includes an automated test suite with **87 unit and integration tests** verifying core gameplay, math formulas, and edge cases in ~130ms:
 
 ```bash
 # Execute test suite via Unity CLI / MCP:

@@ -218,6 +218,7 @@ graph LR
   - Swift Xcode Project: `PlayerSettings.xcodeProjectType = XcodeProjectType.Swift`.
   - Modern Swift lifecycle (`MainApp.swift`).
   - Native safe area resolution.
+  - Footprint & Binary Optimization: High managed code stripping (`ManagedStrippingLevel.High`), IL2CPP `OptimizeSize`, LZ4HC player data compression, manual lightmap/fog shader permutation stripping, and pruned engine packages (`visualscripting`, `terrain`, `physics2d`, `cloth`, etc.).
 - **WebGPU / WebGL**:
   - Primary web graphics target configured for modern browsers with WebGPU fallback to WebGL 2.0.
 - **Standalone PC / Mac**:
@@ -229,7 +230,7 @@ graph LR
 
 ### 9.1 Test Suite Architecture (`Assets/Tests/BlockBreakerCoreTests.cs`)
 - **Engine**: NUnit test framework within `Arcade.Tests` assembly.
-- **Total Tests**: **86 passing tests (100%)**.
+- **Total Tests**: **87 passing tests (100%)**.
 - **Execution Time**: ~130 milliseconds.
 - **Test Coverage**:
   1. Score calculation, global timed combo multipliers ($2\times$ through $5\times$), and tier values.

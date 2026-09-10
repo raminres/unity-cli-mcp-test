@@ -38,6 +38,12 @@ namespace Arcade.Editor
             PlayerSettings.iOS.targetOSVersionString = IosMinVersion;
             PlayerSettings.xcodeProjectType = XcodeProjectType.Swift;
 
+            // iOS Size & Performance Optimizations
+            PlayerSettings.SetManagedStrippingLevel(BuildTargetGroup.iOS, ManagedStrippingLevel.High);
+            PlayerSettings.SetIl2CppCompilerConfiguration(NamedBuildTarget.iOS, Il2CppCompilerConfiguration.Release);
+            PlayerSettings.SetIl2CppCodeGeneration(NamedBuildTarget.iOS, UnityEditor.Build.Il2CppCodeGeneration.OptimizeSize);
+            PlayerSettings.stripEngineCode = true;
+
             // 2. Ensure folder exists
             string folder = Path.GetDirectoryName(ProfilePath);
             if (!AssetDatabase.IsValidFolder(folder))
