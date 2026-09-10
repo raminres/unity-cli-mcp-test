@@ -374,8 +374,12 @@ namespace Arcade.Editor
 
             var shieldIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Shield.png");
             var multiBallIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Multi_Ball.png");
+            var paddleExpandIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
+            var multiplierIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
             if (shieldIcon != null) uiMgrSo.FindProperty("shieldSprite").objectReferenceValue = shieldIcon;
             if (multiBallIcon != null) uiMgrSo.FindProperty("multiBallSprite").objectReferenceValue = multiBallIcon;
+            if (paddleExpandIcon != null) uiMgrSo.FindProperty("paddleExpandSprite").objectReferenceValue = paddleExpandIcon;
+            if (multiplierIcon != null) uiMgrSo.FindProperty("multiplierSprite").objectReferenceValue = multiplierIcon;
 
             uiMgrSo.ApplyModifiedProperties();
             uiGo.AddComponent<SafeAreaController>();

@@ -2187,6 +2187,10 @@ namespace Arcade.Tests
 
             Assert.IsNotNull(uiMgr.PaddleStatusBadge);
             Assert.IsNotNull(uiMgr.MultiplierStatusBadge);
+            Assert.IsNotNull(uiMgr.PaddleExpandSprite, "PaddleExpandSprite must be assigned.");
+            Assert.AreEqual("TX_Powerup_Arrows_Outward", uiMgr.PaddleExpandSprite.name);
+            Assert.IsNotNull(uiMgr.MultiplierSprite, "MultiplierSprite must be assigned.");
+            Assert.AreEqual("TX_Powerup_Extra_Points", uiMgr.MultiplierSprite.name);
 
             // Test Paddle Badge
             uiMgr.HandlePaddleExpandStateChanged(true, 10f);

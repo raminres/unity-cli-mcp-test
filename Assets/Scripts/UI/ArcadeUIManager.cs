@@ -145,6 +145,8 @@ namespace Arcade.UI
         public VisualElement MultiplierStatusBadge => multiplierStatusBadge;
         public Label MultiplierValueLabel => multiplierValueLabel;
         public Label MultiplierTimerLabel => multiplierTimerLabel;
+        public Sprite PaddleExpandSprite => paddleExpandSprite;
+        public Sprite MultiplierSprite => multiplierSprite;
 
         private bool wasPausedByOptions = false;
         private bool wasPausedByLevelSettings = false;
