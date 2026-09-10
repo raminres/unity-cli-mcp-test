@@ -71,6 +71,8 @@ namespace Arcade.BlockBreaker
                 icon.RemoveFromClassList("badge-icon-points-x3");
                 icon.RemoveFromClassList("badge-icon-bomb");
                 icon.RemoveFromClassList("badge-icon-heart-plus");
+                icon.RemoveFromClassList("badge-icon-shield");
+                icon.RemoveFromClassList("badge-icon-multiball");
 
                 if (specialType == BlockSpecialType.PaddleExpander)
                 {
@@ -86,6 +88,16 @@ namespace Arcade.BlockBreaker
                 {
                     icon.style.display = DisplayStyle.Flex;
                     icon.AddToClassList("badge-icon-heart-plus");
+                }
+                else if (specialType == BlockSpecialType.Shield)
+                {
+                    icon.style.display = DisplayStyle.Flex;
+                    icon.AddToClassList("badge-icon-shield");
+                }
+                else if (specialType == BlockSpecialType.MultiBall)
+                {
+                    icon.style.display = DisplayStyle.Flex;
+                    icon.AddToClassList("badge-icon-multiball");
                 }
                 else if (specialType == BlockSpecialType.ScoreMultiplier2x)
                 {
@@ -126,7 +138,7 @@ namespace Arcade.BlockBreaker
                 }
                 else
                 {
-                    // For paddle expander, bomb, extra heart, hide the text completely
+                    // For paddle expander, bomb, extra heart, shield, multiball, hide text completely
                     label.style.display = DisplayStyle.None;
                     label.AddToClassList("badge-text-hidden");
                 }
@@ -139,6 +151,8 @@ namespace Arcade.BlockBreaker
                 plate.RemoveFromClassList("badge-plate-expander");
                 plate.RemoveFromClassList("badge-plate-bomb");
                 plate.RemoveFromClassList("badge-plate-heart-plus");
+                plate.RemoveFromClassList("badge-plate-shield");
+                plate.RemoveFromClassList("badge-plate-multiball");
 
                 if (specialType == BlockSpecialType.ScoreMultiplier2x)
                     plate.AddToClassList("badge-plate-x2");
@@ -150,6 +164,10 @@ namespace Arcade.BlockBreaker
                     plate.AddToClassList("badge-plate-bomb");
                 else if (specialType == BlockSpecialType.ExtraHeart)
                     plate.AddToClassList("badge-plate-heart-plus");
+                else if (specialType == BlockSpecialType.Shield)
+                    plate.AddToClassList("badge-plate-shield");
+                else if (specialType == BlockSpecialType.MultiBall)
+                    plate.AddToClassList("badge-plate-multiball");
             }
         }
     }

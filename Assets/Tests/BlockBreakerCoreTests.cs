@@ -1465,6 +1465,419 @@ namespace Arcade.Tests
         }
 
         #endregion
+
+        #region 12. Shield & Multi-Ball Power-Up Tests
+
+        [Test]
+        public void GameManager_ActivateShield_EnablesShieldAndCountsDown()
+        {
+            bool stateEventFired = false;
+            float recordedRemaining = 0f;
+            gameManager.OnShieldStateChanged += (active, rem) =>
+            {
+                stateEventFired = true;
+                recordedRemaining = rem;
+            };
+
+            gameManager.ActivateShield(10f);
+
+            Assert.IsTrue(gameManager.IsShieldActive);
+            Assert.AreEqual(10f, gameManager.ShieldTimeRemaining, 0.01f);
+            Assert.IsTrue(stateEventFired);
+            Assert.AreEqual(10f, recordedRemaining, 0.01f);
+
+            // Tick 3 seconds
+            gameManager.TickShield(3f);
+            Assert.IsTrue(gameManager.IsShieldActive);
+            Assert.AreEqual(7f, gameManager.ShieldTimeRemaining, 0.01f);
+
+            // Tick remaining 7.5 seconds to expire
+            gameManager.TickShield(7.5f);
+            Assert.IsFalse(gameManager.IsShieldActive);
+            Assert.AreEqual(0f, gameManager.ShieldTimeRemaining, 0.01f);
+        }
+
+        [Test]
+        public void GameManager_ShieldActive_FallingBallResetsToReadyToLaunchWithoutLosingLife()
+        {
+            var ballObj = new GameObject("TestBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.AddComponent<Rigidbody>();
+            ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+
+            gameManager.RegisterBall(ball);
+            gameManager.LaunchBall(); // Playing
+            gameManager.ActivateShield(10f);
+
+            int livesBefore = gameManager.Lives;
+
+            // Ball falls into killzone while shield is active
+            gameManager.HandleBallFell(ball);
+
+            Assert.AreEqual(livesBefore, gameManager.Lives, "Shield must prevent life loss when ball falls.");
+            Assert.AreEqual(GameState.ReadyToLaunch, gameManager.State, "Game must reset to ReadyToLaunch.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void GameManager_ShieldExpired_FallingBallDecrementsLifeNormally()
+        {
+            var ballObj = new GameObject("TestBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.AddComponent<Rigidbody>();
+            ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+
+            gameManager.RegisterBall(ball);
+            gameManager.LaunchBall(); // Playing
+            gameManager.ActivateShield(10f);
+            gameManager.DeactivateShield(); // Explicitly deactivate or expire
+
+            int livesBefore = gameManager.Lives;
+
+            gameManager.HandleBallFell(ball);
+
+            Assert.AreEqual(livesBefore - 1, gameManager.Lives, "Life must decrement when shield is inactive.");
+            Assert.AreEqual(GameState.BallLost, gameManager.State, "State must transition to BallLost.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void GameManager_MultiBall_SpawnsTwoExtraBalls()
+        {
+            var ballObj = new GameObject("PrimaryBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.AddComponent<Rigidbody>();
+            ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+
+            gameManager.RegisterBall(ball);
+            gameManager.LaunchBall();
+
+            Assert.AreEqual(1, gameManager.ActiveBallCount);
+
+            gameManager.SpawnMultiBall(Vector3.zero, Vector3.up * 10f, 10f);
+
+            Assert.AreEqual(3, gameManager.ActiveBallCount, "MultiBall must add 2 extra balls for a total of 3 active balls.");
+
+            gameManager.ClearExtraBalls();
+            Assert.AreEqual(1, gameManager.ActiveBallCount);
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void GameManager_MultiBall_ExtraBallFallingDoesNotDecrementLife()
+        {
+            var ballObj = new GameObject("PrimaryBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.AddComponent<Rigidbody>();
+            ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+
+            gameManager.RegisterBall(ball);
+            gameManager.LaunchBall();
+            gameManager.SpawnMultiBall(Vector3.zero, Vector3.up * 10f, 10f);
+
+            Assert.AreEqual(3, gameManager.ActiveBallCount);
+            int livesBefore = gameManager.Lives;
+
+            var extraBall = gameManager.ActiveBalls[1];
+            gameManager.HandleBallFell(extraBall);
+
+            Assert.AreEqual(2, gameManager.ActiveBallCount, "Active ball count must decrease to 2.");
+            Assert.AreEqual(livesBefore, gameManager.Lives, "Falling extra ball must not decrement lives.");
+            Assert.AreEqual(GameState.Playing, gameManager.State, "Game must remain Playing when extra ball falls.");
+
+            // Drop second extra ball
+            var secondExtra = gameManager.ActiveBalls[1];
+            gameManager.HandleBallFell(secondExtra);
+
+            Assert.AreEqual(1, gameManager.ActiveBallCount, "Active ball count must decrease to 1.");
+            Assert.AreEqual(livesBefore, gameManager.Lives, "Second falling extra ball must not decrement lives.");
+            Assert.AreEqual(GameState.Playing, gameManager.State, "Game must remain Playing with 1 ball left.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void GameManager_MultiBall_LastRemainingBallFallingDecrementsLife()
+        {
+            var ballObj = new GameObject("PrimaryBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.AddComponent<Rigidbody>();
+            ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+
+            gameManager.RegisterBall(ball);
+            gameManager.LaunchBall();
+            gameManager.SpawnMultiBall(Vector3.zero, Vector3.up * 10f, 10f);
+
+            int livesBefore = gameManager.Lives;
+
+            // Drop 2 extra balls
+            gameManager.HandleBallFell(gameManager.ActiveBalls[2]);
+            gameManager.HandleBallFell(gameManager.ActiveBalls[1]);
+
+            Assert.AreEqual(1, gameManager.ActiveBallCount);
+
+            // Now drop the last remaining ball
+            gameManager.HandleBallFell(gameManager.ActiveBalls[0]);
+
+            Assert.AreEqual(livesBefore - 1, gameManager.Lives, "Last ball falling must decrement life.");
+            Assert.AreEqual(GameState.BallLost, gameManager.State, "Game must transition to BallLost.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void GameManager_MultiBall_LastBallWithShieldActiveResetsToReadyToLaunch()
+        {
+            var ballObj = new GameObject("PrimaryBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.AddComponent<Rigidbody>();
+            ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+
+            gameManager.RegisterBall(ball);
+            gameManager.LaunchBall();
+            gameManager.SpawnMultiBall(Vector3.zero, Vector3.up * 10f, 10f);
+            gameManager.ActivateShield(10f);
+
+            int livesBefore = gameManager.Lives;
+
+            // Drop 2 extra balls
+            gameManager.HandleBallFell(gameManager.ActiveBalls[2]);
+            gameManager.HandleBallFell(gameManager.ActiveBalls[1]);
+
+            // Now drop the last remaining ball while shield is active
+            gameManager.HandleBallFell(gameManager.ActiveBalls[0]);
+
+            Assert.AreEqual(livesBefore, gameManager.Lives, "Shield must save the last ball from life loss.");
+            Assert.AreEqual(GameState.ReadyToLaunch, gameManager.State, "Game must reset to ReadyToLaunch.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void LevelConfiguration_ShieldAndMultiBall_CloningAndClamping()
+        {
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+
+            config.SetShieldCount(2);
+            config.SetMultiBallCount(3);
+            config.SetShieldDuration(12f);
+
+            Assert.AreEqual(2, config.ShieldCount);
+            Assert.AreEqual(3, config.MultiBallCount);
+            Assert.AreEqual(12f, config.ShieldDuration);
+
+            // Test Clamping
+            config.SetShieldCount(99);
+            Assert.AreEqual(4, config.ShieldCount, "ShieldCount must clamp to 4.");
+
+            config.SetMultiBallCount(-5);
+            Assert.AreEqual(0, config.MultiBallCount, "MultiBallCount must clamp to 0.");
+
+            config.SetShieldDuration(100f);
+            Assert.AreEqual(30f, config.ShieldDuration, "ShieldDuration must clamp to 30s.");
+
+            var clone = config.Clone();
+            Assert.AreEqual(4, clone.ShieldCount);
+            Assert.AreEqual(0, clone.MultiBallCount);
+            Assert.AreEqual(30f, clone.ShieldDuration);
+
+            Object.DestroyImmediate(config);
+            Object.DestroyImmediate(clone);
+        }
+
+        [Test]
+        public void LevelGenerator_DistributeSpecialBlocks_AllocatesShieldAndMultiBall()
+        {
+            var genObj = new GameObject("LevelGen");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            int totalBlocks = 20;
+            var specials = gen.DistributeSpecialBlocks(
+                totalBlocks,
+                mult2xCount: 1,
+                mult3xCount: 1,
+                expanderCount: 1,
+                bombCount: 1,
+                glassCount: 1,
+                heartCount: 1,
+                shieldCount: 2,
+                multiBallCount: 2
+            );
+
+            Assert.AreEqual(10, specials.Count, "Must allocate 10 special blocks in dictionary.");
+
+            int shieldCount = 0;
+            int multiBallCount = 0;
+            foreach (var kvp in specials)
+            {
+                if (kvp.Value == BlockSpecialType.Shield) shieldCount++;
+                if (kvp.Value == BlockSpecialType.MultiBall) multiBallCount++;
+            }
+
+            Assert.AreEqual(2, shieldCount, "Must allocate 2 Shield blocks.");
+            Assert.AreEqual(2, multiBallCount, "Must allocate 2 MultiBall blocks.");
+
+            Object.DestroyImmediate(genObj);
+        }
+
+        [Test]
+        public void BlockBadge_ShieldAndMultiBall_SetsCorrectIconsAndClasses()
+        {
+            var badgeObj = new GameObject("Badge");
+            badgeObj.AddComponent<PanelRenderer>();
+            var badge = badgeObj.AddComponent<BlockBadge>();
+
+            var root = new VisualElement();
+            var icon = new VisualElement { name = "badge-icon" };
+            var label = new Label { name = "badge-text" };
+            var plate = new VisualElement { name = "badge-plate" };
+            root.Add(icon);
+            root.Add(label);
+            root.Add(plate);
+
+            var typeField = typeof(BlockBadge).GetField("specialType", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            // Test Shield
+            typeField.SetValue(badge, BlockSpecialType.Shield);
+            badge.UpdateUI(root);
+            Assert.IsTrue(icon.ClassListContains("badge-icon-shield"), "Must have badge-icon-shield class.");
+            Assert.IsTrue(plate.ClassListContains("badge-plate-shield"), "Must have badge-plate-shield class.");
+            Assert.AreEqual(DisplayStyle.None, label.style.display.value, "Label must be hidden for Shield badge.");
+
+            // Test MultiBall
+            typeField.SetValue(badge, BlockSpecialType.MultiBall);
+            badge.UpdateUI(root);
+            Assert.IsTrue(icon.ClassListContains("badge-icon-multiball"), "Must have badge-icon-multiball class.");
+            Assert.IsTrue(plate.ClassListContains("badge-plate-multiball"), "Must have badge-plate-multiball class.");
+            Assert.AreEqual(DisplayStyle.None, label.style.display.value, "Label must be hidden for MultiBall badge.");
+
+            Object.DestroyImmediate(badgeObj);
+        }
+
+        [Test]
+        public void Block_DestroyBlock_TriggersShieldAndMultiBall()
+        {
+            // Primary ball
+            var ballObj = new GameObject("PrimaryBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.AddComponent<Rigidbody>();
+            ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+
+            gameManager.RegisterLevelBlocks(10);
+            gameManager.RegisterBall(ball);
+            gameManager.LaunchBall();
+
+            // 1. Destroy Shield Block
+            var shieldObj = new GameObject("ShieldBlock");
+            var shieldBlock = shieldObj.AddComponent<Block>();
+            shieldBlock.Initialize(BlockColorTier.Blue, null, Color.blue, BlockSpecialType.Shield);
+
+            shieldBlock.DestroyBlock(Vector3.down);
+
+            Assert.IsTrue(gameManager.IsShieldActive, "Destroying Shield block must activate shield on GameManager.");
+
+            // 2. Destroy MultiBall Block
+            var multiObj = new GameObject("MultiBallBlock");
+            var multiBlock = multiObj.AddComponent<Block>();
+            multiBlock.Initialize(BlockColorTier.Green, null, Color.green, BlockSpecialType.MultiBall);
+
+            multiBlock.DestroyBlock(Vector3.down);
+
+            Assert.AreEqual(3, gameManager.ActiveBallCount, "Destroying MultiBall block must spawn 2 extra balls (total 3).");
+
+            gameManager.ClearExtraBalls();
+            Object.DestroyImmediate(shieldObj);
+            Object.DestroyImmediate(multiObj);
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void ArcadeUIManager_ShieldAndMultiBall_UpdatesTimerAndVisibility()
+        {
+            var uiGo = new GameObject("UI");
+            uiGo.AddComponent<PanelRenderer>();
+            var uiMgr = uiGo.AddComponent<ArcadeUIManager>();
+
+            var root = new VisualElement();
+            var shieldBadge = new VisualElement { name = "shield-status-badge" };
+            shieldBadge.AddToClassList("powerup-hidden");
+            var shieldLabel = new Label { name = "shield-timer-label" };
+            shieldBadge.Add(shieldLabel);
+
+            var multiBadge = new VisualElement { name = "multiball-status-badge" };
+            multiBadge.AddToClassList("powerup-hidden");
+            var multiLabel = new Label { name = "multiball-count-label" };
+            multiBadge.Add(multiLabel);
+
+            root.Add(shieldBadge);
+            root.Add(multiBadge);
+
+            typeof(ArcadeUIManager).GetField("shieldStatusBadge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, shieldBadge);
+            typeof(ArcadeUIManager).GetField("shieldTimerLabel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, shieldLabel);
+            typeof(ArcadeUIManager).GetField("multiballStatusBadge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, multiBadge);
+            typeof(ArcadeUIManager).GetField("multiballCountLabel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, multiLabel);
+
+            // Shield activated
+            uiMgr.HandleShieldStateChanged(true, 10f);
+            Assert.IsFalse(shieldBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual(DisplayStyle.Flex, shieldBadge.style.display.value);
+            Assert.AreEqual("10s", shieldLabel.text);
+
+            // Shield tick
+            uiMgr.HandleShieldTick(6.2f);
+            Assert.AreEqual("7s", shieldLabel.text);
+
+            // Shield deactivated
+            uiMgr.HandleShieldStateChanged(false, 0f);
+            Assert.IsTrue(shieldBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual(DisplayStyle.None, shieldBadge.style.display.value);
+
+            // MultiBall count changed to 3
+            uiMgr.HandleActiveBallCountChanged(3);
+            Assert.IsFalse(multiBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual(DisplayStyle.Flex, multiBadge.style.display.value);
+            Assert.AreEqual("3 BALLS", multiLabel.text);
+
+            // MultiBall count changed to 1 (normal)
+            uiMgr.HandleActiveBallCountChanged(1);
+            Assert.IsTrue(multiBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual(DisplayStyle.None, multiBadge.style.display.value);
+
+            Object.DestroyImmediate(uiGo);
+        }
+
+        #endregion
     }
 }
 

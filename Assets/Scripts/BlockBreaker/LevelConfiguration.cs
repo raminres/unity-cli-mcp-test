@@ -54,6 +54,15 @@ namespace Arcade.BlockBreaker
         [Tooltip("Number of random extra heart powerup blocks (+1 life).")]
         [Range(0, 3)] [SerializeField] private int extraHeartCount = 0;
 
+        [Tooltip("Number of random shield powerup blocks.")]
+        [Range(0, 4)] [SerializeField] private int shieldCount = 0;
+
+        [Tooltip("Number of random multi-ball powerup blocks.")]
+        [Range(0, 4)] [SerializeField] private int multiBallCount = 0;
+
+        [Tooltip("Duration of shield protection in seconds.")]
+        [Range(5f, 30f)] [SerializeField] private float shieldDuration = 10f;
+
         // Properties
         public int LevelNumber => levelNumber;
         public string LevelName => levelName;
@@ -75,6 +84,9 @@ namespace Arcade.BlockBreaker
         public int BombCount => bombCount;
         public int GlassEnclosedCount => glassEnclosedCount;
         public int ExtraHeartCount => extraHeartCount;
+        public int ShieldCount => shieldCount;
+        public int MultiBallCount => multiBallCount;
+        public float ShieldDuration => shieldDuration;
 
         /// <summary>
         /// Creates a runtime clone of this level configuration for live tweaking in the Level Settings modal.
@@ -100,6 +112,9 @@ namespace Arcade.BlockBreaker
             clone.bombCount = bombCount;
             clone.glassEnclosedCount = glassEnclosedCount;
             clone.extraHeartCount = extraHeartCount;
+            clone.shieldCount = shieldCount;
+            clone.multiBallCount = multiBallCount;
+            clone.shieldDuration = shieldDuration;
             return clone;
         }
 
@@ -114,6 +129,9 @@ namespace Arcade.BlockBreaker
         public void SetBombCount(int val) => bombCount = Mathf.Clamp(val, 0, 5);
         public void SetGlassEnclosedCount(int val) => glassEnclosedCount = Mathf.Clamp(val, 0, 8);
         public void SetExtraHeartCount(int val) => extraHeartCount = Mathf.Clamp(val, 0, 3);
+        public void SetShieldCount(int val) => shieldCount = Mathf.Clamp(val, 0, 4);
+        public void SetMultiBallCount(int val) => multiBallCount = Mathf.Clamp(val, 0, 4);
+        public void SetShieldDuration(float val) => shieldDuration = Mathf.Clamp(val, 5f, 30f);
         public void SetInitialPaddleWidth(float val) => initialPaddleWidth = Mathf.Clamp(val, 3.0f, 8.0f);
     }
 }

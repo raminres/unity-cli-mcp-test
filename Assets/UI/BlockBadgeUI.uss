@@ -44,6 +44,16 @@
     box-shadow: 0 0 14px rgba(255, 42, 109, 0.9);
 }
 
+.badge-plate-shield {
+    border-color: #00f2fe;
+    box-shadow: 0 0 14px rgba(0, 242, 254, 0.9);
+}
+
+.badge-plate-multiball {
+    border-color: #e056fd;
+    box-shadow: 0 0 14px rgba(224, 86, 253, 0.9);
+}
+
 .badge-icon {
     -unity-background-scale-mode: scale-to-fit;
     align-self: center;
@@ -69,6 +79,20 @@
     height: 52px;
     background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Heart_Plus.png?fileID=21300000&guid=f74a7249ed4d1154cb7323e34df14e78&type=3#TX_Powerup_Heart_Plus");
     -unity-background-image-tint-color: #ff3b56;
+}
+
+.badge-icon-shield {
+    width: 52px;
+    height: 52px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Shield.png?fileID=3950488328852594513&guid=16428cb230612564080e96abe31d3eea&type=3#TX_Powerup_Shield_0");
+    -unity-background-image-tint-color: #00f2fe;
+}
+
+.badge-icon-multiball {
+    width: 52px;
+    height: 52px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Multi_Ball.png?fileID=-5547497205224055285&guid=3098a697d024c2547bdafd3878c03c4b&type=3#TX_Powerup_Multi_Ball_0");
+    -unity-background-image-tint-color: #e056fd;
 }
 
 .badge-icon-points {

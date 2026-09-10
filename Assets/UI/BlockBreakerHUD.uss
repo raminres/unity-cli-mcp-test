@@ -93,6 +93,81 @@
     -unity-background-scale-mode: scale-to-fit;
 }
 
+/* Active Powerup Indicators */
+.powerup-status-container {
+    margin-top: 10px;
+    margin-left: 18px;
+    margin-right: 18px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+}
+
+.powerup-badge {
+    height: 42px;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 16px;
+    margin: 0 8px;
+    border-radius: 21px;
+    border-width: 1.5px;
+    background-color: rgba(14, 18, 30, 0.9);
+    transition-property: scale, opacity, translate;
+    transition-duration: 0.25s, 0.25s, 0.25s;
+    transition-timing-function: ease-out-back;
+}
+
+.shield-badge {
+    border-color: #00f2fe;
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.65);
+}
+
+.multiball-badge {
+    border-color: #e056fd;
+    box-shadow: 0 0 12px rgba(224, 86, 253, 0.65);
+}
+
+.powerup-status-icon {
+    width: 26px;
+    height: 26px;
+    margin-right: 8px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.icon-shield {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Shield.png?fileID=3950488328852594513&guid=16428cb230612564080e96abe31d3eea&type=3#TX_Powerup_Shield_0");
+    -unity-background-image-tint-color: #00f2fe;
+}
+
+.icon-multiball {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Multi_Ball.png?fileID=-5547497205224055285&guid=3098a697d024c2547bdafd3878c03c4b&type=3#TX_Powerup_Multi_Ball_0");
+    -unity-background-image-tint-color: #e056fd;
+}
+
+.powerup-timer-label {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #ffffff;
+    letter-spacing: 1px;
+}
+
+.shield-badge .powerup-timer-label {
+    color: #00f2fe;
+    text-shadow: 0 0 8px rgba(0, 242, 254, 0.8);
+}
+
+.multiball-badge .powerup-timer-label {
+    color: #e056fd;
+    text-shadow: 0 0 8px rgba(224, 86, 253, 0.8);
+}
+
+.powerup-hidden {
+    display: none;
+    opacity: 0;
+    scale: 0.8 0.8;
+}
+
 /* Bouncy Quick Control Buttons */
 .quick-controls {
     flex-direction: row;

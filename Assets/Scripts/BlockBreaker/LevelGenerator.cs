@@ -187,8 +187,10 @@ namespace Arcade.BlockBreaker
             int bombCount = currentLevelConfig != null ? currentLevelConfig.BombCount : 0;
             int glassCount = currentLevelConfig != null ? currentLevelConfig.GlassEnclosedCount : 0;
             int heartCount = currentLevelConfig != null ? currentLevelConfig.ExtraHeartCount : 0;
+            int shieldCount = currentLevelConfig != null ? currentLevelConfig.ShieldCount : 0;
+            int multiBallCount = currentLevelConfig != null ? currentLevelConfig.MultiBallCount : 0;
 
-            var specialMap = DistributeSpecialBlocks(totalBlocksCreated, mult2x, mult3x, expCount, bombCount, glassCount, heartCount);
+            var specialMap = DistributeSpecialBlocks(totalBlocksCreated, mult2x, mult3x, expCount, bombCount, glassCount, heartCount, shieldCount, multiBallCount);
 
             int blockIndex = 0;
             for (int r = 0; r < totalRows; r++)
@@ -293,6 +295,11 @@ namespace Arcade.BlockBreaker
 
         public Dictionary<int, BlockSpecialType> DistributeSpecialBlocks(int totalBlocks, int mult2xCount, int mult3xCount, int expanderCount, int bombCount, int glassCount, int heartCount)
         {
+            return DistributeSpecialBlocks(totalBlocks, mult2xCount, mult3xCount, expanderCount, bombCount, glassCount, heartCount, 0, 0);
+        }
+
+        public Dictionary<int, BlockSpecialType> DistributeSpecialBlocks(int totalBlocks, int mult2xCount, int mult3xCount, int expanderCount, int bombCount, int glassCount, int heartCount, int shieldCount, int multiBallCount)
+        {
             var map = new Dictionary<int, BlockSpecialType>();
             if (totalBlocks <= 0) return map;
 
@@ -335,6 +342,16 @@ namespace Arcade.BlockBreaker
             for (int i = 0; i < heartCount && cursor < availableIndices.Count; i++, cursor++)
             {
                 map[availableIndices[cursor]] = BlockSpecialType.ExtraHeart;
+            }
+
+            for (int i = 0; i < shieldCount && cursor < availableIndices.Count; i++, cursor++)
+            {
+                map[availableIndices[cursor]] = BlockSpecialType.Shield;
+            }
+
+            for (int i = 0; i < multiBallCount && cursor < availableIndices.Count; i++, cursor++)
+            {
+                map[availableIndices[cursor]] = BlockSpecialType.MultiBall;
             }
 
             return map;

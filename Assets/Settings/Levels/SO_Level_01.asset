@@ -30,3 +30,6 @@ MonoBehaviour:
   bombCount: 1
   glassEnclosedCount: 2
   extraHeartCount: 1
+  shieldCount: 1
+  multiBallCount: 0
+  shieldDuration: 10

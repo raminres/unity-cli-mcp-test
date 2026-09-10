@@ -25,6 +25,8 @@ namespace Arcade.Audio
         [SerializeField] private AudioClip clipButtonPress;    // AU_Button_Press.mp3 (UI button click)
         [SerializeField] private AudioClip clipGlassBreak;      // AU_Glass_Break.mp3 (reinforced glass shield shatter)
         [SerializeField] private AudioClip clipBombExplosion;   // AU_Bomb_Explosioon.mp3 / AU_Bomb_Explosion.mp3 (bomb detonation)
+        [SerializeField] private AudioClip clipShieldDeflect;   // Shield protection intercept sound
+        [SerializeField] private AudioClip clipMultiBall;       // Multi-ball spawn sound
 
         [Header("Legacy / Fallback Clip Overrides")]
         [SerializeField] private AudioClip clipPaddleBounce;
@@ -46,6 +48,9 @@ namespace Arcade.Audio
         public AudioClip ClipButtonPress => clipButtonPress;
         public AudioClip ClipGlassBreak => clipGlassBreak;
         public AudioClip ClipBombExplosion => clipBombExplosion;
+        public AudioClip ClipLifeLost => clipLifeLost;
+        public AudioClip ClipShieldDeflect => clipShieldDeflect;
+        public AudioClip ClipMultiBall => clipMultiBall;
 
         public float Volume
         {
@@ -115,6 +120,11 @@ namespace Arcade.Audio
                 if (clipBombExplosion == null) clipBombExplosion = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosioon.wav");
                 if (clipBombExplosion == null) clipBombExplosion = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosion.mp3");
                 if (clipBombExplosion == null) clipBombExplosion = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosion.wav");
+            }
+            if (clipLifeLost == null)
+            {
+                clipLifeLost = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Life_Lost.mp3");
+                if (clipLifeLost == null) clipLifeLost = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Life_Lost.wav");
             }
 #endif
 
@@ -230,6 +240,36 @@ namespace Arcade.Audio
         public void PlayLifeLost()
         {
             PlaySound(clipLifeLost, 1.0f);
+        }
+
+        /// <summary>
+        /// Plays Shield Deflect sound when shield catches and resets a falling ball.
+        /// </summary>
+        public void PlayShieldDeflect()
+        {
+            if (clipShieldDeflect != null)
+            {
+                PlaySound(clipShieldDeflect, 1.0f);
+            }
+            else
+            {
+                PlaySound(clipPowerup != null ? clipPowerup : clipPop, 1.35f);
+            }
+        }
+
+        /// <summary>
+        /// Plays Multi-Ball spawn sound when extra balls appear.
+        /// </summary>
+        public void PlayMultiBall()
+        {
+            if (clipMultiBall != null)
+            {
+                PlaySound(clipMultiBall, 1.0f);
+            }
+            else
+            {
+                PlaySound(clipPowerup != null ? clipPowerup : clipPop, 1.15f);
+            }
         }
 
         /// <summary>
@@ -380,6 +420,32 @@ namespace Arcade.Audio
                     float wave = Mathf.Sin(2f * Mathf.PI * freq * t);
                     float crunch = Mathf.Clamp(wave * 1.6f, -0.9f, 0.9f);
                     return crunch * decay * 0.9f;
+                });
+            }
+
+            if (clipShieldDeflect == null)
+            {
+                // Sci-fi resonating shield deflection pulse (380Hz -> 960Hz upward chirp with exponential decay)
+                clipShieldDeflect = GenerateSynthClip("AU_ShieldDeflect", 0.28f, sampleRate, t =>
+                {
+                    float decay = Mathf.Exp(-t * 12f);
+                    float freq = Mathf.Lerp(380f, 960f, t / 0.28f);
+                    float tone1 = Mathf.Sin(2f * Mathf.PI * freq * t);
+                    float tone2 = Mathf.Sin(2f * Mathf.PI * (freq * 1.5f) * t) * 0.4f;
+                    return (tone1 + tone2) * decay * 0.85f;
+                });
+            }
+
+            if (clipMultiBall == null)
+            {
+                // Rapid dual-harmonic rising chirp (520Hz -> 1200Hz)
+                clipMultiBall = GenerateSynthClip("AU_MultiBall", 0.25f, sampleRate, t =>
+                {
+                    float decay = Mathf.Clamp01(1f - t / 0.25f);
+                    float freq = Mathf.Lerp(520f, 1200f, t / 0.25f);
+                    float tone1 = Mathf.Sin(2f * Mathf.PI * freq * t);
+                    float tone2 = Mathf.Sin(2f * Mathf.PI * (freq * 2f) * t) * 0.35f;
+                    return (tone1 + tone2) * decay * 0.8f;
                 });
             }
         }

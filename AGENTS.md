@@ -350,6 +350,42 @@ This file provides persistent context across agent sessions for this Unity proje
 
 ---
 
+### 16. Shield & Multi-Ball Powerups (Countdown Timer & Multi-Ball Physics)
+- **Shield Powerup (`BlockSpecialType.Shield`)**:
+  - Activates a 10-second defensive shield timer (`isShieldActive = true`, `shieldTimeRemaining = 10f`).
+  - **Killzone Safety Net**: When the ball falls into the bottom killzone while the shield is active, `HandleBallFell` intercepts the loss:
+    - Lives are NOT decremented ($0$ lives lost).
+    - The ball is docked safely onto the paddle (`ball.ResetBallToPaddle()`).
+    - Game state resets to `ReadyToLaunch` so the player can re-aim and relaunch.
+    - Plays `PlayShieldDeflect()` sound effect.
+  - **HUD Countdown Timer**:
+    - Displays `shield-status-badge` on the in-game HUD with `TX_Powerup_Shield.png` and live countdown typography (`10s` down to `0s`).
+    - Automatically hides upon timer expiry or level clear.
+  - World space badge: hosts `TX_Powerup_Shield.png` inside glowing neon cyan plate (`.badge-plate-shield`, border `#00f2fe`).
+- **Multi-Ball Powerup (`BlockSpecialType.MultiBall`)**:
+  - Instantly spawns two extra balls at diverging angles ($\pm 35^\circ$) relative to the current ball's trajectory (`activeBalls.Count` increases to 3).
+  - Extra balls are tracked on `ArcadeGameManager` as `BallController` instances with `IsPrimaryBall = false`.
+  - **Multi-Ball Death Tolerance**:
+    - When an extra ball falls into the killzone, it is destroyed and unregistered without decrementing lives.
+    - Only when the final remaining ball falls does normal life loss occur (or shield intercept if shield is active).
+    - If the primary ball falls while extra balls remain, an extra ball is promoted to primary.
+  - **HUD Multi-Ball Indicator**:
+    - Displays `multiball-status-badge` with `TX_Powerup_Multi_Ball.png` and ball count label (`3 BALLS`, `2 BALLS`) whenever active balls $> 1$.
+  - World space badge: hosts `TX_Powerup_Multi_Ball.png` inside vibrant glowing green/amber plate (`.badge-plate-multiball`, border `#00e676`).
+- **Audio & Procedural Synth Integration**:
+  - `ArcadeAudioManager.cs` wired with `clipLifeLost` (`AU_Life_Lost.mp3`), `clipShieldDeflect`, and `clipMultiBall`.
+  - Built-in procedural audio synth fallbacks for shield deflection (pure harmonic 880Hz sine chime) and multi-ball split (arpeggiated dual harmonic chord).
+- **Level Configuration & Presets**:
+  - [LevelConfiguration.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelConfiguration.cs) exposes `shieldCount` (0-4), `multiBallCount` (0-4), and `shieldDuration` (5-30s) with live tuning sliders in the Level Settings modal.
+  - Preset assets updated:
+    - Level 1: 1 Shield, 0 MultiBall
+    - Level 2: 1 Shield, 1 MultiBall
+    - Level 3: 2 Shield, 2 MultiBall
+- **Automated Test Suite**:
+  - 75 automated unit and integration tests passing (100%), with complete coverage for shield activation, timer ticking, killzone deflection without life loss, multi-ball spawning, extra ball destruction tolerance, last-ball death, and UI badge binding.
+
+---
+
 ## Active Scenes & Build Index
 1. `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0)
 2. `Assets/Scenes/LV_BlockBreaker.unity` (Build Index 1)

@@ -187,6 +187,30 @@ namespace Arcade.BlockBreaker
             {
                 ExplodePerimeter();
             }
+            else if (specialType == BlockSpecialType.Shield)
+            {
+                if (ArcadeGameManager.Instance != null)
+                {
+                    ArcadeGameManager.Instance.ActivateShield(BlockModifierExtensions.DEFAULT_SHIELD_DURATION);
+                }
+            }
+            else if (specialType == BlockSpecialType.MultiBall)
+            {
+                if (ArcadeGameManager.Instance != null)
+                {
+                    var ball = FindAnyObjectByType<BallController>();
+                    Vector3 baseVel = Vector3.up;
+                    float speed = 14f;
+                    if (ball != null)
+                    {
+                        var rb = ball.GetComponent<Rigidbody>();
+                        if (rb != null && rb.linearVelocity.sqrMagnitude > 0.1f)
+                            baseVel = rb.linearVelocity;
+                        speed = ball.CurrentSpeed;
+                    }
+                    ArcadeGameManager.Instance.SpawnMultiBall(transform.position, baseVel, speed);
+                }
+            }
 
             // 4. Notify Game Manager with multiplied points
             if (ArcadeGameManager.Instance != null)

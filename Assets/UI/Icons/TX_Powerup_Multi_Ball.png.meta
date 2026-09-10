@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 16428cb230612564080e96abe31d3eea
+guid: 3098a697d024c2547bdafd3878c03c4b
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 3950488328852594513
-    second: TX_Powerup_Shield_0
+      213: -5547497205224055285
+    second: TX_Powerup_Multi_Ball_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -115,7 +115,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: TX_Powerup_Shield_0
+      name: TX_Powerup_Multi_Ball_0
       rect:
         serializedVersion: 2
         x: 0
@@ -130,8 +130,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 15fd59a5434f2d630800000000000000
-      internalID: 3950488328852594513
+      spriteID: b0ed52a0fa45303b0800000000000000
+      internalID: -5547497205224055285
       vertices: []
       indices: 
       edges: []
@@ -150,7 +150,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      TX_Powerup_Shield_0: 3950488328852594513
+      TX_Powerup_Multi_Ball_0: -5547497205224055285
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

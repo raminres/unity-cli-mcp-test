@@ -283,6 +283,8 @@ namespace Arcade.Editor
             levelSo.FindProperty("matRedBlock").objectReferenceValue = redMat;
             levelSo.FindProperty("matGreenBlock").objectReferenceValue = greenMat;
             levelSo.FindProperty("matBlueBlock").objectReferenceValue = blueMat;
+            var glassMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Glass.mat");
+            if (glassMat != null) levelSo.FindProperty("matGlass").objectReferenceValue = glassMat;
 
             var lvl1 = AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset");
             var lvl2 = AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_02.asset");
@@ -327,6 +329,11 @@ namespace Arcade.Editor
             if (pauseIcon != null) uiMgrSo.FindProperty("pauseSprite").objectReferenceValue = pauseIcon;
             if (playIcon != null) uiMgrSo.FindProperty("playSprite").objectReferenceValue = playIcon;
 
+            var shieldIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Shield.png");
+            var multiBallIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Multi_Ball.png");
+            if (shieldIcon != null) uiMgrSo.FindProperty("shieldSprite").objectReferenceValue = shieldIcon;
+            if (multiBallIcon != null) uiMgrSo.FindProperty("multiBallSprite").objectReferenceValue = multiBallIcon;
+
             uiMgrSo.ApplyModifiedProperties();
             uiGo.AddComponent<SafeAreaController>();
 
@@ -364,6 +371,7 @@ namespace Arcade.Editor
             var gameOverClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Game_Over.mp3");
             var levelSuccessClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Level_Success.mp3");
             var buttonPressClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Button_Press.mp3");
+            var lifeLostClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Life_Lost.mp3");
 
             if (popClip != null) audioSo.FindProperty("clipPop").objectReferenceValue = popClip;
             if (breakClip != null) audioSo.FindProperty("clipBreak").objectReferenceValue = breakClip;
@@ -371,6 +379,7 @@ namespace Arcade.Editor
             if (gameOverClip != null) audioSo.FindProperty("clipGameOver").objectReferenceValue = gameOverClip;
             if (levelSuccessClip != null) audioSo.FindProperty("clipLevelSuccess").objectReferenceValue = levelSuccessClip;
             if (buttonPressClip != null) audioSo.FindProperty("clipButtonPress").objectReferenceValue = buttonPressClip;
+            if (lifeLostClip != null) audioSo.FindProperty("clipLifeLost").objectReferenceValue = lifeLostClip;
 
             if (popClip != null)
             {
