@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 6
   levelName: 'Level 6: The High Roller'
-  levelDescription: High stakes, blistering velocity, and the rare x3 score multiplier awarding 90 points on blue bricks. Precision is key.
+  levelDescription: High stakes, blistering velocity, and the rare x4 score multiplier combo. Precision and speed are rewarded.
   colorPattern: 0
   columns: 9
   rowsPerTier: 2
@@ -24,8 +24,10 @@ MonoBehaviour:
   startCenterY: 15.5
   ballSpeedMultiplier: 1.28
   initialPaddleWidth: 5
-  multiplier2xCount: 2
-  multiplier3xCount: 1
+  multiplier2xCount: 1
+  multiplier3xCount: 2
+  multiplier4xCount: 1
+  multiplier5xCount: 0
   paddleExpanderCount: 1
   bombCount: 2
   glassEnclosedCount: 3

@@ -1,6 +1,6 @@
 # BlockBreaker: Game Design Document (GDD)
 
-**Version**: 2.0  
+**Version**: 2.1  
 **Status**: Living Design Specification  
 **Project**: BlockBreaker (`com.RaminRasulzade.BlockBreaker`)  
 **Target Engine**: Unity 6 (6000.6.0f1) Universal Render Pipeline (URP)  
@@ -66,8 +66,10 @@
   - **Red Brick**: Bottom tier, 10 base points.
   - **Green Brick**: Middle tier, 20 base points.
   - **Blue Brick**: Top tier, 30 base points.
-- **Score Multipliers**:
-  - Stacking with brick point values ($2\times \to 20, 40, 60$ pts; $3\times \to 30, 60, 90$ pts).
+- **Score Multipliers & Combo System**:
+  - Global timed combo multipliers ($2\times$, $3\times$, $4\times$, $5\times$) with a 10-second active window.
+  - When active, all blocks broken across the playfield multiply their awarded points by the combo multiplier (e.g. Blue brick under $5\times$ awards 150 pts).
+  - Collecting a higher tier immediately upgrades the multiplier and resets the duration to 10 seconds; collecting an equal or lower tier refreshes the duration to 10 seconds.
   - Level score carries forward cumulatively across levels and infinite cycle advancement.
 
 ---
@@ -76,9 +78,11 @@
 
 | Modifier | Visual Indicator | Archetype | Mechanic Description |
 | :--- | :--- | :--- | :--- |
-| **Paddle Expander** | Cyan particle aura | Power-up | Expands paddle width by $+10\%$ compounding ($W_n = W_{prev} \times 1.10$, clamped to max $12.0$). Recalculates boundary clamps instantly. Plays break + powerup audio. |
-| **Score Multiplier 2X** | `2X` badge (`#FFD700` Gold) | Multiplier | Doubles brick point value (Red = 20, Green = 40, Blue = 60). |
-| **Score Multiplier 3X** | `3X` badge (`#FF8C00` Amber) | Multiplier | Triples brick point value (Red = 30, Green = 60, Blue = 90). Premium modifier introduced in Level 6. |
+| **Paddle Expander** | Cyan particle aura | Power-up | 10-second timed buff widening paddle by $+10\%$ compounding ($W_n = W_{prev} \times 1.10$, clamped to max $12.0$). Shows live top HUD countdown timer with outward arrows icon, and cleanly resets to base width upon expiration. Recalculates boundary clamps instantly. Plays break + powerup audio. |
+| **Score Multiplier 2X** | `2X` badge (`#FFD700` Gold) | Multiplier Combo | Activates 10-second global $2\times$ combo window doubling all block break points across the arena. |
+| **Score Multiplier 3X** | `3X` badge (`#FF8C00` Amber) | Multiplier Combo | Activates 10-second global $3\times$ combo window tripling all block break points across the arena. |
+| **Score Multiplier 4X** | `4X` badge (`#FF1744` Ruby Red) | Multiplier Combo | Activates 10-second global $4\times$ combo window quadrupling all block break points across the arena. Introduced in Level 6. |
+| **Score Multiplier 5X** | `5X` badge (`#D500F9` Magenta) | Multiplier Combo | Activates 10-second global $5\times$ combo window quintupling all block break points across the arena. Climax modifier in Level 7. |
 | **Glass-Enclosed** | Translucent 1.18x outer shell | Armored Brick | Encased in a protective crystal shell (`MI_Block_Glass.mat`). Requires 2 hits: Hit 1 shatters glass shell with crystal debris; Hit 2 destroys base brick for $2\times$ base points. |
 | **Bomb Brick** | `BOMB` badge (`#FF3B30` Crimson) | Area Hazard | Detonates in a $2.5$-unit radius upon impact, triggering cascading destruction of adjacent bricks with outward physical debris impulses. Protected against recursion by `isDestroyed` flag. |
 | **Shield** | `SHIELD` badge (`#00E5FF` Cyan) | Defensive Power-up | Activates a 10-second defensive safety net at the arena bottom. Any ball falling into the kill zone is safely intercepted and redocked onto the paddle in `ReadyToLaunch` without life deduction. Displays live HUD countdown. |
@@ -87,7 +91,7 @@
 
 ### 3.1 World-Space UI Badges (`BlockBadge.cs`)
 - Rendered via Unity 6 `PanelRenderer` in `WorldSpace` mode (`80px` fixed dimension, 100 PPU, clamped layout margins).
-- Renders badges cleanly without billboard artifacts or depth sorting flickering.
+- Renders badges cleanly without billboard artifacts or depth sorting flickering. Supports custom plates and labels for `x2`, `x3`, `x4`, and `x5`.
 
 ---
 
@@ -115,8 +119,8 @@ graph LR
 | **3** | **Chain Reaction** | **Explosive Cascades** | $7 \times 6$ | **42** | `1.05x` (Paddle 5.0) | • 2x Bombs, 2x 2X Multipliers, 1x Expander (`Checkerboard`) |
 | **4** | **Kinetic Aegis** | **Speed Surge & Protective Net** | $8 \times 6$ | **48** | `1.15x` (Paddle 5.0) | • 1x Shield, 1x Extra Heart, 1x Bomb, 2x Glass, 1x 2X |
 | **5** | **Multi-Ball Mayhem** | **Ball Juggling Rush** | $8 \times 6$ | **48** | `1.20x` (Paddle 5.0) | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass, 1x 2X (`Checkerboard`) |
-| **6** | **The High Roller** | **High Stakes & 3X Multiplier** | $9 \times 6$ | **54** | `1.28x` (Paddle 5.0) | • 1x 3X (90 pts on Blue!), 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass |
-| **7** | **Chaos Gauntlet** | **The Grand Climax** | $10 \times 9$ | **90** | `1.38x` (Paddle 5.0) | • 2x 3X, 2x 2X, 2x Expanders, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls (`Randomized`) |
+| **6** | **The High Roller** | **High Stakes & 4X Multiplier** | $9 \times 6$ | **54** | `1.28x` (Paddle 5.0) | • 1x 4X, 2x 3X, 1x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass, 1x Expander |
+| **7** | **Chaos Gauntlet** | **The Grand Climax & 5X Multiplier** | $10 \times 9$ | **90** | `1.38x` (Paddle 5.0) | • 1x 5X, 2x 4X, 2x 3X, 2x 2X, 2x Expanders, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls (`Randomized`) |
 
 - **Asset Storage**: Serialized as ScriptableObjects `Assets/Settings/Levels/SO_Level_01.asset` through `SO_Level_07.asset`.
 - **Runtime Generation**: `LevelGenerator.cs` instantiates tiered rows with alternating or randomized palettes and dynamically attaches special modifier components (`PaddleExpander`, `ScoreMultiplier`, `BombBlock`, `GlassEnclosed`, `PowerupShield`, `PowerupMultiBall`, `PowerupExtraHeart`).
@@ -141,7 +145,11 @@ graph LR
    - Current Level Title & Star Mechanic indicator.
    - Cumulative Score counter with pulse animation on increment.
    - 5-slot Heart Life Gauge.
-   - Shield Active countdown timer (displays remaining seconds when active).
+   - **Active Power-Up Status Indicators**:
+     - **Shield**: Cyan badge displaying `SHIELD {n}s`.
+     - **Multi-Ball**: Purple badge displaying `3 BALLS`.
+     - **Wide Paddle**: Green/Cyan badge with outward arrows icon displaying `{n}s`.
+     - **Score Multiplier**: Tier-tinted badge (Gold 2X, Amber 3X, Ruby 4X, Magenta 5X) with star icon displaying `{tier} {n}s`.
 2. **Quick Action Bar**:
    - **Pause / Resume**: Dynamic icon swapping between pause bars and play triangle.
    - **Settings Toggle**: Opens tuning modal with a 360° compounding mechanical spin transition.
@@ -219,12 +227,12 @@ graph LR
 
 ### 9.1 Test Suite Architecture (`Assets/Tests/BlockBreakerCoreTests.cs`)
 - **Engine**: NUnit test framework within `Arcade.Tests` assembly.
-- **Total Tests**: **79 passing tests (100%)**.
+- **Total Tests**: **86 passing tests (100%)**.
 - **Execution Time**: ~130 milliseconds.
 - **Test Coverage**:
-  1. Score calculation, multipliers ($2\times$, $3\times$), and tier values.
+  1. Score calculation, global timed combo multipliers ($2\times$ through $5\times$), and tier values.
   2. Dynamic paddle deflection angles across full offset spectrum $[-1.0, 1.0]$.
-  3. Boundary clamping with compounding paddle widths up to $12.0$.
+  3. Boundary clamping with compounding paddle widths up to $12.0$, 10-second buff timer tick, and base width reversion.
   4. Life tracking, death thresholds, and Extra Heart capping at $5$.
   5. Responsive camera frustum math across multiple aspect ratios ($16:9$, $9:16$, $9:19.5$).
   6. Safe area inset propagation to UI Toolkit hierarchy.
@@ -232,4 +240,5 @@ graph LR
   8. Glass-enclosed brick 2-hit durability and shell shatter.
   9. Shield 10-second timer decrement and kill zone safe interception.
   10. Multi-ball concurrent ball management and tolerant life loss.
-  11. Complete 7-level campaign arc validation, parameter monotonicity, and endless loop wrap-around.
+  11. Active power-up HUD status badge timers and dynamic visibility.
+  12. Complete 7-level campaign arc validation, 4X and 5X modifier assignments in levels 6 and 7, parameter monotonicity, and endless loop wrap-around.

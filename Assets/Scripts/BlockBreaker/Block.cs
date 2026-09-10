@@ -68,6 +68,8 @@ namespace Arcade.BlockBreaker
 
             scoreMultiplier = special switch
             {
+                BlockSpecialType.ScoreMultiplier5x => 5,
+                BlockSpecialType.ScoreMultiplier4x => 4,
                 BlockSpecialType.ScoreMultiplier3x => 3,
                 BlockSpecialType.ScoreMultiplier2x => 2,
                 BlockSpecialType.GlassEnclosed => 2,
@@ -165,10 +167,17 @@ namespace Arcade.BlockBreaker
             // 3. Apply Special Modifier Effects
             if (specialType == BlockSpecialType.PaddleExpander)
             {
-                var paddle = FindAnyObjectByType<PaddleController>();
-                if (paddle != null)
+                if (ArcadeGameManager.Instance != null)
                 {
-                    paddle.ExpandWidth(paddleExpansionPercent);
+                    ArcadeGameManager.Instance.ActivatePaddleExpander(BlockModifierExtensions.DEFAULT_PADDLE_EXPAND_DURATION);
+                }
+                else
+                {
+                    var paddle = FindAnyObjectByType<PaddleController>();
+                    if (paddle != null)
+                    {
+                        paddle.ExpandWidth(paddleExpansionPercent);
+                    }
                 }
             }
             else if (specialType == BlockSpecialType.ExtraHeart)
@@ -211,11 +220,28 @@ namespace Arcade.BlockBreaker
                     ArcadeGameManager.Instance.SpawnMultiBall(transform.position, baseVel, speed);
                 }
             }
+            else if (specialType == BlockSpecialType.ScoreMultiplier2x ||
+                     specialType == BlockSpecialType.ScoreMultiplier3x ||
+                     specialType == BlockSpecialType.ScoreMultiplier4x ||
+                     specialType == BlockSpecialType.ScoreMultiplier5x)
+            {
+                if (ArcadeGameManager.Instance != null)
+                {
+                    ArcadeGameManager.Instance.ActivateScoreMultiplier(scoreMultiplier, BlockModifierExtensions.DEFAULT_MULTIPLIER_DURATION);
+                }
+            }
 
             // 4. Notify Game Manager with multiplied points
             if (ArcadeGameManager.Instance != null)
             {
-                ArcadeGameManager.Instance.RecordBlockDestroyed(Points, (int)colorTier);
+                int pointsToRecord = (specialType == BlockSpecialType.ScoreMultiplier2x ||
+                                      specialType == BlockSpecialType.ScoreMultiplier3x ||
+                                      specialType == BlockSpecialType.ScoreMultiplier4x ||
+                                      specialType == BlockSpecialType.ScoreMultiplier5x)
+                    ? basePoints
+                    : Points;
+
+                ArcadeGameManager.Instance.RecordBlockDestroyed(pointsToRecord, (int)colorTier);
             }
 
             // 5. Destroy block

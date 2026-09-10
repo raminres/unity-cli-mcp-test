@@ -894,6 +894,8 @@ namespace Arcade.Tests
         [Test]
         [TestCase(BlockSpecialType.ScoreMultiplier2x, "x2", "badge-text-x2", "badge-plate-x2")]
         [TestCase(BlockSpecialType.ScoreMultiplier3x, "x3", "badge-text-x3", "badge-plate-x3")]
+        [TestCase(BlockSpecialType.ScoreMultiplier4x, "x4", "badge-text-x4", "badge-plate-x4")]
+        [TestCase(BlockSpecialType.ScoreMultiplier5x, "x5", "badge-text-x5", "badge-plate-x5")]
         public void BlockBadge_Configures_Multiplier_ShowsIcon_And_ShowsCorrectText(BlockSpecialType type, string expectedText, string expectedTextClass, string expectedPlateClass)
         {
             var badgeGo = new GameObject("TestBadge");
@@ -1996,6 +1998,8 @@ namespace Arcade.Tests
                     config.TotalBlocks,
                     config.Multiplier2xCount,
                     config.Multiplier3xCount,
+                    config.Multiplier4xCount,
+                    config.Multiplier5xCount,
                     config.PaddleExpanderCount,
                     config.BombCount,
                     config.GlassEnclosedCount,
@@ -2003,13 +2007,13 @@ namespace Arcade.Tests
                     config.ShieldCount,
                     config.MultiBallCount);
 
-                int expectedTotal = config.Multiplier2xCount + config.Multiplier3xCount + config.PaddleExpanderCount +
-                                    config.BombCount + config.GlassEnclosedCount + config.ExtraHeartCount +
+                int expectedTotal = config.Multiplier2xCount + config.Multiplier3xCount + config.Multiplier4xCount + config.Multiplier5xCount +
+                                    config.PaddleExpanderCount + config.BombCount + config.GlassEnclosedCount + config.ExtraHeartCount +
                                     config.ShieldCount + config.MultiBallCount;
 
                 Assert.AreEqual(expectedTotal, map.Count, $"Level {i} must allocate exact total special blocks without collision.");
 
-                int actual2x = 0, actual3x = 0, actualExp = 0, actualBomb = 0, actualGlass = 0, actualHeart = 0, actualShield = 0, actualMulti = 0;
+                int actual2x = 0, actual3x = 0, actual4x = 0, actual5x = 0, actualExp = 0, actualBomb = 0, actualGlass = 0, actualHeart = 0, actualShield = 0, actualMulti = 0;
                 foreach (var kvp in map)
                 {
                     Assert.IsTrue(kvp.Key >= 0 && kvp.Key < config.TotalBlocks, $"Index {kvp.Key} must be valid block index for Level {i}.");
@@ -2017,6 +2021,8 @@ namespace Arcade.Tests
                     {
                         case BlockSpecialType.ScoreMultiplier2x: actual2x++; break;
                         case BlockSpecialType.ScoreMultiplier3x: actual3x++; break;
+                        case BlockSpecialType.ScoreMultiplier4x: actual4x++; break;
+                        case BlockSpecialType.ScoreMultiplier5x: actual5x++; break;
                         case BlockSpecialType.PaddleExpander: actualExp++; break;
                         case BlockSpecialType.Bomb: actualBomb++; break;
                         case BlockSpecialType.GlassEnclosed: actualGlass++; break;
@@ -2028,6 +2034,8 @@ namespace Arcade.Tests
 
                 Assert.AreEqual(config.Multiplier2xCount, actual2x);
                 Assert.AreEqual(config.Multiplier3xCount, actual3x);
+                Assert.AreEqual(config.Multiplier4xCount, actual4x);
+                Assert.AreEqual(config.Multiplier5xCount, actual5x);
                 Assert.AreEqual(config.PaddleExpanderCount, actualExp);
                 Assert.AreEqual(config.BombCount, actualBomb);
                 Assert.AreEqual(config.GlassEnclosedCount, actualGlass);
@@ -2037,6 +2045,183 @@ namespace Arcade.Tests
             }
 
             Object.DestroyImmediate(genObj);
+        }
+
+        #endregion
+
+        #region Region 14: Timed Buffs & Combo Multipliers Tests
+
+        [Test]
+        public void ArcadeGameManager_ActivatePaddleExpander_TicksDownAndResetsPaddle()
+        {
+            paddle.ResetWidth(5.0f);
+            Assert.AreEqual(5.0f, paddle.Width, 0.001f);
+            Assert.IsFalse(gameManager.IsPaddleExpanded);
+            Assert.AreEqual(0f, gameManager.PaddleExpandTimeRemaining);
+
+            bool stateFired = false;
+            gameManager.OnPaddleExpandStateChanged += (active, dur) => { stateFired = active; };
+
+            // Activate for 10 seconds
+            gameManager.ActivatePaddleExpander(10f);
+            Assert.IsTrue(gameManager.IsPaddleExpanded);
+            Assert.AreEqual(10f, gameManager.PaddleExpandTimeRemaining, 0.001f);
+            Assert.IsTrue(stateFired);
+            Assert.Greater(paddle.Width, 5.0f);
+
+            // Tick 5 seconds
+            gameManager.TickPaddleExpander(5f);
+            Assert.IsTrue(gameManager.IsPaddleExpanded);
+            Assert.AreEqual(5f, gameManager.PaddleExpandTimeRemaining, 0.001f);
+
+            // Tick remaining 5 seconds -> expires
+            gameManager.TickPaddleExpander(5.1f);
+            Assert.IsFalse(gameManager.IsPaddleExpanded);
+            Assert.AreEqual(0f, gameManager.PaddleExpandTimeRemaining);
+            Assert.AreEqual(5.0f, paddle.Width, 0.001f);
+            Assert.IsFalse(stateFired);
+        }
+
+        [Test]
+        public void ArcadeGameManager_ActivateScoreMultiplier_AppliesGlobalComboMultiplier()
+        {
+            gameManager.RegisterLevelBlocks(10);
+            gameManager.LaunchBall(); // State -> Playing
+
+            Assert.AreEqual(1, gameManager.ActiveScoreMultiplier);
+            Assert.AreEqual(0, gameManager.Score);
+
+            // Base destruction without multiplier (10 pts)
+            gameManager.RecordBlockDestroyed(10, 1);
+            Assert.AreEqual(10, gameManager.Score);
+
+            // Activate 3X multiplier for 10s
+            gameManager.ActivateScoreMultiplier(3, 10f);
+            Assert.AreEqual(3, gameManager.ActiveScoreMultiplier);
+            Assert.AreEqual(10f, gameManager.MultiplierTimeRemaining, 0.001f);
+
+            // Block destroyed during 3X combo awards 10 * 3 = 30 pts
+            gameManager.RecordBlockDestroyed(10, 1);
+            Assert.AreEqual(40, gameManager.Score);
+
+            // Green block (20 pts) during 3X combo awards 20 * 3 = 60 pts
+            gameManager.RecordBlockDestroyed(20, 2);
+            Assert.AreEqual(100, gameManager.Score);
+
+            // Tick down to expiration
+            gameManager.TickScoreMultiplier(10.1f);
+            Assert.AreEqual(1, gameManager.ActiveScoreMultiplier);
+            Assert.AreEqual(0f, gameManager.MultiplierTimeRemaining);
+
+            // Block after expiration awards base points
+            gameManager.RecordBlockDestroyed(10, 1);
+            Assert.AreEqual(110, gameManager.Score);
+        }
+
+        [Test]
+        public void ArcadeGameManager_ActivateScoreMultiplier_UpgradesTierAndRefreshesTimer()
+        {
+            gameManager.ActivateScoreMultiplier(2, 5f);
+            Assert.AreEqual(2, gameManager.ActiveScoreMultiplier);
+            Assert.AreEqual(5f, gameManager.MultiplierTimeRemaining, 0.001f);
+
+            // Upgrade to 4X with 10s
+            gameManager.ActivateScoreMultiplier(4, 10f);
+            Assert.AreEqual(4, gameManager.ActiveScoreMultiplier);
+            Assert.AreEqual(10f, gameManager.MultiplierTimeRemaining, 0.001f);
+
+            // Hit 3X while 4X is active -> stays 4X, duration refreshes to max
+            gameManager.TickScoreMultiplier(3f); // remaining = 7s
+            gameManager.ActivateScoreMultiplier(3, 10f);
+            Assert.AreEqual(4, gameManager.ActiveScoreMultiplier);
+            Assert.AreEqual(10f, gameManager.MultiplierTimeRemaining, 0.001f);
+
+            // Hit 5X -> upgrades to 5X
+            gameManager.ActivateScoreMultiplier(5, 10f);
+            Assert.AreEqual(5, gameManager.ActiveScoreMultiplier);
+        }
+
+        [Test]
+        public void BlockSpecialType_4xAnd5x_MetadataAndBadgesValid()
+        {
+            Assert.AreEqual("x4", BlockSpecialType.ScoreMultiplier4x.GetBadgeText());
+            Assert.AreEqual("x5", BlockSpecialType.ScoreMultiplier5x.GetBadgeText());
+
+            var block4xObj = new GameObject("Block4x");
+            var block4x = block4xObj.AddComponent<Block>();
+            block4x.Initialize(BlockColorTier.Red, null, Color.white, BlockSpecialType.ScoreMultiplier4x);
+            Assert.AreEqual(40, block4x.Points); // 10 * 4 = 40
+            Assert.AreEqual(4, block4x.ScoreMultiplier);
+
+            var block5xObj = new GameObject("Block5x");
+            var block5x = block5xObj.AddComponent<Block>();
+            block5x.Initialize(BlockColorTier.Blue, null, Color.white, BlockSpecialType.ScoreMultiplier5x);
+            Assert.AreEqual(150, block5x.Points); // 30 * 5 = 150
+            Assert.AreEqual(5, block5x.ScoreMultiplier);
+
+            Object.DestroyImmediate(block4xObj);
+            Object.DestroyImmediate(block5xObj);
+        }
+
+        [Test]
+        public void ArcadeUIManager_PaddleAndMultiplierBadges_UpdatesTimerAndVisibility()
+        {
+            var uiManagerGo = new GameObject("TestArcadeUIManager");
+            var panelRenderer = uiManagerGo.AddComponent<UnityEngine.UIElements.PanelRenderer>();
+            var uiMgr = uiManagerGo.AddComponent<ArcadeUIManager>();
+
+            var uxml = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+
+            panelRenderer.visualTreeAsset = uxml;
+            var root = uxml.CloneTree();
+
+            // Reflection-based bind for unit testing
+            var bindMethod = typeof(ArcadeUIManager).GetMethod("BindElements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, root);
+            bindMethod.Invoke(uiMgr, null);
+
+            Assert.IsNotNull(uiMgr.PaddleStatusBadge);
+            Assert.IsNotNull(uiMgr.MultiplierStatusBadge);
+
+            // Test Paddle Badge
+            uiMgr.HandlePaddleExpandStateChanged(true, 10f);
+            Assert.IsFalse(uiMgr.PaddleStatusBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual("10s", uiMgr.PaddleTimerLabel.text);
+
+            uiMgr.HandlePaddleExpandTick(6.4f);
+            Assert.AreEqual("7s", uiMgr.PaddleTimerLabel.text);
+
+            uiMgr.HandlePaddleExpandStateChanged(false, 0f);
+            Assert.IsTrue(uiMgr.PaddleStatusBadge.ClassListContains("powerup-hidden"));
+
+            // Test Multiplier Badge
+            uiMgr.HandleScoreMultiplierStateChanged(true, 4, 10f);
+            Assert.IsFalse(uiMgr.MultiplierStatusBadge.ClassListContains("powerup-hidden"));
+            Assert.IsTrue(uiMgr.MultiplierStatusBadge.ClassListContains("mult-tier-4x"));
+            Assert.AreEqual("4X", uiMgr.MultiplierValueLabel.text);
+            Assert.AreEqual("10s", uiMgr.MultiplierTimerLabel.text);
+
+            uiMgr.HandleScoreMultiplierTick(4.2f);
+            Assert.AreEqual("5s", uiMgr.MultiplierTimerLabel.text);
+
+            uiMgr.HandleScoreMultiplierStateChanged(false, 1, 0f);
+            Assert.IsTrue(uiMgr.MultiplierStatusBadge.ClassListContains("powerup-hidden"));
+
+            Object.DestroyImmediate(uiManagerGo);
+        }
+
+        [Test]
+        public void Campaign_Level6And7_Contain4xAnd5xMultipliers()
+        {
+            var lvl6 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_06.asset");
+            Assert.IsNotNull(lvl6);
+            Assert.AreEqual(1, lvl6.Multiplier4xCount, "Level 6 must introduce 1x 4X multiplier.");
+
+            var lvl7 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_07.asset");
+            Assert.IsNotNull(lvl7);
+            Assert.AreEqual(2, lvl7.Multiplier4xCount, "Level 7 must contain 2x 4X multipliers.");
+            Assert.AreEqual(1, lvl7.Multiplier5xCount, "Level 7 must introduce 1x 5X multiplier.");
         }
 
         #endregion

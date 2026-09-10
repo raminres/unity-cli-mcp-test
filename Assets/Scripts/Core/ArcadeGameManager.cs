@@ -33,6 +33,10 @@ namespace Arcade.Core
         [Header("Power-Up States")]
         [SerializeField] private bool isShieldActive = false;
         [SerializeField] private float shieldTimeRemaining = 0f;
+        [SerializeField] private bool isPaddleExpanded = false;
+        [SerializeField] private float paddleExpandTimeRemaining = 0f;
+        [SerializeField] private int activeScoreMultiplier = 1;
+        [SerializeField] private float multiplierTimeRemaining = 0f;
 
         private GameState previousStateBeforePause;
         private readonly System.Collections.Generic.List<BallController> activeBalls = new System.Collections.Generic.List<BallController>();
@@ -45,6 +49,10 @@ namespace Arcade.Core
         public event Action<bool, float> OnShieldStateChanged;
         public event Action<float> OnShieldTick;
         public event Action<int> OnActiveBallCountChanged;
+        public event Action<bool, float> OnPaddleExpandStateChanged;
+        public event Action<float> OnPaddleExpandTick;
+        public event Action<bool, int, float> OnScoreMultiplierStateChanged;
+        public event Action<float> OnScoreMultiplierTick;
 
         public GameState State => currentState;
         public int Score => currentScore;
@@ -54,6 +62,10 @@ namespace Arcade.Core
         public int TotalBlocks => totalBlocksInLevel;
         public bool IsShieldActive => isShieldActive;
         public float ShieldTimeRemaining => shieldTimeRemaining;
+        public bool IsPaddleExpanded => isPaddleExpanded;
+        public float PaddleExpandTimeRemaining => paddleExpandTimeRemaining;
+        public int ActiveScoreMultiplier => activeScoreMultiplier;
+        public float MultiplierTimeRemaining => multiplierTimeRemaining;
         public System.Collections.Generic.IReadOnlyList<BallController> ActiveBalls => activeBalls;
         public int ActiveBallCount => activeBalls.Count;
 
@@ -106,9 +118,20 @@ namespace Arcade.Core
 
         private void Update()
         {
-            if (isShieldActive && currentState == GameState.Playing)
+            if (currentState == GameState.Playing)
             {
-                TickShield(Time.deltaTime);
+                if (isShieldActive)
+                {
+                    TickShield(Time.deltaTime);
+                }
+                if (isPaddleExpanded)
+                {
+                    TickPaddleExpander(Time.deltaTime);
+                }
+                if (activeScoreMultiplier > 1)
+                {
+                    TickScoreMultiplier(Time.deltaTime);
+                }
             }
         }
 
@@ -139,6 +162,95 @@ namespace Arcade.Core
             if (shieldTimeRemaining <= 0f)
             {
                 DeactivateShield();
+            }
+        }
+
+        public void ActivatePaddleExpander(float duration = 10f)
+        {
+            isPaddleExpanded = true;
+            paddleExpandTimeRemaining = duration;
+
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null)
+            {
+                paddle.ExpandWidth(BlockModifierExtensions.PADDLE_EXPANSION_PERCENT);
+            }
+
+            OnPaddleExpandStateChanged?.Invoke(true, duration);
+            OnPaddleExpandTick?.Invoke(duration);
+        }
+
+        public void DeactivatePaddleExpander()
+        {
+            if (!isPaddleExpanded && paddleExpandTimeRemaining <= 0f) return;
+
+            isPaddleExpanded = false;
+            paddleExpandTimeRemaining = 0f;
+
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null)
+            {
+                paddle.ResetToBaseWidth();
+            }
+
+            OnPaddleExpandStateChanged?.Invoke(false, 0f);
+        }
+
+        public void TickPaddleExpander(float delta)
+        {
+            if (!isPaddleExpanded) return;
+
+            paddleExpandTimeRemaining -= delta;
+            OnPaddleExpandTick?.Invoke(Mathf.Max(0f, paddleExpandTimeRemaining));
+
+            if (paddleExpandTimeRemaining <= 0f)
+            {
+                DeactivatePaddleExpander();
+            }
+        }
+
+        public void ActivateScoreMultiplier(int multiplier, float duration = 10f)
+        {
+            if (multiplier <= 1) return;
+
+            if (multiplier > activeScoreMultiplier)
+            {
+                activeScoreMultiplier = multiplier;
+                multiplierTimeRemaining = duration;
+            }
+            else if (multiplier == activeScoreMultiplier)
+            {
+                multiplierTimeRemaining = duration;
+            }
+            else
+            {
+                // Equal or lower multiplier hit while higher tier is active: refresh duration without downgrading
+                multiplierTimeRemaining = Mathf.Max(multiplierTimeRemaining, duration);
+            }
+
+            OnScoreMultiplierStateChanged?.Invoke(true, activeScoreMultiplier, multiplierTimeRemaining);
+            OnScoreMultiplierTick?.Invoke(multiplierTimeRemaining);
+        }
+
+        public void DeactivateScoreMultiplier()
+        {
+            if (activeScoreMultiplier <= 1 && multiplierTimeRemaining <= 0f) return;
+
+            activeScoreMultiplier = 1;
+            multiplierTimeRemaining = 0f;
+            OnScoreMultiplierStateChanged?.Invoke(false, 1, 0f);
+        }
+
+        public void TickScoreMultiplier(float delta)
+        {
+            if (activeScoreMultiplier <= 1) return;
+
+            multiplierTimeRemaining -= delta;
+            OnScoreMultiplierTick?.Invoke(Mathf.Max(0f, multiplierTimeRemaining));
+
+            if (multiplierTimeRemaining <= 0f)
+            {
+                DeactivateScoreMultiplier();
             }
         }
 
@@ -297,7 +409,8 @@ namespace Arcade.Core
         {
             if (currentState != GameState.Playing) return;
 
-            currentScore += points;
+            int awardedPoints = points * activeScoreMultiplier;
+            currentScore += awardedPoints;
             remainingBlocks = Mathf.Max(0, remainingBlocks - 1);
 
             if (currentScore > highScore)
@@ -307,10 +420,10 @@ namespace Arcade.Core
                 PlayerPrefs.Save();
             }
 
-            OnScoreChanged?.Invoke(currentScore, points);
+            OnScoreChanged?.Invoke(currentScore, awardedPoints);
             SaveCurrentGameSession();
 
-            if (remainingBlocks <= 0)
+            if (totalBlocksInLevel > 0 && remainingBlocks <= 0)
             {
                 OnLevelCleared();
             }
@@ -319,6 +432,10 @@ namespace Arcade.Core
         public void RecordBallLost()
         {
             if (currentState != GameState.Playing) return;
+
+            DeactivateShield();
+            DeactivatePaddleExpander();
+            DeactivateScoreMultiplier();
 
             remainingLives--;
             OnLivesChanged?.Invoke(remainingLives);
@@ -352,6 +469,8 @@ namespace Arcade.Core
         {
             ClearExtraBalls();
             DeactivateShield();
+            DeactivatePaddleExpander();
+            DeactivateScoreMultiplier();
             SetState(GameState.LevelClear);
 
             if (ArcadeAudioManager.Instance != null)
@@ -366,6 +485,8 @@ namespace Arcade.Core
         {
             ClearExtraBalls();
             DeactivateShield();
+            DeactivatePaddleExpander();
+            DeactivateScoreMultiplier();
             Time.timeScale = 1f;
             SetState(GameState.ReadyToLaunch);
             SaveCurrentGameSession();
@@ -375,6 +496,8 @@ namespace Arcade.Core
         {
             ClearExtraBalls();
             DeactivateShield();
+            DeactivatePaddleExpander();
+            DeactivateScoreMultiplier();
             SetState(GameState.GameOver);
             ClearSavedGame();
 

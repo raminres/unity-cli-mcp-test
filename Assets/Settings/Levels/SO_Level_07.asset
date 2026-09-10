@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 7
   levelName: 'Level 7: Arcade Chaos Gauntlet'
-  levelDescription: The 90-block grand climax! Fully randomized neon patterns, top velocity, and a non-stop orchestra of bombs, multi-balls, shields, and multipliers.
+  levelDescription: The 90-block grand climax! Fully randomized neon patterns, top velocity, and the ultimate x5 combo multiplier.
   colorPattern: 1
   columns: 10
   rowsPerTier: 3
@@ -26,6 +26,8 @@ MonoBehaviour:
   initialPaddleWidth: 5
   multiplier2xCount: 2
   multiplier3xCount: 2
+  multiplier4xCount: 2
+  multiplier5xCount: 1
   paddleExpanderCount: 2
   bombCount: 3
   glassEnclosedCount: 4

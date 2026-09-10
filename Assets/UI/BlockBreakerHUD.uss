@@ -128,6 +128,36 @@
     box-shadow: 0 0 12px rgba(224, 86, 253, 0.65);
 }
 
+.paddle-badge {
+    border-color: #00e5ff;
+    box-shadow: 0 0 12px rgba(0, 229, 255, 0.65);
+}
+
+.multiplier-badge {
+    border-color: #ffd700;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.65);
+}
+
+.mult-tier-2x {
+    border-color: #ffd700;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.75);
+}
+
+.mult-tier-3x {
+    border-color: #ff8c00;
+    box-shadow: 0 0 12px rgba(255, 140, 0, 0.75);
+}
+
+.mult-tier-4x {
+    border-color: #ff1744;
+    box-shadow: 0 0 14px rgba(255, 23, 68, 0.85);
+}
+
+.mult-tier-5x {
+    border-color: #d500f9;
+    box-shadow: 0 0 14px rgba(213, 0, 249, 0.9);
+}
+
 .powerup-status-icon {
     width: 26px;
     height: 26px;
@@ -145,11 +175,27 @@
     -unity-background-image-tint-color: #e056fd;
 }
 
+.icon-paddle-expand {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Arrows_Outward.png?fileID=21300000&guid=a78437860f4b9b54184a24a248743a7d&type=3#TX_Powerup_Arrows_Outward");
+    -unity-background-image-tint-color: #00e5ff;
+}
+
+.icon-multiplier {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Extra_Points.png?fileID=21300000&guid=1d8d97a548b3e734687c47462e523395&type=3#TX_Powerup_Extra_Points");
+    -unity-background-image-tint-color: #ffd700;
+}
+
 .powerup-timer-label {
     font-size: 16px;
     -unity-font-style: bold;
     color: #ffffff;
     letter-spacing: 1px;
+}
+
+.multiplier-val-text {
+    font-size: 16px;
+    -unity-font-style: bold;
+    margin-right: 4px;
 }
 
 .shield-badge .powerup-timer-label {
@@ -160,6 +206,31 @@
 .multiball-badge .powerup-timer-label {
     color: #e056fd;
     text-shadow: 0 0 8px rgba(224, 86, 253, 0.8);
+}
+
+.paddle-badge .powerup-timer-label {
+    color: #00e5ff;
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.8);
+}
+
+.mult-tier-2x .multiplier-val-text {
+    color: #ffd700;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+}
+
+.mult-tier-3x .multiplier-val-text {
+    color: #ff8c00;
+    text-shadow: 0 0 8px rgba(255, 140, 0, 0.8);
+}
+
+.mult-tier-4x .multiplier-val-text {
+    color: #ff1744;
+    text-shadow: 0 0 8px rgba(255, 23, 68, 0.8);
+}
+
+.mult-tier-5x .multiplier-val-text {
+    color: #d500f9;
+    text-shadow: 0 0 8px rgba(213, 0, 249, 0.8);
 }
 
 .powerup-hidden {

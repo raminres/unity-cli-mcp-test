@@ -26,6 +26,8 @@ MonoBehaviour:
   initialPaddleWidth: 5
   multiplier2xCount: 1
   multiplier3xCount: 0
+  multiplier4xCount: 0
+  multiplier5xCount: 0
   paddleExpanderCount: 1
   bombCount: 0
   glassEnclosedCount: 2

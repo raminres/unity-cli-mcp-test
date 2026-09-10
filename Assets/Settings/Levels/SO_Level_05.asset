@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 5
   levelName: 'Level 5: Multi-Ball Mayhem'
-  levelDescription: High-octane arcade juggling! Trigger Multi-Ball to split into 3 active balls simultaneously, supported by emergency shields.
+  levelDescription: High-octane arcade juggling! Trigger Multi-Ball to split into 3 active balls simultaneously, supported by emergency shields and 3X combo multipliers.
   colorPattern: 2
   columns: 8
   rowsPerTier: 2
@@ -25,7 +25,9 @@ MonoBehaviour:
   ballSpeedMultiplier: 1.2
   initialPaddleWidth: 5
   multiplier2xCount: 1
-  multiplier3xCount: 0
+  multiplier3xCount: 1
+  multiplier4xCount: 0
+  multiplier5xCount: 0
   paddleExpanderCount: 0
   bombCount: 1
   glassEnclosedCount: 2

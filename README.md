@@ -2,12 +2,12 @@
 
 [![Unity Version](https://img.shields.io/badge/Unity-6%20(6000.6.0f1)-black.svg?style=flat&logo=unity)](https://unity.com/)
 [![Render Pipeline](https://img.shields.io/badge/Render%20Pipeline-URP-blue.svg)](https://unity.com/srp/universal-render-pipeline)
-[![Automated Tests](https://img.shields.io/badge/Tests-79%2F79%20Passing%20(100%25)-brightgreen.svg)]()
+[![Automated Tests](https://img.shields.io/badge/Tests-86%2F86%20Passing%20(100%25)-brightgreen.svg)]()
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%20(Swift)%20%7C%20WebGPU%20%7C%20PC-purple.svg)]()
 [![Git LFS](https://img.shields.io/badge/Git-LFS%20Enabled-orange.svg)](https://git-lfs.github.com/)
 [![AI Integration](https://img.shields.io/badge/AI%20Assistant-Google%20Antigravity-green.svg)]()
 
-**BlockBreaker 3D** is a modern, physics-driven arcade brick breaker built with Unity 6 (6000.6.0f1) and the Universal Render Pipeline (URP). Featuring dynamic paddle deflection physics, explosive chain reactions, armored multi-hit bricks, an escalating 7-level campaign arc, mobile safe-area touch controls, frame-0 shader prewarming, and an automated NUnit test suite.
+**BlockBreaker 3D** is a modern, physics-driven arcade brick breaker built with Unity 6 (6000.6.0f1) and the Universal Render Pipeline (URP). Featuring dynamic paddle deflection physics, explosive chain reactions, armored multi-hit bricks, timed combo multipliers up to 5X, an escalating 7-level campaign arc, mobile safe-area touch controls, frame-0 shader prewarming, and an automated NUnit test suite.
 
 The project also acts as a production testbed for **Google Antigravity**, **Unity MCP (Model Context Protocol)**, and **Unity CLI** agentic workflows.
 
@@ -16,16 +16,17 @@ The project also acts as a production testbed for **Google Antigravity**, **Unit
 ## 🎮 Game Overview & Key Features
 
 - **Dynamic Angle Deflection**: Bounce angles are calculated in real time based on paddle contact offset ($\theta = 90^\circ - \text{offset} \times 60^\circ$), giving players complete precision over shot placement while eliminating horizontal trapping.
-- **7-Level Progressive Campaign Arc**: A smoothly escalating campaign that introduces mechanics incrementally—from deflection warmups to explosive chain reactions and multi-ball chaos. Loops endlessly ($7 \to 1$) preserving cumulative high scores.
-- **8 Dynamic Modifiers & Brick Archetypes**:
-  - 🌟 **Paddle Expander**: $+10\%$ compounding width expansion (clamped to max $12.0$).
+- **7-Level Progressive Campaign Arc**: A smoothly escalating campaign that introduces mechanics incrementally—from deflection warmups to explosive chain reactions, multi-ball chaos, and high-tier 4X and 5X combo multipliers. Loops endlessly ($7 \to 1$) preserving cumulative high scores.
+- **10 Dynamic Modifiers & Brick Archetypes**:
+  - 🌟 **Paddle Expander**: 10-second timed buff widening paddle by $+10\%$ compounding (clamped to max $12.0$) with live HUD countdown timer, reverting cleanly upon expiration.
+  - ✖️ **Timed Combo Multipliers (2X, 3X, 4X, 5X)**: 10-second global combo window that multiplies points for all destroyed blocks across the arena. Collecting higher tiers upgrades tier and refreshes duration; collecting equal/lower tiers refreshes duration.
   - 💥 **Bomb Bricks**: Detonates adjacent bricks in a $2.5$-unit radius with outward physical debris impulses.
   - 🛡️ **Shield Powerup**: 10-second defensive safety net. Intercepts falling balls back into docked `ReadyToLaunch` without life loss, accompanied by a live HUD countdown.
   - ⚡ **Multi-Ball Powerup**: Spawns 2 extra balls at diverging angles ($\pm 35^\circ$). Extra balls fall harmlessly; only the final remaining ball causes a life penalty.
   - 💎 **Glass-Enclosed Bricks**: Encased in a translucent 3D crystal shell requiring 2 hits (Hit 1: crystal shatter; Hit 2: brick destroyed for $2\times$ points).
   - 💖 **Extra Heart**: Grants $+1$ life (up to 5 max) with a celebratory flying heart HUD animation.
-  - ✖️ **2X & 3X Multipliers**: High-scoring multipliers that boost brick points up to 90 pts on top-tier bricks.
-  - 🏷️ **World-Space Badges**: Crisp, resolution-independent badges rendered via Unity 6 UI Toolkit `PanelRenderer` in `WorldSpace` mode.
+  - 🏷️ **World-Space Badges**: Crisp, resolution-independent badges rendered via Unity 6 UI Toolkit `PanelRenderer` in `WorldSpace` mode (`x2`, `x3`, `x4`, `x5`, `SHIELD`, `3-BALL`, `+1 HP`, `BOMB`).
+- **Real-Time Top HUD Status Indicators**: Dedicated visual status pills with countdown timers and icons for Shield, Multi-Ball, Wide Paddle, and Score Multipliers with tiered color coding.
 - **Aspect Ratio Agnostic (`ResponsiveCameraController`)**: Dynamic camera math recalculates view distance on the fly to guarantee 100% visible arena boundaries on any screen (16:9 desktop, 9:16 vertical, 9:19.5 notched mobile).
 - **Mobile Safe Area & Touch Support**: `SafeAreaController` dynamically adapts UI Toolkit roots to clear iPhone Dynamic Island, notches, and navigation bars.
 - **Zero-Stutter Frame-0 Shader Prewarming**: Off-camera VFX priming during `Start()` forces GPU drivers (Apple Metal, WebGPU, Vulkan, DX12) to compile PSOs upfront, eliminating first-hit frame drops.
@@ -44,8 +45,8 @@ Levels are authored as modular ScriptableObjects (`Assets/Settings/Levels/SO_Lev
 | **3** | **Chain Reaction** | **Explosive Cascades** | $7 \times 6$ | **42** | `1.05x` (Paddle 5.0) | • 2x Bombs, 2x 2X Multipliers, 1x Expander (`Checkerboard`) |
 | **4** | **Kinetic Aegis** | **Speed Surge & Protective Net** | $8 \times 6$ | **48** | `1.15x` (Paddle 5.0) | • 1x Shield, 1x Extra Heart, 1x Bomb, 2x Glass, 1x 2X |
 | **5** | **Multi-Ball Mayhem** | **Ball Juggling Rush** | $8 \times 6$ | **48** | `1.20x` (Paddle 5.0) | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass, 1x 2X (`Checkerboard`) |
-| **6** | **The High Roller** | **High Stakes & 3X Multiplier** | $9 \times 6$ | **54** | `1.28x` (Paddle 5.0) | • 1x 3X (90 pts on Blue!), 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass |
-| **7** | **Chaos Gauntlet** | **The Grand Climax** | $10 \times 9$ | **90** | `1.38x` (Paddle 5.0) | • 2x 3X, 2x 2X, 2x Expanders, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls (`Randomized`) |
+| **6** | **The High Roller** | **High Stakes & 4X Multiplier** | $9 \times 6$ | **54** | `1.28x` (Paddle 5.0) | • 1x 4X, 2x 3X, 1x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass, 1x Expander |
+| **7** | **Chaos Gauntlet** | **The Grand Climax & 5X Multiplier** | $10 \times 9$ | **90** | `1.38x` (Paddle 5.0) | • 1x 5X, 2x 4X, 2x 3X, 2x 2X, 2x Expanders, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls (`Randomized`) |
 
 *Completing Level 7 cycles back seamlessly to Level 1 while preserving the cumulative score.*
 
@@ -138,7 +139,7 @@ unity-cli-mcp-test/
 
 ## 🧪 Automated Test Suite
 
-The project includes an automated test suite with **79 unit and integration tests** verifying core gameplay, math formulas, and edge cases in ~130ms:
+The project includes an automated test suite with **86 unit and integration tests** verifying core gameplay, math formulas, and edge cases in ~130ms:
 
 ```bash
 # Execute test suite via Unity CLI / MCP:
@@ -147,11 +148,11 @@ Unity.exe -batchmode -runTests -testPlatform EditMode -testResults results.xml
 
 ### Coverage Highlights:
 - **Physics & Deflection**: Normalized offsets, angle boundaries ($[30^\circ, 150^\circ]$), zero-drift restitution.
-- **Paddle Dynamics**: Compounding $+10\%$ width calculations, hard clamping at $12.0$, and adaptive arena boundary restrictions.
-- **Powerup Behaviors**: Shield 10s timer decrement, killzone dock interception, multi-ball spawn divergence ($\pm 35^\circ$) and death tolerance, Extra Heart maximum clamping (5 max).
+- **Paddle Dynamics**: Compounding $+10\%$ width calculations, hard clamping at $12.0$, adaptive arena boundary restrictions, 10-second buff timer tick, and base width reversion.
+- **Powerup & Combo Behaviors**: Shield 10s timer decrement, killzone dock interception, multi-ball spawn divergence ($\pm 35^\circ$) and death tolerance, Extra Heart maximum clamping (5 max), and global combo score multipliers ($2\times$ through $5\times$) with duration refresh and tier progression.
 - **Destruction Logic**: Bomb $2.5$-unit blast radius, non-recursive destruction guards, glass 2-hit durability.
-- **UI & Display**: Safe area inset calculation, aspect-ratio frustum framing across $16:9$, $9:16$, and $9:19.5$.
-- **Campaign Validation**: Monotonic difficulty scaling across all 7 levels and endless cycle advancement ($7 \to 1$).
+- **UI & Display**: Top HUD power-up status badge timers and dynamic visibility, safe area inset calculation, aspect-ratio frustum framing across $16:9$, $9:16$, and $9:19.5$.
+- **Campaign Validation**: Monotonic difficulty scaling across all 7 levels, inclusion of 4X/5X combo multipliers in levels 6 and 7, and endless cycle advancement ($7 \to 1$).
 
 ---
 

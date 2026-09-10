@@ -46,6 +46,15 @@
                 <ui:VisualElement name="multiball-status-icon" class="powerup-status-icon icon-multiball" picking-mode="Ignore" />
                 <ui:Label name="multiball-count-label" text="3 BALLS" class="powerup-timer-label" />
             </ui:VisualElement>
+            <ui:VisualElement name="paddle-status-badge" class="powerup-badge paddle-badge powerup-hidden">
+                <ui:VisualElement name="paddle-status-icon" class="powerup-status-icon icon-paddle-expand" picking-mode="Ignore" />
+                <ui:Label name="paddle-timer-label" text="10s" class="powerup-timer-label" />
+            </ui:VisualElement>
+            <ui:VisualElement name="multiplier-status-badge" class="powerup-badge multiplier-badge mult-tier-2x powerup-hidden">
+                <ui:VisualElement name="multiplier-status-icon" class="powerup-status-icon icon-multiplier" picking-mode="Ignore" />
+                <ui:Label name="multiplier-value-label" text="2X" class="powerup-timer-label multiplier-val-text" />
+                <ui:Label name="multiplier-timer-label" text="10s" class="powerup-timer-label" />
+            </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- Center Prompt Banner (Visible before ball launch) -->

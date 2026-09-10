@@ -53,8 +53,8 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
 | **3** | **Chain Reaction** | **Explosive Cascades** | $7 \times 6$ | **42** | `1.05x` (Paddle 5.0) | • 2x Bombs, 2x 2X Multipliers, 1x Expander (`Checkerboard`) |
 | **4** | **Kinetic Aegis** | **Speed Surge & Protective Net** | $8 \times 6$ | **48** | `1.15x` (Paddle 5.0) | • 1x Shield, 1x Extra Heart, 1x Bomb, 2x Glass, 1x 2X |
 | **5** | **Multi-Ball Mayhem** | **Ball Juggling Rush** | $8 \times 6$ | **48** | `1.20x` (Paddle 5.0) | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass, 1x 2X (`Checkerboard`) |
-| **6** | **The High Roller** | **High Stakes & 3X Multiplier** | $9 \times 6$ | **54** | `1.28x` (Paddle 5.0) | • 1x 3X (90 pts on Blue!), 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass |
-| **7** | **Chaos Gauntlet** | **The Grand Climax** | $10 \times 9$ | **90** | `1.38x` (Paddle 5.0) | • 2x 3X, 2x 2X, 2x Expanders, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls (`Randomized`) |
+| **6** | **The High Roller** | **High Stakes & 4X Multiplier** | $9 \times 6$ | **54** | `1.28x` (Paddle 5.0) | • 1x 4X, 2x 3X, 1x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass, 1x Expander |
+| **7** | **Chaos Gauntlet** | **The Grand Climax & 5X Multiplier** | $10 \times 9$ | **90** | `1.38x` (Paddle 5.0) | • 1x 5X, 2x 4X, 2x 3X, 2x 2X, 2x Expanders, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls (`Randomized`) |
 
 - **Asset Storage**: `Assets/Settings/Levels/SO_Level_01.asset` through `SO_Level_07.asset`.
 - **Automation**: [SetupBlockBreakerScenes.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupBlockBreakerScenes.cs) configures and wires all 7 presets into both scenes.
@@ -62,14 +62,14 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
 ---
 
 ## 5. Powerups & Special Brick Archetypes
-- **Paddle Expander (`PaddleExpander`)**: Widen paddle by $+10\%$, plays break + powerup audio, cyan particle burst.
-- **Score Multipliers (`ScoreMultiplier2x`, `ScoreMultiplier3x`)**: Multiplies brick point value (e.g. 3x Blue = 90 pts).
+- **Paddle Expander (`PaddleExpander`)**: 10-second timed buff widening paddle by $+10\%$ compounding (clamped to max $12.0$), displays live HUD timer countdown, and reverts to base width on expiration. Plays break + powerup audio, cyan particle burst.
+- **Timed Combo Score Multipliers (`ScoreMultiplier2x`, `ScoreMultiplier3x`, `ScoreMultiplier4x`, `ScoreMultiplier5x`)**: 10-second global combo window that multiplies points for ALL destroyed blocks (2x, 3x, 4x, 5x). Collecting higher tiers upgrades tier and refreshes duration; collecting equal/lower tiers refreshes duration. Displays live HUD countdown with tier badge styling.
 - **Glass-Enclosed Bricks (`GlassEnclosed`)**: Encased in a $1.18\times$ glass shell ([MI_Block_Glass.mat](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Materials/BlockBreaker/MI_Block_Glass.mat)). Requires 2 hits (Hit 1: shatters glass shell with crystal debris; Hit 2: breaks brick for $2\times$ points).
 - **Bomb Bricks (`Bomb`)**: Explosive radius detonation ($2.5$ units) detonating surrounding bricks with outward impulses. Protected by `isDestroyed` flag against recursive loops.
 - **Shield Powerup (`Shield`)**: 10-second defensive barrier. Falling balls intercept safely into `ReadyToLaunch` docked on paddle without losing lives. Displays live countdown timer on HUD.
 - **Multi-Ball Powerup (`MultiBall`)**: Spawns 2 extra balls at $\pm 35^\circ$ diverging angles (3 balls active). Extra balls falling do NOT lose lives; only the final remaining ball causes life loss.
 - **Extra Heart Powerup (`ExtraHeart`)**: Grants $+1$ life (up to 5 max) with flying heart HUD parabolic animation.
-- **World Space Badges ([BlockBadge.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockBadge.cs))**: Rendered via Unity 6 `PanelRenderer` in `WorldSpace` mode (`80px` fixed dimension, 100 PPU, clamped margins).
+- **World Space Badges ([BlockBadge.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockBadge.cs))**: Rendered via Unity 6 `PanelRenderer` in `WorldSpace` mode (`80px` fixed dimension, 100 PPU, clamped margins). Supports plates and text for `x2`, `x3`, `x4`, and `x5`.
 
 ---
 
@@ -88,6 +88,7 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
 - **Safe Area Controller ([SafeAreaController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/SafeAreaController.cs))**: Dynamically resolves device safe area insets directly to child roots (`hud-root`, `root-container`), ensuring the top HUD bar clears notches and Dynamic Island.
 - **HUD & Modal Controls**:
   - Heart icon life indicator (`TX_Heart_Fill.png` / `TX_Heart_Empty.png`).
+  - Active Power-Up Badges: Dedicated top status pills for Shield (`SHIELD 10s`), Multi-Ball (`3 BALLS`), Wide Paddle (`10s` outward arrows), and Score Multipliers (`2X`–`5X` `10s` star icon) with live countdowns and tint themes.
   - Quick action bar: Pause/Play dynamic icon swap, Settings 360° compounding mechanical spin, Volume/Mute toggle with custom icons.
   - 2-row responsive wrapped tabs for all 7 levels (`LVL 1`–`LVL 4` top, `LVL 5`–`LVL 7` bottom) with $>80\text{px}$ touch targets.
   - Live interactive tuning sliders in Level Settings modal.
@@ -107,5 +108,5 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
 
 ## 9. Automated Test Suite
 - **Location**: `Assets/Tests/BlockBreakerCoreTests.cs`
-- **Total Tests**: **79 passing tests (100%)**, executing in ~130ms.
-- **Coverage**: Scoring multipliers, dynamic paddle deflection math, boundary clamping, life tracking, heart UI transitions, safe area insets, aspect-ratio frustum framing, compounding paddle widening, audio persistence, debris shader resolution, pause lifecycle, direct touch controls, bomb radius blast, glass 2-hit durability, shield countdown & killzone intercept, multi-ball death tolerance, 7-level campaign existence, speed escalation, and cyclic advancement.
+- **Total Tests**: **86 passing tests (100%)**, executing in ~130ms.
+- **Coverage**: Global combo scoring multipliers (2x-5x), dynamic paddle deflection math, boundary clamping, life tracking, heart UI transitions, safe area insets, aspect-ratio frustum framing, compounding timed paddle widening & reversion, audio persistence, debris shader resolution, pause lifecycle, direct touch controls, bomb radius blast, glass 2-hit durability, shield countdown & killzone intercept, multi-ball death tolerance, 7-level campaign existence, speed escalation, cyclic advancement, HUD status badges, and 4x/5x block metadata.

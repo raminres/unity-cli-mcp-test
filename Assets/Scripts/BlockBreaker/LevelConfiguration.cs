@@ -42,6 +42,12 @@ namespace Arcade.BlockBreaker
         [Tooltip("Number of random blocks with x3 score multiplier badges.")]
         [Range(0, 8)] [SerializeField] private int multiplier3xCount = 0;
 
+        [Tooltip("Number of random blocks with x4 score multiplier badges.")]
+        [Range(0, 8)] [SerializeField] private int multiplier4xCount = 0;
+
+        [Tooltip("Number of random blocks with x5 score multiplier badges.")]
+        [Range(0, 8)] [SerializeField] private int multiplier5xCount = 0;
+
         [Tooltip("Number of random blocks that expand paddle width by +10% when destroyed.")]
         [Range(0, 5)] [SerializeField] private int paddleExpanderCount = 1;
 
@@ -80,6 +86,8 @@ namespace Arcade.BlockBreaker
         public float InitialPaddleWidth => initialPaddleWidth;
         public int Multiplier2xCount => multiplier2xCount;
         public int Multiplier3xCount => multiplier3xCount;
+        public int Multiplier4xCount => multiplier4xCount;
+        public int Multiplier5xCount => multiplier5xCount;
         public int PaddleExpanderCount => paddleExpanderCount;
         public int BombCount => bombCount;
         public int GlassEnclosedCount => glassEnclosedCount;
@@ -108,6 +116,8 @@ namespace Arcade.BlockBreaker
             clone.initialPaddleWidth = initialPaddleWidth;
             clone.multiplier2xCount = multiplier2xCount;
             clone.multiplier3xCount = multiplier3xCount;
+            clone.multiplier4xCount = multiplier4xCount;
+            clone.multiplier5xCount = multiplier5xCount;
             clone.paddleExpanderCount = paddleExpanderCount;
             clone.bombCount = bombCount;
             clone.glassEnclosedCount = glassEnclosedCount;
@@ -125,6 +135,8 @@ namespace Arcade.BlockBreaker
         public void SetBallSpeedMultiplier(float val) => ballSpeedMultiplier = Mathf.Clamp(val, 0.6f, 2.5f);
         public void SetMultiplier2xCount(int val) => multiplier2xCount = Mathf.Clamp(val, 0, 8);
         public void SetMultiplier3xCount(int val) => multiplier3xCount = Mathf.Clamp(val, 0, 8);
+        public void SetMultiplier4xCount(int val) => multiplier4xCount = Mathf.Clamp(val, 0, 8);
+        public void SetMultiplier5xCount(int val) => multiplier5xCount = Mathf.Clamp(val, 0, 8);
         public void SetPaddleExpanderCount(int val) => paddleExpanderCount = Mathf.Clamp(val, 0, 5);
         public void SetBombCount(int val) => bombCount = Mathf.Clamp(val, 0, 5);
         public void SetGlassEnclosedCount(int val) => glassEnclosedCount = Mathf.Clamp(val, 0, 8);
