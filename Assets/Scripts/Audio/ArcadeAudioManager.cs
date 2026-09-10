@@ -126,6 +126,12 @@ namespace Arcade.Audio
                 clipLifeLost = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Life_Lost.mp3");
                 if (clipLifeLost == null) clipLifeLost = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Life_Lost.wav");
             }
+            if (clipShieldDeflect == null)
+            {
+                clipShieldDeflect = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Powerup_Shield.mp3");
+                if (clipShieldDeflect == null) clipShieldDeflect = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Powerup_Shield.wav");
+                if (clipShieldDeflect == null) clipShieldDeflect = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Shield_Deflect.mp3");
+            }
 #endif
 
             if (clipPaddleBounce == null) clipPaddleBounce = clipPop;

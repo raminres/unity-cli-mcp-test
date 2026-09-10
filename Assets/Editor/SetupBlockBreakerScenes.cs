@@ -372,6 +372,7 @@ namespace Arcade.Editor
             var levelSuccessClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Level_Success.mp3");
             var buttonPressClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Button_Press.mp3");
             var lifeLostClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Life_Lost.mp3");
+            var shieldDeflectClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Powerup_Shield.mp3");
 
             if (popClip != null) audioSo.FindProperty("clipPop").objectReferenceValue = popClip;
             if (breakClip != null) audioSo.FindProperty("clipBreak").objectReferenceValue = breakClip;
@@ -380,6 +381,7 @@ namespace Arcade.Editor
             if (levelSuccessClip != null) audioSo.FindProperty("clipLevelSuccess").objectReferenceValue = levelSuccessClip;
             if (buttonPressClip != null) audioSo.FindProperty("clipButtonPress").objectReferenceValue = buttonPressClip;
             if (lifeLostClip != null) audioSo.FindProperty("clipLifeLost").objectReferenceValue = lifeLostClip;
+            if (shieldDeflectClip != null) audioSo.FindProperty("clipShieldDeflect").objectReferenceValue = shieldDeflectClip;
 
             if (popClip != null)
             {
