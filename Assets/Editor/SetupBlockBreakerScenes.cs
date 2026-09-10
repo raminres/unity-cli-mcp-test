@@ -388,13 +388,11 @@ namespace Arcade.Editor
         {
             var menuScenePath = "Assets/Scenes/LV_BlockBreaker_MainMenu.unity";
             var gameScenePath = "Assets/Scenes/LV_BlockBreaker.unity";
-            var sampleScenePath = "Assets/Scenes/SampleScene.unity";
 
             var scenes = new[]
             {
                 new EditorBuildSettingsScene(menuScenePath, true),
-                new EditorBuildSettingsScene(gameScenePath, true),
-                new EditorBuildSettingsScene(sampleScenePath, false)
+                new EditorBuildSettingsScene(gameScenePath, true)
             };
 
             EditorBuildSettings.scenes = scenes;

@@ -17,7 +17,6 @@ This file provides persistent, high-density project context across agent session
 ### Active Scenes & Build Index
 1. `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0)
 2. `Assets/Scenes/LV_BlockBreaker.unity` (Build Index 1)
-3. `Assets/Scenes/SampleScene.unity` (Disabled legacy sandbox)
 
 ---
 
