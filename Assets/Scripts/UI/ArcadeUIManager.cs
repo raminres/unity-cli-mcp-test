@@ -65,9 +65,6 @@ namespace Arcade.UI
 
         // Level Settings controls
         private readonly System.Collections.Generic.List<Button> hudLevelTabButtons = new System.Collections.Generic.List<Button>();
-        private Button btnLvl1;
-        private Button btnLvl2;
-        private Button btnLvl3;
         private Label levelNameLabel;
         private Label levelDescLabel;
 
@@ -336,9 +333,6 @@ namespace Arcade.UI
             btnCloseOptions = root.Q<Button>("btn-close-options");
 
             // Level Settings controls
-            btnLvl1 = root.Q<Button>("btn-lvl-1");
-            btnLvl2 = root.Q<Button>("btn-lvl-2");
-            btnLvl3 = root.Q<Button>("btn-lvl-3");
             levelNameLabel = root.Q<Label>("level-name-label");
             levelDescLabel = root.Q<Label>("level-desc-label");
 

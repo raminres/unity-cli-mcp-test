@@ -40,9 +40,6 @@ namespace Arcade.UI
 
         // Level Select controls
         private readonly System.Collections.Generic.List<Button> menuLevelTabButtons = new System.Collections.Generic.List<Button>();
-        private Button btnMenuLvl1;
-        private Button btnMenuLvl2;
-        private Button btnMenuLvl3;
         private Label menuLevelName;
         private Label menuLevelDesc;
         private int selectedLevelNumber = 1;
@@ -144,9 +141,6 @@ namespace Arcade.UI
                 }
             }
 
-            btnMenuLvl1 = root.Q<Button>("btn-menu-lvl-1");
-            btnMenuLvl2 = root.Q<Button>("btn-menu-lvl-2");
-            btnMenuLvl3 = root.Q<Button>("btn-menu-lvl-3");
             menuLevelName = root.Q<Label>("menu-level-name");
             menuLevelDesc = root.Q<Label>("menu-level-desc");
 
