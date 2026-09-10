@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 81520429}
   - component: {fileID: 81520428}
+  - component: {fileID: 81520430}
   m_Layer: 0
   m_Name: Fill Light
   m_TagString: Untagged
@@ -216,6 +217,35 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &81520430
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 81520427}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &141131096
 GameObject:
   m_ObjectHideFlags: 0
@@ -262,6 +292,7 @@ MonoBehaviour:
   matRedBlock: {fileID: 2100000, guid: fabb4170ab6eb3d4b9dbc0288c50f0a0, type: 2}
   matGreenBlock: {fileID: 2100000, guid: 02e0e52ddca62014cb30af9990efdbf3, type: 2}
   matBlueBlock: {fileID: 2100000, guid: a1c7a04e981c8004d9ace0f4051923b8, type: 2}
+  matGlass: {fileID: 2100000, guid: b2d8e04e981c8004d9ace0f4051923c9, type: 2}
   vfxRedColor: {r: 1, g: 0.2, b: 0.3, a: 1}
   vfxGreenColor: {r: 0.15, g: 0.95, b: 0.45, a: 1}
   vfxBlueColor: {r: 0.15, g: 0.7, b: 1, a: 1}
@@ -300,6 +331,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.Input.ArcadeInputHandler
   touchSensitivity: 1.2
   launchSwipeThreshold: 50
+  dragDeadzonePixels: 15
+  tapSlopPixels: 45
+  maxTapDuration: 0.4
 --- !u!114 &141131100
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -533,12 +567,14 @@ MonoBehaviour:
   clipLevelSuccess: {fileID: 8300000, guid: c309d850c4ce9c345a5cbd3efe74473e, type: 3}
   clipGameOver: {fileID: 8300000, guid: 7afe7b7a1e297ef45aa3707bca8f6214, type: 3}
   clipButtonPress: {fileID: 8300000, guid: cfd679dbfdf5d4043a8b3f36a6b0993f, type: 3}
+  clipGlassBreak: {fileID: 8300000, guid: 71622bdbba0dc0b45a4aa0cddf6cdac8, type: 3}
+  clipBombExplosion: {fileID: 8300000, guid: a782c2fba18087e4a9b38d537daf7efb, type: 3}
   clipPaddleBounce: {fileID: 8300000, guid: 72579e2a14739d64383c79e6c4f9045b, type: 3}
   clipWallBounce: {fileID: 8300000, guid: 72579e2a14739d64383c79e6c4f9045b, type: 3}
   clipBlockHitRed: {fileID: 8300000, guid: 28f9da65d6050544381fd13055535cb7, type: 3}
   clipBlockHitGreen: {fileID: 8300000, guid: 28f9da65d6050544381fd13055535cb7, type: 3}
   clipBlockHitBlue: {fileID: 8300000, guid: 28f9da65d6050544381fd13055535cb7, type: 3}
-  clipLifeLost: {fileID: 0}
+  clipLifeLost: {fileID: 8300000, guid: 35b1b55c7c75dbf41b80cf9cd76f4c6e, type: 3}
   clipLevelClear: {fileID: 8300000, guid: c309d850c4ce9c345a5cbd3efe74473e, type: 3}
 --- !u!82 &804178443
 AudioSource:
@@ -1217,6 +1253,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1794479011}
   - component: {fileID: 1794479010}
+  - component: {fileID: 1794479012}
   m_Layer: 0
   m_Name: Key Light
   m_TagString: Untagged
@@ -1304,6 +1341,35 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1794479012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1794479009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1913458102
 GameObject:
   m_ObjectHideFlags: 0
