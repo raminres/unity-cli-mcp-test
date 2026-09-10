@@ -204,6 +204,8 @@ graph LR
   - `AU_Level_Success.mp3`: Level completion fanfare.
   - `AU_Game_Over.mp3`: Zero lives exhaustion jingle.
   - `AU_Button_Press.mp3`: UI button tactile click.
+  - `AU_Glass_Break.mp3`: Reinforced glass outer shell crack/shatter.
+  - `AU_Bomb_Explosion.mp3`: Explosive brick area-of-effect detonation.
 - **Procedural Synthesizer Fallback**:
   - Generates real-time math-based audio waveforms (sine, triangle, white noise envelopes) if audio files are missing or unassigned, ensuring acoustic feedback is never silent.
 

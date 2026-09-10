@@ -23,7 +23,7 @@ This file provides persistent, high-density project context across agent session
 ## 2. Naming Conventions & Asset Presets
 - **Materials**: `MT_` prefix for Master Materials (`Assets/Materials/MT_Master_PBR_URP.mat`), `MI_` prefix for Material Instances (`Assets/Materials/BlockBreaker/MI_*`).
 - **Textures / Icons**: `TX_` prefix with semantic suffixes (`_BaseColor`, `_Normal`, `_MetallicSmoothness`, `_AO`, `_Emissive`). UI icons in `Assets/UI/Icons/`.
-- **Audio**: `AU_` prefix (e.g. `AU_Pop.mp3`, `AU_Break.mp3`, `AU_Powerup.mp3`, `AU_Button_Press.mp3`, `AU_Level_Success.mp3`, `AU_Game_Over.mp3`, `AU_Life_Lost.mp3`, `AU_Powerup_Shield.mp3`).
+- **Audio**: `AU_` prefix (e.g. `AU_Pop.mp3`, `AU_Break.mp3`, `AU_Powerup.mp3`, `AU_Button_Press.mp3`, `AU_Level_Success.mp3`, `AU_Game_Over.mp3`, `AU_Life_Lost.mp3`, `AU_Powerup_Shield.mp3`, `AU_Glass_Break.mp3`, `AU_Bomb_Explosion.mp3`).
 - **ScriptableObjects**: `SO_` prefix (`Assets/Settings/Levels/SO_Level_*.asset`).
 - **Presets**: `PR_` prefix in `Assets/Presets/` managed by `ProjectSettings/PresetManager.asset` and [SetupAssetPresets.cs](Assets/Editor/SetupAssetPresets.cs).
 

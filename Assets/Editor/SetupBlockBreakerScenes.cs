@@ -414,6 +414,8 @@ namespace Arcade.Editor
             var buttonPressClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Button_Press.mp3");
             var lifeLostClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Life_Lost.mp3");
             var shieldDeflectClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Powerup_Shield.mp3");
+            var glassBreakClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Glass_Break.mp3");
+            var bombExplosionClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosion.mp3");
 
             if (popClip != null) audioSo.FindProperty("clipPop").objectReferenceValue = popClip;
             if (breakClip != null) audioSo.FindProperty("clipBreak").objectReferenceValue = breakClip;
@@ -423,6 +425,8 @@ namespace Arcade.Editor
             if (buttonPressClip != null) audioSo.FindProperty("clipButtonPress").objectReferenceValue = buttonPressClip;
             if (lifeLostClip != null) audioSo.FindProperty("clipLifeLost").objectReferenceValue = lifeLostClip;
             if (shieldDeflectClip != null) audioSo.FindProperty("clipShieldDeflect").objectReferenceValue = shieldDeflectClip;
+            if (glassBreakClip != null) audioSo.FindProperty("clipGlassBreak").objectReferenceValue = glassBreakClip;
+            if (bombExplosionClip != null) audioSo.FindProperty("clipBombExplosion").objectReferenceValue = bombExplosionClip;
 
             if (popClip != null)
             {

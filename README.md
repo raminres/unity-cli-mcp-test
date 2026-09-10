@@ -87,7 +87,7 @@ This restricts the reflection vector to $[30^\circ, 150^\circ]$, ensuring all de
 - **iOS Debris Shader**: Custom `Arcade/VFX_BlockDebris` shader (`Assets/Shaders/VFX_BlockDebris.shader`) compiled specifically for Apple Metal to eliminate missing shader artifacts.
 
 ### 4. Dual-Engine Audio (`ArcadeAudioManager.cs`)
-- Persistent singleton (`DontDestroyOnLoad`) wired to dedicated audio clips (`AU_Pop`, `AU_Break`, `AU_Powerup`, `AU_Powerup_Shield`, `AU_Life_Lost`, `AU_Level_Success`, `AU_Game_Over`, `AU_Button_Press`).
+- Persistent singleton (`DontDestroyOnLoad`) wired to dedicated audio clips (`AU_Pop`, `AU_Break`, `AU_Powerup`, `AU_Powerup_Shield`, `AU_Life_Lost`, `AU_Level_Success`, `AU_Game_Over`, `AU_Button_Press`, `AU_Glass_Break`, `AU_Bomb_Explosion`).
 - Built-in procedural synthesis fallback generates real-time waveforms if audio clips are absent, ensuring guaranteed acoustic feedback across all builds.
 
 ---

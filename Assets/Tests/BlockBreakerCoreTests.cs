@@ -809,6 +809,8 @@ namespace Arcade.Tests
             Assert.IsNotNull(audioMgr.ClipButtonPress, "ClipButtonPress must not be null.");
             Assert.IsNotNull(audioMgr.ClipLifeLost, "ClipLifeLost must not be null.");
             Assert.IsNotNull(audioMgr.ClipShieldDeflect, "ClipShieldDeflect must not be null.");
+            Assert.IsNotNull(audioMgr.ClipGlassBreak, "ClipGlassBreak must not be null.");
+            Assert.IsNotNull(audioMgr.ClipBombExplosion, "ClipBombExplosion must not be null.");
 
             Object.DestroyImmediate(audioObj);
         }
@@ -857,6 +859,8 @@ namespace Arcade.Tests
             Assert.DoesNotThrow(() => audioMgr.PlayLifeLost(), "PlayLifeLost must execute without error.");
             Assert.DoesNotThrow(() => audioMgr.PlayShieldDeflect(), "PlayShieldDeflect must execute without error.");
             Assert.DoesNotThrow(() => audioMgr.PlayMultiBall(), "PlayMultiBall must execute without error.");
+            Assert.DoesNotThrow(() => audioMgr.PlayGlassBreak(), "PlayGlassBreak must execute without error.");
+            Assert.DoesNotThrow(() => audioMgr.PlayBombExplosion(), "PlayBombExplosion must execute without error.");
 
             Object.DestroyImmediate(audioObj);
         }

@@ -116,10 +116,10 @@ namespace Arcade.Audio
             }
             if (clipBombExplosion == null)
             {
-                clipBombExplosion = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosioon.mp3");
-                if (clipBombExplosion == null) clipBombExplosion = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosioon.wav");
-                if (clipBombExplosion == null) clipBombExplosion = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosion.mp3");
+                clipBombExplosion = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosion.mp3");
                 if (clipBombExplosion == null) clipBombExplosion = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosion.wav");
+                if (clipBombExplosion == null) clipBombExplosion = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosioon.mp3");
+                if (clipBombExplosion == null) clipBombExplosion = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosioon.wav");
             }
             if (clipLifeLost == null)
             {
