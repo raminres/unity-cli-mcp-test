@@ -10,26 +10,26 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9216ae91f49a9ac4f8812d36de2d4b76, type: 3}
-  m_Name: SO_Level_03
+  m_Name: SO_Level_06
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
-  levelNumber: 3
-  levelName: 'Level 3: Chain Reaction'
-  levelDescription: Denser checkerboard formation introducing explosive Bomb bricks. Trigger cascading perimeter blasts to clear columns rapidly.
-  colorPattern: 2
-  columns: 7
+  levelNumber: 6
+  levelName: 'Level 6: The High Roller'
+  levelDescription: High stakes, blistering velocity, and the rare x3 score multiplier awarding 90 points on blue bricks. Precision is key.
+  colorPattern: 0
+  columns: 9
   rowsPerTier: 2
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
-  ballSpeedMultiplier: 1.05
+  ballSpeedMultiplier: 1.28
   initialPaddleWidth: 5
   multiplier2xCount: 2
-  multiplier3xCount: 0
+  multiplier3xCount: 1
   paddleExpanderCount: 1
   bombCount: 2
-  glassEnclosedCount: 0
-  extraHeartCount: 0
-  shieldCount: 0
-  multiBallCount: 0
+  glassEnclosedCount: 3
+  extraHeartCount: 1
+  shieldCount: 1
+  multiBallCount: 1
   shieldDuration: 10

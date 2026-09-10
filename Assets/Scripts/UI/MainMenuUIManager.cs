@@ -32,10 +32,14 @@ namespace Arcade.UI
 
         private Button btnCloseLevelModal;
         private Button btnStartSelectedLevel;
+        [Header("Level Presets")]
+        [SerializeField] private LevelConfiguration[] levelPresets;
+
         private Button btnCloseOptions;
         private Button btnCloseCredits;
 
         // Level Select controls
+        private readonly System.Collections.Generic.List<Button> menuLevelTabButtons = new System.Collections.Generic.List<Button>();
         private Button btnMenuLvl1;
         private Button btnMenuLvl2;
         private Button btnMenuLvl3;
@@ -103,9 +107,7 @@ namespace Arcade.UI
 
             if (btnToggleFps != null) btnToggleFps.clicked -= ToggleFpsSetting;
 
-            if (btnMenuLvl1 != null) btnMenuLvl1.clicked -= () => SelectLevel(1);
-            if (btnMenuLvl2 != null) btnMenuLvl2.clicked -= () => SelectLevel(2);
-            if (btnMenuLvl3 != null) btnMenuLvl3.clicked -= () => SelectLevel(3);
+            menuLevelTabButtons.Clear();
         }
 
         private void BindElements()
@@ -128,6 +130,20 @@ namespace Arcade.UI
             btnCloseOptions = root.Q<Button>("btn-close-options");
             btnCloseCredits = root.Q<Button>("btn-close-credits");
 
+            menuLevelTabButtons.Clear();
+            var tabsContainer = root.Q<VisualElement>(className: "level-tabs-container");
+            if (tabsContainer != null)
+            {
+                var buttons = tabsContainer.Query<Button>(className: "level-tab-btn").ToList();
+                for (int i = 0; i < buttons.Count; i++)
+                {
+                    int lvlNum = i + 1;
+                    var btn = buttons[i];
+                    menuLevelTabButtons.Add(btn);
+                    btn.clicked += () => SelectLevel(lvlNum);
+                }
+            }
+
             btnMenuLvl1 = root.Q<Button>("btn-menu-lvl-1");
             btnMenuLvl2 = root.Q<Button>("btn-menu-lvl-2");
             btnMenuLvl3 = root.Q<Button>("btn-menu-lvl-3");
@@ -149,10 +165,6 @@ namespace Arcade.UI
 
             if (btnCloseOptions != null) btnCloseOptions.clicked += HideOptions;
             if (btnCloseCredits != null) btnCloseCredits.clicked += HideCredits;
-
-            if (btnMenuLvl1 != null) btnMenuLvl1.clicked += () => SelectLevel(1);
-            if (btnMenuLvl2 != null) btnMenuLvl2.clicked += () => SelectLevel(2);
-            if (btnMenuLvl3 != null) btnMenuLvl3.clicked += () => SelectLevel(3);
 
             if (sliderVolume != null)
             {
@@ -177,10 +189,10 @@ namespace Arcade.UI
 
         private void InitializeValues()
         {
-            int high = PlayerPrefs.GetInt("Arcade_HighScore", 0);
             if (highscoreLabel != null)
             {
-                highscoreLabel.text = $"ALL-TIME HIGH SCORE: {high}";
+                int highscore = PlayerPrefs.GetInt("Arcade_HighScore", 0);
+                highscoreLabel.text = $"ALL-TIME HIGH SCORE: {highscore}";
             }
 
             bool hasSaved = ArcadeGameManager.HasSavedGame;
@@ -209,25 +221,43 @@ namespace Arcade.UI
             if (playSound && ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             selectedLevelNumber = levelNumber;
 
-            if (btnMenuLvl1 != null) { if (levelNumber == 1) btnMenuLvl1.AddToClassList("level-tab-active"); else btnMenuLvl1.RemoveFromClassList("level-tab-active"); }
-            if (btnMenuLvl2 != null) { if (levelNumber == 2) btnMenuLvl2.AddToClassList("level-tab-active"); else btnMenuLvl2.RemoveFromClassList("level-tab-active"); }
-            if (btnMenuLvl3 != null) { if (levelNumber == 3) btnMenuLvl3.AddToClassList("level-tab-active"); else btnMenuLvl3.RemoveFromClassList("level-tab-active"); }
-
-            switch (levelNumber)
+            for (int i = 0; i < menuLevelTabButtons.Count; i++)
             {
-                case 1:
-                    if (menuLevelName != null) menuLevelName.text = "Level 1: Classic Inverted";
-                    if (menuLevelDesc != null) menuLevelDesc.text = "Classic 3-tier block setup with Red on bottom, Green in middle, and Blue on top. Features random x2 multiplier and paddle expander blocks.";
-                    break;
-                case 2:
-                    if (menuLevelName != null) menuLevelName.text = "Level 2: Wide Grid";
-                    if (menuLevelDesc != null) menuLevelDesc.text = "Wider 9-column grid with increased ball speed and dual x2 score multipliers.";
-                    break;
-                case 3:
-                    if (menuLevelName != null) menuLevelName.text = "Level 3: Dense Gauntlet";
-                    if (menuLevelDesc != null) menuLevelDesc.text = "Dense 10-column, 9-row gauntlet with fast velocity and multiple power-up blocks.";
-                    break;
+                if (i + 1 == levelNumber)
+                    menuLevelTabButtons[i].AddToClassList("level-tab-active");
+                else
+                    menuLevelTabButtons[i].RemoveFromClassList("level-tab-active");
             }
+
+            var config = GetLevelConfig(levelNumber);
+            if (config != null)
+            {
+                if (menuLevelName != null) menuLevelName.text = config.LevelName;
+                if (menuLevelDesc != null) menuLevelDesc.text = config.Description;
+            }
+            else
+            {
+                if (menuLevelName != null) menuLevelName.text = $"Level {levelNumber}";
+                if (menuLevelDesc != null) menuLevelDesc.text = "Arcade block breaker challenge.";
+            }
+        }
+
+        public LevelConfiguration GetLevelConfig(int levelNumber)
+        {
+            if (levelPresets != null && levelPresets.Length > 0)
+            {
+                for (int i = 0; i < levelPresets.Length; i++)
+                {
+                    if (levelPresets[i] != null && levelPresets[i].LevelNumber == levelNumber)
+                        return levelPresets[i];
+                }
+            }
+#if UNITY_EDITOR
+            string path = $"Assets/Settings/Levels/SO_Level_{levelNumber:D2}.asset";
+            var loaded = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>(path);
+            if (loaded != null) return loaded;
+#endif
+            return null;
         }
 
         private void HandleNewGameClicked()

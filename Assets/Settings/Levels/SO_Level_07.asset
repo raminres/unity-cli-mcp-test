@@ -10,26 +10,26 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9216ae91f49a9ac4f8812d36de2d4b76, type: 3}
-  m_Name: SO_Level_03
+  m_Name: SO_Level_07
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
-  levelNumber: 3
-  levelName: 'Level 3: Chain Reaction'
-  levelDescription: Denser checkerboard formation introducing explosive Bomb bricks. Trigger cascading perimeter blasts to clear columns rapidly.
-  colorPattern: 2
-  columns: 7
-  rowsPerTier: 2
+  levelNumber: 7
+  levelName: 'Level 7: Arcade Chaos Gauntlet'
+  levelDescription: The 90-block grand climax! Fully randomized neon patterns, top velocity, and a non-stop orchestra of bombs, multi-balls, shields, and multipliers.
+  colorPattern: 1
+  columns: 10
+  rowsPerTier: 3
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
-  ballSpeedMultiplier: 1.05
+  ballSpeedMultiplier: 1.38
   initialPaddleWidth: 5
   multiplier2xCount: 2
-  multiplier3xCount: 0
-  paddleExpanderCount: 1
-  bombCount: 2
-  glassEnclosedCount: 0
-  extraHeartCount: 0
-  shieldCount: 0
-  multiBallCount: 0
+  multiplier3xCount: 2
+  paddleExpanderCount: 2
+  bombCount: 3
+  glassEnclosedCount: 4
+  extraHeartCount: 1
+  shieldCount: 2
+  multiBallCount: 2
   shieldDuration: 10

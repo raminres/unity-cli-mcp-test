@@ -198,18 +198,22 @@ This file provides persistent context across agent sessions for this Unity proje
 
 ### 9. ScriptableObject Level Architecture & Gameplay Modifiers
 - **ScriptableObject Data Models (`SO_` Prefix)**:
-  - [LevelConfiguration.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelConfiguration.cs): Defines grid layout (columns, rowsPerTier, horizontal/vertical spacing, startCenterY), color patterns (`BlockColorPattern`), gameplay balance (ball speed multiplier, initial paddle width), and special modifier counts (2x, 3x score multipliers, paddle expanders). Supports deep runtime cloning and boundary-clamped runtime tuning.
-  - Assets in `Assets/Settings/Levels/`:
-    - `SO_Level_01.asset`: "Level 1: Classic Inverted" (8 cols, 2 rows/tier = 6 rows, 1.0x speed, 1x 2X block, 1x expander block, `InvertedTiered`).
-    - `SO_Level_02.asset`: "Level 2: Wide Checkerboard" (9 cols, 2 rows/tier = 6 rows, 1.2x speed, 2x 2X blocks, 1x 3X block, 1x expander block, `Checkerboard`).
-    - `SO_Level_03.asset`: "Level 3: Chaos Gauntlet" (10 cols, 3 rows/tier = 9 rows, 1.35x speed, 2x 2X blocks, 2x 3X blocks, 2x expander blocks, `Randomized`).
+  - [LevelConfiguration.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelConfiguration.cs): Defines grid layout (columns, rowsPerTier, horizontal/vertical spacing, startCenterY), color patterns (`BlockColorPattern`), gameplay balance (ball speed multiplier, initial paddle width), and special modifier counts (2x, 3x score multipliers, paddle expanders, bomb bricks, glass-enclosed bricks, extra heart, shield, multi-ball). Supports deep runtime cloning and boundary-clamped runtime tuning.
+  - **Progressive 7-Level Campaign Arc** in `Assets/Settings/Levels/`:
+    - `SO_Level_01.asset`: "Level 1: First Flight" (5 cols, 1 row/tier = 3 rows, 15 blocks, 0.85x speed, paddle width 5.5, 1x Expander, 0 hazards/glass/bombs, `InvertedTiered`). Gentle, accessible warmup grid.
+    - `SO_Level_02.asset`: "Level 2: Glass & Gold" (6 cols, 1 row/tier = 3 rows, 18 blocks, 0.95x speed, paddle width 5.0, 1x 2X multiplier, 2x Glass-Enclosed bricks, 1x Expander, `InvertedTiered`). Teaches durability and score hunting.
+    - `SO_Level_03.asset`: "Level 3: Chain Reaction" (7 cols, 2 rows/tier = 6 rows, 42 blocks, 1.05x speed, paddle width 5.0, 2x Bombs, 2x 2X multipliers, 1x Expander, `Checkerboard`). Introduces explosive cascading detonations.
+    - `SO_Level_04.asset`: "Level 4: Kinetic Aegis" (8 cols, 2 rows/tier = 6 rows, 48 blocks, 1.15x speed, paddle width 5.0, 1x Shield, 1x Extra Heart, 1x Bomb, 2x Glass, 1x 2X, 1x Expander, `InvertedTiered`). High velocity balanced by bottom shield safety net.
+    - `SO_Level_05.asset`: "Level 5: Multi-Ball Mayhem" (8 cols, 2 rows/tier = 6 rows, 48 blocks, 1.20x speed, paddle width 5.0, 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass, 1x 2X, `Checkerboard`). High-octane 3-ball juggling rush.
+    - `SO_Level_06.asset`: "Level 6: The High Roller" (9 cols, 2 rows/tier = 6 rows, 54 blocks, 1.28x speed, paddle width 5.0, 1x 3X multiplier [90 pts on Blue!], 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass, 1x Expander, `InvertedTiered`).
+    - `SO_Level_07.asset`: "Level 7: Arcade Chaos Gauntlet" (10 cols, 3 rows/tier = 9 rows, 90 blocks, 1.38x speed, paddle width 5.0, 2x 3X, 2x 2X, 2x Expanders, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls, `Randomized`). The grand 90-block arcade climax.
 - **Inverted Block Color Rows**:
   - [LevelGenerator.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelGenerator.cs) inverts the block tier layout:
     - Top rows ($r < rowsPerTier$): Blue blocks (Tier 3, 30 pts, `matBlueBlock`).
     - Middle rows ($r < rowsPerTier \times 2$): Green blocks (Tier 2, 20 pts, `matGreenBlock`).
     - Bottom rows ($r \ge rowsPerTier \times 2$): Red blocks (Tier 1, 10 pts, `matRedBlock`).
 - **Block Modifiers, Powerup Icons & World Space UI Toolkit**:
-  - [BlockModifier.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockModifier.cs): Defines `BlockSpecialType` (`Normal`, `ScoreMultiplier2x`, `ScoreMultiplier3x`, `PaddleExpander`).
+  - [BlockModifier.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockModifier.cs): Defines `BlockSpecialType` (`Normal`, `ScoreMultiplier2x`, `ScoreMultiplier3x`, `PaddleExpander`, `Bomb`, `GlassEnclosed`, `ExtraHeart`, `Shield`, `MultiBall`).
   - [Block.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/Block.cs): Multiplies awarded score points on destroy (e.g. 2x: Blue 60, Green 40, Red 20; 3x: Blue 90, Green 60, Red 30).
   - [PaddleController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/PaddleController.cs): Implements compounding expansion ($W_n = W_{prev} \times 1.10$) with `expansionCount` tracking, maximum cap at 12.0f, and adaptive collision boundary clamping ($minX = -10.0 + \frac{W}{2}$, $maxX = 10.0 - \frac{W}{2}$).
   - [BlockBadge.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockBadge.cs): Attached to special block faces using Unity 6 `PanelRenderer` in `PanelRenderMode.WorldSpace` mode (`Assets/UI/BlockWorldPanelSettings.asset`, `Assets/UI/BlockBadgeUI.uxml`, `Assets/UI/BlockBadgeUI.uss`):
@@ -221,8 +225,8 @@ This file provides persistent context across agent sessions for this Unity proje
   - Material: `Assets/Materials/BlockBreaker/MI_Block_Debris.mat`.
   - [BlockVFXManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockVFXManager.cs): Assigns `debrisMaterial` to `SubBox_Debris` mesh renderers upon instantiation and during bursts, backed by emergency URP shader resolution fallback to eliminate iOS pink/uncompiled shader failures. Wired in [LV_BlockBreaker.unity](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scenes/LV_BlockBreaker.unity) and [SetupBlockBreakerScenes.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupBlockBreakerScenes.cs).
 - **Editable Level Settings Modal & Main Menu Level Select**:
-  - `BlockBreakerHUD.uxml` & `BlockBreakerHUD.uss`: Adds wide level modal with Level 1/2/3 preset tabs, level descriptions, live sliders for Columns (4-14), Rows/Tier (1-4), Ball Speed (0.6-2.5x), 2X blocks (0-8), 3X blocks (0-8), Paddle Expanders (0-5), and an "APPLY & RESTART" button.
-  - `MainMenuUI.uxml` & `MainMenuUI.uss`: Adds "SELECT LEVEL" button and level selection modal to directly launch into any configured level.
+  - `BlockBreakerHUD.uxml` & `BlockBreakerHUD.uss`: Adds wide level modal with 7 wrapped level preset tabs (`LVL 1` to `LVL 7`), level descriptions, live sliders for Columns (4-14), Rows/Tier (1-4), Ball Speed (0.6-2.5x), 2X blocks (0-8), 3X blocks (0-8), Paddle Expanders (0-5), Bombs (0-5), Glass (0-8), Hearts (0-3), Shields (0-4), Multi-Ball (0-4), and an "APPLY & RESTART" button.
+  - `MainMenuUI.uxml` & `MainMenuUI.uss`: Adds "SELECT LEVEL" button and level selection modal with 7 wrapped level tabs to directly launch into any configured level.
   - Decoupled state synchronization via [ArcadeUIManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/ArcadeUIManager.cs) and [MainMenuUIManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/MainMenuUIManager.cs).
 
 ---
@@ -230,7 +234,7 @@ This file provides persistent context across agent sessions for this Unity proje
 ### 10. Level Progression & Variations
 - **Level Advancing Loop**:
   - [ArcadeGameManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/Core/ArcadeGameManager.cs) `AdvanceToNextLevel()` preserves cumulative score and remaining lives while setting game state to `ReadyToLaunch`.
-  - [LevelGenerator.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelGenerator.cs) `AdvanceToNextLevel()` selects and loads the next level configuration (Level 1 $\to$ 2 $\to$ 3 $\to$ 1 loop), resets the ball onto the paddle, and resets the paddle to the level's default width.
+  - [LevelGenerator.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelGenerator.cs) `AdvanceToNextLevel()` cycles through levels ($1 \to 2 \to 3 \to 4 \to 5 \to 6 \to 7 \to 1$ loop), resets the ball onto the paddle, and resets the paddle to the level's default width.
   - [ArcadeUIManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/ArcadeUIManager.cs) binds the "NEXT LEVEL" button in the Victory / Level Cleared modal to advance to the next level seamlessly without reloading the entire scene.
 - **Color Distribution Patterns**:
   - `BlockColorPattern.InvertedTiered`: Classic Blue top, Green middle, Red bottom.

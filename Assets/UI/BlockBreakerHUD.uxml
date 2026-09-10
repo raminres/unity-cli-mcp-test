@@ -74,6 +74,10 @@
                     <ui:Button name="btn-lvl-1" text="LVL 1" class="level-tab-btn level-tab-active" />
                     <ui:Button name="btn-lvl-2" text="LVL 2" class="level-tab-btn" />
                     <ui:Button name="btn-lvl-3" text="LVL 3" class="level-tab-btn" />
+                    <ui:Button name="btn-lvl-4" text="LVL 4" class="level-tab-btn" />
+                    <ui:Button name="btn-lvl-5" text="LVL 5" class="level-tab-btn" />
+                    <ui:Button name="btn-lvl-6" text="LVL 6" class="level-tab-btn" />
+                    <ui:Button name="btn-lvl-7" text="LVL 7" class="level-tab-btn" />
                 </ui:VisualElement>
 
                 <ui:Label name="level-name-label" text="Level 1: Classic Inverted" class="level-name-display" />

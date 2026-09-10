@@ -64,6 +64,7 @@ namespace Arcade.UI
         private Button btnCloseOptions;
 
         // Level Settings controls
+        private readonly System.Collections.Generic.List<Button> hudLevelTabButtons = new System.Collections.Generic.List<Button>();
         private Button btnLvl1;
         private Button btnLvl2;
         private Button btnLvl3;
@@ -222,10 +223,7 @@ namespace Arcade.UI
 
             if (btnCloseOptions != null) btnCloseOptions.clicked -= HideOptions;
             if (btnFps != null) btnFps.clicked -= ToggleFpsSetting;
-
-            if (btnLvl1 != null) btnLvl1.clicked -= () => SelectLevelTab(1);
-            if (btnLvl2 != null) btnLvl2.clicked -= () => SelectLevelTab(2);
-            if (btnLvl3 != null) btnLvl3.clicked -= () => SelectLevelTab(3);
+            hudLevelTabButtons.Clear();
 
             if (btnApplyLevel != null) btnApplyLevel.clicked -= ApplyLevelSettingsAndRestart;
             if (btnCloseLevelSettings != null) btnCloseLevelSettings.clicked -= HideLevelSettings;
@@ -412,9 +410,22 @@ namespace Arcade.UI
             if (btnFps != null) btnFps.clicked += ToggleFpsSetting;
 
             // Level settings wiring
-            if (btnLvl1 != null) btnLvl1.clicked += () => SelectLevelTab(1);
-            if (btnLvl2 != null) btnLvl2.clicked += () => SelectLevelTab(2);
-            if (btnLvl3 != null) btnLvl3.clicked += () => SelectLevelTab(3);
+            hudLevelTabButtons.Clear();
+            if (levelSettingsModal != null)
+            {
+                var tabsContainer = levelSettingsModal.Q<VisualElement>(className: "level-tabs-container");
+                if (tabsContainer != null)
+                {
+                    var buttons = tabsContainer.Query<Button>(className: "level-tab-btn").ToList();
+                    for (int i = 0; i < buttons.Count; i++)
+                    {
+                        int lvlNum = i + 1;
+                        var btn = buttons[i];
+                        hudLevelTabButtons.Add(btn);
+                        btn.clicked += () => SelectLevelTab(lvlNum);
+                    }
+                }
+            }
 
             if (sliderColumns != null)
             {
@@ -1135,9 +1146,13 @@ namespace Arcade.UI
 
             // Update tab button active states
             int lvl = activeEditableConfig.LevelNumber;
-            if (btnLvl1 != null) { if (lvl == 1) btnLvl1.AddToClassList("level-tab-active"); else btnLvl1.RemoveFromClassList("level-tab-active"); }
-            if (btnLvl2 != null) { if (lvl == 2) btnLvl2.AddToClassList("level-tab-active"); else btnLvl2.RemoveFromClassList("level-tab-active"); }
-            if (btnLvl3 != null) { if (lvl == 3) btnLvl3.AddToClassList("level-tab-active"); else btnLvl3.RemoveFromClassList("level-tab-active"); }
+            for (int i = 0; i < hudLevelTabButtons.Count; i++)
+            {
+                if (i + 1 == lvl)
+                    hudLevelTabButtons[i].AddToClassList("level-tab-active");
+                else
+                    hudLevelTabButtons[i].RemoveFromClassList("level-tab-active");
+            }
 
             if (levelNameLabel != null) levelNameLabel.text = activeEditableConfig.LevelName;
             if (levelDescLabel != null) levelDescLabel.text = activeEditableConfig.Description;

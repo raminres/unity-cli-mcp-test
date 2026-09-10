@@ -33,20 +33,47 @@ namespace Arcade.Editor
                 Directory.CreateDirectory("Assets/Settings/Levels");
             }
 
-            // Level 1: Classic Inverted
-            CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_01.asset", 1, "Level 1: Classic Inverted",
-                "Classic 3-tier block setup with Red on bottom, Green in middle, and Blue on top. Features random x2 multiplier and paddle expander blocks.",
-                BlockColorPattern.InvertedTiered, 8, 2, 1.0f, 5.0f, 1, 0, 1);
+            // Level 1: First Flight
+            CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_01.asset", 1, "Level 1: First Flight",
+                "Gentle warmup grid with comfortable ball speed. Introduces the Paddle Expander to widen your paddle and master bounce angles.",
+                BlockColorPattern.InvertedTiered, 5, 1, 0.85f, 5.5f,
+                mult2x: 0, mult3x: 0, expanders: 1, bombs: 0, glass: 0, heart: 0, shield: 0, multiBall: 0, shieldDuration: 10f);
 
-            // Level 2: Wide Checkerboard
-            CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_02.asset", 2, "Level 2: Wide Checkerboard",
-                "Wider 9-column grid with alternating checkerboard colors, elevated speed, and both x2 and new x3 multipliers.",
-                BlockColorPattern.Checkerboard, 9, 2, 1.2f, 5.0f, 2, 1, 1);
+            // Level 2: Glass & Gold
+            CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_02.asset", 2, "Level 2: Glass & Gold",
+                "Introduce durable glass-encased bricks requiring two strikes and score multiplier targets for big points.",
+                BlockColorPattern.InvertedTiered, 6, 1, 0.95f, 5.0f,
+                mult2x: 1, mult3x: 0, expanders: 1, bombs: 0, glass: 2, heart: 0, shield: 0, multiBall: 0, shieldDuration: 10f);
 
-            // Level 3: Chaos Gauntlet
-            CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_03.asset", 3, "Level 3: Chaos Gauntlet",
-                "Dense 10-column, 9-row gauntlet with fully randomized color dispersion, high velocity, dual x3 multipliers, and compounding paddle expanders.",
-                BlockColorPattern.Randomized, 10, 3, 1.35f, 5.0f, 2, 2, 2);
+            // Level 3: Chain Reaction
+            CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_03.asset", 3, "Level 3: Chain Reaction",
+                "Denser checkerboard formation introducing explosive Bomb bricks. Trigger cascading perimeter blasts to clear columns rapidly.",
+                BlockColorPattern.Checkerboard, 7, 2, 1.05f, 5.0f,
+                mult2x: 2, mult3x: 0, expanders: 1, bombs: 2, glass: 0, heart: 0, shield: 0, multiBall: 0, shieldDuration: 10f);
+
+            // Level 4: Kinetic Aegis
+            CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_04.asset", 4, "Level 4: Kinetic Aegis",
+                "Ball velocity surges. Deploy the bottom laser Shield power-up for a 10-second safety net, and collect extra heart lives.",
+                BlockColorPattern.InvertedTiered, 8, 2, 1.15f, 5.0f,
+                mult2x: 1, mult3x: 0, expanders: 1, bombs: 1, glass: 2, heart: 1, shield: 1, multiBall: 0, shieldDuration: 10f);
+
+            // Level 5: Multi-Ball Mayhem
+            CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_05.asset", 5, "Level 5: Multi-Ball Mayhem",
+                "High-octane arcade juggling! Trigger Multi-Ball to split into 3 active balls simultaneously, supported by emergency shields.",
+                BlockColorPattern.Checkerboard, 8, 2, 1.20f, 5.0f,
+                mult2x: 1, mult3x: 0, expanders: 0, bombs: 1, glass: 2, heart: 0, shield: 1, multiBall: 2, shieldDuration: 10f);
+
+            // Level 6: The High Roller
+            CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_06.asset", 6, "Level 6: The High Roller",
+                "High stakes, blistering velocity, and the rare x3 score multiplier awarding 90 points on blue bricks. Precision is key.",
+                BlockColorPattern.InvertedTiered, 9, 2, 1.28f, 5.0f,
+                mult2x: 2, mult3x: 1, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 1, shieldDuration: 10f);
+
+            // Level 7: Arcade Chaos Gauntlet
+            CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_07.asset", 7, "Level 7: Arcade Chaos Gauntlet",
+                "The 90-block grand climax! Fully randomized neon patterns, top velocity, and a non-stop orchestra of bombs, multi-balls, shields, and multipliers.",
+                BlockColorPattern.Randomized, 10, 3, 1.38f, 5.0f,
+                mult2x: 2, mult3x: 2, expanders: 2, bombs: 3, glass: 4, heart: 1, shield: 2, multiBall: 2, shieldDuration: 10f);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -54,7 +81,7 @@ namespace Arcade.Editor
 
         private static void CreateOrConfigureLevel(string path, int levelNumber, string name, string desc,
             BlockColorPattern pattern, int cols, int rowsPerTier, float speed, float paddleWidth,
-            int mult2x, int mult3x, int expanders)
+            int mult2x, int mult3x, int expanders, int bombs, int glass, int heart, int shield, int multiBall, float shieldDuration = 10f)
         {
             var config = AssetDatabase.LoadAssetAtPath<LevelConfiguration>(path);
             if (config == null)
@@ -79,6 +106,12 @@ namespace Arcade.Editor
             so.FindProperty("multiplier2xCount").intValue = mult2x;
             so.FindProperty("multiplier3xCount").intValue = mult3x;
             so.FindProperty("paddleExpanderCount").intValue = expanders;
+            so.FindProperty("bombCount").intValue = bombs;
+            so.FindProperty("glassEnclosedCount").intValue = glass;
+            so.FindProperty("extraHeartCount").intValue = heart;
+            so.FindProperty("shieldCount").intValue = shield;
+            so.FindProperty("multiBallCount").intValue = multiBall;
+            so.FindProperty("shieldDuration").floatValue = shieldDuration;
             so.ApplyModifiedProperties();
             EditorUtility.SetDirty(config);
         }
@@ -108,7 +141,16 @@ namespace Arcade.Editor
             if (uxml != null) panelRenderer.visualTreeAsset = uxml;
             var panelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>("Assets/UI/ArcadePanelSettings.asset");
             if (panelSettings != null) panelRenderer.panelSettings = panelSettings;
-            uiGo.AddComponent<MainMenuUIManager>();
+            var menuMgr = uiGo.AddComponent<MainMenuUIManager>();
+            var menuSo = new SerializedObject(menuMgr);
+            var menuPresetsProp = menuSo.FindProperty("levelPresets");
+            menuPresetsProp.arraySize = 7;
+            for (int i = 0; i < 7; i++)
+            {
+                var lvl = AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i + 1:D2}.asset");
+                menuPresetsProp.GetArrayElementAtIndex(i).objectReferenceValue = lvl;
+            }
+            menuSo.ApplyModifiedProperties();
             uiGo.AddComponent<SafeAreaController>();
 
             // Save scene
@@ -286,14 +328,13 @@ namespace Arcade.Editor
             var glassMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Glass.mat");
             if (glassMat != null) levelSo.FindProperty("matGlass").objectReferenceValue = glassMat;
 
-            var lvl1 = AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset");
-            var lvl2 = AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_02.asset");
-            var lvl3 = AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_03.asset");
             var presetsProp = levelSo.FindProperty("levelPresets");
-            presetsProp.arraySize = 3;
-            presetsProp.GetArrayElementAtIndex(0).objectReferenceValue = lvl1;
-            presetsProp.GetArrayElementAtIndex(1).objectReferenceValue = lvl2;
-            presetsProp.GetArrayElementAtIndex(2).objectReferenceValue = lvl3;
+            presetsProp.arraySize = 7;
+            for (int i = 0; i < 7; i++)
+            {
+                var lvl = AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i + 1:D2}.asset");
+                presetsProp.GetArrayElementAtIndex(i).objectReferenceValue = lvl;
+            }
 
             var badgeSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>("Assets/UI/BlockWorldPanelSettings.asset");
             var badgeUxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/BlockBadgeUI.uxml");

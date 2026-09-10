@@ -1883,6 +1883,163 @@ namespace Arcade.Tests
         }
 
         #endregion
+
+        #region 13. Progressive 7-Level Campaign Tests
+
+        [Test]
+        public void Campaign_AllSevenLevelsExist_AndEnforceProgressiveSpeedAndBlockScaling()
+        {
+            float lastSpeed = 0f;
+            int lastBlocks = 0;
+
+            for (int i = 1; i <= 7; i++)
+            {
+                string path = $"Assets/Settings/Levels/SO_Level_{i:D2}.asset";
+                var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>(path);
+                Assert.IsNotNull(config, $"Level {i} asset must exist at {path}.");
+                Assert.AreEqual(i, config.LevelNumber, $"Level {i} must have matching LevelNumber.");
+                Assert.IsFalse(string.IsNullOrEmpty(config.LevelName), $"Level {i} must have a non-empty name.");
+                Assert.IsFalse(string.IsNullOrEmpty(config.Description), $"Level {i} must have a non-empty description.");
+
+                Assert.Greater(config.BallSpeedMultiplier, lastSpeed, $"Level {i} speed ({config.BallSpeedMultiplier}) must be strictly faster than Level {i - 1} speed ({lastSpeed}).");
+                Assert.GreaterOrEqual(config.TotalBlocks, lastBlocks, $"Level {i} blocks ({config.TotalBlocks}) must be >= Level {i - 1} blocks ({lastBlocks}).");
+
+                lastSpeed = config.BallSpeedMultiplier;
+                lastBlocks = config.TotalBlocks;
+            }
+
+            Assert.AreEqual(0.85f, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset").BallSpeedMultiplier, 0.001f);
+            Assert.AreEqual(1.38f, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_07.asset").BallSpeedMultiplier, 0.001f);
+            Assert.AreEqual(15, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset").TotalBlocks);
+            Assert.AreEqual(90, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_07.asset").TotalBlocks);
+        }
+
+        [Test]
+        public void Level1_WarmupGrid_IsAccessibleAndHasZeroHazards()
+        {
+            var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset");
+            Assert.IsNotNull(config);
+
+            // Level 1: 5 cols * 3 rows = 15 blocks
+            Assert.AreEqual(5, config.Columns);
+            Assert.AreEqual(1, config.RowsPerTier);
+            Assert.AreEqual(3, config.TotalRows);
+            Assert.AreEqual(15, config.TotalBlocks);
+
+            // Generous warmup paddle and comfortable speed
+            Assert.AreEqual(5.5f, config.InitialPaddleWidth, 0.001f);
+            Assert.AreEqual(0.85f, config.BallSpeedMultiplier, 0.001f);
+
+            // Single paddle expander reward, zero hazards
+            Assert.AreEqual(1, config.PaddleExpanderCount);
+            Assert.AreEqual(0, config.Multiplier2xCount);
+            Assert.AreEqual(0, config.Multiplier3xCount);
+            Assert.AreEqual(0, config.BombCount);
+            Assert.AreEqual(0, config.GlassEnclosedCount);
+            Assert.AreEqual(0, config.ExtraHeartCount);
+            Assert.AreEqual(0, config.ShieldCount);
+            Assert.AreEqual(0, config.MultiBallCount);
+        }
+
+        [Test]
+        public void LevelGenerator_AdvanceToNextLevel_CyclesSevenLevelsSeamlessly()
+        {
+            var genObj = new GameObject("TestGenerator");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            var levelConfigs = new LevelConfiguration[7];
+            for (int i = 0; i < 7; i++)
+            {
+                levelConfigs[i] = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i + 1:D2}.asset");
+                Assert.IsNotNull(levelConfigs[i]);
+            }
+
+            var genSo = new UnityEditor.SerializedObject(gen);
+            var presetsProp = genSo.FindProperty("levelPresets");
+            presetsProp.arraySize = 7;
+            for (int i = 0; i < 7; i++)
+            {
+                presetsProp.GetArrayElementAtIndex(i).objectReferenceValue = levelConfigs[i];
+            }
+            genSo.ApplyModifiedProperties();
+
+            // Start at Level 1
+            gen.SelectAndLoadLevel(1);
+            Assert.AreEqual(1, gen.CurrentConfig.LevelNumber);
+
+            // Advance through 2, 3, 4, 5, 6, 7
+            for (int expectedLvl = 2; expectedLvl <= 7; expectedLvl++)
+            {
+                gen.AdvanceToNextLevel();
+                Assert.AreEqual(expectedLvl, gen.CurrentConfig.LevelNumber, $"Expected advancing to Level {expectedLvl}.");
+            }
+
+            // Advancing from Level 7 must loop back to Level 1
+            gen.AdvanceToNextLevel();
+            Assert.AreEqual(1, gen.CurrentConfig.LevelNumber, "Advancing beyond Level 7 must loop back to Level 1 for endless arcade progression.");
+
+            Object.DestroyImmediate(genObj);
+        }
+
+        [Test]
+        public void LevelGenerator_SpecialBlockDistribution_MaintainsExactCountsWithoutCollisionsAcrossAll7Levels()
+        {
+            var genObj = new GameObject("TestGenerator");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            for (int i = 1; i <= 7; i++)
+            {
+                var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i:D2}.asset");
+                Assert.IsNotNull(config);
+
+                var map = gen.DistributeSpecialBlocks(
+                    config.TotalBlocks,
+                    config.Multiplier2xCount,
+                    config.Multiplier3xCount,
+                    config.PaddleExpanderCount,
+                    config.BombCount,
+                    config.GlassEnclosedCount,
+                    config.ExtraHeartCount,
+                    config.ShieldCount,
+                    config.MultiBallCount);
+
+                int expectedTotal = config.Multiplier2xCount + config.Multiplier3xCount + config.PaddleExpanderCount +
+                                    config.BombCount + config.GlassEnclosedCount + config.ExtraHeartCount +
+                                    config.ShieldCount + config.MultiBallCount;
+
+                Assert.AreEqual(expectedTotal, map.Count, $"Level {i} must allocate exact total special blocks without collision.");
+
+                int actual2x = 0, actual3x = 0, actualExp = 0, actualBomb = 0, actualGlass = 0, actualHeart = 0, actualShield = 0, actualMulti = 0;
+                foreach (var kvp in map)
+                {
+                    Assert.IsTrue(kvp.Key >= 0 && kvp.Key < config.TotalBlocks, $"Index {kvp.Key} must be valid block index for Level {i}.");
+                    switch (kvp.Value)
+                    {
+                        case BlockSpecialType.ScoreMultiplier2x: actual2x++; break;
+                        case BlockSpecialType.ScoreMultiplier3x: actual3x++; break;
+                        case BlockSpecialType.PaddleExpander: actualExp++; break;
+                        case BlockSpecialType.Bomb: actualBomb++; break;
+                        case BlockSpecialType.GlassEnclosed: actualGlass++; break;
+                        case BlockSpecialType.ExtraHeart: actualHeart++; break;
+                        case BlockSpecialType.Shield: actualShield++; break;
+                        case BlockSpecialType.MultiBall: actualMulti++; break;
+                    }
+                }
+
+                Assert.AreEqual(config.Multiplier2xCount, actual2x);
+                Assert.AreEqual(config.Multiplier3xCount, actual3x);
+                Assert.AreEqual(config.PaddleExpanderCount, actualExp);
+                Assert.AreEqual(config.BombCount, actualBomb);
+                Assert.AreEqual(config.GlassEnclosedCount, actualGlass);
+                Assert.AreEqual(config.ExtraHeartCount, actualHeart);
+                Assert.AreEqual(config.ShieldCount, actualShield);
+                Assert.AreEqual(config.MultiBallCount, actualMulti);
+            }
+
+            Object.DestroyImmediate(genObj);
+        }
+
+        #endregion
     }
 }
 
