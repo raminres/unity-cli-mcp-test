@@ -69,11 +69,23 @@ namespace Arcade.BlockBreaker
                 icon.RemoveFromClassList("badge-icon-points");
                 icon.RemoveFromClassList("badge-icon-points-x2");
                 icon.RemoveFromClassList("badge-icon-points-x3");
+                icon.RemoveFromClassList("badge-icon-bomb");
+                icon.RemoveFromClassList("badge-icon-heart-plus");
 
                 if (specialType == BlockSpecialType.PaddleExpander)
                 {
                     icon.style.display = DisplayStyle.Flex;
                     icon.AddToClassList("badge-icon-expander");
+                }
+                else if (specialType == BlockSpecialType.Bomb)
+                {
+                    icon.style.display = DisplayStyle.Flex;
+                    icon.AddToClassList("badge-icon-bomb");
+                }
+                else if (specialType == BlockSpecialType.ExtraHeart)
+                {
+                    icon.style.display = DisplayStyle.Flex;
+                    icon.AddToClassList("badge-icon-heart-plus");
                 }
                 else if (specialType == BlockSpecialType.ScoreMultiplier2x)
                 {
@@ -98,6 +110,7 @@ namespace Arcade.BlockBreaker
                 label.RemoveFromClassList("badge-text-x2");
                 label.RemoveFromClassList("badge-text-x3");
                 label.RemoveFromClassList("badge-text-expander");
+                label.RemoveFromClassList("badge-text-hidden");
 
                 if (specialType == BlockSpecialType.ScoreMultiplier2x)
                 {
@@ -113,9 +126,9 @@ namespace Arcade.BlockBreaker
                 }
                 else
                 {
-                    // For paddle expander and other non-text powerups, hide the text completely
+                    // For paddle expander, bomb, extra heart, hide the text completely
                     label.style.display = DisplayStyle.None;
-                    label.AddToClassList("badge-text-expander");
+                    label.AddToClassList("badge-text-hidden");
                 }
             }
 
@@ -124,12 +137,19 @@ namespace Arcade.BlockBreaker
                 plate.RemoveFromClassList("badge-plate-x2");
                 plate.RemoveFromClassList("badge-plate-x3");
                 plate.RemoveFromClassList("badge-plate-expander");
+                plate.RemoveFromClassList("badge-plate-bomb");
+                plate.RemoveFromClassList("badge-plate-heart-plus");
+
                 if (specialType == BlockSpecialType.ScoreMultiplier2x)
                     plate.AddToClassList("badge-plate-x2");
                 else if (specialType == BlockSpecialType.ScoreMultiplier3x)
                     plate.AddToClassList("badge-plate-x3");
                 else if (specialType == BlockSpecialType.PaddleExpander)
                     plate.AddToClassList("badge-plate-expander");
+                else if (specialType == BlockSpecialType.Bomb)
+                    plate.AddToClassList("badge-plate-bomb");
+                else if (specialType == BlockSpecialType.ExtraHeart)
+                    plate.AddToClassList("badge-plate-heart-plus");
             }
         }
     }

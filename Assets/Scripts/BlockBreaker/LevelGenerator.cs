@@ -29,6 +29,7 @@ namespace Arcade.BlockBreaker
         [SerializeField] private Material matRedBlock;
         [SerializeField] private Material matGreenBlock;
         [SerializeField] private Material matBlueBlock;
+        [SerializeField] private Material matGlass;
 
         [Header("VFX Particle Colors")]
         [SerializeField] private Color vfxRedColor = new Color(1.0f, 0.2f, 0.3f);
@@ -183,8 +184,11 @@ namespace Arcade.BlockBreaker
             int mult2x = currentLevelConfig != null ? currentLevelConfig.Multiplier2xCount : 1;
             int mult3x = currentLevelConfig != null ? currentLevelConfig.Multiplier3xCount : 0;
             int expCount = currentLevelConfig != null ? currentLevelConfig.PaddleExpanderCount : 1;
+            int bombCount = currentLevelConfig != null ? currentLevelConfig.BombCount : 0;
+            int glassCount = currentLevelConfig != null ? currentLevelConfig.GlassEnclosedCount : 0;
+            int heartCount = currentLevelConfig != null ? currentLevelConfig.ExtraHeartCount : 0;
 
-            var specialMap = DistributeSpecialBlocks(totalBlocksCreated, mult2x, mult3x, expCount);
+            var specialMap = DistributeSpecialBlocks(totalBlocksCreated, mult2x, mult3x, expCount, bombCount, glassCount, heartCount);
 
             int blockIndex = 0;
             for (int r = 0; r < totalRows; r++)
@@ -242,7 +246,11 @@ namespace Arcade.BlockBreaker
                     Block blockComp = blockObj.AddComponent<Block>();
                     blockComp.Initialize(tier, mat, vfxColor, special);
 
-                    if (special != BlockSpecialType.Normal && badgePanelSettings != null && badgeVisualTreeAsset != null)
+                    if (special == BlockSpecialType.GlassEnclosed)
+                    {
+                        CreateGlassShellForBlock(blockObj, blockComp);
+                    }
+                    else if (special != BlockSpecialType.Normal && badgePanelSettings != null && badgeVisualTreeAsset != null)
                     {
                         CreateBadgeForBlock(blockObj, special);
                     }
@@ -275,10 +283,15 @@ namespace Arcade.BlockBreaker
 
         public Dictionary<int, BlockSpecialType> DistributeSpecialBlocks(int totalBlocks, int mult2xCount, int expanderCount)
         {
-            return DistributeSpecialBlocks(totalBlocks, mult2xCount, 0, expanderCount);
+            return DistributeSpecialBlocks(totalBlocks, mult2xCount, 0, expanderCount, 0, 0, 0);
         }
 
         public Dictionary<int, BlockSpecialType> DistributeSpecialBlocks(int totalBlocks, int mult2xCount, int mult3xCount, int expanderCount)
+        {
+            return DistributeSpecialBlocks(totalBlocks, mult2xCount, mult3xCount, expanderCount, 0, 0, 0);
+        }
+
+        public Dictionary<int, BlockSpecialType> DistributeSpecialBlocks(int totalBlocks, int mult2xCount, int mult3xCount, int expanderCount, int bombCount, int glassCount, int heartCount)
         {
             var map = new Dictionary<int, BlockSpecialType>();
             if (totalBlocks <= 0) return map;
@@ -309,7 +322,60 @@ namespace Arcade.BlockBreaker
                 map[availableIndices[cursor]] = BlockSpecialType.PaddleExpander;
             }
 
+            for (int i = 0; i < bombCount && cursor < availableIndices.Count; i++, cursor++)
+            {
+                map[availableIndices[cursor]] = BlockSpecialType.Bomb;
+            }
+
+            for (int i = 0; i < glassCount && cursor < availableIndices.Count; i++, cursor++)
+            {
+                map[availableIndices[cursor]] = BlockSpecialType.GlassEnclosed;
+            }
+
+            for (int i = 0; i < heartCount && cursor < availableIndices.Count; i++, cursor++)
+            {
+                map[availableIndices[cursor]] = BlockSpecialType.ExtraHeart;
+            }
+
             return map;
+        }
+
+        private void CreateGlassShellForBlock(GameObject blockObj, Block blockComp)
+        {
+            GameObject shellObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            shellObj.name = "Glass_Shell";
+            shellObj.transform.SetParent(blockObj.transform);
+            shellObj.transform.localPosition = Vector3.zero;
+            shellObj.transform.localRotation = Quaternion.identity;
+            shellObj.transform.localScale = Vector3.one * 1.18f;
+
+            var col = shellObj.GetComponent<Collider>();
+            if (col != null)
+            {
+                if (Application.isPlaying) Destroy(col);
+                else DestroyImmediate(col);
+            }
+
+            var mr = shellObj.GetComponent<MeshRenderer>();
+            if (mr != null)
+            {
+                if (matGlass != null)
+                {
+                    mr.sharedMaterial = matGlass;
+                }
+                else
+                {
+#if UNITY_EDITOR
+                    matGlass = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Glass.mat");
+                    if (matGlass != null) mr.sharedMaterial = matGlass;
+#endif
+                }
+            }
+
+            if (blockComp != null)
+            {
+                blockComp.SetGlassShell(shellObj);
+            }
         }
 
         private void CreateBadgeForBlock(GameObject blockObj, BlockSpecialType special)

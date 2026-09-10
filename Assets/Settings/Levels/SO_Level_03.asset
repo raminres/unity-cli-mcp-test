@@ -27,3 +27,6 @@ MonoBehaviour:
   multiplier2xCount: 2
   multiplier3xCount: 2
   paddleExpanderCount: 2
+  bombCount: 3
+  glassEnclosedCount: 5
+  extraHeartCount: 1

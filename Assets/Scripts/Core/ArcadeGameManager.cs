@@ -18,6 +18,7 @@ namespace Arcade.Core
         private const string PREF_HAS_SAVED_GAME = "Arcade_HasSavedGame";
 
         [Header("Game Configuration")]
+        public const int MAX_LIVES = 5;
         [SerializeField] private int startingLives = 3;
 
         [Header("Runtime State")]
@@ -155,6 +156,15 @@ namespace Arcade.Core
                 SetState(GameState.BallLost);
                 SaveCurrentGameSession();
             }
+        }
+
+        public void AddLife(int amount = 1)
+        {
+            if (currentState == GameState.GameOver) return;
+
+            remainingLives = Mathf.Min(MAX_LIVES, remainingLives + amount);
+            OnLivesChanged?.Invoke(remainingLives);
+            SaveCurrentGameSession();
         }
 
         private void OnLevelCleared()

@@ -34,6 +34,16 @@
     box-shadow: 0 0 12px rgba(0, 242, 254, 0.8);
 }
 
+.badge-plate-bomb {
+    border-color: #ff5722;
+    box-shadow: 0 0 14px rgba(255, 87, 34, 0.9);
+}
+
+.badge-plate-heart-plus {
+    border-color: #ff2a6d;
+    box-shadow: 0 0 14px rgba(255, 42, 109, 0.9);
+}
+
 .badge-icon {
     -unity-background-scale-mode: scale-to-fit;
     align-self: center;
@@ -45,6 +55,20 @@
     height: 52px;
     background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Arrows_Outward.png?fileID=21300000&guid=a78437860f4b9b54184a24a248743a7d&type=3#TX_Powerup_Arrows_Outward");
     -unity-background-image-tint-color: #00f2fe;
+}
+
+.badge-icon-bomb {
+    width: 52px;
+    height: 52px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Bomb.png?fileID=21300000&guid=d4796fe8b40cb6c45985a6cda1c74774&type=3#TX_Powerup_Bomb");
+    -unity-background-image-tint-color: #ff6b35;
+}
+
+.badge-icon-heart-plus {
+    width: 52px;
+    height: 52px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Heart_Plus.png?fileID=21300000&guid=f74a7249ed4d1154cb7323e34df14e78&type=3#TX_Powerup_Heart_Plus");
+    -unity-background-image-tint-color: #ff3b56;
 }
 
 .badge-icon-points {
@@ -84,5 +108,9 @@
 }
 
 .badge-text-expander {
+    display: none;
+}
+
+.badge-text-hidden {
     display: none;
 }

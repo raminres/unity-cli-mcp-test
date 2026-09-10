@@ -74,6 +74,25 @@
     scale: 0.86 0.86;
 }
 
+.pip-hidden {
+    display: none;
+}
+
+.pip-pop {
+    scale: 1.45 1.45;
+    transition-duration: 0.15s;
+    transition-timing-function: ease-out-back;
+}
+
+.flying-heart {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Heart_Fill.png?fileID=21300000&guid=5c78b93fab88e17459882a82ea8a4a6f&type=3#TX_Heart_Fill");
+    -unity-background-image-tint-color: #ff2a6d;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
 /* Bouncy Quick Control Buttons */
 .quick-controls {
     flex-direction: row;
