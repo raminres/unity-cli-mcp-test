@@ -2,7 +2,7 @@
 
 [![Unity Version](https://img.shields.io/badge/Unity-6%20(6000.6.0f1)-black.svg?style=flat&logo=unity)](https://unity.com/)
 [![Render Pipeline](https://img.shields.io/badge/Render%20Pipeline-URP-blue.svg)](https://unity.com/srp/universal-render-pipeline)
-[![Automated Tests](https://img.shields.io/badge/Tests-86%2F86%20Passing%20(100%25)-brightgreen.svg)]()
+[![Automated Tests](https://img.shields.io/badge/Tests-87%2F87%20Passing%20(100%25)-brightgreen.svg)]()
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%20(Swift)%20%7C%20WebGPU%20%7C%20PC-purple.svg)]()
 [![Git LFS](https://img.shields.io/badge/Git-LFS%20Enabled-orange.svg)](https://git-lfs.github.com/)
 [![AI Integration](https://img.shields.io/badge/AI%20Assistant-Google%20Antigravity-green.svg)]()
