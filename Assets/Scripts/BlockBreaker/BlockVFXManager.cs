@@ -134,8 +134,11 @@ namespace Arcade.BlockBreaker
         /// </summary>
         public void Prewarm()
         {
-            // 1. Warm up raster shaders in memory
-            Shader.WarmupAllShaders();
+            // 1. Warm up raster shaders in memory on standalone player builds (iOS, PC, Web)
+            if (!Application.isEditor)
+            {
+                Shader.WarmupAllShaders();
+            }
 
             // 2. Prewarm 1 VFX Graph instance to force driver compute & particle PSO compilation
             if (vfxPool.Count > 0)

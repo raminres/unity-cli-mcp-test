@@ -23,6 +23,8 @@ namespace Arcade.Audio
         [SerializeField] private AudioClip clipLevelSuccess;    // AU_Level_Success.mp3 (level clear)
         [SerializeField] private AudioClip clipGameOver;       // AU_Game_Over.mp3 (game over)
         [SerializeField] private AudioClip clipButtonPress;    // AU_Button_Press.mp3 (UI button click)
+        [SerializeField] private AudioClip clipGlassBreak;      // AU_Glass_Break.mp3 (reinforced glass shield shatter)
+        [SerializeField] private AudioClip clipBombExplosion;   // AU_Bomb_Explosioon.mp3 / AU_Bomb_Explosion.mp3 (bomb detonation)
 
         [Header("Legacy / Fallback Clip Overrides")]
         [SerializeField] private AudioClip clipPaddleBounce;
@@ -42,6 +44,8 @@ namespace Arcade.Audio
         public AudioClip ClipGameOver => clipGameOver;
         public AudioClip ClipLevelSuccess => clipLevelSuccess != null ? clipLevelSuccess : clipLevelClear;
         public AudioClip ClipButtonPress => clipButtonPress;
+        public AudioClip ClipGlassBreak => clipGlassBreak;
+        public AudioClip ClipBombExplosion => clipBombExplosion;
 
         public float Volume
         {
@@ -99,6 +103,19 @@ namespace Arcade.Audio
             if (clipGameOver == null) clipGameOver = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Game_Over.mp3");
             if (clipLevelSuccess == null) clipLevelSuccess = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Level_Success.mp3");
             if (clipButtonPress == null) clipButtonPress = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Button_Press.mp3");
+
+            if (clipGlassBreak == null)
+            {
+                clipGlassBreak = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Glass_Break.mp3");
+                if (clipGlassBreak == null) clipGlassBreak = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Glass_Break.wav");
+            }
+            if (clipBombExplosion == null)
+            {
+                clipBombExplosion = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosioon.mp3");
+                if (clipBombExplosion == null) clipBombExplosion = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosioon.wav");
+                if (clipBombExplosion == null) clipBombExplosion = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosion.mp3");
+                if (clipBombExplosion == null) clipBombExplosion = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Bomb_Explosion.wav");
+            }
 #endif
 
             if (clipPaddleBounce == null) clipPaddleBounce = clipPop;
@@ -162,6 +179,36 @@ namespace Arcade.Audio
             if (clipPowerup != null)
             {
                 PlaySound(clipPowerup, 1.0f);
+            }
+        }
+
+        /// <summary>
+        /// Plays Glass Break sound (AU_Glass_Break.mp3) when a reinforced glass shell is cracked.
+        /// </summary>
+        public void PlayGlassBreak()
+        {
+            if (clipGlassBreak != null)
+            {
+                PlaySound(clipGlassBreak, 1.0f);
+            }
+            else
+            {
+                PlaySound(clipBreak != null ? clipBreak : clipBlockHitBlue, 1.4f);
+            }
+        }
+
+        /// <summary>
+        /// Plays Bomb Explosion sound (AU_Bomb_Explosioon.mp3) when an explosive brick detonates.
+        /// </summary>
+        public void PlayBombExplosion()
+        {
+            if (clipBombExplosion != null)
+            {
+                PlaySound(clipBombExplosion, 1.0f);
+            }
+            else
+            {
+                PlaySound(clipBreak != null ? clipBreak : clipBlockHitRed, 0.65f);
             }
         }
 
@@ -307,6 +354,32 @@ namespace Arcade.Audio
                     float decay = Mathf.Exp(-noteTime * 8f);
                     float tone = Mathf.Sin(2f * Mathf.PI * notes[noteIndex] * t);
                     return tone * decay * 0.7f;
+                });
+            }
+
+            if (clipGlassBreak == null)
+            {
+                // High-pitched crystal glass shatter ping (1760Hz with fast sparkle harmonics)
+                clipGlassBreak = GenerateSynthClip("AU_Glass_Break", 0.22f, sampleRate, t =>
+                {
+                    float decay = Mathf.Exp(-t * 16f);
+                    float tone1 = Mathf.Sin(2f * Mathf.PI * 1760f * t);
+                    float tone2 = Mathf.Sin(2f * Mathf.PI * 2640f * t) * 0.4f;
+                    float tone3 = Mathf.Sin(2f * Mathf.PI * 3520f * t) * 0.2f;
+                    return (tone1 + tone2 + tone3) * decay * 0.85f;
+                });
+            }
+
+            if (clipBombExplosion == null)
+            {
+                // Low-frequency explosive impact rumble (120Hz sliding down to 35Hz with saturation)
+                clipBombExplosion = GenerateSynthClip("AU_Bomb_Explosion", 0.45f, sampleRate, t =>
+                {
+                    float decay = Mathf.Clamp01(1f - t / 0.45f);
+                    float freq = Mathf.Lerp(120f, 35f, t / 0.45f);
+                    float wave = Mathf.Sin(2f * Mathf.PI * freq * t);
+                    float crunch = Mathf.Clamp(wave * 1.6f, -0.9f, 0.9f);
+                    return crunch * decay * 0.9f;
                 });
             }
         }

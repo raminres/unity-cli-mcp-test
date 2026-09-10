@@ -45,6 +45,15 @@ namespace Arcade.BlockBreaker
         [Tooltip("Number of random blocks that expand paddle width by +10% when destroyed.")]
         [Range(0, 5)] [SerializeField] private int paddleExpanderCount = 1;
 
+        [Tooltip("Number of random explosive bomb blocks.")]
+        [Range(0, 5)] [SerializeField] private int bombCount = 0;
+
+        [Tooltip("Number of random reinforced glass-enclosed bricks (2 hits, 2x score).")]
+        [Range(0, 8)] [SerializeField] private int glassEnclosedCount = 0;
+
+        [Tooltip("Number of random extra heart powerup blocks (+1 life).")]
+        [Range(0, 3)] [SerializeField] private int extraHeartCount = 0;
+
         // Properties
         public int LevelNumber => levelNumber;
         public string LevelName => levelName;
@@ -63,6 +72,9 @@ namespace Arcade.BlockBreaker
         public int Multiplier2xCount => multiplier2xCount;
         public int Multiplier3xCount => multiplier3xCount;
         public int PaddleExpanderCount => paddleExpanderCount;
+        public int BombCount => bombCount;
+        public int GlassEnclosedCount => glassEnclosedCount;
+        public int ExtraHeartCount => extraHeartCount;
 
         /// <summary>
         /// Creates a runtime clone of this level configuration for live tweaking in the Level Settings modal.
@@ -85,6 +97,9 @@ namespace Arcade.BlockBreaker
             clone.multiplier2xCount = multiplier2xCount;
             clone.multiplier3xCount = multiplier3xCount;
             clone.paddleExpanderCount = paddleExpanderCount;
+            clone.bombCount = bombCount;
+            clone.glassEnclosedCount = glassEnclosedCount;
+            clone.extraHeartCount = extraHeartCount;
             return clone;
         }
 
@@ -96,6 +111,9 @@ namespace Arcade.BlockBreaker
         public void SetMultiplier2xCount(int val) => multiplier2xCount = Mathf.Clamp(val, 0, 8);
         public void SetMultiplier3xCount(int val) => multiplier3xCount = Mathf.Clamp(val, 0, 8);
         public void SetPaddleExpanderCount(int val) => paddleExpanderCount = Mathf.Clamp(val, 0, 5);
+        public void SetBombCount(int val) => bombCount = Mathf.Clamp(val, 0, 5);
+        public void SetGlassEnclosedCount(int val) => glassEnclosedCount = Mathf.Clamp(val, 0, 8);
+        public void SetExtraHeartCount(int val) => extraHeartCount = Mathf.Clamp(val, 0, 3);
         public void SetInitialPaddleWidth(float val) => initialPaddleWidth = Mathf.Clamp(val, 3.0f, 8.0f);
     }
 }

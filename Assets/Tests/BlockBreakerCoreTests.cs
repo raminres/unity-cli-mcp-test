@@ -1263,6 +1263,209 @@ namespace Arcade.Tests
         }
 
         #endregion
+
+        #region 12. New Powerup Mechanics (Glass, Bomb, Extra Heart) Tests
+
+        [Test]
+        public void Block_GlassEnclosed_RequiresTwoHits_AndAwardsDoublePoints()
+        {
+            var blockObj = new GameObject("GlassBlock");
+            var block = blockObj.AddComponent<Block>();
+            var glassShell = new GameObject("GlassShell");
+            glassShell.transform.SetParent(blockObj.transform);
+            block.SetGlassShell(glassShell);
+
+            block.Initialize(BlockColorTier.Blue, null, Color.cyan, BlockSpecialType.GlassEnclosed);
+
+            Assert.AreEqual(60, block.Points, "Glass enclosed Blue block must award 2x base points (60).");
+            Assert.AreEqual(2, block.HitPoints, "Glass enclosed block must start with 2 hit points.");
+            Assert.IsNotNull(block.GlassShell, "Glass shell reference must exist initially.");
+
+            // Hit 1: Shatters glass shell
+            block.TakeHit(Vector3.down);
+            Assert.AreEqual(1, block.HitPoints, "Hit points should decrement to 1.");
+            Assert.IsNull(block.GlassShell, "Glass shell GameObject must be destroyed after 1st hit.");
+            Assert.IsFalse(block.IsDestroyed, "Block must not be destroyed on 1st hit.");
+
+            // Hit 2: Shatters the block
+            block.TakeHit(Vector3.down);
+            Assert.AreEqual(0, block.HitPoints);
+            Assert.IsTrue(block.IsDestroyed, "Block must be destroyed after 2nd hit.");
+
+            Object.DestroyImmediate(blockObj);
+        }
+
+        [Test]
+        public void Block_Bomb_ExplodesPerimeter_DestroysSurroundingBlocks()
+        {
+            var parentObj = new GameObject("GridRoot");
+
+            var bombObj = new GameObject("BombBlock");
+            bombObj.transform.SetParent(parentObj.transform);
+            bombObj.transform.position = Vector3.zero;
+            var bomb = bombObj.AddComponent<Block>();
+            bomb.Initialize(BlockColorTier.Red, null, Color.red, BlockSpecialType.Bomb);
+
+            var neighborObj = new GameObject("NeighborBlock");
+            neighborObj.transform.SetParent(parentObj.transform);
+            neighborObj.transform.position = new Vector3(1.0f, 0, 0); // Distance 1.0 <= 2.5
+            var neighbor = neighborObj.AddComponent<Block>();
+            neighbor.Initialize(BlockColorTier.Green, null, Color.green);
+
+            var farObj = new GameObject("FarBlock");
+            farObj.transform.SetParent(parentObj.transform);
+            farObj.transform.position = new Vector3(5.0f, 0, 0); // Distance 5.0 > 2.5
+            var far = farObj.AddComponent<Block>();
+            far.Initialize(BlockColorTier.Blue, null, Color.blue);
+
+            bomb.DestroyBlock(Vector3.down);
+
+            Assert.IsTrue(bomb.IsDestroyed, "Bomb itself must be destroyed.");
+            Assert.IsTrue(neighbor.IsDestroyed, "Adjacent neighbor block must be destroyed by perimeter blast.");
+            Assert.IsFalse(far.IsDestroyed, "Far block outside perimeter radius must not be destroyed.");
+
+            Object.DestroyImmediate(parentObj);
+        }
+
+        [Test]
+        public void Block_Bomb_ChainReaction_DoesNotInfiniteLoop()
+        {
+            var parentObj = new GameObject("GridRoot");
+
+            var bomb1Obj = new GameObject("Bomb1");
+            bomb1Obj.transform.SetParent(parentObj.transform);
+            bomb1Obj.transform.position = Vector3.zero;
+            var bomb1 = bomb1Obj.AddComponent<Block>();
+            bomb1.Initialize(BlockColorTier.Red, null, Color.red, BlockSpecialType.Bomb);
+
+            var bomb2Obj = new GameObject("Bomb2");
+            bomb2Obj.transform.SetParent(parentObj.transform);
+            bomb2Obj.transform.position = new Vector3(1.2f, 0, 0);
+            var bomb2 = bomb2Obj.AddComponent<Block>();
+            bomb2.Initialize(BlockColorTier.Red, null, Color.red, BlockSpecialType.Bomb);
+
+            var block3Obj = new GameObject("Block3");
+            block3Obj.transform.SetParent(parentObj.transform);
+            block3Obj.transform.position = new Vector3(2.4f, 0, 0);
+            var block3 = block3Obj.AddComponent<Block>();
+            block3.Initialize(BlockColorTier.Green, null, Color.green);
+
+            // Detonating bomb1 should trigger bomb2, which triggers block3 without infinite recursion
+            Assert.DoesNotThrow(() => bomb1.DestroyBlock(Vector3.down));
+            Assert.IsTrue(bomb1.IsDestroyed);
+            Assert.IsTrue(bomb2.IsDestroyed);
+            Assert.IsTrue(block3.IsDestroyed);
+
+            Object.DestroyImmediate(parentObj);
+        }
+
+        [Test]
+        public void Block_ExtraHeart_AwardsLifeToGameManager()
+        {
+            int initialLives = gameManager.Lives;
+
+            var heartObj = new GameObject("HeartBlock");
+            var heartBlock = heartObj.AddComponent<Block>();
+            heartBlock.Initialize(BlockColorTier.Red, null, Color.magenta, BlockSpecialType.ExtraHeart);
+
+            heartBlock.DestroyBlock(Vector3.down);
+
+            Assert.AreEqual(initialLives + 1, gameManager.Lives, "Destroying ExtraHeart block must award 1 life.");
+
+            Object.DestroyImmediate(heartObj);
+        }
+
+        [Test]
+        public void ArcadeGameManager_AddLife_ClampsToMaxLives()
+        {
+            gameManager.AddLife(10);
+            Assert.AreEqual(ArcadeGameManager.MAX_LIVES, gameManager.Lives, $"Lives must clamp to MAX_LIVES ({ArcadeGameManager.MAX_LIVES}).");
+        }
+
+        [Test]
+        public void BlockBadge_Bomb_SetsCorrectIconAndClasses()
+        {
+            var badgeObj = new GameObject("Badge");
+            badgeObj.AddComponent<PanelRenderer>();
+            var badge = badgeObj.AddComponent<BlockBadge>();
+
+            var root = new VisualElement();
+            var icon = new VisualElement { name = "badge-icon" };
+            var label = new Label { name = "badge-text" };
+            var plate = new VisualElement { name = "badge-plate" };
+            root.Add(icon);
+            root.Add(label);
+            root.Add(plate);
+
+            var typeField = typeof(BlockBadge).GetField("specialType", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeField.SetValue(badge, BlockSpecialType.Bomb);
+
+            badge.UpdateUI(root);
+
+            Assert.IsTrue(icon.ClassListContains("badge-icon-bomb"));
+            Assert.IsTrue(plate.ClassListContains("badge-plate-bomb"));
+            Assert.AreEqual(DisplayStyle.None, label.style.display.value, "Label must be hidden for Bomb badge.");
+
+            Object.DestroyImmediate(badgeObj);
+        }
+
+        [Test]
+        public void BlockBadge_ExtraHeart_SetsCorrectIconAndClasses()
+        {
+            var badgeObj = new GameObject("Badge");
+            badgeObj.AddComponent<PanelRenderer>();
+            var badge = badgeObj.AddComponent<BlockBadge>();
+
+            var root = new VisualElement();
+            var icon = new VisualElement { name = "badge-icon" };
+            var label = new Label { name = "badge-text" };
+            var plate = new VisualElement { name = "badge-plate" };
+            root.Add(icon);
+            root.Add(label);
+            root.Add(plate);
+
+            var typeField = typeof(BlockBadge).GetField("specialType", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeField.SetValue(badge, BlockSpecialType.ExtraHeart);
+
+            badge.UpdateUI(root);
+
+            Assert.IsTrue(icon.ClassListContains("badge-icon-heart-plus"));
+            Assert.IsTrue(plate.ClassListContains("badge-plate-heart-plus"));
+            Assert.AreEqual(DisplayStyle.None, label.style.display.value, "Label must be hidden for ExtraHeart badge.");
+
+            Object.DestroyImmediate(badgeObj);
+        }
+
+        [Test]
+        public void LevelConfiguration_NewModifierCounts_CloneAndSetters()
+        {
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+
+            config.SetBombCount(3);
+            config.SetGlassEnclosedCount(4);
+            config.SetExtraHeartCount(2);
+
+            Assert.AreEqual(3, config.BombCount);
+            Assert.AreEqual(4, config.GlassEnclosedCount);
+            Assert.AreEqual(2, config.ExtraHeartCount);
+
+            // Clamping tests
+            config.SetBombCount(99);
+            Assert.AreEqual(5, config.BombCount, "BombCount should clamp to 5.");
+            config.SetGlassEnclosedCount(-1);
+            Assert.AreEqual(0, config.GlassEnclosedCount, "GlassEnclosedCount should clamp to 0.");
+
+            var clone = config.Clone();
+            Assert.AreEqual(5, clone.BombCount);
+            Assert.AreEqual(0, clone.GlassEnclosedCount);
+            Assert.AreEqual(2, clone.ExtraHeartCount);
+
+            Object.DestroyImmediate(config);
+            Object.DestroyImmediate(clone);
+        }
+
+        #endregion
     }
 }
+
 

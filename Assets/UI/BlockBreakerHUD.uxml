@@ -15,6 +15,8 @@
                 <ui:VisualElement name="life-pip-1" class="life-pip pip-active" />
                 <ui:VisualElement name="life-pip-2" class="life-pip pip-active" />
                 <ui:VisualElement name="life-pip-3" class="life-pip pip-active" />
+                <ui:VisualElement name="life-pip-4" class="life-pip pip-hidden" />
+                <ui:VisualElement name="life-pip-5" class="life-pip pip-hidden" />
             </ui:VisualElement>
 
             <!-- Right: Quick Action Buttons -->
@@ -100,6 +102,24 @@
                     <ui:Label text="Paddle Expanders" class="setting-label" />
                     <ui:SliderInt name="slider-expander" low-value="0" high-value="5" value="1" class="setting-slider" />
                     <ui:Label name="val-expander" text="1" class="setting-val-badge" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Bomb Bricks" class="setting-label" />
+                    <ui:SliderInt name="slider-bomb" low-value="0" high-value="5" value="0" class="setting-slider" />
+                    <ui:Label name="val-bomb" text="0" class="setting-val-badge" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Glass Bricks (2x)" class="setting-label" />
+                    <ui:SliderInt name="slider-glass" low-value="0" high-value="8" value="0" class="setting-slider" />
+                    <ui:Label name="val-glass" text="0" class="setting-val-badge" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Extra Hearts (+1)" class="setting-label" />
+                    <ui:SliderInt name="slider-heart" low-value="0" high-value="3" value="0" class="setting-slider" />
+                    <ui:Label name="val-heart" text="0" class="setting-val-badge" />
                 </ui:VisualElement>
 
                 <ui:Button name="btn-apply-level" text="APPLY &amp; RESTART" class="arcade-btn btn-secondary modal-action-btn" />

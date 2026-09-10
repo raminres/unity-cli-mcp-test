@@ -82,6 +82,12 @@ namespace Arcade.UI
         private Label valMultiplier3x;
         private SliderInt sliderExpander;
         private Label valExpander;
+        private SliderInt sliderBomb;
+        private Label valBomb;
+        private SliderInt sliderGlass;
+        private Label valGlass;
+        private SliderInt sliderHeart;
+        private Label valHeart;
 
         private Button btnApplyLevel;
         private Button btnCloseLevelSettings;
@@ -218,7 +224,9 @@ namespace Arcade.UI
             {
                 root.Q<VisualElement>("life-pip-1"),
                 root.Q<VisualElement>("life-pip-2"),
-                root.Q<VisualElement>("life-pip-3")
+                root.Q<VisualElement>("life-pip-3"),
+                root.Q<VisualElement>("life-pip-4"),
+                root.Q<VisualElement>("life-pip-5")
             };
 
             if (heartFillSprite == null)
@@ -313,6 +321,12 @@ namespace Arcade.UI
             valMultiplier3x = root.Q<Label>("val-multiplier3x");
             sliderExpander = root.Q<SliderInt>("slider-expander");
             valExpander = root.Q<Label>("val-expander");
+            sliderBomb = root.Q<SliderInt>("slider-bomb");
+            valBomb = root.Q<Label>("val-bomb");
+            sliderGlass = root.Q<SliderInt>("slider-glass");
+            valGlass = root.Q<Label>("val-glass");
+            sliderHeart = root.Q<SliderInt>("slider-heart");
+            valHeart = root.Q<Label>("val-heart");
 
             btnApplyLevel = root.Q<Button>("btn-apply-level");
             btnCloseLevelSettings = root.Q<Button>("btn-close-level-settings");
@@ -417,6 +431,33 @@ namespace Arcade.UI
                 });
             }
 
+            if (sliderBomb != null)
+            {
+                sliderBomb.RegisterValueChangedCallback(evt =>
+                {
+                    if (activeEditableConfig != null) activeEditableConfig.SetBombCount(evt.newValue);
+                    if (valBomb != null) valBomb.text = evt.newValue.ToString();
+                });
+            }
+
+            if (sliderGlass != null)
+            {
+                sliderGlass.RegisterValueChangedCallback(evt =>
+                {
+                    if (activeEditableConfig != null) activeEditableConfig.SetGlassEnclosedCount(evt.newValue);
+                    if (valGlass != null) valGlass.text = evt.newValue.ToString();
+                });
+            }
+
+            if (sliderHeart != null)
+            {
+                sliderHeart.RegisterValueChangedCallback(evt =>
+                {
+                    if (activeEditableConfig != null) activeEditableConfig.SetExtraHeartCount(evt.newValue);
+                    if (valHeart != null) valHeart.text = evt.newValue.ToString();
+                });
+            }
+
             if (btnApplyLevel != null) btnApplyLevel.clicked += ApplyLevelSettingsAndRestart;
             if (btnCloseLevelSettings != null) btnCloseLevelSettings.clicked += HideLevelSettings;
         }
@@ -477,6 +518,28 @@ namespace Arcade.UI
             for (int i = 0; i < lifePips.Length; i++)
             {
                 if (lifePips[i] == null) continue;
+
+                // Base 3 pips are always displayed (active or lost outline).
+                // Bonus pips 4 and 5 are only shown when lives > 3 or when active.
+                if (i >= 3)
+                {
+                    if (i < lives)
+                    {
+                        lifePips[i].RemoveFromClassList("pip-hidden");
+                        lifePips[i].style.display = DisplayStyle.Flex;
+                    }
+                    else
+                    {
+                        lifePips[i].AddToClassList("pip-hidden");
+                        lifePips[i].style.display = DisplayStyle.None;
+                    }
+                }
+                else
+                {
+                    lifePips[i].RemoveFromClassList("pip-hidden");
+                    lifePips[i].style.display = DisplayStyle.Flex;
+                }
+
                 if (i < lives)
                 {
                     lifePips[i].AddToClassList("pip-active");
@@ -497,6 +560,92 @@ namespace Arcade.UI
                         lifePips[i].style.unityBackgroundImageTintColor = new StyleColor(new Color(1f, 0.231f, 0.337f, 0.35f)); // dimmed red outline
                     }
                 }
+            }
+        }
+
+        public void AnimateFlyingHeart(Vector3 worldPosition)
+        {
+            if (gameObject.activeInHierarchy)
+            {
+                StartCoroutine(DoFlyingHeartAnimation(worldPosition));
+            }
+        }
+
+        private System.Collections.IEnumerator DoFlyingHeartAnimation(Vector3 worldPos)
+        {
+            if (root == null) yield break;
+
+            Camera cam = Camera.main;
+            Vector2 startPanelPos;
+            if (cam != null)
+            {
+                Vector3 screenPt = cam.WorldToScreenPoint(worldPos);
+                startPanelPos = new Vector2(screenPt.x, Screen.height - screenPt.y);
+                if (root.panel != null)
+                {
+                    startPanelPos = RuntimePanelUtils.ScreenToPanel(root.panel, startPanelPos);
+                }
+            }
+            else
+            {
+                startPanelPos = new Vector2(root.resolvedStyle.width * 0.5f, root.resolvedStyle.height * 0.5f);
+            }
+
+            int targetIndex = Mathf.Clamp(ArcadeGameManager.Instance != null ? ArcadeGameManager.Instance.Lives - 1 : 2, 0, lifePips.Length - 1);
+            VisualElement targetPip = (lifePips != null && targetIndex >= 0 && targetIndex < lifePips.Length) ? lifePips[targetIndex] : null;
+
+            Vector2 targetPanelPos;
+            if (targetPip != null && targetPip.worldBound.width > 0)
+            {
+                targetPanelPos = targetPip.worldBound.center;
+            }
+            else
+            {
+                targetPanelPos = new Vector2(root.resolvedStyle.width * 0.5f, 35f);
+            }
+
+            VisualElement flyingHeart = new VisualElement();
+            flyingHeart.AddToClassList("flying-heart");
+            if (heartFillSprite != null)
+            {
+                flyingHeart.style.backgroundImage = new StyleBackground(heartFillSprite);
+            }
+            flyingHeart.pickingMode = PickingMode.Ignore;
+            flyingHeart.style.left = startPanelPos.x - 20f;
+            flyingHeart.style.top = startPanelPos.y - 20f;
+            root.Add(flyingHeart);
+
+            float duration = 0.55f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float curvedT = Mathf.SmoothStep(0f, 1f, t);
+
+                Vector2 currentPos = Vector2.Lerp(startPanelPos, targetPanelPos, curvedT);
+                currentPos.y += Mathf.Sin(t * Mathf.PI) * -60f;
+
+                flyingHeart.style.left = currentPos.x - 20f;
+                flyingHeart.style.top = currentPos.y - 20f;
+
+                float scale = Mathf.Lerp(1.5f, 1.0f, t);
+                flyingHeart.style.scale = new StyleScale(new Scale(new Vector2(scale, scale)));
+
+                yield return null;
+            }
+
+            if (root.Contains(flyingHeart))
+            {
+                root.Remove(flyingHeart);
+            }
+
+            if (targetPip != null)
+            {
+                targetPip.AddToClassList("pip-pop");
+                yield return new WaitForSecondsRealtime(0.18f);
+                targetPip.RemoveFromClassList("pip-pop");
             }
         }
 
@@ -907,6 +1056,15 @@ namespace Arcade.UI
 
             if (sliderExpander != null) sliderExpander.value = activeEditableConfig.PaddleExpanderCount;
             if (valExpander != null) valExpander.text = activeEditableConfig.PaddleExpanderCount.ToString();
+
+            if (sliderBomb != null) sliderBomb.value = activeEditableConfig.BombCount;
+            if (valBomb != null) valBomb.text = activeEditableConfig.BombCount.ToString();
+
+            if (sliderGlass != null) sliderGlass.value = activeEditableConfig.GlassEnclosedCount;
+            if (valGlass != null) valGlass.text = activeEditableConfig.GlassEnclosedCount.ToString();
+
+            if (sliderHeart != null) sliderHeart.value = activeEditableConfig.ExtraHeartCount;
+            if (valHeart != null) valHeart.text = activeEditableConfig.ExtraHeartCount.ToString();
         }
 
         private void ApplyLevelSettingsAndRestart()
