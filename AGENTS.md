@@ -373,8 +373,8 @@ This file provides persistent context across agent sessions for this Unity proje
     - Displays `multiball-status-badge` with `TX_Powerup_Multi_Ball.png` and ball count label (`3 BALLS`, `2 BALLS`) whenever active balls $> 1$.
   - World space badge: hosts `TX_Powerup_Multi_Ball.png` inside vibrant glowing green/amber plate (`.badge-plate-multiball`, border `#00e676`).
 - **Audio & Procedural Synth Integration**:
-  - `ArcadeAudioManager.cs` wired with `clipLifeLost` (`AU_Life_Lost.mp3`), `clipShieldDeflect`, and `clipMultiBall`.
-  - Built-in procedural audio synth fallbacks for shield deflection (pure harmonic 880Hz sine chime) and multi-ball split (arpeggiated dual harmonic chord).
+  - `ArcadeAudioManager.cs` wired with `clipLifeLost` (`AU_Life_Lost.mp3`), `clipShieldDeflect` (`AU_Powerup_Shield.mp3`), and `clipMultiBall`.
+  - Multi-ball sound operates via procedural synthesizer (arpeggiated harmonic chord) with dynamic expansion capability.
 - **Level Configuration & Presets**:
   - [LevelConfiguration.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelConfiguration.cs) exposes `shieldCount` (0-4), `multiBallCount` (0-4), and `shieldDuration` (5-30s) with live tuning sliders in the Level Settings modal.
   - Preset assets updated:
