@@ -2781,6 +2781,138 @@ namespace Arcade.Tests
         }
 
         #endregion
+
+        #region Background Gradient Tests
+
+        [Test]
+        public void LevelBackgroundController_InitializesAndAppliesGradientTexture()
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            var mr = go.GetComponent<MeshRenderer>();
+            var bgCtrl = go.AddComponent<LevelBackgroundController>();
+
+            var tex1 = new Texture2D(32, 32);
+            var tex2 = new Texture2D(32, 32);
+            var tex3 = new Texture2D(32, 32);
+            var tex4 = new Texture2D(32, 32);
+
+            bgCtrl.SetTextures(new[] { tex1, tex2, tex3, tex4 });
+
+            Assert.IsNotNull(bgCtrl.CurrentTexture, "CurrentTexture should not be null after SetTextures.");
+            Assert.GreaterOrEqual(bgCtrl.CurrentTextureIndex, 0);
+            Assert.Less(bgCtrl.CurrentTextureIndex, 4);
+
+            Object.DestroyImmediate(tex1);
+            Object.DestroyImmediate(tex2);
+            Object.DestroyImmediate(tex3);
+            Object.DestroyImmediate(tex4);
+            Object.DestroyImmediate(go);
+        }
+
+        [Test]
+        public void LevelBackgroundController_RandomizeBackground_AvoidsSameConsecutiveTexture()
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            var bgCtrl = go.AddComponent<LevelBackgroundController>();
+
+            var tex1 = new Texture2D(16, 16);
+            var tex2 = new Texture2D(16, 16);
+
+            bgCtrl.SetTextures(new[] { tex1, tex2 });
+            bgCtrl.SetBackgroundByIndex(0);
+            Assert.AreEqual(0, bgCtrl.CurrentTextureIndex);
+
+            // Calling randomize with avoidSameAsCurrent = true must pick the other texture (index 1)
+            bgCtrl.RandomizeBackground(avoidSameAsCurrent: true);
+            Assert.AreEqual(1, bgCtrl.CurrentTextureIndex, "RandomizeBackground must avoid repeating the same texture when alternatives exist.");
+
+            // Calling randomize again must pick index 0
+            bgCtrl.RandomizeBackground(avoidSameAsCurrent: true);
+            Assert.AreEqual(0, bgCtrl.CurrentTextureIndex, "RandomizeBackground must cycle away from current texture index.");
+
+            Object.DestroyImmediate(tex1);
+            Object.DestroyImmediate(tex2);
+            Object.DestroyImmediate(go);
+        }
+
+        [Test]
+        public void LevelBackgroundController_SetBackgroundByIndex_ClampsSafely()
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            var bgCtrl = go.AddComponent<LevelBackgroundController>();
+
+            var tex1 = new Texture2D(16, 16);
+            var tex2 = new Texture2D(16, 16);
+
+            bgCtrl.SetTextures(new[] { tex1, tex2 });
+
+            bgCtrl.SetBackgroundByIndex(999);
+            Assert.AreEqual(1, bgCtrl.CurrentTextureIndex);
+            Assert.AreEqual(tex2, bgCtrl.CurrentTexture);
+
+            bgCtrl.SetBackgroundByIndex(-50);
+            Assert.AreEqual(0, bgCtrl.CurrentTextureIndex);
+            Assert.AreEqual(tex1, bgCtrl.CurrentTexture);
+
+            Object.DestroyImmediate(tex1);
+            Object.DestroyImmediate(tex2);
+            Object.DestroyImmediate(go);
+        }
+
+        [Test]
+        public void LevelGenerator_GenerateLevel_TriggersBackgroundRandomization()
+        {
+            var bgGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            var bgCtrl = bgGo.AddComponent<LevelBackgroundController>();
+
+            var tex1 = new Texture2D(16, 16);
+            var tex2 = new Texture2D(16, 16);
+            bgCtrl.SetTextures(new[] { tex1, tex2 });
+            bgCtrl.SetBackgroundByIndex(0);
+            Assert.AreEqual(0, bgCtrl.CurrentTextureIndex);
+
+            var genObj = new GameObject("TestGen");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            // Calling GenerateLevel on LevelGenerator must trigger background randomization
+            gen.GenerateLevel();
+
+            // Index should have changed from 0 to 1 because avoidSameAsCurrent is default true
+            Assert.AreEqual(1, bgCtrl.CurrentTextureIndex, "GenerateLevel must trigger background randomization.");
+
+            Object.DestroyImmediate(tex1);
+            Object.DestroyImmediate(tex2);
+            Object.DestroyImmediate(genObj);
+            Object.DestroyImmediate(bgGo);
+        }
+
+        [Test]
+        public void SceneSetup_GameplayScene_HasBackgroundPlaneBehindPlayfield()
+        {
+            var scene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/LV_BlockBreaker.unity", UnityEditor.SceneManagement.OpenSceneMode.Additive);
+            var rootObjects = scene.GetRootGameObjects();
+
+            GameObject bgPlane = null;
+            foreach (var root in rootObjects)
+            {
+                if (root.name == "Background_Plane")
+                {
+                    bgPlane = root;
+                    break;
+                }
+            }
+
+            Assert.IsNotNull(bgPlane, "Background_Plane must exist in LV_BlockBreaker scene.");
+            Assert.Greater(bgPlane.transform.position.z, 2.0f, "Background_Plane must be positioned behind arena elements (Z > 2.0).");
+            var ctrl = bgPlane.GetComponent<LevelBackgroundController>();
+            Assert.IsNotNull(ctrl, "Background_Plane must have LevelBackgroundController component.");
+            Assert.IsNotNull(ctrl.BackgroundTextures, "BackgroundTextures array must be configured.");
+            Assert.AreEqual(4, ctrl.BackgroundTextures.Length, "Must have 4 gradient textures assigned.");
+
+            UnityEditor.SceneManagement.EditorSceneManager.CloseScene(scene, true);
+        }
+
+        #endregion
     }
 }
 

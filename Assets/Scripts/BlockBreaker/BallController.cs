@@ -33,7 +33,7 @@ namespace Arcade.BlockBreaker
 
         public bool IsLaunched => isLaunched;
         public float CurrentSpeed => currentSpeed;
-        public BallTrail Trail => ballTrail;
+        public BallTrail Trail => ballTrail != null ? ballTrail : (ballTrail = GetComponent<BallTrail>() ?? gameObject.AddComponent<BallTrail>());
         public bool IsPrimaryBall
         {
             get => isPrimaryBall;
@@ -175,9 +175,9 @@ namespace Arcade.BlockBreaker
 
         public void SetTrailColor(Color color)
         {
-            if (ballTrail != null)
+            if (Trail != null)
             {
-                ballTrail.SetTrailColor(color);
+                Trail.SetTrailColor(color);
             }
             ApplyBallColor(color);
         }
@@ -211,10 +211,10 @@ namespace Arcade.BlockBreaker
                 transform.position = new Vector3(paddlePos.x, paddlePos.y + launchYOffset, 0f);
             }
 
-            if (ballTrail != null)
+            if (Trail != null)
             {
-                ballTrail.SetEmitting(false);
-                ballTrail.Clear();
+                Trail.SetEmitting(false);
+                Trail.Clear();
             }
         }
 
@@ -226,10 +226,10 @@ namespace Arcade.BlockBreaker
             var col = GetComponent<Collider>();
             if (col != null) col.enabled = active;
 
-            if (ballTrail != null && !active)
+            if (Trail != null && !active)
             {
-                ballTrail.SetEmitting(false);
-                ballTrail.Clear();
+                Trail.SetEmitting(false);
+                Trail.Clear();
             }
         }
 
@@ -247,10 +247,10 @@ namespace Arcade.BlockBreaker
             isLaunched = true;
             currentSpeed = baseSpeed;
 
-            if (ballTrail != null)
+            if (Trail != null)
             {
-                ballTrail.Clear();
-                ballTrail.SetEmitting(true);
+                Trail.Clear();
+                Trail.SetEmitting(true);
             }
 
             // Launch upwards with slight random angular bias (+- 15 degrees off vertical)
@@ -271,10 +271,10 @@ namespace Arcade.BlockBreaker
             isLaunched = true;
             currentSpeed = speed > 0f ? speed : baseSpeed;
 
-            if (ballTrail != null)
+            if (Trail != null)
             {
-                ballTrail.Clear();
-                ballTrail.SetEmitting(true);
+                Trail.Clear();
+                Trail.SetEmitting(true);
             }
 
             if (rb != null)
