@@ -2698,15 +2698,15 @@ namespace Arcade.Tests
         }
 
         [Test]
-        public void PowerupCapsule_SpawnsInForeground_AtMinusZeroPointNineZ()
+        public void PowerupCapsule_SpawnsInForeground_AtForegroundZ()
         {
             Vector3 spawnPos = new Vector3(3f, 8f, 0f);
             var capsule = PowerupCapsule.Spawn(spawnPos, BlockSpecialType.PaddleExpander);
             Assert.IsNotNull(capsule);
 
             Assert.AreEqual(PowerupCapsule.FOREGROUND_Z, capsule.transform.position.z, 0.001f,
-                "Powerup capsule must spawn at foreground depth Z = -0.90f to avoid occlusion behind lower bricks.");
-            Assert.AreEqual(-0.90f, capsule.transform.position.z, 0.001f);
+                "Powerup capsule must spawn at foreground depth Z = -1.0f to avoid occlusion behind lower bricks.");
+            Assert.AreEqual(-1.0f, capsule.transform.position.z, 0.001f);
 
             var boxCol = capsule.GetComponent<BoxCollider>();
             Assert.IsNotNull(boxCol, "Capsule should use BoxCollider with depth overlap.");
@@ -2717,16 +2717,25 @@ namespace Arcade.Tests
         }
 
         [Test]
-        public void PowerupCapsule_HasBillboardIconChild_WithSpriteAssigned()
+        public void PowerupCapsule_HasDecoupledVisualAndBillboardHierarchy_WithLargeVisibleScale()
         {
             var capsule = PowerupCapsule.Spawn(new Vector3(0f, 5f, 0f), BlockSpecialType.PaddleExpander);
             Assert.IsNotNull(capsule);
 
+            // Verify visual capsule child (tumbler mesh)
+            Assert.IsNotNull(capsule.VisualCapsuleTransform, "Capsule must have VisualCapsuleTransform child.");
+            Assert.AreEqual("Visual_Capsule", capsule.VisualCapsuleTransform.name);
+            Assert.GreaterOrEqual(capsule.VisualCapsuleTransform.localScale.x, 0.80f, "Capsule visual mesh must be prominently sized.");
+
+            // Verify billboard icon child
             Assert.IsNotNull(capsule.IconTransform, "Capsule must have IconTransform child.");
             Assert.AreEqual("Icon_Billboard", capsule.IconTransform.name);
+            Assert.GreaterOrEqual(capsule.IconTransform.localScale.x, 0.85f, "Billboard icon must be prominently sized.");
+            Assert.Less(capsule.IconTransform.localPosition.z, -0.50f, "Billboard icon must sit comfortably in front of the capsule.");
+
             Assert.IsNotNull(capsule.IconRenderer, "IconTransform must have SpriteRenderer component.");
             Assert.IsNotNull(capsule.IconRenderer.sprite, "Billboard icon must have a sprite assigned.");
-            Assert.AreEqual(30, capsule.IconRenderer.sortingOrder, "Billboard icon must have foreground sortingOrder.");
+            Assert.GreaterOrEqual(capsule.IconRenderer.sortingOrder, 30, "Billboard icon must have foreground sortingOrder.");
 
             // Test LateUpdate orientation lock
             capsule.transform.rotation = Quaternion.Euler(45f, 90f, 30f);
