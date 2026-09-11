@@ -99,7 +99,7 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
   - Zero-allocation `MaterialPropertyBlock` tinting: preserves 100% SRP Batcher compatibility without material cloning.
   - Struct-based simulation lists (`ActiveDebris`, `ActiveVFX`) replacing per-brick coroutines.
 - **Cross-Platform Cosmic Gradient Background ([LevelBackgroundController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelBackgroundController.cs))**:
-  - Background Quad placed at $Z = 6.0\text{f}$ (comfortably behind arena walls $Z \in [-1, 1]$ and kill zone $Z \in [-2, 2]$), scaled to $100 \times 200$ to preserve the $1:2$ texture aspect ratio and eliminate frustum borders across extreme aspect ratios (9:21 to 32:9).
+  - Background Quad placed at $Z = 6.0\text{f}$ (comfortably behind arena walls $Z \in [-1, 1]$ and kill zone $Z \in [-2, 2]$), scaled to $40 \times 80$ to preserve the $1:2$ texture aspect ratio and frame the playfield cleanly.
   - Uses `MI_Background_Gradient.mat` (`Universal Render Pipeline/Unlit` with double-sided rendering).
   - Randomly selects and applies one of the four cosmic nebular gradients (`TX_Background_Gradient_A.png` through `TX_Background_Gradient_D.png`) via zero-allocation `MaterialPropertyBlock`.
   - Automatically randomizes on level generation (`LevelGenerator.GenerateLevel()`) avoiding consecutive repeats, providing a distinct atmosphere for each level.

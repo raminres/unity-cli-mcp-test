@@ -159,7 +159,7 @@ namespace Arcade.Editor
             var bgGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
             bgGo.name = "Background_Plane";
             bgGo.transform.position = new Vector3(0f, 0f, 5.0f);
-            bgGo.transform.localScale = new Vector3(50f, 100f, 1f);
+            bgGo.transform.localScale = new Vector3(40f, 80f, 1f);
             Object.DestroyImmediate(bgGo.GetComponent<Collider>());
             var bgMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Background_Gradient.mat");
             if (bgMat != null) bgGo.GetComponent<MeshRenderer>().sharedMaterial = bgMat;
@@ -226,7 +226,7 @@ namespace Arcade.Editor
             var bgGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
             bgGo.name = "Background_Plane";
             bgGo.transform.position = new Vector3(0f, 8.5f, 6.0f);
-            bgGo.transform.localScale = new Vector3(100f, 200f, 1f);
+            bgGo.transform.localScale = new Vector3(40f, 80f, 1f);
             Object.DestroyImmediate(bgGo.GetComponent<Collider>());
             var bgMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Background_Gradient.mat");
             if (bgMat != null) bgGo.GetComponent<MeshRenderer>().sharedMaterial = bgMat;

@@ -2904,6 +2904,7 @@ namespace Arcade.Tests
 
             Assert.IsNotNull(bgPlane, "Background_Plane must exist in LV_BlockBreaker scene.");
             Assert.Greater(bgPlane.transform.position.z, 2.0f, "Background_Plane must be positioned behind arena elements (Z > 2.0).");
+            Assert.AreEqual(new Vector3(40f, 80f, 1f), bgPlane.transform.localScale, "Background_Plane must be scaled to 40x80.");
             var ctrl = bgPlane.GetComponent<LevelBackgroundController>();
             Assert.IsNotNull(ctrl, "Background_Plane must have LevelBackgroundController component.");
             Assert.IsNotNull(ctrl.BackgroundTextures, "BackgroundTextures array must be configured.");
