@@ -54,8 +54,8 @@
         </ui:VisualElement>
 
         <!-- Center Prompt Banner (Visible before ball launch) -->
-        <ui:VisualElement name="launch-banner" class="launch-banner">
-            <ui:Label text="PRESS UP ARROW OR TAP TO LAUNCH" class="launch-text" />
+        <ui:VisualElement name="launch-banner" class="launch-banner" picking-mode="Ignore">
+            <ui:Label text="PRESS UP ARROW OR TAP TO LAUNCH" class="launch-text" picking-mode="Ignore" />
         </ui:VisualElement>
 
         <!-- Pause Modal -->

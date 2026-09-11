@@ -10,6 +10,7 @@ namespace Arcade.Input
     /// <summary>
     /// Cross-platform input coordinator supporting PC keyboard, Mobile touch drag/tap, and WebGPU mouse/keys.
     /// </summary>
+    [DefaultExecutionOrder(-90)]
     public class ArcadeInputHandler : MonoBehaviour
     {
         public static ArcadeInputHandler Instance { get; private set; }

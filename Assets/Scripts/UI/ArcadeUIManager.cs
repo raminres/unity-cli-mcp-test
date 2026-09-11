@@ -188,6 +188,65 @@ namespace Arcade.UI
             {
                 levelGenerator = FindAnyObjectByType<LevelGenerator>();
             }
+            EnsureInitialized();
+        }
+
+        private void Update()
+        {
+            if (root == null || btnQuickPause == null)
+            {
+                EnsureInitialized();
+            }
+        }
+
+        public void EnsureInitialized()
+        {
+            SubscribeEvents();
+
+            if (root == null)
+            {
+                root = GetRootVisualElement();
+            }
+
+            if (root != null && btnQuickPause == null)
+            {
+                UnbindElements();
+                BindElements();
+                InitializeDisplay();
+            }
+        }
+
+        private VisualElement GetRootVisualElement()
+        {
+            if (root != null) return root;
+
+            if (panelRenderer == null) panelRenderer = GetComponent<PanelRenderer>();
+            if (panelRenderer != null)
+            {
+                var prop = panelRenderer.GetType().GetProperty("rootVisualElement", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (prop != null)
+                {
+                    root = prop.GetValue(panelRenderer) as VisualElement;
+                }
+
+                if (root == null)
+                {
+                    var panelProp = panelRenderer.GetType().GetProperty("containerPanel", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    var panel = panelProp?.GetValue(panelRenderer) as IPanel;
+                    if (panel != null)
+                    {
+                        root = panel.visualTree;
+                    }
+                }
+            }
+
+            if (root == null)
+            {
+                var doc = GetComponent<UIDocument>();
+                if (doc != null) root = doc.rootVisualElement;
+            }
+
+            return root;
         }
 
         private void OnEnable()
@@ -196,10 +255,8 @@ namespace Arcade.UI
             if (panelRenderer != null)
             {
                 panelRenderer.RegisterUIReloadCallback(OnUIReload);
-                panelRenderer.enabled = false;
-                panelRenderer.enabled = true;
             }
-            SubscribeEvents();
+            EnsureInitialized();
         }
 
         private void OnDisable()
@@ -582,6 +639,8 @@ namespace Arcade.UI
 
         private void SubscribeEvents()
         {
+            UnsubscribeEvents();
+
             if (ArcadeGameManager.Instance != null)
             {
                 ArcadeGameManager.Instance.OnScoreChanged += UpdateScoreDisplay;

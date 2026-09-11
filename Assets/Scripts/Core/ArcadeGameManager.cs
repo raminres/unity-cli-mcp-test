@@ -9,6 +9,7 @@ namespace Arcade.Core
     /// <summary>
     /// Central game coordinator managing state machine, scoring, lives, and high-level gameplay events.
     /// </summary>
+    [DefaultExecutionOrder(-100)]
     public class ArcadeGameManager : MonoBehaviour
     {
         public static ArcadeGameManager Instance { get; private set; }
@@ -269,11 +270,14 @@ namespace Arcade.Core
                 activeBalls.Add(ball);
                 OnActiveBallCountChanged?.Invoke(activeBalls.Count);
             }
+            OnStateChanged -= ball.HandleStateChangedDirect;
+            OnStateChanged += ball.HandleStateChangedDirect;
         }
 
         public void UnregisterBall(BallController ball)
         {
             if (ball == null) return;
+            OnStateChanged -= ball.HandleStateChangedDirect;
             if (activeBalls.Remove(ball))
             {
                 OnActiveBallCountChanged?.Invoke(activeBalls.Count);
@@ -419,6 +423,15 @@ namespace Arcade.Core
             if (currentState != GameState.ReadyToLaunch && currentState != GameState.BallLost) return;
 
             SetState(GameState.Playing);
+
+            // Directly guarantee all registered balls launch even if event subscription had timing race
+            for (int i = 0; i < activeBalls.Count; i++)
+            {
+                if (activeBalls[i] != null && !activeBalls[i].IsLaunched)
+                {
+                    activeBalls[i].Launch();
+                }
+            }
         }
 
         public void RecordBlockDestroyed(int points, int colorTier)

@@ -376,6 +376,7 @@
     border-color: rgba(33, 212, 253, 0.45);
     border-radius: 20px;
     padding: 14px 32px;
+    pointer-events: none;
 }
 
 .launch-banner-hidden {

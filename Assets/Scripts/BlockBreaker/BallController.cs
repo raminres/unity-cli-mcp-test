@@ -69,6 +69,7 @@ namespace Arcade.BlockBreaker
         {
             if (ArcadeGameManager.Instance != null)
             {
+                ArcadeGameManager.Instance.OnStateChanged -= HandleStateChanged;
                 ArcadeGameManager.Instance.OnStateChanged += HandleStateChanged;
             }
         }
@@ -98,6 +99,8 @@ namespace Arcade.BlockBreaker
 
             if (ArcadeGameManager.Instance != null)
             {
+                ArcadeGameManager.Instance.OnStateChanged -= HandleStateChanged;
+                ArcadeGameManager.Instance.OnStateChanged += HandleStateChanged;
                 ArcadeGameManager.Instance.RegisterBall(this);
             }
 
@@ -105,6 +108,11 @@ namespace Arcade.BlockBreaker
             {
                 ResetBallToPaddle();
             }
+        }
+
+        public void HandleStateChangedDirect(GameState state)
+        {
+            HandleStateChanged(state);
         }
 
         public void Initialize(ArcadeGameManager manager, PaddleController paddleController)
