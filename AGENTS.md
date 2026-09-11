@@ -12,7 +12,7 @@ This file provides persistent, high-density project context across agent session
 - **Render Pipeline**: Universal Render Pipeline (URP)
 - **Play Mode Start Scene**: `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (configured via [PlayModeSceneSetup.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/PlayModeSceneSetup.cs))
 - **Remote Repository**: `https://github.com/raminres/unity-cli-mcp-test.git`
-- **Active Branch**: `develop` (Git LFS enabled)
+- **Active Branch**: `feature/paddle-geometry-and-gameplay` (based off `develop`, Git LFS enabled)
 
 ### Active Scenes & Build Index
 1. `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0)
@@ -101,6 +101,7 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
 - **Cross-Platform Cosmic Gradient Background ([LevelBackgroundController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelBackgroundController.cs))**:
   - Background Quad placed at $Z = 6.0\text{f}$ (comfortably behind arena walls $Z \in [-1, 1]$ and kill zone $Z \in [-2, 2]$), scaled to $40 \times 80$ to preserve the $1:2$ texture aspect ratio and frame the playfield cleanly.
   - Uses `MI_Background_Gradient.mat` (`Universal Render Pipeline/Unlit` with double-sided rendering).
+  - Explicit default texture assigned (`TX_Background_Gradient_A.png`) ensuring immediate URP shader variant compilation on Apple Metal/iOS and preventing initial white flash.
   - Randomly selects and applies one of the four cosmic nebular gradients (`TX_Background_Gradient_A.png` through `TX_Background_Gradient_D.png`) via zero-allocation `MaterialPropertyBlock`.
   - Automatically randomizes on level generation (`LevelGenerator.GenerateLevel()`) avoiding consecutive repeats, providing a distinct atmosphere for each level.
 - **iOS Debris Material**: Custom Universal Render Pipeline shader `Assets/Shaders/VFX_BlockDebris.shader` (`Arcade/VFX_BlockDebris`) preventing uncompiled pink shaders on Apple Metal.
