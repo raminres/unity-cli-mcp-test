@@ -38,12 +38,11 @@ namespace Arcade.UI
         private void Awake()
         {
             panelRenderer = GetComponent<PanelRenderer>();
-            if (panelRenderer != null)
-            {
-                // Toggle enabled to force PanelRenderer tree attachment across scene loads in Unity 6
-                panelRenderer.enabled = false;
-                panelRenderer.enabled = true;
-            }
+        }
+
+        private void Start()
+        {
+            ApplySafeArea();
         }
 
         private void OnEnable()
@@ -93,10 +92,15 @@ namespace Arcade.UI
             if (panelRenderer == null) panelRenderer = GetComponent<PanelRenderer>();
             if (root == null && panelRenderer != null)
             {
-#if UNITY_EDITOR
-                var prop = panelRenderer.GetType().GetProperty("rootVisualElement", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var prop = panelRenderer.GetType().GetProperty("rootVisualElement", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 root = prop?.GetValue(panelRenderer) as VisualElement;
-#endif
+
+                if (root == null)
+                {
+                    var panelProp = panelRenderer.GetType().GetProperty("containerPanel", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    var panel = panelProp?.GetValue(panelRenderer) as IPanel;
+                    if (panel != null) root = panel.visualTree;
+                }
             }
 
             if (root == null) return;

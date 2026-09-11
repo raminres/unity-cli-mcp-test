@@ -2232,6 +2232,302 @@ namespace Arcade.Tests
             Assert.AreEqual(1, lvl7.Multiplier5xCount, "Level 7 must introduce 1x 5X multiplier.");
         }
 
+        [Test]
+        public void BallController_ResumeFromPauseBeforeLaunch_RemainsDockedOnPaddle()
+        {
+            var ballObj = new GameObject("TestBall");
+            ballObj.transform.SetParent(testRoot.transform);
+            var ball = ballObj.AddComponent<BallController>();
+            ball.Initialize(gameManager, paddle);
+
+            // 1. Initially in ReadyToLaunch, ball must not be launched
+            gameManager.SetState(GameState.ReadyToLaunch);
+            Assert.IsFalse(ball.IsLaunched, "Ball must start unlaunched.");
+
+            // 2. Pause game
+            gameManager.PauseGame();
+            Assert.AreEqual(GameState.Paused, gameManager.State);
+            Assert.IsFalse(ball.IsLaunched, "Ball must remain unlaunched while paused.");
+
+            // 3. Resume game
+            gameManager.ResumeGame();
+            Assert.AreEqual(GameState.ReadyToLaunch, gameManager.State, "Game must return to ReadyToLaunch.");
+            Assert.IsFalse(ball.IsLaunched, "Ball must NOT automatically start moving upon resume before launch.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void InputHandler_SuppressLaunch_PreventsPrematureLaunchBall()
+        {
+            var inputGo = new GameObject("TestInput");
+            inputGo.transform.SetParent(testRoot.transform);
+            var inputHandler = inputGo.AddComponent<Arcade.Input.ArcadeInputHandler>();
+            Arcade.Input.ArcadeInputHandler.SetInstanceForTesting(inputHandler);
+
+            gameManager.SetState(GameState.ReadyToLaunch);
+
+            // Suppress launch
+            inputHandler.SuppressLaunch(1.0f);
+            inputHandler.TriggerLaunch();
+
+            Assert.AreEqual(GameState.ReadyToLaunch, gameManager.State, "Launch must be blocked while suppressed.");
+
+            Object.DestroyImmediate(inputGo);
+        }
+
+        [Test]
+        public void InputHandler_ResetTouchState_DoesNotPermanentlyBlockKeyboardLaunch()
+        {
+            var inputGo = new GameObject("TestInput");
+            inputGo.transform.SetParent(testRoot.transform);
+            var inputHandler = inputGo.AddComponent<Arcade.Input.ArcadeInputHandler>();
+            Arcade.Input.ArcadeInputHandler.SetInstanceForTesting(inputHandler);
+
+            gameManager.SetState(GameState.ReadyToLaunch);
+
+            // Simulating a touch/click release or modal dismissal calling ResetTouchState
+            inputHandler.ResetTouchState();
+            Assert.IsFalse(inputHandler.IsLaunchSuppressed, "ResetTouchState must not lock out launches.");
+
+            // Keyboard launch should immediately succeed
+            inputHandler.TriggerLaunch();
+            Assert.AreEqual(GameState.Playing, gameManager.State, "Launch must succeed after ResetTouchState.");
+
+            Object.DestroyImmediate(inputGo);
+        }
+
+        [Test]
+        public void InputHandler_TriggerLaunch_LaunchesBallWhenNotSuppressed()
+        {
+            var inputGo = new GameObject("TestInput");
+            inputGo.transform.SetParent(testRoot.transform);
+            var inputHandler = inputGo.AddComponent<Arcade.Input.ArcadeInputHandler>();
+            Arcade.Input.ArcadeInputHandler.SetInstanceForTesting(inputHandler);
+
+            gameManager.SetState(GameState.ReadyToLaunch);
+            inputHandler.TriggerLaunch();
+
+            Assert.AreEqual(GameState.Playing, gameManager.State, "Launch must trigger State transition to Playing.");
+
+            Object.DestroyImmediate(inputGo);
+        }
+
+        [Test]
+        public void HighScoreManager_RecordScore_SortsDescendingAndClampsTo10()
+        {
+            HighScoreManager.ResetScores();
+
+            // Record 12 scores in non-sorted order
+            int[] scoresToAdd = { 100, 500, 250, 1000, 800, 50, 300, 400, 200, 900, 150, 75 };
+            foreach (var s in scoresToAdd)
+            {
+                HighScoreManager.RecordScore(s, 1);
+            }
+
+            var topScores = HighScoreManager.GetTopScores();
+            Assert.AreEqual(10, topScores.Count, "HighScoreManager must clamp to MAX_SCORES (10).");
+            Assert.AreEqual(1000, topScores[0].score, "First score must be 1000.");
+            Assert.AreEqual(900, topScores[1].score, "Second score must be 900.");
+            Assert.AreEqual(800, topScores[2].score, "Third score must be 800.");
+            Assert.AreEqual(150, topScores[8].score, "9th score must be 150.");
+            Assert.AreEqual(100, topScores[9].score, "10th score must be 100.");
+            Assert.AreEqual(1000, HighScoreManager.HighestScore, "HighestScore must return 1000.");
+
+            // Adding a score lower than or equal to 10th score (e.g. 50) should return false and not alter list
+            bool addedLower = HighScoreManager.RecordScore(50, 1);
+            Assert.IsFalse(addedLower, "RecordScore should return false if score does not exceed 10th place.");
+            Assert.AreEqual(10, HighScoreManager.GetTopScores().Count);
+
+            // Adding a higher score (e.g. 950) should succeed and displace 100 (150 becomes 10th)
+            bool addedHigher = HighScoreManager.RecordScore(950, 2);
+            Assert.IsTrue(addedHigher);
+            topScores = HighScoreManager.GetTopScores();
+            Assert.AreEqual(950, topScores[1].score);
+            Assert.AreEqual(150, topScores[9].score);
+
+            HighScoreManager.ResetScores();
+        }
+
+        [Test]
+        public void HighScoreManager_ResetScores_ClearsAllRecordedScores()
+        {
+            HighScoreManager.ResetScores();
+            HighScoreManager.RecordScore(500, 1);
+            Assert.AreEqual(1, HighScoreManager.GetTopScores().Count);
+            Assert.AreEqual(500, HighScoreManager.HighestScore);
+
+            HighScoreManager.ResetScores();
+            Assert.AreEqual(0, HighScoreManager.GetTopScores().Count);
+            Assert.AreEqual(0, HighScoreManager.HighestScore);
+        }
+
+        [Test]
+        public void ArcadeUIManager_IsAnyModalVisible_IncludesHighScoresAndHowToPlay()
+        {
+            var uiObj = new GameObject("UI_HUD");
+            uiObj.transform.SetParent(testRoot.transform);
+            uiObj.AddComponent<PanelRenderer>();
+            var uiMgr = uiObj.AddComponent<ArcadeUIManager>();
+
+            var root = new VisualElement { name = "hud-root" };
+            var highscoresModal = new VisualElement { name = "highscores-modal" };
+            highscoresModal.AddToClassList("modal-hidden");
+            var howToPlayModal = new VisualElement { name = "how-to-play-modal" };
+            howToPlayModal.AddToClassList("modal-hidden");
+            root.Add(highscoresModal);
+            root.Add(howToPlayModal);
+
+            var rootField = typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            rootField.SetValue(uiMgr, root);
+
+            var highField = typeof(ArcadeUIManager).GetField("highscoresModal", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            highField.SetValue(uiMgr, highscoresModal);
+
+            var howField = typeof(ArcadeUIManager).GetField("howToPlayModal", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            howField.SetValue(uiMgr, howToPlayModal);
+
+            Assert.IsFalse(uiMgr.IsAnyModalVisible());
+
+            // Show high scores
+            highscoresModal.RemoveFromClassList("modal-hidden");
+            Assert.IsTrue(uiMgr.IsAnyModalVisible());
+            highscoresModal.AddToClassList("modal-hidden");
+            Assert.IsFalse(uiMgr.IsAnyModalVisible());
+
+            // Show how to play
+            howToPlayModal.RemoveFromClassList("modal-hidden");
+            Assert.IsTrue(uiMgr.IsAnyModalVisible());
+            howToPlayModal.AddToClassList("modal-hidden");
+            Assert.IsFalse(uiMgr.IsAnyModalVisible());
+
+            Object.DestroyImmediate(uiObj);
+        }
+
+        [Test]
+        public void BallTrail_Initialization_CreatesDualLayerRenderers()
+        {
+            var ballObj = new GameObject("TestBall");
+            var trail = ballObj.AddComponent<BallTrail>();
+            trail.EnsureTrailsCreated();
+
+            Assert.IsNotNull(trail.OuterTrail, "Outer trail renderer must be created.");
+            Assert.IsNotNull(trail.InnerTrail, "Inner trail renderer must be created.");
+            Assert.AreEqual(trail.OuterStartWidth, 0.55f, 0.01f, "Outer trail start width should be 0.55.");
+            Assert.AreEqual(trail.InnerStartWidth, 0.25f, 0.01f, "Inner trail start width should be 0.25.");
+            Assert.AreEqual(trail.OuterDuration, 0.22f, 0.01f, "Outer trail duration should be 0.22s.");
+            Assert.AreEqual(trail.InnerDuration, 0.16f, 0.01f, "Inner trail duration should be 0.16s.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void BallTrail_TaperingCurves_WidthTapersToZero()
+        {
+            var ballObj = new GameObject("TestBall");
+            var trail = ballObj.AddComponent<BallTrail>();
+            trail.EnsureTrailsCreated();
+
+            AnimationCurve outerCurve = trail.OuterTrail.widthCurve;
+            AnimationCurve innerCurve = trail.InnerTrail.widthCurve;
+
+            Assert.AreEqual(0.55f, outerCurve.Evaluate(0f), 0.02f, "Outer trail should start at ~0.55 width.");
+            Assert.AreEqual(0.0f, outerCurve.Evaluate(1f), 0.01f, "Outer trail should taper to 0 width at tail.");
+
+            Assert.AreEqual(0.25f, innerCurve.Evaluate(0f), 0.02f, "Inner trail should start at ~0.25 width.");
+            Assert.AreEqual(0.0f, innerCurve.Evaluate(1f), 0.01f, "Inner trail should taper to 0 width at tail.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void BallTrail_SetTrailColor_CalculatesDualLightnessLevelsCorrectly()
+        {
+            var ballObj = new GameObject("TestBall");
+            var trail = ballObj.AddComponent<BallTrail>();
+            Color testColor = new Color(0f, 0.8f, 1f, 1f);
+            trail.SetTrailColor(testColor);
+
+            Assert.AreEqual(testColor, trail.BaseColor);
+
+            // Inner core must have higher lightness (blended toward white)
+            Color innerCore = trail.InnerCoreColor;
+            Assert.Greater(innerCore.r, testColor.r, "Inner core R must be lighter.");
+            Assert.Greater(innerCore.g, testColor.g, "Inner core G must be lighter.");
+            Assert.GreaterOrEqual(innerCore.b, testColor.b, "Inner core B must be lighter or equal.");
+
+            // Verify alpha keys: outer 0.40 -> 0, inner 0.85 -> 0
+            Gradient outerGrad = trail.OuterTrail.colorGradient;
+            Gradient innerGrad = trail.InnerTrail.colorGradient;
+
+            Assert.AreEqual(0.40f, outerGrad.alphaKeys[0].alpha, 0.02f);
+            Assert.AreEqual(0.00f, outerGrad.alphaKeys[1].alpha, 0.01f);
+            Assert.AreEqual(0.85f, innerGrad.alphaKeys[0].alpha, 0.02f);
+            Assert.AreEqual(0.00f, innerGrad.alphaKeys[1].alpha, 0.01f);
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void BallController_Docked_SuppressesTrailEmission()
+        {
+            var ballObj = new GameObject("TestBall");
+            var rb = ballObj.AddComponent<Rigidbody>();
+            rb.useGravity = false;
+            var ballCtrl = ballObj.AddComponent<BallController>();
+
+            // Initially docked
+            Assert.IsFalse(ballCtrl.IsLaunched);
+            Assert.IsFalse(ballCtrl.Trail.OuterTrail.emitting, "Outer trail should not emit while docked.");
+            Assert.IsFalse(ballCtrl.Trail.InnerTrail.emitting, "Inner trail should not emit while docked.");
+
+            // Launch ball
+            ballCtrl.Launch();
+            Assert.IsTrue(ballCtrl.IsLaunched);
+            Assert.IsTrue(ballCtrl.Trail.OuterTrail.emitting, "Outer trail must emit after launch.");
+            Assert.IsTrue(ballCtrl.Trail.InnerTrail.emitting, "Inner trail must emit after launch.");
+
+            // Dock ball again
+            ballCtrl.StopAndDockBall();
+            Assert.IsFalse(ballCtrl.IsLaunched);
+            Assert.IsFalse(ballCtrl.Trail.OuterTrail.emitting, "Outer trail must stop emitting when docked.");
+            Assert.IsFalse(ballCtrl.Trail.InnerTrail.emitting, "Inner trail must stop emitting when docked.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void ArcadeGameManager_MultiBall_AssignsDistinctColors()
+        {
+            var ballObj = new GameObject("PrimaryBall");
+            ballObj.AddComponent<Rigidbody>();
+            var primaryBall = ballObj.AddComponent<BallController>();
+            primaryBall.SetTrailColor(new Color(0f, 0.95f, 1f, 1f)); // Electric Cyan
+            gameManager.RegisterBall(primaryBall);
+
+            // Spawn Multi-Ball
+            gameManager.SpawnMultiBall(Vector3.zero, Vector3.up, 14f);
+
+            var balls = Object.FindObjectsByType<BallController>();
+            Assert.GreaterOrEqual(balls.Length, 3, "Multi-ball must spawn 2 extra balls (total >= 3).");
+
+            // Verify that at least 2 distinct trail colors exist among active balls
+            var distinctColors = new System.Collections.Generic.HashSet<Color>();
+            foreach (var b in balls)
+            {
+                if (b != null && b.Trail != null)
+                {
+                    distinctColors.Add(b.Trail.BaseColor);
+                }
+            }
+
+            Assert.GreaterOrEqual(distinctColors.Count, 3, "Each ball in multi-ball must have a distinct trail color.");
+
+            // Clean up
+            gameManager.ClearExtraBalls();
+            Object.DestroyImmediate(ballObj);
+        }
+
         #endregion
     }
 }

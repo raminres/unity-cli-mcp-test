@@ -39,7 +39,7 @@ namespace Arcade.Editor
             PlayerSettings.xcodeProjectType = XcodeProjectType.Swift;
 
             // iOS Size & Performance Optimizations
-            PlayerSettings.SetManagedStrippingLevel(BuildTargetGroup.iOS, ManagedStrippingLevel.High);
+            PlayerSettings.SetManagedStrippingLevel(NamedBuildTarget.iOS, ManagedStrippingLevel.High);
             PlayerSettings.SetIl2CppCompilerConfiguration(NamedBuildTarget.iOS, Il2CppCompilerConfiguration.Release);
             PlayerSettings.SetIl2CppCodeGeneration(NamedBuildTarget.iOS, UnityEditor.Build.Il2CppCodeGeneration.OptimizeSize);
             PlayerSettings.stripEngineCode = true;

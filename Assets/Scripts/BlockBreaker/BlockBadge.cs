@@ -48,6 +48,10 @@ namespace Arcade.BlockBreaker
                 // Toggle enable to force clean reinsertion in Unity 6
                 panelRenderer.enabled = false;
                 panelRenderer.enabled = true;
+
+                var prop = panelRenderer.GetType().GetProperty("rootVisualElement", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var r = prop?.GetValue(panelRenderer) as VisualElement;
+                if (r != null) UpdateUI(r);
             }
         }
 

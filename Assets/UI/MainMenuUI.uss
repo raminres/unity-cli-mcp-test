@@ -6,23 +6,27 @@
     align-items: center;
     justify-content: center;
     padding: 30px;
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Inter.ttf?fileID=12800000&guid=c32a959b960d5234baae7b3519c3828a&type=3#FT_Inter");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Inter.ttf?fileID=12800000&guid=c32a959b960d5234baae7b3519c3828a&type=3#FT_Inter");
 }
 
 .bg-glow {
     position: absolute;
-    width: 500px;
-    height: 500px;
+    width: 580px;
+    height: 580px;
     background-color: rgba(33, 212, 253, 0.08);
-    border-radius: 250px;
+    border-radius: 290px;
 }
 
 .header-container {
     align-items: center;
-    margin-bottom: 35px;
+    margin-bottom: 40px;
 }
 
 .game-title {
-    font-size: 54px;
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 62px;
     -unity-font-style: bold;
     letter-spacing: 4px;
     margin: 0;
@@ -41,29 +45,31 @@
 }
 
 .subtitle {
-    font-size: 14px;
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 16px;
     color: #8fa0c0;
     letter-spacing: 3px;
     margin-top: 8px;
 }
 
 .menu-card {
-    width: 350px;
+    width: 410px;
     background-color: rgba(22, 28, 44, 0.88);
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.12);
-    border-radius: 24px;
-    padding: 24px 20px;
+    border-radius: 28px;
+    padding: 28px 24px;
     align-items: stretch;
 }
 
 /* Bouncy Arcade Buttons */
 .arcade-button {
-    height: 56px;
-    border-radius: 16px;
+    height: 64px;
+    border-radius: 18px;
     border-width: 1.5px;
-    margin-bottom: 12px;
-    font-size: 19px;
+    margin-bottom: 14px;
+    font-size: 21px;
     -unity-font-style: bold;
     letter-spacing: 1.5px;
     align-items: center;
@@ -135,22 +141,6 @@
     background-color: rgba(255, 255, 255, 0.04);
 }
 
-.highscore-badge {
-    margin-top: 24px;
-    background-color: rgba(38, 232, 133, 0.12);
-    border-width: 1px;
-    border-color: rgba(38, 232, 133, 0.35);
-    border-radius: 14px;
-    padding: 10px 20px;
-}
-
-.highscore-text {
-    font-size: 14px;
-    color: #26e885;
-    -unity-font-style: bold;
-    letter-spacing: 1px;
-}
-
 /* Modals */
 .modal-backdrop {
     position: absolute;
@@ -166,48 +156,50 @@
 }
 
 .modal-card {
-    width: 360px;
+    width: 420px;
     background-color: #171c2c;
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.16);
-    border-radius: 24px;
-    padding: 28px 24px;
+    border-radius: 28px;
+    padding: 32px 28px;
 }
 
 .modal-title {
-    font-size: 24px;
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 28px;
     -unity-font-style: bold;
     color: #ffffff;
     letter-spacing: 2px;
     align-self: center;
-    margin-bottom: 22px;
+    margin-bottom: 18px;
 }
 
 .setting-row {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 
 .setting-label {
-    font-size: 15px;
+    font-size: 17px;
     color: #cbd5e1;
 }
 
 .setting-slider {
-    width: 150px;
+    width: 170px;
 }
 
 .fps-btn {
-    width: 95px;
-    height: 36px;
-    border-radius: 10px;
+    width: 110px;
+    height: 42px;
+    border-radius: 12px;
     background-color: #252e46;
     border-color: rgba(255, 255, 255, 0.2);
     color: #21d4fd;
     -unity-font-style: bold;
-    font-size: 14px;
+    font-size: 16px;
     scale: 1 1;
     transition-property: scale, background-color;
     transition-duration: 0.2s;
@@ -226,48 +218,50 @@
 }
 
 .modal-close-btn {
-    margin-top: 14px;
+    margin-top: 16px;
     margin-bottom: 0;
 }
 
 .credit-highlight {
-    font-size: 17px;
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 19px;
     -unity-font-style: bold;
     color: #21d4fd;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     align-self: center;
 }
 
 .credit-body {
-    font-size: 14px;
+    font-size: 16px;
     color: #94a3b8;
-    margin-bottom: 6px;
+    margin-bottom: 7px;
     align-self: center;
 }
 
 /* Level Select Modal Extensions */
 .modal-card-wide {
-    width: 440px;
+    width: 510px;
 }
 
 .level-tabs-container {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 }
 
 .level-tab-btn {
     flex-grow: 1;
-    min-width: 80px;
-    height: 40px;
-    margin: 3px;
-    border-radius: 12px;
+    min-width: 92px;
+    height: 46px;
+    margin: 4px;
+    border-radius: 14px;
     border-width: 1.5px;
     border-color: rgba(255, 255, 255, 0.18);
     background-color: rgba(255, 255, 255, 0.08);
     color: #cbd5e1;
-    font-size: 13px;
+    font-size: 15px;
     -unity-font-style: bold;
     letter-spacing: 0.5px;
     align-items: center;
@@ -301,7 +295,9 @@
 }
 
 .level-name-display {
-    font-size: 18px;
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 21px;
     -unity-font-style: bold;
     color: #21d4fd;
     align-self: center;
@@ -310,14 +306,240 @@
 }
 
 .level-desc-display {
-    font-size: 13px;
+    font-size: 15px;
     color: #94a3b8;
     align-self: center;
-    margin-bottom: 20px;
+    margin-bottom: 22px;
     -unity-text-align: middle-center;
     white-space: normal;
 }
 
 .modal-action-btn {
-    margin-top: 10px;
+    margin-top: 14px;
+}
+
+/* Leaderboard & High Scores Modal */
+.leaderboard-card {
+    width: 530px;
+}
+
+.leaderboard-table {
+    margin-top: 6px;
+    margin-bottom: 16px;
+}
+
+.score-row {
+    height: 44px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.07);
+    margin-bottom: 5px;
+    padding: 0 16px;
+}
+
+.row-gold {
+    background-color: rgba(255, 215, 0, 0.12);
+    border-color: rgba(255, 215, 0, 0.45);
+}
+
+.row-silver {
+    background-color: rgba(226, 232, 240, 0.10);
+    border-color: rgba(226, 232, 240, 0.38);
+}
+
+.row-bronze {
+    background-color: rgba(205, 127, 50, 0.10);
+    border-color: rgba(205, 127, 50, 0.38);
+}
+
+.rank-badge-pod {
+    flex-direction: row;
+    align-items: center;
+    width: 78px;
+}
+
+.medal-icon {
+    width: 26px;
+    height: 26px;
+    margin-right: 7px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.icon-gold {
+    background-image: url("project://database/Assets/UI/Icons/TX_Medal_Gold.png?fileID=21300000&guid=49e1ff47be1e4d7449ce42ffe621b576&type=3#TX_Medal_Gold");
+}
+
+.icon-silver {
+    background-image: url("project://database/Assets/UI/Icons/TX_Medal_Silver.png?fileID=21300000&guid=f7805189d97536541b31bb823665894c&type=3#TX_Medal_Silver");
+}
+
+.icon-bronze {
+    background-image: url("project://database/Assets/UI/Icons/TX_Medal_Bronze.png?fileID=21300000&guid=644f3d4abae177341b78bebc8b2f6968&type=3#TX_Medal_Bronze");
+}
+
+.rank-label {
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+.label-gold {
+    color: #ffd700;
+}
+
+.label-silver {
+    color: #e2e8f0;
+}
+
+.label-bronze {
+    color: #cd7f32;
+}
+
+.rank-num-label {
+    width: 78px;
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: #94a3b8;
+}
+
+.score-row-value {
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: #ffffff;
+    letter-spacing: 1px;
+}
+
+.val-gold {
+    color: #ffd700;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+}
+
+.val-silver {
+    color: #e2e8f0;
+    text-shadow: 0 0 8px rgba(226, 232, 240, 0.6);
+}
+
+.val-bronze {
+    color: #cd7f32;
+    text-shadow: 0 0 8px rgba(205, 127, 50, 0.6);
+}
+
+.score-row-date {
+    font-size: 13px;
+    color: #64748b;
+    width: 92px;
+    -unity-text-align: middle-right;
+}
+
+.warning-btn {
+    background-color: rgba(225, 29, 72, 0.18);
+    border-color: rgba(244, 63, 94, 0.6);
+    color: #fb7185;
+}
+
+.warning-btn:hover {
+    background-color: #e11d48;
+    border-color: #ffffff;
+    color: #ffffff;
+}
+
+.warning-btn:active {
+    background-color: #be123c;
+}
+
+/* How To Play Modal */
+.how-to-play-card {
+    width: 550px;
+    max-height: 660px;
+}
+
+.guide-scroll {
+    max-height: 490px;
+    margin-bottom: 14px;
+}
+
+.guide-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.1);
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.guide-heading {
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #21d4fd;
+    letter-spacing: 1px;
+    margin-bottom: 7px;
+}
+
+.guide-text {
+    font-size: 14px;
+    color: #cbd5e1;
+    white-space: normal;
+}
+
+/* Credits Modal Interactive Links */
+.credits-card {
+    width: 530px;
+}
+
+.credit-author {
+    font-size: 17px;
+    -unity-font-style: bold;
+    color: #21d4fd;
+    align-self: center;
+    margin-bottom: 18px;
+}
+
+.credit-links-container {
+    flex-direction: column;
+    margin-bottom: 16px;
+}
+
+.credit-link-btn {
+    height: 54px;
+    border-radius: 14px;
+    border-width: 1px;
+    border-color: rgba(33, 212, 253, 0.35);
+    background-color: rgba(33, 212, 253, 0.08);
+    color: #21d4fd;
+    font-size: 16px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    align-items: center;
+    justify-content: center;
+    scale: 1 1;
+    transition-property: scale, background-color, border-color;
+    transition-duration: 0.2s, 0.15s, 0.15s;
+    transition-timing-function: ease-out-back;
+}
+
+.credit-link-btn:hover {
+    scale: 1.03 1.03;
+    background-color: rgba(33, 212, 253, 0.25);
+    border-color: #21d4fd;
+    color: #ffffff;
+}
+
+.credit-link-btn:active {
+    scale: 0.96 0.96;
+    background-color: rgba(33, 212, 253, 0.06);
+}
+
+.credit-footnote {
+    font-size: 13px;
+    color: #64748b;
+    align-self: center;
+    margin-bottom: 10px;
 }

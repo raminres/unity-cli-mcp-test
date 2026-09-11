@@ -21,14 +21,17 @@ namespace Arcade.UI
         private Button btnNewGame;
         private Button btnLevelSelect;
         private Button btnContinue;
+        private Button btnHighscores;
+        private Button btnHowToPlay;
         private Button btnOptions;
         private Button btnCredits;
-        private Label highscoreLabel;
 
         // Modals
         private VisualElement levelModal;
         private VisualElement optionsModal;
         private VisualElement creditsModal;
+        private VisualElement highscoresModal;
+        private VisualElement howToPlayModal;
 
         private Button btnCloseLevelModal;
         private Button btnStartSelectedLevel;
@@ -37,6 +40,15 @@ namespace Arcade.UI
 
         private Button btnCloseOptions;
         private Button btnCloseCredits;
+        private Button btnCloseHighscores;
+        private Button btnResetHighscores;
+        private Button btnCloseHowToPlay;
+
+        // Credit links
+        private Button btnCreditEmail;
+        private Button btnCreditWebsite;
+        private Button btnCreditLinkedin;
+        private Button btnCreditGithub;
 
         // Level Select controls
         private readonly System.Collections.Generic.List<Button> menuLevelTabButtons = new System.Collections.Generic.List<Button>();
@@ -54,11 +66,67 @@ namespace Arcade.UI
         private void Awake()
         {
             panelRenderer = GetComponent<PanelRenderer>();
+        }
+
+        private void Start()
+        {
+            EnsureInitialized();
+        }
+
+        private void Update()
+        {
+            if (root == null || btnNewGame == null)
+            {
+                EnsureInitialized();
+            }
+        }
+
+        public void EnsureInitialized()
+        {
+            if (root == null)
+            {
+                root = GetRootVisualElement();
+            }
+
+            if (root != null && btnNewGame == null)
+            {
+                UnbindElements();
+                BindElements();
+                InitializeValues();
+            }
+        }
+
+        private VisualElement GetRootVisualElement()
+        {
+            if (root != null) return root;
+
+            if (panelRenderer == null) panelRenderer = GetComponent<PanelRenderer>();
             if (panelRenderer != null)
             {
-                panelRenderer.enabled = false;
-                panelRenderer.enabled = true;
+                var prop = panelRenderer.GetType().GetProperty("rootVisualElement", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (prop != null)
+                {
+                    root = prop.GetValue(panelRenderer) as VisualElement;
+                }
+
+                if (root == null)
+                {
+                    var panelProp = panelRenderer.GetType().GetProperty("containerPanel", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    var panel = panelProp?.GetValue(panelRenderer) as IPanel;
+                    if (panel != null)
+                    {
+                        root = panel.visualTree;
+                    }
+                }
             }
+
+            if (root == null)
+            {
+                var doc = GetComponent<UIDocument>();
+                if (doc != null) root = doc.rootVisualElement;
+            }
+
+            return root;
         }
 
         private void OnEnable()
@@ -68,6 +136,7 @@ namespace Arcade.UI
             {
                 panelRenderer.RegisterUIReloadCallback(OnUIReload);
             }
+            EnsureInitialized();
         }
 
         private void OnDisable()
@@ -93,6 +162,8 @@ namespace Arcade.UI
             if (btnNewGame != null) btnNewGame.clicked -= HandleNewGameClicked;
             if (btnLevelSelect != null) btnLevelSelect.clicked -= ShowLevelModal;
             if (btnContinue != null) btnContinue.clicked -= HandleContinueClicked;
+            if (btnHighscores != null) btnHighscores.clicked -= ShowHighScoresModal;
+            if (btnHowToPlay != null) btnHowToPlay.clicked -= ShowHowToPlayModal;
             if (btnOptions != null) btnOptions.clicked -= ShowOptions;
             if (btnCredits != null) btnCredits.clicked -= ShowCredits;
 
@@ -101,6 +172,14 @@ namespace Arcade.UI
 
             if (btnCloseOptions != null) btnCloseOptions.clicked -= HideOptions;
             if (btnCloseCredits != null) btnCloseCredits.clicked -= HideCredits;
+            if (btnCloseHighscores != null) btnCloseHighscores.clicked -= HideHighScoresModal;
+            if (btnResetHighscores != null) btnResetHighscores.clicked -= HandleResetHighScores;
+            if (btnCloseHowToPlay != null) btnCloseHowToPlay.clicked -= HideHowToPlayModal;
+
+            if (btnCreditEmail != null) btnCreditEmail.clicked -= OpenEmail;
+            if (btnCreditWebsite != null) btnCreditWebsite.clicked -= OpenWebsite;
+            if (btnCreditLinkedin != null) btnCreditLinkedin.clicked -= OpenLinkedIn;
+            if (btnCreditGithub != null) btnCreditGithub.clicked -= OpenGitHub;
 
             if (btnToggleFps != null) btnToggleFps.clicked -= ToggleFpsSetting;
 
@@ -114,18 +193,29 @@ namespace Arcade.UI
             btnNewGame = root.Q<Button>("btn-new-game");
             btnLevelSelect = root.Q<Button>("btn-level-select");
             btnContinue = root.Q<Button>("btn-continue");
+            btnHighscores = root.Q<Button>("btn-highscores");
+            btnHowToPlay = root.Q<Button>("btn-how-to-play");
             btnOptions = root.Q<Button>("btn-options");
             btnCredits = root.Q<Button>("btn-credits");
-            highscoreLabel = root.Q<Label>("menu-highscore-label");
 
             levelModal = root.Q<VisualElement>("level-modal");
             optionsModal = root.Q<VisualElement>("options-modal");
             creditsModal = root.Q<VisualElement>("credits-modal");
+            highscoresModal = root.Q<VisualElement>("highscores-modal");
+            howToPlayModal = root.Q<VisualElement>("how-to-play-modal");
 
             btnCloseLevelModal = root.Q<Button>("btn-close-level-modal");
             btnStartSelectedLevel = root.Q<Button>("btn-start-selected-level");
             btnCloseOptions = root.Q<Button>("btn-close-options");
             btnCloseCredits = root.Q<Button>("btn-close-credits");
+            btnCloseHighscores = root.Q<Button>("btn-close-highscores");
+            btnResetHighscores = root.Q<Button>("btn-reset-highscores");
+            btnCloseHowToPlay = root.Q<Button>("btn-close-how-to-play");
+
+            btnCreditEmail = root.Q<Button>("btn-credit-email");
+            btnCreditWebsite = root.Q<Button>("btn-credit-website");
+            btnCreditLinkedin = root.Q<Button>("btn-credit-linkedin");
+            btnCreditGithub = root.Q<Button>("btn-credit-github");
 
             menuLevelTabButtons.Clear();
             var tabsContainer = root.Q<VisualElement>(className: "level-tabs-container");
@@ -151,6 +241,8 @@ namespace Arcade.UI
             if (btnNewGame != null) btnNewGame.clicked += HandleNewGameClicked;
             if (btnLevelSelect != null) btnLevelSelect.clicked += ShowLevelModal;
             if (btnContinue != null) btnContinue.clicked += HandleContinueClicked;
+            if (btnHighscores != null) btnHighscores.clicked += ShowHighScoresModal;
+            if (btnHowToPlay != null) btnHowToPlay.clicked += ShowHowToPlayModal;
             if (btnOptions != null) btnOptions.clicked += ShowOptions;
             if (btnCredits != null) btnCredits.clicked += ShowCredits;
 
@@ -159,6 +251,14 @@ namespace Arcade.UI
 
             if (btnCloseOptions != null) btnCloseOptions.clicked += HideOptions;
             if (btnCloseCredits != null) btnCloseCredits.clicked += HideCredits;
+            if (btnCloseHighscores != null) btnCloseHighscores.clicked += HideHighScoresModal;
+            if (btnResetHighscores != null) btnResetHighscores.clicked += HandleResetHighScores;
+            if (btnCloseHowToPlay != null) btnCloseHowToPlay.clicked += HideHowToPlayModal;
+
+            if (btnCreditEmail != null) btnCreditEmail.clicked += OpenEmail;
+            if (btnCreditWebsite != null) btnCreditWebsite.clicked += OpenWebsite;
+            if (btnCreditLinkedin != null) btnCreditLinkedin.clicked += OpenLinkedIn;
+            if (btnCreditGithub != null) btnCreditGithub.clicked += OpenGitHub;
 
             if (sliderVolume != null)
             {
@@ -183,12 +283,6 @@ namespace Arcade.UI
 
         private void InitializeValues()
         {
-            if (highscoreLabel != null)
-            {
-                int highscore = PlayerPrefs.GetInt("Arcade_HighScore", 0);
-                highscoreLabel.text = $"ALL-TIME HIGH SCORE: {highscore}";
-            }
-
             bool hasSaved = ArcadeGameManager.HasSavedGame;
             if (btnContinue != null)
             {
@@ -315,6 +409,90 @@ namespace Arcade.UI
         {
             if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             if (creditsModal != null) creditsModal.AddToClassList("modal-hidden");
+        }
+
+        private void ShowHighScoresModal()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            PopulateHighScoresTable();
+            if (highscoresModal != null) highscoresModal.RemoveFromClassList("modal-hidden");
+        }
+
+        private void HideHighScoresModal()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            if (highscoresModal != null) highscoresModal.AddToClassList("modal-hidden");
+        }
+
+        private void HandleResetHighScores()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            HighScoreManager.ResetScores();
+            PopulateHighScoresTable();
+        }
+
+        private void PopulateHighScoresTable()
+        {
+            if (root == null) return;
+            var scores = HighScoreManager.GetTopScores();
+
+            for (int i = 0; i < HighScoreManager.MAX_SCORES; i++)
+            {
+                var valLabel = root.Q<Label>($"score-val-{i}");
+                var dateLabel = root.Q<Label>($"score-date-{i}");
+
+                if (valLabel != null)
+                {
+                    if (i < scores.Count && scores[i].score > 0)
+                        valLabel.text = scores[i].score.ToString("#,##0");
+                    else
+                        valLabel.text = "---";
+                }
+
+                if (dateLabel != null)
+                {
+                    if (i < scores.Count && scores[i].score > 0)
+                        dateLabel.text = scores[i].date;
+                    else
+                        dateLabel.text = "---";
+                }
+            }
+        }
+
+        private void ShowHowToPlayModal()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            if (howToPlayModal != null) howToPlayModal.RemoveFromClassList("modal-hidden");
+        }
+
+        private void HideHowToPlayModal()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            if (howToPlayModal != null) howToPlayModal.AddToClassList("modal-hidden");
+        }
+
+        private void OpenEmail()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            Application.OpenURL("mailto:ramin.rasulzade@gmail.com");
+        }
+
+        private void OpenWebsite()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            Application.OpenURL("https://raminrasulzade.com");
+        }
+
+        private void OpenLinkedIn()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            Application.OpenURL("https://www.linkedin.com/in/ramin-rasulzade/");
+        }
+
+        private void OpenGitHub()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            Application.OpenURL("https://github.com/raminres");
         }
 
         private void ToggleFpsSetting()

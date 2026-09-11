@@ -9,6 +9,7 @@ namespace Arcade.Core
     /// <summary>
     /// Central game coordinator managing state machine, scoring, lives, and high-level gameplay events.
     /// </summary>
+    [DefaultExecutionOrder(-100)]
     public class ArcadeGameManager : MonoBehaviour
     {
         public static ArcadeGameManager Instance { get; private set; }
@@ -85,7 +86,13 @@ namespace Arcade.Core
             }
 
             Instance = this;
-            highScore = PlayerPrefs.GetInt(PREF_HIGH_SCORE, 0);
+            highScore = HighScoreManager.HighestScore;
+            HighScoreManager.OnHighScoresChanged += HandleHighScoresChanged;
+        }
+
+        private void HandleHighScoresChanged()
+        {
+            highScore = HighScoreManager.HighestScore;
         }
 
         private void OnDestroy()
@@ -94,6 +101,7 @@ namespace Arcade.Core
             {
                 Instance = null;
             }
+            HighScoreManager.OnHighScoresChanged -= HandleHighScoresChanged;
         }
 
         private void Start()
@@ -262,11 +270,14 @@ namespace Arcade.Core
                 activeBalls.Add(ball);
                 OnActiveBallCountChanged?.Invoke(activeBalls.Count);
             }
+            OnStateChanged -= ball.HandleStateChangedDirect;
+            OnStateChanged += ball.HandleStateChangedDirect;
         }
 
         public void UnregisterBall(BallController ball)
         {
             if (ball == null) return;
+            OnStateChanged -= ball.HandleStateChangedDirect;
             if (activeBalls.Remove(ball))
             {
                 OnActiveBallCountChanged?.Invoke(activeBalls.Count);
@@ -290,6 +301,14 @@ namespace Arcade.Core
             OnActiveBallCountChanged?.Invoke(activeBalls.Count);
         }
 
+        private static readonly Color[] MultiBallColorPalette = new Color[]
+        {
+            new Color(1f, 0.165f, 0.427f, 1f),     // Neon Magenta (#ff2a6d)
+            new Color(1f, 0.843f, 0f, 1f),         // Solar Gold (#ffd700)
+            new Color(0f, 0.96f, 0.608f, 1f),      // Neon Emerald (#00f59b)
+            new Color(0.608f, 0.365f, 0.898f, 1f)  // Electric Purple (#9b5de5)
+        };
+
         public void SpawnMultiBall(Vector3 originPosition, Vector3 baseVelocity, float speed)
         {
             BallController primary = activeBalls.Count > 0 ? activeBalls[0] : FindAnyObjectByType<BallController>();
@@ -310,8 +329,8 @@ namespace Arcade.Core
             Quaternion rotNeg = Quaternion.AngleAxis(-35f, Vector3.forward);
             Vector3 dir2 = rotNeg * baseVelocity.normalized;
 
-            CreateExtraBall(primary, originPosition, dir1, currentSpeed);
-            CreateExtraBall(primary, originPosition, dir2, currentSpeed);
+            CreateExtraBall(primary, originPosition, dir1, currentSpeed, MultiBallColorPalette[0]);
+            CreateExtraBall(primary, originPosition, dir2, currentSpeed, MultiBallColorPalette[1]);
 
             if (ArcadeAudioManager.Instance != null)
             {
@@ -319,7 +338,7 @@ namespace Arcade.Core
             }
         }
 
-        private void CreateExtraBall(BallController template, Vector3 position, Vector3 direction, float speed)
+        private void CreateExtraBall(BallController template, Vector3 position, Vector3 direction, float speed, Color trailColor)
         {
             GameObject ballObj = Instantiate(template.gameObject, position, Quaternion.identity);
             ballObj.name = "Ball_Extra";
@@ -328,6 +347,7 @@ namespace Arcade.Core
             {
                 extraBall.IsPrimaryBall = false;
                 RegisterBall(extraBall);
+                extraBall.SetTrailColor(trailColor);
                 extraBall.LaunchWithDirection(direction, speed);
             }
         }
@@ -403,6 +423,15 @@ namespace Arcade.Core
             if (currentState != GameState.ReadyToLaunch && currentState != GameState.BallLost) return;
 
             SetState(GameState.Playing);
+
+            // Directly guarantee all registered balls launch even if event subscription had timing race
+            for (int i = 0; i < activeBalls.Count; i++)
+            {
+                if (activeBalls[i] != null && !activeBalls[i].IsLaunched)
+                {
+                    activeBalls[i].Launch();
+                }
+            }
         }
 
         public void RecordBlockDestroyed(int points, int colorTier)
@@ -416,8 +445,7 @@ namespace Arcade.Core
             if (currentScore > highScore)
             {
                 highScore = currentScore;
-                PlayerPrefs.SetInt(PREF_HIGH_SCORE, highScore);
-                PlayerPrefs.Save();
+                HighScoreManager.RecordScore(currentScore);
             }
 
             OnScoreChanged?.Invoke(currentScore, awardedPoints);
@@ -425,6 +453,7 @@ namespace Arcade.Core
 
             if (totalBlocksInLevel > 0 && remainingBlocks <= 0)
             {
+                HighScoreManager.RecordScore(currentScore);
                 OnLevelCleared();
             }
         }
@@ -498,6 +527,10 @@ namespace Arcade.Core
             DeactivateShield();
             DeactivatePaddleExpander();
             DeactivateScoreMultiplier();
+            if (currentScore > 0)
+            {
+                HighScoreManager.RecordScore(currentScore);
+            }
             SetState(GameState.GameOver);
             ClearSavedGame();
 
@@ -524,6 +557,7 @@ namespace Arcade.Core
 
             Time.timeScale = 1f;
             currentState = previousStateBeforePause;
+            Arcade.Input.ArcadeInputHandler.Instance?.SuppressLaunch(0.3f);
             OnPauseToggled?.Invoke(false);
             OnStateChanged?.Invoke(currentState);
         }

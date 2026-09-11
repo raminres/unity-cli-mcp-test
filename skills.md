@@ -147,3 +147,49 @@ In Unity 6 / Cinemachine 3.x:
 6. **Automated Testing Suite**:
    - Tests reside in `Assets/Tests/` under `Arcade.Tests.asmdef`.
    - Run via `Assets/Editor/RunBlockBreakerTests.cs` (Menu item: `Tools/Arcade/Run Block Breaker Tests`) or `unity test . --mode EditMode`.
+
+---
+
+## 9. Unity 6 UI Toolkit PanelRenderer & Runtime Architecture
+1. **PanelRenderer vs. UIDocument in Unity 6**:
+   - `PanelRenderer` replaces legacy `UIDocument` for both screen-space HUDs and world-space panels in Unity 6.
+   - **Lifecycle Pitfall**: `RegisterUIReloadCallback(OnUIReload)` only fires during editor asset re-imports, NOT on initial Play Mode entry.
+   - **Safe Runtime Binding Pattern**:
+     ```csharp
+     public void EnsureInitialized()
+     {
+         if (root == null) root = GetRootVisualElement();
+         if (root != null && btnNewGame == null)
+         {
+             UnbindElements();
+             BindElements();
+             InitializeValues();
+         }
+     }
+     ```
+     With fallback reflection on `PanelRenderer`:
+     `panelRenderer.GetType().GetProperty("rootVisualElement", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(panelRenderer) as VisualElement;`
+2. **Script Execution Order**:
+   - Apply `[DefaultExecutionOrder(-100)]` on `ArcadeGameManager` and `[DefaultExecutionOrder(-90)]` on `ArcadeInputHandler` to ensure manager singletons and event subscriptions are active before scene game objects run `Awake()`/`Start()`.
+3. **Pointer Event Pass-Through**:
+   - Floating layout containers (e.g. `launch-banner` or HUD overlays) must specify `picking-mode="Ignore"` in UXML and `pointer-events: none;` in USS so they do not intercept mouse clicks or screen touch inputs meant for underlying controls.
+4. **Touch Target Scaling for Mobile**:
+   - Touch targets must adhere to $\ge 54\text{px}$–$64\text{px}$ height to support high-DPI displays (e.g. iPhone $2778 \times 1284$) without feeling cramped.
+
+---
+
+## 10. Ball Trail & Dynamic VFX System
+1. **Dual-Layer Stacked Trail Architecture (`BallTrail.cs`)**:
+   - Instantiates two stacked `TrailRenderer` components on child objects:
+     - `Trail_Outer`: Wider translucent halo ($0.55$ start width, $0.22\text{s}$ duration, $40\%$ alpha).
+     - `Trail_Inner`: Narrow luminous core ($0.25$ start width, $0.16\text{s}$ duration, $85\%$ alpha, blended $+65\%$ white).
+   - Both layers evaluate smooth quadratic decay curves (`AnimationCurve`) to eliminate harsh trail cutoff at tail end.
+2. **Multi-Ball High-Contrast Palette**:
+   - Primary ball emits Electric Cyan (`#00F2FF`).
+   - Secondary balls dynamically receive high-contrast neon tints (Hot Magenta `#FF0099`, Electric Gold `#FFCC00`, Neon Lime `#00FF66`).
+3. **Zero-Allocation Color Tinting**:
+   - Synchronizes ball sphere mesh base color and emissive glow to trail color using `MaterialPropertyBlock` (`_EmissionColor`, `_BaseColor`), preventing material duplication and preserving SRP Batcher efficiency.
+4. **Lifecycle Coupling**:
+   - Trails automatically clear and disable emission when docked atop the paddle in `ReadyToLaunch`, paused, or reset.
+   - Emission resumes seamlessly upon launch and game unpause.
+

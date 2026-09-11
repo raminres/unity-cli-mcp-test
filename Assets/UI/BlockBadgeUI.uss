@@ -5,6 +5,8 @@
     align-items: center;
     justify-content: center;
     background-color: transparent;
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Inter.ttf?fileID=12800000&guid=c32a959b960d5234baae7b3519c3828a&type=3#FT_Inter");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Inter.ttf?fileID=12800000&guid=c32a959b960d5234baae7b3519c3828a&type=3#FT_Inter");
 }
 
 .badge-plate {
