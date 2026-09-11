@@ -154,6 +154,9 @@ namespace Arcade.UI
         public Label MultiplierTimerLabel => multiplierTimerLabel;
         public Sprite PaddleExpandSprite => paddleExpandSprite;
         public Sprite MultiplierSprite => multiplierSprite;
+        public Sprite ShieldSprite => shieldSprite;
+        public Sprite MultiBallSprite => multiBallSprite;
+        public Sprite HeartSprite => heartFillSprite;
 
         private bool wasPausedByOptions = false;
         private bool wasPausedByLevelSettings = false;

@@ -25,8 +25,23 @@ namespace Arcade.BlockBreaker
         [SerializeField] private TrailRenderer outerTrail;
         [SerializeField] private TrailRenderer innerTrail;
 
-        public TrailRenderer OuterTrail => outerTrail;
-        public TrailRenderer InnerTrail => innerTrail;
+        public TrailRenderer OuterTrail
+        {
+            get
+            {
+                if (outerTrail == null) EnsureTrailsCreated();
+                return outerTrail;
+            }
+        }
+
+        public TrailRenderer InnerTrail
+        {
+            get
+            {
+                if (innerTrail == null) EnsureTrailsCreated();
+                return innerTrail;
+            }
+        }
         public Color BaseColor => baseColor;
         public Color InnerCoreColor => Color.Lerp(baseColor, Color.white, innerLightnessBlend);
         public float OuterStartWidth => outerStartWidth;
@@ -137,6 +152,10 @@ namespace Arcade.BlockBreaker
         public void SetTrailColor(Color newColor)
         {
             baseColor = newColor;
+            if (outerTrail == null || innerTrail == null)
+            {
+                EnsureTrailsCreated();
+            }
             UpdateTrailColors();
         }
 
@@ -178,6 +197,10 @@ namespace Arcade.BlockBreaker
 
         public void SetEmitting(bool emitting)
         {
+            if (outerTrail == null || innerTrail == null)
+            {
+                EnsureTrailsCreated();
+            }
             if (outerTrail != null) outerTrail.emitting = emitting;
             if (innerTrail != null) innerTrail.emitting = emitting;
         }

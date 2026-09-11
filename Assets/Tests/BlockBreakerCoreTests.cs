@@ -29,6 +29,7 @@ namespace Arcade.Tests
             paddleObj.transform.SetParent(testRoot.transform);
             paddleObj.transform.position = Vector3.zero;
             paddle = paddleObj.AddComponent<PaddleController>();
+            paddle.EnsureSteppedMeshHierarchy();
         }
 
         [TearDown]
@@ -2526,6 +2527,390 @@ namespace Arcade.Tests
             // Clean up
             gameManager.ClearExtraBalls();
             Object.DestroyImmediate(ballObj);
+        }
+
+        #endregion
+
+        #region 12. Stepped Pyramid Paddle & Powerup Capsule Tests
+
+        [Test]
+        public void Paddle_SteppedPyramid_DimensionsAndTapering()
+        {
+            var pObj = new GameObject("SteppedPaddleTest");
+            var col = pObj.AddComponent<BoxCollider>();
+            var pCtrl = pObj.AddComponent<PaddleController>();
+
+            // Construct 3-tier stepped children
+            var stepTop = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            stepTop.name = "Step_Top";
+            stepTop.transform.SetParent(pObj.transform, false);
+            stepTop.transform.localPosition = new Vector3(0f, 0.38f, 0f);
+            stepTop.transform.localScale = new Vector3(1.0f, 0.24f, 1.0f);
+            Object.DestroyImmediate(stepTop.GetComponent<Collider>());
+
+            var stepMid = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            stepMid.name = "Step_Mid";
+            stepMid.transform.SetParent(pObj.transform, false);
+            stepMid.transform.localPosition = new Vector3(0f, 0.16f, 0f);
+            stepMid.transform.localScale = new Vector3(0.72f, 0.20f, 0.88f);
+            Object.DestroyImmediate(stepMid.GetComponent<Collider>());
+
+            var stepBtm = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            stepBtm.name = "Step_Bottom";
+            stepBtm.transform.SetParent(pObj.transform, false);
+            stepBtm.transform.localPosition = new Vector3(0f, -0.02f, 0f);
+            stepBtm.transform.localScale = new Vector3(0.44f, 0.16f, 0.72f);
+            Object.DestroyImmediate(stepBtm.GetComponent<Collider>());
+
+            pCtrl.EnsureSteppedMeshHierarchy();
+
+            Assert.IsNotNull(pCtrl.StepTop, "Step_Top must be resolved.");
+            Assert.IsNotNull(pCtrl.StepMid, "Step_Mid must be resolved.");
+            Assert.IsNotNull(pCtrl.StepBottom, "Step_Bottom must be resolved.");
+
+            Assert.AreEqual(1.0f, pCtrl.StepTop.localScale.x, 0.001f);
+            Assert.AreEqual(0.72f, pCtrl.StepMid.localScale.x, 0.001f);
+            Assert.AreEqual(0.44f, pCtrl.StepBottom.localScale.x, 0.001f);
+
+            // Verify strike collider is aligned with top deck
+            Assert.AreEqual(0.38f, col.center.y, 0.001f);
+            Assert.AreEqual(0.24f, col.size.y, 0.001f);
+
+            Object.DestroyImmediate(pObj);
+        }
+
+        [Test]
+        public void Paddle_CompoundingExpansion_PreservesTaperingRatio()
+        {
+            var pObj = new GameObject("TaperingExpansionTest");
+            var col = pObj.AddComponent<BoxCollider>();
+            var pCtrl = pObj.AddComponent<PaddleController>();
+
+            var stepTop = new GameObject("Step_Top");
+            stepTop.transform.SetParent(pObj.transform, false);
+            stepTop.transform.localScale = new Vector3(1.0f, 0.24f, 1.0f);
+
+            var stepMid = new GameObject("Step_Mid");
+            stepMid.transform.SetParent(pObj.transform, false);
+            stepMid.transform.localScale = new Vector3(0.72f, 0.20f, 0.88f);
+
+            var stepBtm = new GameObject("Step_Bottom");
+            stepBtm.transform.SetParent(pObj.transform, false);
+            stepBtm.transform.localScale = new Vector3(0.44f, 0.16f, 0.72f);
+
+            pCtrl.EnsureSteppedMeshHierarchy();
+            pCtrl.ResetWidth(5.0f);
+
+            // Expand by +10% -> 5.5f
+            pCtrl.ExpandWidth(0.10f);
+            Assert.AreEqual(5.50f, pCtrl.Width, 0.001f);
+
+            // World widths of tiers are multiplied by parent scale
+            float topWorldW = pCtrl.Width * pCtrl.StepTop.localScale.x;
+            float midWorldW = pCtrl.Width * pCtrl.StepMid.localScale.x;
+            float btmWorldW = pCtrl.Width * pCtrl.StepBottom.localScale.x;
+
+            Assert.AreEqual(5.50f, topWorldW, 0.001f);
+            Assert.AreEqual(5.50f * 0.72f, midWorldW, 0.001f);
+            Assert.AreEqual(5.50f * 0.44f, btmWorldW, 0.001f);
+
+            Object.DestroyImmediate(pObj);
+        }
+
+        [Test]
+        public void PowerupCapsule_Collect_TriggersPaddleExpansion()
+        {
+            paddle.ResetWidth(5.0f);
+            var capsule = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.PaddleExpander);
+            Assert.IsNotNull(capsule);
+
+            capsule.Collect(paddle);
+            Assert.AreEqual(5.50f, paddle.Width, 0.001f, "Collecting PaddleExpander capsule must expand paddle.");
+            Assert.AreEqual(1, paddle.ExpansionCount);
+        }
+
+        [Test]
+        public void PowerupCapsule_Collect_ExtraHeart_AddsLife()
+        {
+            int startingLives = gameManager.Lives;
+
+            var capsule = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.ExtraHeart);
+            capsule.Collect(paddle);
+
+            Assert.AreEqual(startingLives + 1, gameManager.Lives, "Collecting ExtraHeart capsule must add 1 life.");
+        }
+
+        [Test]
+        public void PowerupCapsule_Collect_Shield_ActivatesShield()
+        {
+            Assert.IsFalse(gameManager.IsShieldActive);
+
+            var capsule = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.Shield);
+            capsule.Collect(paddle);
+
+            Assert.IsTrue(gameManager.IsShieldActive, "Collecting Shield capsule must activate defensive barrier.");
+            Assert.Greater(gameManager.ShieldTimeRemaining, 0f);
+        }
+
+        [Test]
+        public void BallController_IsValidPaddleBounceNormal_EnforcesUpwardContactsOnly()
+        {
+            // Pure vertical hit from top
+            Assert.IsTrue(BallController.IsValidPaddleBounceNormal(Vector3.up));
+
+            // Angled hit from top (45 deg)
+            Vector3 angledHit = new Vector3(0.707f, 0.707f, 0f);
+            Assert.IsTrue(BallController.IsValidPaddleBounceNormal(angledHit));
+
+            // Side wall collision (horizontal normal)
+            Assert.IsFalse(BallController.IsValidPaddleBounceNormal(Vector3.right), "Side wall hits must NOT deflect upward.");
+            Assert.IsFalse(BallController.IsValidPaddleBounceNormal(Vector3.left), "Side wall hits must NOT deflect upward.");
+
+            // Shallow side scrape with normal.y below 0.25f
+            Vector3 sideScrape = new Vector3(0.98f, 0.15f, 0f);
+            Assert.IsFalse(BallController.IsValidPaddleBounceNormal(sideScrape), "Side scrape below threshold must NOT deflect upward.");
+
+            // Collision from underneath (negative Y normal)
+            Assert.IsFalse(BallController.IsValidPaddleBounceNormal(Vector3.down), "Bottom collisions must NOT deflect upward.");
+        }
+
+        [Test]
+        public void BallController_CalculatePaddleDeflection_PreservesForwardMomentumAndSteers()
+        {
+            // Ball flying down-right
+            Vector3 inVelRight = new Vector3(8f, -10f, 0f);
+
+            // Center hit: should naturally reflect upward and right
+            Vector3 bounceCenter = BallController.CalculatePaddleDeflection(inVelRight, 0f);
+            Assert.Greater(bounceCenter.x, 0f, "Natural optical reflection must preserve rightward horizontal momentum.");
+            Assert.Greater(bounceCenter.y, 0f, "Reflected vector must point upward.");
+
+            // Left-edge hit on rightward ball: should steer steeper upward, but NOT unnaturally reverse left!
+            Vector3 bounceLeft = BallController.CalculatePaddleDeflection(inVelRight, -0.6f);
+            Assert.Greater(bounceLeft.x, 0f, "Hitting left half with rightward velocity must NOT flip horizontal travel.");
+            Assert.Greater(bounceLeft.y, bounceCenter.y, "Left steering on rightward ball should yield steeper upward exit.");
+
+            // Ball flying down-left
+            Vector3 inVelLeft = new Vector3(-8f, -10f, 0f);
+            Vector3 bounceLeftIn = BallController.CalculatePaddleDeflection(inVelLeft, 0f);
+            Assert.Less(bounceLeftIn.x, 0f, "Natural optical reflection must preserve leftward horizontal momentum.");
+            Assert.Greater(bounceLeftIn.y, 0f, "Reflected vector must point upward.");
+        }
+
+        [Test]
+        public void PowerupCapsule_SpawnsInForeground_AtForegroundZ()
+        {
+            Vector3 spawnPos = new Vector3(3f, 8f, 0f);
+            var capsule = PowerupCapsule.Spawn(spawnPos, BlockSpecialType.PaddleExpander);
+            Assert.IsNotNull(capsule);
+
+            Assert.AreEqual(PowerupCapsule.FOREGROUND_Z, capsule.transform.position.z, 0.001f,
+                "Powerup capsule must spawn at foreground depth Z = -1.0f to avoid occlusion behind lower bricks.");
+            Assert.AreEqual(-1.0f, capsule.transform.position.z, 0.001f);
+
+            var boxCol = capsule.GetComponent<BoxCollider>();
+            Assert.IsNotNull(boxCol, "Capsule should use BoxCollider with depth overlap.");
+            Assert.IsTrue(boxCol.isTrigger, "Capsule BoxCollider must be a trigger.");
+            Assert.GreaterOrEqual(boxCol.size.z, 2.5f, "BoxCollider depth must comfortably span the paddle plane.");
+
+            Object.DestroyImmediate(capsule.gameObject);
+        }
+
+        [Test]
+        public void PowerupCapsule_HasDecoupledVisualAndBillboardHierarchy_WithLargeVisibleScale()
+        {
+            var capsule = PowerupCapsule.Spawn(new Vector3(0f, 5f, 0f), BlockSpecialType.PaddleExpander);
+            Assert.IsNotNull(capsule);
+
+            // Verify visual capsule child (tumbler mesh)
+            Assert.IsNotNull(capsule.VisualCapsuleTransform, "Capsule must have VisualCapsuleTransform child.");
+            Assert.AreEqual("Visual_Capsule", capsule.VisualCapsuleTransform.name);
+            Assert.GreaterOrEqual(capsule.VisualCapsuleTransform.localScale.x, 0.80f, "Capsule visual mesh must be prominently sized.");
+
+            // Verify billboard icon child
+            Assert.IsNotNull(capsule.IconTransform, "Capsule must have IconTransform child.");
+            Assert.AreEqual("Icon_Billboard", capsule.IconTransform.name);
+            Assert.GreaterOrEqual(capsule.IconTransform.localScale.x, 0.85f, "Billboard icon must be prominently sized.");
+            Assert.Less(capsule.IconTransform.localPosition.z, -0.50f, "Billboard icon must sit comfortably in front of the capsule.");
+
+            Assert.IsNotNull(capsule.IconRenderer, "IconTransform must have SpriteRenderer component.");
+            Assert.IsNotNull(capsule.IconRenderer.sprite, "Billboard icon must have a sprite assigned.");
+            Assert.GreaterOrEqual(capsule.IconRenderer.sortingOrder, 30, "Billboard icon must have foreground sortingOrder.");
+
+            // Test LateUpdate orientation lock
+            capsule.transform.rotation = Quaternion.Euler(45f, 90f, 30f);
+            capsule.UpdateBillboardOrientation();
+
+            Assert.Less(Quaternion.Angle(capsule.IconTransform.rotation, Quaternion.identity), 0.1f,
+                "Billboard icon must stay upright and unrotated facing camera regardless of parent capsule rotation.");
+
+            Object.DestroyImmediate(capsule.gameObject);
+        }
+
+        [Test]
+        public void PowerupCapsule_Collect_ScoreMultipliers_ActivateMultiplierBuff()
+        {
+            // Test 2X
+            var capsule2x = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.ScoreMultiplier2x);
+            capsule2x.Collect(paddle);
+            Assert.AreEqual(2, gameManager.ActiveScoreMultiplier, "Collecting 2X capsule must activate 2X score multiplier.");
+            Assert.Greater(gameManager.MultiplierTimeRemaining, 0f);
+
+            // Test 3X
+            var capsule3x = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.ScoreMultiplier3x);
+            capsule3x.Collect(paddle);
+            Assert.AreEqual(3, gameManager.ActiveScoreMultiplier, "Collecting 3X capsule must activate 3X score multiplier.");
+
+            // Test 4X
+            var capsule4x = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.ScoreMultiplier4x);
+            capsule4x.Collect(paddle);
+            Assert.AreEqual(4, gameManager.ActiveScoreMultiplier, "Collecting 4X capsule must activate 4X score multiplier.");
+
+            // Test 5X
+            var capsule5x = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.ScoreMultiplier5x);
+            capsule5x.Collect(paddle);
+            Assert.AreEqual(5, gameManager.ActiveScoreMultiplier, "Collecting 5X capsule must activate 5X score multiplier.");
+        }
+
+        [Test]
+        public void PaddleController_RootCollider_HasExtendedDepth()
+        {
+            var boxCol = paddle.GetComponent<BoxCollider>();
+            Assert.IsNotNull(boxCol);
+            Assert.GreaterOrEqual(boxCol.size.z, 2.5f, "Paddle root collider must have depth >= 2.5 to intersect foreground capsules.");
+        }
+
+        #endregion
+
+        #region Background Gradient Tests
+
+        [Test]
+        public void LevelBackgroundController_InitializesAndAppliesGradientTexture()
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            var mr = go.GetComponent<MeshRenderer>();
+            var bgCtrl = go.AddComponent<LevelBackgroundController>();
+
+            var tex1 = new Texture2D(32, 32);
+            var tex2 = new Texture2D(32, 32);
+            var tex3 = new Texture2D(32, 32);
+            var tex4 = new Texture2D(32, 32);
+
+            bgCtrl.SetTextures(new[] { tex1, tex2, tex3, tex4 });
+
+            Assert.IsNotNull(bgCtrl.CurrentTexture, "CurrentTexture should not be null after SetTextures.");
+            Assert.GreaterOrEqual(bgCtrl.CurrentTextureIndex, 0);
+            Assert.Less(bgCtrl.CurrentTextureIndex, 4);
+
+            Object.DestroyImmediate(tex1);
+            Object.DestroyImmediate(tex2);
+            Object.DestroyImmediate(tex3);
+            Object.DestroyImmediate(tex4);
+            Object.DestroyImmediate(go);
+        }
+
+        [Test]
+        public void LevelBackgroundController_RandomizeBackground_AvoidsSameConsecutiveTexture()
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            var bgCtrl = go.AddComponent<LevelBackgroundController>();
+
+            var tex1 = new Texture2D(16, 16);
+            var tex2 = new Texture2D(16, 16);
+
+            bgCtrl.SetTextures(new[] { tex1, tex2 });
+            bgCtrl.SetBackgroundByIndex(0);
+            Assert.AreEqual(0, bgCtrl.CurrentTextureIndex);
+
+            // Calling randomize with avoidSameAsCurrent = true must pick the other texture (index 1)
+            bgCtrl.RandomizeBackground(avoidSameAsCurrent: true);
+            Assert.AreEqual(1, bgCtrl.CurrentTextureIndex, "RandomizeBackground must avoid repeating the same texture when alternatives exist.");
+
+            // Calling randomize again must pick index 0
+            bgCtrl.RandomizeBackground(avoidSameAsCurrent: true);
+            Assert.AreEqual(0, bgCtrl.CurrentTextureIndex, "RandomizeBackground must cycle away from current texture index.");
+
+            Object.DestroyImmediate(tex1);
+            Object.DestroyImmediate(tex2);
+            Object.DestroyImmediate(go);
+        }
+
+        [Test]
+        public void LevelBackgroundController_SetBackgroundByIndex_ClampsSafely()
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            var bgCtrl = go.AddComponent<LevelBackgroundController>();
+
+            var tex1 = new Texture2D(16, 16);
+            var tex2 = new Texture2D(16, 16);
+
+            bgCtrl.SetTextures(new[] { tex1, tex2 });
+
+            bgCtrl.SetBackgroundByIndex(999);
+            Assert.AreEqual(1, bgCtrl.CurrentTextureIndex);
+            Assert.AreEqual(tex2, bgCtrl.CurrentTexture);
+
+            bgCtrl.SetBackgroundByIndex(-50);
+            Assert.AreEqual(0, bgCtrl.CurrentTextureIndex);
+            Assert.AreEqual(tex1, bgCtrl.CurrentTexture);
+
+            Object.DestroyImmediate(tex1);
+            Object.DestroyImmediate(tex2);
+            Object.DestroyImmediate(go);
+        }
+
+        [Test]
+        public void LevelGenerator_GenerateLevel_TriggersBackgroundRandomization()
+        {
+            var bgGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            var bgCtrl = bgGo.AddComponent<LevelBackgroundController>();
+
+            var tex1 = new Texture2D(16, 16);
+            var tex2 = new Texture2D(16, 16);
+            bgCtrl.SetTextures(new[] { tex1, tex2 });
+            bgCtrl.SetBackgroundByIndex(0);
+            Assert.AreEqual(0, bgCtrl.CurrentTextureIndex);
+
+            var genObj = new GameObject("TestGen");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            // Calling GenerateLevel on LevelGenerator must trigger background randomization
+            gen.GenerateLevel();
+
+            // Index should have changed from 0 to 1 because avoidSameAsCurrent is default true
+            Assert.AreEqual(1, bgCtrl.CurrentTextureIndex, "GenerateLevel must trigger background randomization.");
+
+            Object.DestroyImmediate(tex1);
+            Object.DestroyImmediate(tex2);
+            Object.DestroyImmediate(genObj);
+            Object.DestroyImmediate(bgGo);
+        }
+
+        [Test]
+        public void SceneSetup_GameplayScene_HasBackgroundPlaneBehindPlayfield()
+        {
+            var scene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/LV_BlockBreaker.unity", UnityEditor.SceneManagement.OpenSceneMode.Additive);
+            var rootObjects = scene.GetRootGameObjects();
+
+            GameObject bgPlane = null;
+            foreach (var root in rootObjects)
+            {
+                if (root.name == "Background_Plane")
+                {
+                    bgPlane = root;
+                    break;
+                }
+            }
+
+            Assert.IsNotNull(bgPlane, "Background_Plane must exist in LV_BlockBreaker scene.");
+            Assert.Greater(bgPlane.transform.position.z, 2.0f, "Background_Plane must be positioned behind arena elements (Z > 2.0).");
+            Assert.AreEqual(new Vector3(40f, 80f, 1f), bgPlane.transform.localScale, "Background_Plane must be scaled to 40x80.");
+            var ctrl = bgPlane.GetComponent<LevelBackgroundController>();
+            Assert.IsNotNull(ctrl, "Background_Plane must have LevelBackgroundController component.");
+            Assert.IsNotNull(ctrl.BackgroundTextures, "BackgroundTextures array must be configured.");
+            Assert.AreEqual(4, ctrl.BackgroundTextures.Length, "Must have 4 gradient textures assigned.");
+
+            UnityEditor.SceneManagement.EditorSceneManager.CloseScene(scene, true);
         }
 
         #endregion

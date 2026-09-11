@@ -283,6 +283,17 @@ namespace Arcade.BlockBreaker
             {
                 ArcadeGameManager.Instance.RegisterLevelBlocks(totalBlocksCreated);
             }
+
+            // Randomize background gradient texture for each level
+            if (LevelBackgroundController.Instance != null)
+            {
+                LevelBackgroundController.Instance.RandomizeBackground();
+            }
+            else
+            {
+                var bg = FindAnyObjectByType<LevelBackgroundController>();
+                if (bg != null) bg.RandomizeBackground();
+            }
         }
 
         public Dictionary<int, BlockSpecialType> DistributeSpecialBlocks(int totalBlocks, int mult2xCount, int expanderCount)

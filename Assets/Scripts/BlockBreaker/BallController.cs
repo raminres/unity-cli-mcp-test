@@ -33,7 +33,7 @@ namespace Arcade.BlockBreaker
 
         public bool IsLaunched => isLaunched;
         public float CurrentSpeed => currentSpeed;
-        public BallTrail Trail => ballTrail;
+        public BallTrail Trail => ballTrail != null ? ballTrail : (ballTrail = GetComponent<BallTrail>() ?? gameObject.AddComponent<BallTrail>());
         public bool IsPrimaryBall
         {
             get => isPrimaryBall;
@@ -175,9 +175,9 @@ namespace Arcade.BlockBreaker
 
         public void SetTrailColor(Color color)
         {
-            if (ballTrail != null)
+            if (Trail != null)
             {
-                ballTrail.SetTrailColor(color);
+                Trail.SetTrailColor(color);
             }
             ApplyBallColor(color);
         }
@@ -211,10 +211,10 @@ namespace Arcade.BlockBreaker
                 transform.position = new Vector3(paddlePos.x, paddlePos.y + launchYOffset, 0f);
             }
 
-            if (ballTrail != null)
+            if (Trail != null)
             {
-                ballTrail.SetEmitting(false);
-                ballTrail.Clear();
+                Trail.SetEmitting(false);
+                Trail.Clear();
             }
         }
 
@@ -226,10 +226,10 @@ namespace Arcade.BlockBreaker
             var col = GetComponent<Collider>();
             if (col != null) col.enabled = active;
 
-            if (ballTrail != null && !active)
+            if (Trail != null && !active)
             {
-                ballTrail.SetEmitting(false);
-                ballTrail.Clear();
+                Trail.SetEmitting(false);
+                Trail.Clear();
             }
         }
 
@@ -247,10 +247,10 @@ namespace Arcade.BlockBreaker
             isLaunched = true;
             currentSpeed = baseSpeed;
 
-            if (ballTrail != null)
+            if (Trail != null)
             {
-                ballTrail.Clear();
-                ballTrail.SetEmitting(true);
+                Trail.Clear();
+                Trail.SetEmitting(true);
             }
 
             // Launch upwards with slight random angular bias (+- 15 degrees off vertical)
@@ -271,10 +271,10 @@ namespace Arcade.BlockBreaker
             isLaunched = true;
             currentSpeed = speed > 0f ? speed : baseSpeed;
 
-            if (ballTrail != null)
+            if (Trail != null)
             {
-                ballTrail.Clear();
-                ballTrail.SetEmitting(true);
+                Trail.Clear();
+                Trail.SetEmitting(true);
             }
 
             if (rb != null)
@@ -329,15 +329,44 @@ namespace Arcade.BlockBreaker
             }
         }
 
+        public const float MIN_UPWARD_NORMAL_Y = 0.25f;
+
+        /// <summary>
+        /// Validates that a collision normal points predominantly upward, preventing side/bottom edge saves.
+        /// </summary>
+        public static bool IsValidPaddleBounceNormal(Vector3 normal)
+        {
+            return normal.y >= MIN_UPWARD_NORMAL_Y;
+        }
+
         private void OnCollisionEnter(Collision collision)
         {
             if (!isLaunched) return;
 
             // Check if we hit the paddle
-            PaddleController hitPaddle = collision.gameObject.GetComponent<PaddleController>();
+            PaddleController hitPaddle = collision.gameObject.GetComponent<PaddleController>()
+                ?? collision.gameObject.GetComponentInParent<PaddleController>();
             if (hitPaddle != null)
             {
+                // Contact Normal Guard:
+                // Only upward-facing contacts on the top strike deck count as paddle saves.
+                // If contactNormal.y < MIN_UPWARD_NORMAL_Y, it's a side-wall or underneath collision;
+                // do not trigger upward deflection so balls that missed the top drop into killzone.
+                if (collision.contacts.Length > 0)
+                {
+                    Vector3 contactNormal = collision.contacts[0].normal;
+                    if (!IsValidPaddleBounceNormal(contactNormal))
+                    {
+                        if (ArcadeAudioManager.Instance != null)
+                        {
+                            ArcadeAudioManager.Instance.PlayWallBounce();
+                        }
+                        return;
+                    }
+                }
+
                 HandlePaddleCollision(hitPaddle);
+                hitPaddle.TriggerImpactRecoil();
                 return;
             }
 
@@ -356,19 +385,49 @@ namespace Arcade.BlockBreaker
             }
         }
 
+        /// <summary>
+        /// Computes a physics-informed paddle deflection vector:
+        /// 1. Takes natural optical ray reflection off the horizontal paddle (preserving forward horizontal momentum).
+        /// 2. Applies paddle steering based on normalized contact hitOffset (-1 to +1).
+        /// 3. Clamps final bounce angle to playable arcade bounds (25° to 155°) to prevent horizontal locks.
+        /// </summary>
+        public static Vector3 CalculatePaddleDeflection(Vector3 inVelocity, float hitOffset, float steerStrength = 32f, float minAngleDeg = 25f, float maxAngleDeg = 155f)
+        {
+            float inX = inVelocity.x;
+            float inY = Mathf.Abs(inVelocity.y); // Upward reflection normal
+
+            // Fallback for near-zero incoming velocities
+            if (Mathf.Abs(inX) < 0.01f && inY < 0.01f)
+            {
+                inY = 1.0f;
+            }
+
+            // Natural optical ray reflection angle in degrees (0 to 180)
+            float rayAngleDeg = Mathf.Atan2(inY, inX) * Mathf.Rad2Deg;
+
+            // Paddle steering influence:
+            // Positive offset (right of center) biases angle toward shallow right (-deg).
+            // Negative offset (left of center) biases angle toward shallow left (+deg).
+            float steerAngleDeg = -hitOffset * steerStrength;
+
+            // Clamped final angle preserving natural momentum while allowing sharp cuts
+            float finalAngleDeg = Mathf.Clamp(rayAngleDeg + steerAngleDeg, minAngleDeg, maxAngleDeg);
+            float finalRad = finalAngleDeg * Mathf.Deg2Rad;
+
+            return new Vector3(Mathf.Cos(finalRad), Mathf.Sin(finalRad), 0f).normalized;
+        }
+
         private void HandlePaddleCollision(PaddleController hitPaddle)
         {
             float hitOffset = hitPaddle.CalculateHitOffset(transform.position.x);
 
-            // Angle mapping:
-            // hitOffset = 0 -> 90 deg (straight up)
-            // hitOffset = +1 -> 90 - 60 = 30 deg (shallow right)
-            // hitOffset = -1 -> 90 - (-60) = 150 deg (shallow left)
-            float bounceAngleDeg = 90f - (hitOffset * maxDeflectionAngleDegrees);
-            float bounceRad = bounceAngleDeg * Mathf.Deg2Rad;
+            Vector3 inVelocity = rb != null ? rb.linearVelocity : Vector3.down * currentSpeed;
+            Vector3 newDir = CalculatePaddleDeflection(inVelocity, hitOffset, 32f, 25f, 155f);
 
-            Vector3 newDir = new Vector3(Mathf.Cos(bounceRad), Mathf.Sin(bounceRad), 0f).normalized;
-            rb.linearVelocity = newDir * currentSpeed;
+            if (rb != null)
+            {
+                rb.linearVelocity = newDir * currentSpeed;
+            }
 
             if (ArcadeAudioManager.Instance != null)
             {
