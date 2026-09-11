@@ -2277,6 +2277,43 @@ namespace Arcade.Tests
         }
 
         [Test]
+        public void InputHandler_ResetTouchState_DoesNotPermanentlyBlockKeyboardLaunch()
+        {
+            var inputGo = new GameObject("TestInput");
+            inputGo.transform.SetParent(testRoot.transform);
+            var inputHandler = inputGo.AddComponent<Arcade.Input.ArcadeInputHandler>();
+            Arcade.Input.ArcadeInputHandler.SetInstanceForTesting(inputHandler);
+
+            gameManager.SetState(GameState.ReadyToLaunch);
+
+            // Simulating a touch/click release or modal dismissal calling ResetTouchState
+            inputHandler.ResetTouchState();
+            Assert.IsFalse(inputHandler.IsLaunchSuppressed, "ResetTouchState must not lock out launches.");
+
+            // Keyboard launch should immediately succeed
+            inputHandler.TriggerLaunch();
+            Assert.AreEqual(GameState.Playing, gameManager.State, "Launch must succeed after ResetTouchState.");
+
+            Object.DestroyImmediate(inputGo);
+        }
+
+        [Test]
+        public void InputHandler_TriggerLaunch_LaunchesBallWhenNotSuppressed()
+        {
+            var inputGo = new GameObject("TestInput");
+            inputGo.transform.SetParent(testRoot.transform);
+            var inputHandler = inputGo.AddComponent<Arcade.Input.ArcadeInputHandler>();
+            Arcade.Input.ArcadeInputHandler.SetInstanceForTesting(inputHandler);
+
+            gameManager.SetState(GameState.ReadyToLaunch);
+            inputHandler.TriggerLaunch();
+
+            Assert.AreEqual(GameState.Playing, gameManager.State, "Launch must trigger State transition to Playing.");
+
+            Object.DestroyImmediate(inputGo);
+        }
+
+        [Test]
         public void HighScoreManager_RecordScore_SortsDescendingAndClampsTo10()
         {
             HighScoreManager.ResetScores();

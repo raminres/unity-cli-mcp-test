@@ -30,7 +30,6 @@ namespace Arcade.Input
         private bool hasDirectTargetX = false;
         private float directTargetWorldX = 0f;
         private bool touchStartedOverUI = false;
-        private bool suppressLaunch = false;
         private float launchSuppressedUntil = 0f;
         private Camera mainCam;
 
@@ -47,9 +46,10 @@ namespace Arcade.Input
             Instance = instance;
         }
 
+        public bool IsLaunchSuppressed => Time.unscaledTime < launchSuppressedUntil;
+
         public void SuppressLaunch(float durationSeconds = 0.25f)
         {
-            suppressLaunch = true;
             launchSuppressedUntil = Mathf.Max(launchSuppressedUntil, Time.unscaledTime + durationSeconds);
         }
 
@@ -104,7 +104,7 @@ namespace Arcade.Input
                 if (keyboard.rightArrowKey.isPressed || keyboard.dKey.isPressed)
                     axis += 1f;
 
-                if (keyboard.upArrowKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame)
+                if (keyboard.upArrowKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame)
                 {
                     if (Arcade.UI.ArcadeUIManager.Instance == null || !Arcade.UI.ArcadeUIManager.Instance.IsAnyModalVisible())
                     {
@@ -123,7 +123,7 @@ namespace Arcade.Input
             if (UnityEngine.Input.GetKey(KeyCode.RightArrow) || UnityEngine.Input.GetKey(KeyCode.D))
                 axis += 1f;
 
-            if (UnityEngine.Input.GetKeyDown(KeyCode.UpArrow) || UnityEngine.Input.GetKeyDown(KeyCode.Space))
+            if (UnityEngine.Input.GetKeyDown(KeyCode.UpArrow) || UnityEngine.Input.GetKeyDown(KeyCode.Space) || UnityEngine.Input.GetKeyDown(KeyCode.W))
             {
                 if (Arcade.UI.ArcadeUIManager.Instance == null || !Arcade.UI.ArcadeUIManager.Instance.IsAnyModalVisible())
                 {
@@ -262,7 +262,7 @@ namespace Arcade.Input
             else if (pointerUp)
             {
                 bool pointerOverUIOnRelease = Arcade.UI.ArcadeUIManager.Instance != null && Arcade.UI.ArcadeUIManager.Instance.IsPointerOverUI(screenPos);
-                if (!touchStartedOverUI && !pointerOverUIOnRelease && !suppressLaunch && Time.unscaledTime >= launchSuppressedUntil)
+                if (!touchStartedOverUI && !pointerOverUIOnRelease && Time.unscaledTime >= launchSuppressedUntil)
                 {
                     float tapDist = Vector2.Distance(screenPos, touchStartScreenPos);
                     float duration = Time.unscaledTime - touchStartTime;
@@ -276,7 +276,6 @@ namespace Arcade.Input
                 }
 
                 touchStartedOverUI = false;
-                suppressLaunch = false;
                 ResetTouchState();
             }
         }
@@ -287,14 +286,14 @@ namespace Arcade.Input
             hasDirectTargetX = false;
             directTargetWorldX = 0f;
             horizontalInput = 0f;
-            suppressLaunch = true;
+            touchStartedOverUI = false;
             touchStartPaddleX = 0f;
             touchStartWorldX = 0f;
         }
 
         public void TriggerLaunch()
         {
-            if (suppressLaunch || Time.unscaledTime < launchSuppressedUntil) return;
+            if (Time.unscaledTime < launchSuppressedUntil) return;
             if (Arcade.UI.ArcadeUIManager.Instance != null && Arcade.UI.ArcadeUIManager.Instance.IsAnyModalVisible()) return;
 
             OnLaunchTriggered?.Invoke();
