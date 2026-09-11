@@ -20,14 +20,21 @@ namespace Arcade.BlockBreaker
         [Header("References")]
         [SerializeField] private PaddleController paddle;
         [SerializeField] private Rigidbody rb;
+        [SerializeField] private BallTrail ballTrail;
+        [SerializeField] private Color primaryBallColor = new Color(0f, 0.95f, 1f, 1f); // Electric Cyan
 
         private float currentSpeed;
         private bool isLaunched = false;
         private Vector3 lastVelocity;
         private bool isPrimaryBall = true;
+        private MaterialPropertyBlock propBlock;
+        private Renderer ballRenderer;
+        private static readonly int EmissionColorProp = Shader.PropertyToID("_EmissionColor");
+        private static readonly int BaseColorProp = Shader.PropertyToID("_BaseColor");
 
         public bool IsLaunched => isLaunched;
         public float CurrentSpeed => currentSpeed;
+        public BallTrail Trail => ballTrail;
         public bool IsPrimaryBall
         {
             get => isPrimaryBall;
@@ -43,6 +50,19 @@ namespace Arcade.BlockBreaker
             rb.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
 
             currentSpeed = baseSpeed;
+
+            if (ballTrail == null)
+            {
+                ballTrail = GetComponent<BallTrail>() ?? gameObject.AddComponent<BallTrail>();
+            }
+
+            ballRenderer = GetComponent<Renderer>();
+            propBlock = new MaterialPropertyBlock();
+
+            if (isPrimaryBall)
+            {
+                SetTrailColor(primaryBallColor);
+            }
         }
 
         private void OnEnable()
@@ -147,6 +167,28 @@ namespace Arcade.BlockBreaker
             }
         }
 
+        public void SetTrailColor(Color color)
+        {
+            if (ballTrail != null)
+            {
+                ballTrail.SetTrailColor(color);
+            }
+            ApplyBallColor(color);
+        }
+
+        private void ApplyBallColor(Color color)
+        {
+            if (ballRenderer == null) ballRenderer = GetComponent<Renderer>();
+            if (ballRenderer != null)
+            {
+                if (propBlock == null) propBlock = new MaterialPropertyBlock();
+                ballRenderer.GetPropertyBlock(propBlock);
+                propBlock.SetColor(EmissionColorProp, color * 1.15f);
+                propBlock.SetColor(BaseColorProp, Color.Lerp(Color.white, color, 0.25f));
+                ballRenderer.SetPropertyBlock(propBlock);
+            }
+        }
+
         public void StopAndDockBall()
         {
             isLaunched = false;
@@ -162,6 +204,12 @@ namespace Arcade.BlockBreaker
                 Vector3 paddlePos = paddle.transform.position;
                 transform.position = new Vector3(paddlePos.x, paddlePos.y + launchYOffset, 0f);
             }
+
+            if (ballTrail != null)
+            {
+                ballTrail.SetEmitting(false);
+                ballTrail.Clear();
+            }
         }
 
         public void SetBallActive(bool active)
@@ -171,6 +219,12 @@ namespace Arcade.BlockBreaker
 
             var col = GetComponent<Collider>();
             if (col != null) col.enabled = active;
+
+            if (ballTrail != null && !active)
+            {
+                ballTrail.SetEmitting(false);
+                ballTrail.Clear();
+            }
         }
 
         public void ResetBallToPaddle()
@@ -186,6 +240,12 @@ namespace Arcade.BlockBreaker
             SetBallActive(true);
             isLaunched = true;
             currentSpeed = baseSpeed;
+
+            if (ballTrail != null)
+            {
+                ballTrail.Clear();
+                ballTrail.SetEmitting(true);
+            }
 
             // Launch upwards with slight random angular bias (+- 15 degrees off vertical)
             float randomAngleOffset = UnityEngine.Random.Range(-15f, 15f);
@@ -204,6 +264,12 @@ namespace Arcade.BlockBreaker
             SetBallActive(true);
             isLaunched = true;
             currentSpeed = speed > 0f ? speed : baseSpeed;
+
+            if (ballTrail != null)
+            {
+                ballTrail.Clear();
+                ballTrail.SetEmitting(true);
+            }
 
             if (rb != null)
             {
@@ -224,9 +290,16 @@ namespace Arcade.BlockBreaker
                 return;
             }
 
-            if (state == GameState.Playing && !isLaunched)
+            if (state == GameState.Playing)
             {
-                Launch();
+                if (!isLaunched)
+                {
+                    Launch();
+                }
+                else if (ballTrail != null)
+                {
+                    ballTrail.SetEmitting(true);
+                }
             }
             else if (state == GameState.BallLost || state == GameState.ReadyToLaunch)
             {
@@ -244,7 +317,10 @@ namespace Arcade.BlockBreaker
             }
             else if (state == GameState.Paused)
             {
-                // Physics is paused by Time.timeScale in GameManager
+                if (ballTrail != null)
+                {
+                    ballTrail.SetEmitting(false);
+                }
             }
         }
 

@@ -297,6 +297,14 @@ namespace Arcade.Core
             OnActiveBallCountChanged?.Invoke(activeBalls.Count);
         }
 
+        private static readonly Color[] MultiBallColorPalette = new Color[]
+        {
+            new Color(1f, 0.165f, 0.427f, 1f),     // Neon Magenta (#ff2a6d)
+            new Color(1f, 0.843f, 0f, 1f),         // Solar Gold (#ffd700)
+            new Color(0f, 0.96f, 0.608f, 1f),      // Neon Emerald (#00f59b)
+            new Color(0.608f, 0.365f, 0.898f, 1f)  // Electric Purple (#9b5de5)
+        };
+
         public void SpawnMultiBall(Vector3 originPosition, Vector3 baseVelocity, float speed)
         {
             BallController primary = activeBalls.Count > 0 ? activeBalls[0] : FindAnyObjectByType<BallController>();
@@ -317,8 +325,8 @@ namespace Arcade.Core
             Quaternion rotNeg = Quaternion.AngleAxis(-35f, Vector3.forward);
             Vector3 dir2 = rotNeg * baseVelocity.normalized;
 
-            CreateExtraBall(primary, originPosition, dir1, currentSpeed);
-            CreateExtraBall(primary, originPosition, dir2, currentSpeed);
+            CreateExtraBall(primary, originPosition, dir1, currentSpeed, MultiBallColorPalette[0]);
+            CreateExtraBall(primary, originPosition, dir2, currentSpeed, MultiBallColorPalette[1]);
 
             if (ArcadeAudioManager.Instance != null)
             {
@@ -326,7 +334,7 @@ namespace Arcade.Core
             }
         }
 
-        private void CreateExtraBall(BallController template, Vector3 position, Vector3 direction, float speed)
+        private void CreateExtraBall(BallController template, Vector3 position, Vector3 direction, float speed, Color trailColor)
         {
             GameObject ballObj = Instantiate(template.gameObject, position, Quaternion.identity);
             ballObj.name = "Ball_Extra";
@@ -335,6 +343,7 @@ namespace Arcade.Core
             {
                 extraBall.IsPrimaryBall = false;
                 RegisterBall(extraBall);
+                extraBall.SetTrailColor(trailColor);
                 extraBall.LaunchWithDirection(direction, speed);
             }
         }

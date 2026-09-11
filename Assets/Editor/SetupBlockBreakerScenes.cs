@@ -230,6 +230,7 @@ namespace Arcade.Editor
             var borderMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Playfield_Border.mat");
             var paddleMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Paddle.mat");
             var ballMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Ball.mat");
+            var trailMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_BallTrail.mat");
             var redMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Red.mat");
             var greenMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Green.mat");
             var blueMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Blue.mat");
@@ -287,7 +288,7 @@ namespace Arcade.Editor
             paddleRb.isKinematic = true;
             var paddleCtrl = paddleGo.AddComponent<PaddleController>();
 
-            // 8. Ball (Sphere)
+            // 8. Ball (Sphere) with Dual-Layer Trail
             var ballGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             ballGo.name = "Ball";
             ballGo.transform.position = new Vector3(0f, -5.65f, 0f);
@@ -299,12 +300,19 @@ namespace Arcade.Editor
             ballRb.useGravity = false;
             ballRb.collisionDetectionMode = CollisionDetectionMode.Continuous;
             ballRb.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
+            
+            var ballTrail = ballGo.AddComponent<BallTrail>();
+            if (trailMat != null)
+            {
+                ballTrail.Initialize(trailMat, new Color(0f, 0.95f, 1f, 1f));
+            }
             var ballCtrl = ballGo.AddComponent<BallController>();
 
-            // Wire BallController to Paddle
+            // Wire BallController to Paddle and BallTrail
             var ballSo = new SerializedObject(ballCtrl);
             ballSo.FindProperty("paddle").objectReferenceValue = paddleCtrl;
             ballSo.FindProperty("rb").objectReferenceValue = ballRb;
+            ballSo.FindProperty("ballTrail").objectReferenceValue = ballTrail;
             ballSo.ApplyModifiedProperties();
 
             // 9. Audio Manager (Fallback if entering gameplay directly)

@@ -2367,6 +2367,130 @@ namespace Arcade.Tests
             Object.DestroyImmediate(uiObj);
         }
 
+        [Test]
+        public void BallTrail_Initialization_CreatesDualLayerRenderers()
+        {
+            var ballObj = new GameObject("TestBall");
+            var trail = ballObj.AddComponent<BallTrail>();
+            trail.EnsureTrailsCreated();
+
+            Assert.IsNotNull(trail.OuterTrail, "Outer trail renderer must be created.");
+            Assert.IsNotNull(trail.InnerTrail, "Inner trail renderer must be created.");
+            Assert.AreEqual(trail.OuterStartWidth, 0.55f, 0.01f, "Outer trail start width should be 0.55.");
+            Assert.AreEqual(trail.InnerStartWidth, 0.25f, 0.01f, "Inner trail start width should be 0.25.");
+            Assert.AreEqual(trail.OuterDuration, 0.22f, 0.01f, "Outer trail duration should be 0.22s.");
+            Assert.AreEqual(trail.InnerDuration, 0.16f, 0.01f, "Inner trail duration should be 0.16s.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void BallTrail_TaperingCurves_WidthTapersToZero()
+        {
+            var ballObj = new GameObject("TestBall");
+            var trail = ballObj.AddComponent<BallTrail>();
+            trail.EnsureTrailsCreated();
+
+            AnimationCurve outerCurve = trail.OuterTrail.widthCurve;
+            AnimationCurve innerCurve = trail.InnerTrail.widthCurve;
+
+            Assert.AreEqual(0.55f, outerCurve.Evaluate(0f), 0.02f, "Outer trail should start at ~0.55 width.");
+            Assert.AreEqual(0.0f, outerCurve.Evaluate(1f), 0.01f, "Outer trail should taper to 0 width at tail.");
+
+            Assert.AreEqual(0.25f, innerCurve.Evaluate(0f), 0.02f, "Inner trail should start at ~0.25 width.");
+            Assert.AreEqual(0.0f, innerCurve.Evaluate(1f), 0.01f, "Inner trail should taper to 0 width at tail.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void BallTrail_SetTrailColor_CalculatesDualLightnessLevelsCorrectly()
+        {
+            var ballObj = new GameObject("TestBall");
+            var trail = ballObj.AddComponent<BallTrail>();
+            Color testColor = new Color(0f, 0.8f, 1f, 1f);
+            trail.SetTrailColor(testColor);
+
+            Assert.AreEqual(testColor, trail.BaseColor);
+
+            // Inner core must have higher lightness (blended toward white)
+            Color innerCore = trail.InnerCoreColor;
+            Assert.Greater(innerCore.r, testColor.r, "Inner core R must be lighter.");
+            Assert.Greater(innerCore.g, testColor.g, "Inner core G must be lighter.");
+            Assert.GreaterOrEqual(innerCore.b, testColor.b, "Inner core B must be lighter or equal.");
+
+            // Verify alpha keys: outer 0.40 -> 0, inner 0.85 -> 0
+            Gradient outerGrad = trail.OuterTrail.colorGradient;
+            Gradient innerGrad = trail.InnerTrail.colorGradient;
+
+            Assert.AreEqual(0.40f, outerGrad.alphaKeys[0].alpha, 0.02f);
+            Assert.AreEqual(0.00f, outerGrad.alphaKeys[1].alpha, 0.01f);
+            Assert.AreEqual(0.85f, innerGrad.alphaKeys[0].alpha, 0.02f);
+            Assert.AreEqual(0.00f, innerGrad.alphaKeys[1].alpha, 0.01f);
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void BallController_Docked_SuppressesTrailEmission()
+        {
+            var ballObj = new GameObject("TestBall");
+            var rb = ballObj.AddComponent<Rigidbody>();
+            rb.useGravity = false;
+            var ballCtrl = ballObj.AddComponent<BallController>();
+
+            // Initially docked
+            Assert.IsFalse(ballCtrl.IsLaunched);
+            Assert.IsFalse(ballCtrl.Trail.OuterTrail.emitting, "Outer trail should not emit while docked.");
+            Assert.IsFalse(ballCtrl.Trail.InnerTrail.emitting, "Inner trail should not emit while docked.");
+
+            // Launch ball
+            ballCtrl.Launch();
+            Assert.IsTrue(ballCtrl.IsLaunched);
+            Assert.IsTrue(ballCtrl.Trail.OuterTrail.emitting, "Outer trail must emit after launch.");
+            Assert.IsTrue(ballCtrl.Trail.InnerTrail.emitting, "Inner trail must emit after launch.");
+
+            // Dock ball again
+            ballCtrl.StopAndDockBall();
+            Assert.IsFalse(ballCtrl.IsLaunched);
+            Assert.IsFalse(ballCtrl.Trail.OuterTrail.emitting, "Outer trail must stop emitting when docked.");
+            Assert.IsFalse(ballCtrl.Trail.InnerTrail.emitting, "Inner trail must stop emitting when docked.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void ArcadeGameManager_MultiBall_AssignsDistinctColors()
+        {
+            var ballObj = new GameObject("PrimaryBall");
+            ballObj.AddComponent<Rigidbody>();
+            var primaryBall = ballObj.AddComponent<BallController>();
+            primaryBall.SetTrailColor(new Color(0f, 0.95f, 1f, 1f)); // Electric Cyan
+            gameManager.RegisterBall(primaryBall);
+
+            // Spawn Multi-Ball
+            gameManager.SpawnMultiBall(Vector3.zero, Vector3.up, 14f);
+
+            var balls = Object.FindObjectsByType<BallController>(FindObjectsSortMode.None);
+            Assert.GreaterOrEqual(balls.Length, 3, "Multi-ball must spawn 2 extra balls (total >= 3).");
+
+            // Verify that at least 2 distinct trail colors exist among active balls
+            var distinctColors = new System.Collections.Generic.HashSet<Color>();
+            foreach (var b in balls)
+            {
+                if (b != null && b.Trail != null)
+                {
+                    distinctColors.Add(b.Trail.BaseColor);
+                }
+            }
+
+            Assert.GreaterOrEqual(distinctColors.Count, 3, "Each ball in multi-ball must have a distinct trail color.");
+
+            // Clean up
+            gameManager.ClearExtraBalls();
+            Object.DestroyImmediate(ballObj);
+        }
+
         #endregion
     }
 }
