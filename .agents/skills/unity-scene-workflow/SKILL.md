@@ -19,6 +19,9 @@ Use this skill when:
 - Managing arcade game scenes (`LV_` prefix), game state, and UI Toolkit menus/HUDs.
 - Implementing responsive multi-aspect ratio camera framing (`ResponsiveCameraController`).
 - Integrating iOS Safe Area insets with extra breathing room margins (`SafeAreaController`).
+- Implementing dual-layer stacked tapering trails and multi-ball dynamic VFX (`BallTrail`).
+- Binding Unity 6 UI Toolkit `PanelRenderer` components safely at runtime with fallback reflection and execution order coordination.
+- Managing persistent high score leaderboards (`HighScoreManager`), card guides, and interactive credits.
 - Writing and executing automated EditMode/PlayMode tests via Unity Test Framework.
 
 ## Reference Documentation

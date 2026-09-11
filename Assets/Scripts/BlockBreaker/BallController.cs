@@ -25,7 +25,6 @@ namespace Arcade.BlockBreaker
 
         private float currentSpeed;
         private bool isLaunched = false;
-        private Vector3 lastVelocity;
         private bool isPrimaryBall = true;
         private MaterialPropertyBlock propBlock;
         private Renderer ballRenderer;
@@ -161,7 +160,6 @@ namespace Arcade.BlockBreaker
             {
                 rb.linearVelocity = vel.normalized * currentSpeed;
             }
-            lastVelocity = rb.linearVelocity;
         }
 
         public void SetSpeedMultiplier(float multiplier)
@@ -283,7 +281,6 @@ namespace Arcade.BlockBreaker
             {
                 rb.linearVelocity = direction.normalized * currentSpeed;
             }
-            lastVelocity = rb != null ? rb.linearVelocity : direction.normalized * currentSpeed;
         }
 
         private void HandleStateChanged(GameState state)

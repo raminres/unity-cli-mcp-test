@@ -1,6 +1,6 @@
 # BlockBreaker: Game Design Document (GDD)
 
-**Version**: 2.1  
+**Version**: 2.2  
 **Status**: Living Design Specification  
 **Project**: BlockBreaker (`com.RaminRasulzade.BlockBreaker`)  
 **Target Engine**: Unity 6 (6000.6.0f1) Universal Render Pipeline (URP)  
@@ -72,6 +72,19 @@
   - Collecting a higher tier immediately upgrades the multiplier and resets the duration to 10 seconds; collecting an equal or lower tier refreshes the duration to 10 seconds.
   - Level score carries forward cumulatively across levels and infinite cycle advancement.
 
+### 2.5 Ball Trail System & Dynamic VFX (`BallTrail.cs`)
+- **Dual-Layer Stacked Ribbon**:
+  - **Outer Halo (`Trail_Outer`)**: Wide, soft translucent trail ribbon ($0.55$ start width, $0.22\text{s}$ duration, $40\%$ alpha) tinted to the ball's base color.
+  - **Inner Hot Core (`Trail_Inner`)**: Focused, high-luminance core ribbon ($0.25$ start width, $0.16\text{s}$ duration, $85\%$ alpha) blended with $+65\%$ white for radiant arcade energy.
+  - **Taper Dynamics**: Evaluates smooth quadratic decay curves fading to zero width, avoiding abrupt cutoff artifacts.
+- **Multi-Ball Color Harmonization**:
+  - Primary ball: High-visibility Electric Cyan (`#00F2FF`).
+  - Secondary balls (spawned by Multi-Ball powerup): Distinct high-contrast neon tints (Hot Magenta `#FF0099`, Electric Gold `#FFCC00`, Neon Green `#00FF66`).
+  - Ball sphere mesh emissive and base colors are dynamically synchronized to the trail hue via zero-allocation `MaterialPropertyBlock`.
+- **Lifecycle Emission Synchronization**:
+  - Trails immediately clear and cease emitting while docked atop the paddle in `ReadyToLaunch`, paused, or when resetting after a life loss.
+  - Emission smoothly triggers upon ball launch and unpause.
+
 ---
 
 ## 3. Power-ups & Special Brick Archetypes
@@ -141,30 +154,44 @@ graph LR
   - Clears hardware obstructions (iPhone notches, Dynamic Island, rounded corners, Android navigation bars).
 
 ### 5.3 HUD & Navigation Elements
-1. **Top Bar**:
+1. **Detached Floating Frosted Glass Pods**:
+   - **Left Pod**: 5-slot Heart Life Gauge (`TX_Heart_Fill.png` / `TX_Heart_Empty.png`).
+   - **Center Pod**: Large cumulative Score readout (`FT_Montserrat`) with pulse scale bump on score increments.
+   - **Right Pod (Quick Actions)**:
+     - **Pause / Resume**: Dynamic icon swapping between pause bars and play triangle.
+     - **Settings Toggle**: Opens tuning modal with a 360° compounding mechanical spin transition.
+     - **Audio Mute / Unmute**: Live volume state toggle with custom speaker icons.
+2. **Top Status Bar & Active Buff Indicators**:
    - Current Level Title & Star Mechanic indicator.
-   - Cumulative Score counter with pulse animation on increment.
-   - 5-slot Heart Life Gauge.
-   - **Active Power-Up Status Indicators**:
+   - **Active Power-Up Badges**:
      - **Shield**: Cyan badge displaying `SHIELD {n}s`.
      - **Multi-Ball**: Purple badge displaying `3 BALLS`.
      - **Wide Paddle**: Green/Cyan badge with outward arrows icon displaying `{n}s`.
      - **Score Multiplier**: Tier-tinted badge (Gold 2X, Amber 3X, Ruby 4X, Magenta 5X) with star icon displaying `{tier} {n}s`.
-2. **Quick Action Bar**:
-   - **Pause / Resume**: Dynamic icon swapping between pause bars and play triangle.
-   - **Settings Toggle**: Opens tuning modal with a 360° compounding mechanical spin transition.
-   - **Audio Mute / Unmute**: Live volume state toggle with custom speaker icons.
-3. **Level Selection Matrix**:
-   - Responsive 2-row wrapped flex container:
-     - Top row: `LVL 1` through `LVL 4`
-     - Bottom row: `LVL 5` through `LVL 7`
-   - Touch targets $> 80\text{px}$ adhering to Apple Human Interface Guidelines and Google Material Design.
-4. **Interactive Level Settings Modal**:
+3. **High Scores Leaderboard (`HighScoreManager.cs`)**:
+   - Dedicated Top 10 high scores modal accessible from both Main Menu and Pause Menu.
+   - Distinct rank 1 (Gold), rank 2 (Silver), and rank 3 (Bronze) medal icons.
+   - Formatted timestamps (`YYYY-MM-DD`) and level achieved.
+   - Reset High Scores functionality with real-time UI synchronization.
+4. **How to Play Guide Modal**:
+   - Clean card-based visual reference accessible from Main Menu and Pause Menu.
+   - Concise explanations for controls (keyboard, touch drag), angle deflection math, block tier scoring (Red 10, Green 20, Blue 30), glass reinforced durability (2 hits), and all powerups.
+5. **Interactive Credits Modal**:
+   - Dedicated modal citing Unity MCP, Gemini, Antigravity, and creator Ramin Rasulzade.
+   - Clickable URL buttons launching Email (`mailto:`), Website, LinkedIn, and GitHub via `Application.OpenURL`.
+6. **Scaled UI & Ergonomic Touch Targets**:
+   - +10%–15% size scaling across all HUD containers, pods, modal windows, and buttons.
+   - Touch targets $\ge 54\text{px}$–$64\text{px}$ with generous spacing tailored for high-resolution mobile viewports ($2778 \times 1284$).
+7. **Interactive Level Settings Modal**:
    - Live runtime tuning sliders:
      - **Ball Speed**: $0.5\times$ to $2.5\times$
      - **Paddle Speed**: $10.0$ to $40.0$
      - **Block Rows**: $1$ to $9$
    - Instant visual reflection in playfield.
+8. **Lifecycle & Execution Order Architecture**:
+   - `PanelRenderer` runtime root binding via `EnsureInitialized()` with fallback reflection (`rootVisualElement` / `containerPanel.visualTree`).
+   - `[DefaultExecutionOrder(-100)]` on `ArcadeGameManager` and `[DefaultExecutionOrder(-90)]` on `ArcadeInputHandler`.
+   - Floating overlays (e.g. `launch-banner`) set to `picking-mode="Ignore"` and `pointer-events: none` to prevent blocking touch inputs.
 
 ---
 
@@ -230,8 +257,8 @@ graph LR
 
 ### 9.1 Test Suite Architecture (`Assets/Tests/BlockBreakerCoreTests.cs`)
 - **Engine**: NUnit test framework within `Arcade.Tests` assembly.
-- **Total Tests**: **87 passing tests (100%)**.
-- **Execution Time**: ~130 milliseconds.
+- **Total Tests**: **99 passing tests (100%)**.
+- **Execution Time**: ~150 milliseconds.
 - **Test Coverage**:
   1. Score calculation, global timed combo multipliers ($2\times$ through $5\times$), and tier values.
   2. Dynamic paddle deflection angles across full offset spectrum $[-1.0, 1.0]$.
@@ -245,3 +272,7 @@ graph LR
   10. Multi-ball concurrent ball management and tolerant life loss.
   11. Active power-up HUD status badge timers and dynamic visibility.
   12. Complete 7-level campaign arc validation, 4X and 5X modifier assignments in levels 6 and 7, parameter monotonicity, and endless loop wrap-around.
+  13. Dual-layer stacked ball trail creation, parameters, and smooth taper curve dynamics (`BallTrail.cs`).
+  14. Multi-ball distinct trail color allocation and high-contrast palette uniqueness.
+  15. HighScoreManager top 10 score recording, sorting, date formatting, and score reset functionality.
+  16. How to Play and Credits modal visibility toggles, safe dismissal, and launch suppression.

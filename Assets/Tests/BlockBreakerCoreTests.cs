@@ -2508,7 +2508,7 @@ namespace Arcade.Tests
             // Spawn Multi-Ball
             gameManager.SpawnMultiBall(Vector3.zero, Vector3.up, 14f);
 
-            var balls = Object.FindObjectsByType<BallController>(FindObjectsSortMode.None);
+            var balls = Object.FindObjectsByType<BallController>();
             Assert.GreaterOrEqual(balls.Length, 3, "Multi-ball must spawn 2 extra balls (total >= 3).");
 
             // Verify that at least 2 distinct trail colors exist among active balls

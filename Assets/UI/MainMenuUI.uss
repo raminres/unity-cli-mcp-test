@@ -370,15 +370,15 @@
 }
 
 .icon-gold {
-    background-image: url("project://database/Assets/UI/Icons/TX_Medal_Gold.png?fileID=21300000&guid=49e1ff47be1e4d7449ce42ffe621b576&type=3#TX_Medal_Gold_0");
+    background-image: url("project://database/Assets/UI/Icons/TX_Medal_Gold.png?fileID=21300000&guid=49e1ff47be1e4d7449ce42ffe621b576&type=3#TX_Medal_Gold");
 }
 
 .icon-silver {
-    background-image: url("project://database/Assets/UI/Icons/TX_Medal_Silver.png?fileID=21300000&guid=f7805189d97536541b31bb823665894c&type=3#TX_Medal_Silver_0");
+    background-image: url("project://database/Assets/UI/Icons/TX_Medal_Silver.png?fileID=21300000&guid=f7805189d97536541b31bb823665894c&type=3#TX_Medal_Silver");
 }
 
 .icon-bronze {
-    background-image: url("project://database/Assets/UI/Icons/TX_Medal_Bronze.png?fileID=21300000&guid=644f3d4abae177341b78bebc8b2f6968&type=3#TX_Medal_Bronze_0");
+    background-image: url("project://database/Assets/UI/Icons/TX_Medal_Bronze.png?fileID=21300000&guid=644f3d4abae177341b78bebc8b2f6968&type=3#TX_Medal_Bronze");
 }
 
 .rank-label {
@@ -486,7 +486,6 @@
     font-size: 14px;
     color: #cbd5e1;
     white-space: normal;
-    line-height: 20px;
 }
 
 /* Credits Modal Interactive Links */
