@@ -2232,6 +2232,141 @@ namespace Arcade.Tests
             Assert.AreEqual(1, lvl7.Multiplier5xCount, "Level 7 must introduce 1x 5X multiplier.");
         }
 
+        [Test]
+        public void BallController_ResumeFromPauseBeforeLaunch_RemainsDockedOnPaddle()
+        {
+            var ballObj = new GameObject("TestBall");
+            ballObj.transform.SetParent(testRoot.transform);
+            var ball = ballObj.AddComponent<BallController>();
+            ball.Initialize(gameManager, paddle);
+
+            // 1. Initially in ReadyToLaunch, ball must not be launched
+            gameManager.SetState(GameState.ReadyToLaunch);
+            Assert.IsFalse(ball.IsLaunched, "Ball must start unlaunched.");
+
+            // 2. Pause game
+            gameManager.PauseGame();
+            Assert.AreEqual(GameState.Paused, gameManager.State);
+            Assert.IsFalse(ball.IsLaunched, "Ball must remain unlaunched while paused.");
+
+            // 3. Resume game
+            gameManager.ResumeGame();
+            Assert.AreEqual(GameState.ReadyToLaunch, gameManager.State, "Game must return to ReadyToLaunch.");
+            Assert.IsFalse(ball.IsLaunched, "Ball must NOT automatically start moving upon resume before launch.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void InputHandler_SuppressLaunch_PreventsPrematureLaunchBall()
+        {
+            var inputGo = new GameObject("TestInput");
+            inputGo.transform.SetParent(testRoot.transform);
+            var inputHandler = inputGo.AddComponent<Arcade.Input.ArcadeInputHandler>();
+            Arcade.Input.ArcadeInputHandler.SetInstanceForTesting(inputHandler);
+
+            gameManager.SetState(GameState.ReadyToLaunch);
+
+            // Suppress launch
+            inputHandler.SuppressLaunch(1.0f);
+            inputHandler.TriggerLaunch();
+
+            Assert.AreEqual(GameState.ReadyToLaunch, gameManager.State, "Launch must be blocked while suppressed.");
+
+            Object.DestroyImmediate(inputGo);
+        }
+
+        [Test]
+        public void HighScoreManager_RecordScore_SortsDescendingAndClampsTo10()
+        {
+            HighScoreManager.ResetScores();
+
+            // Record 12 scores in non-sorted order
+            int[] scoresToAdd = { 100, 500, 250, 1000, 800, 50, 300, 400, 200, 900, 150, 75 };
+            foreach (var s in scoresToAdd)
+            {
+                HighScoreManager.RecordScore(s, 1);
+            }
+
+            var topScores = HighScoreManager.GetTopScores();
+            Assert.AreEqual(10, topScores.Count, "HighScoreManager must clamp to MAX_SCORES (10).");
+            Assert.AreEqual(1000, topScores[0].score, "First score must be 1000.");
+            Assert.AreEqual(900, topScores[1].score, "Second score must be 900.");
+            Assert.AreEqual(800, topScores[2].score, "Third score must be 800.");
+            Assert.AreEqual(150, topScores[8].score, "9th score must be 150.");
+            Assert.AreEqual(100, topScores[9].score, "10th score must be 100.");
+            Assert.AreEqual(1000, HighScoreManager.HighestScore, "HighestScore must return 1000.");
+
+            // Adding a score lower than or equal to 10th score (e.g. 50) should return false and not alter list
+            bool addedLower = HighScoreManager.RecordScore(50, 1);
+            Assert.IsFalse(addedLower, "RecordScore should return false if score does not exceed 10th place.");
+            Assert.AreEqual(10, HighScoreManager.GetTopScores().Count);
+
+            // Adding a higher score (e.g. 950) should succeed and displace 100 (150 becomes 10th)
+            bool addedHigher = HighScoreManager.RecordScore(950, 2);
+            Assert.IsTrue(addedHigher);
+            topScores = HighScoreManager.GetTopScores();
+            Assert.AreEqual(950, topScores[1].score);
+            Assert.AreEqual(150, topScores[9].score);
+
+            HighScoreManager.ResetScores();
+        }
+
+        [Test]
+        public void HighScoreManager_ResetScores_ClearsAllRecordedScores()
+        {
+            HighScoreManager.ResetScores();
+            HighScoreManager.RecordScore(500, 1);
+            Assert.AreEqual(1, HighScoreManager.GetTopScores().Count);
+            Assert.AreEqual(500, HighScoreManager.HighestScore);
+
+            HighScoreManager.ResetScores();
+            Assert.AreEqual(0, HighScoreManager.GetTopScores().Count);
+            Assert.AreEqual(0, HighScoreManager.HighestScore);
+        }
+
+        [Test]
+        public void ArcadeUIManager_IsAnyModalVisible_IncludesHighScoresAndHowToPlay()
+        {
+            var uiObj = new GameObject("UI_HUD");
+            uiObj.transform.SetParent(testRoot.transform);
+            uiObj.AddComponent<PanelRenderer>();
+            var uiMgr = uiObj.AddComponent<ArcadeUIManager>();
+
+            var root = new VisualElement { name = "hud-root" };
+            var highscoresModal = new VisualElement { name = "highscores-modal" };
+            highscoresModal.AddToClassList("modal-hidden");
+            var howToPlayModal = new VisualElement { name = "how-to-play-modal" };
+            howToPlayModal.AddToClassList("modal-hidden");
+            root.Add(highscoresModal);
+            root.Add(howToPlayModal);
+
+            var rootField = typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            rootField.SetValue(uiMgr, root);
+
+            var highField = typeof(ArcadeUIManager).GetField("highscoresModal", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            highField.SetValue(uiMgr, highscoresModal);
+
+            var howField = typeof(ArcadeUIManager).GetField("howToPlayModal", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            howField.SetValue(uiMgr, howToPlayModal);
+
+            Assert.IsFalse(uiMgr.IsAnyModalVisible());
+
+            // Show high scores
+            highscoresModal.RemoveFromClassList("modal-hidden");
+            Assert.IsTrue(uiMgr.IsAnyModalVisible());
+            highscoresModal.AddToClassList("modal-hidden");
+            Assert.IsFalse(uiMgr.IsAnyModalVisible());
+
+            // Show how to play
+            howToPlayModal.RemoveFromClassList("modal-hidden");
+            Assert.IsTrue(uiMgr.IsAnyModalVisible());
+            howToPlayModal.AddToClassList("modal-hidden");
+            Assert.IsFalse(uiMgr.IsAnyModalVisible());
+
+            Object.DestroyImmediate(uiObj);
+        }
+
         #endregion
     }
 }

@@ -85,7 +85,13 @@ namespace Arcade.Core
             }
 
             Instance = this;
-            highScore = PlayerPrefs.GetInt(PREF_HIGH_SCORE, 0);
+            highScore = HighScoreManager.HighestScore;
+            HighScoreManager.OnHighScoresChanged += HandleHighScoresChanged;
+        }
+
+        private void HandleHighScoresChanged()
+        {
+            highScore = HighScoreManager.HighestScore;
         }
 
         private void OnDestroy()
@@ -94,6 +100,7 @@ namespace Arcade.Core
             {
                 Instance = null;
             }
+            HighScoreManager.OnHighScoresChanged -= HandleHighScoresChanged;
         }
 
         private void Start()
@@ -416,8 +423,7 @@ namespace Arcade.Core
             if (currentScore > highScore)
             {
                 highScore = currentScore;
-                PlayerPrefs.SetInt(PREF_HIGH_SCORE, highScore);
-                PlayerPrefs.Save();
+                HighScoreManager.RecordScore(currentScore);
             }
 
             OnScoreChanged?.Invoke(currentScore, awardedPoints);
@@ -425,6 +431,7 @@ namespace Arcade.Core
 
             if (totalBlocksInLevel > 0 && remainingBlocks <= 0)
             {
+                HighScoreManager.RecordScore(currentScore);
                 OnLevelCleared();
             }
         }
@@ -498,6 +505,10 @@ namespace Arcade.Core
             DeactivateShield();
             DeactivatePaddleExpander();
             DeactivateScoreMultiplier();
+            if (currentScore > 0)
+            {
+                HighScoreManager.RecordScore(currentScore);
+            }
             SetState(GameState.GameOver);
             ClearSavedGame();
 
@@ -524,6 +535,7 @@ namespace Arcade.Core
 
             Time.timeScale = 1f;
             currentState = previousStateBeforePause;
+            Arcade.Input.ArcadeInputHandler.Instance?.SuppressLaunch(0.3f);
             OnPauseToggled?.Invoke(false);
             OnStateChanged?.Invoke(currentState);
         }

@@ -87,6 +87,12 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
 - **PanelRenderer Migration**: Native Unity 6 `PanelRenderer` on `UI_HUD` and `UI_MainMenu` with `RegisterUIReloadCallback` lifecycle binding.
 - **Safe Area Controller ([SafeAreaController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/SafeAreaController.cs))**: Dynamically resolves device safe area insets directly to child roots (`hud-root`, `root-container`), ensuring the top HUD bar clears notches and Dynamic Island.
 - **HUD & Modal Controls**:
+  - Detached floating frosted glass pods: Hearts/Lives left-aligned, Current Score centered (single readout, clean typography), Minimal Quick Action pod right-aligned (Mute, Settings, Pause).
+  - High Scores Leaderboard: Dedicated top 10 scores modal with rank 1 (Gold), rank 2 (Silver), and rank 3 (Bronze) medal icons, formatted dates, and full reset capability in both Main Menu and Pause Menu ([HighScoreManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/Core/HighScoreManager.cs)).
+  - How to Play: Quick-reference card-based gameplay guide in Main Menu and Pause Menu covering controls, dynamic deflection, block tier scoring, glass 2-hit durability, and all powerups.
+  - Interactive Credits: Dedicated modal citing Unity MCP, Gemini, Antigravity, and Ramin Rasulzade, with clickable URL buttons routing to Email (`mailto:`), personal Website, LinkedIn, and GitHub via `Application.OpenURL`.
+  - Typography: `FT_Montserrat` for titles, headers, and score readout; `FT_Inter` for body copy, badges, and buttons.
+  - Launch Suppression: Touch release / click suppression on modal dismissal and unpause prevents balls docked in `ReadyToLaunch` from auto-launching.
   - Heart icon life indicator (`TX_Heart_Fill.png` / `TX_Heart_Empty.png`).
   - Quick action bar: Pause/Play dynamic icon swap, Settings 360° compounding mechanical spin, Volume/Mute toggle with custom icons.
   - 2-row responsive wrapped tabs for all 7 levels (`LVL 1`–`LVL 4` top, `LVL 5`–`LVL 7` bottom) with $>80\text{px}$ touch targets.
@@ -107,5 +113,5 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
 
 ## 9. Automated Test Suite
 - **Location**: `Assets/Tests/BlockBreakerCoreTests.cs`
-- **Total Tests**: **79 passing tests (100%)**, executing in ~130ms.
-- **Coverage**: Scoring multipliers, dynamic paddle deflection math, boundary clamping, life tracking, heart UI transitions, safe area insets, aspect-ratio frustum framing, compounding paddle widening, audio persistence, debris shader resolution, pause lifecycle, direct touch controls, bomb radius blast, glass 2-hit durability, shield countdown & killzone intercept, multi-ball death tolerance, 7-level campaign existence, speed escalation, and cyclic advancement.
+- **Total Tests**: **92 passing tests (100%)**, executing in ~150ms.
+- **Coverage**: Scoring multipliers, dynamic paddle deflection math, boundary clamping, life tracking, heart UI transitions, safe area insets, aspect-ratio frustum framing, compounding paddle widening, audio persistence, debris shader resolution, pause lifecycle, launch suppression window, direct touch controls, bomb radius blast, glass 2-hit durability, shield countdown & killzone intercept, multi-ball death tolerance, 7-level campaign existence, speed escalation, cyclic advancement, HighScoreManager sorting/clamping/resetting, and in-game/menu modal visibility states.

@@ -42,6 +42,8 @@ namespace Arcade.UI
         private VisualElement levelClearModal;
         private VisualElement gameOverModal;
         private VisualElement levelSettingsModal;
+        private VisualElement highscoresModal;
+        private VisualElement howToPlayModal;
 
         // Modal Labels & Buttons
         private Label clearScoreLabel;
@@ -49,6 +51,8 @@ namespace Arcade.UI
         private Label overHighLabel;
 
         private Button btnResume;
+        private Button btnHighscoresPause;
+        private Button btnHowToPlayPause;
         private Button btnLevelSettingsPause;
         private Button btnRestartPause;
         private Button btnMenuPause;
@@ -56,6 +60,9 @@ namespace Arcade.UI
         private Button btnClearMenu;
         private Button btnRetry;
         private Button btnOverMenu;
+        private Button btnCloseHighscores;
+        private Button btnResetHighscores;
+        private Button btnCloseHowToPlay;
 
         // Options controls
         private Slider sliderVolume;
@@ -222,6 +229,8 @@ namespace Arcade.UI
             if (btnQuickPause != null) btnQuickPause.clicked -= HandleQuickPauseClicked;
 
             if (btnResume != null) btnResume.clicked -= HandleResumeClicked;
+            if (btnHighscoresPause != null) btnHighscoresPause.clicked -= ShowHighScores;
+            if (btnHowToPlayPause != null) btnHowToPlayPause.clicked -= ShowHowToPlay;
             if (btnLevelSettingsPause != null) btnLevelSettingsPause.clicked -= ShowLevelSettings;
             if (btnRestartPause != null) btnRestartPause.clicked -= HandleRestartClicked;
             if (btnMenuPause != null) btnMenuPause.clicked -= HandleMenuClicked;
@@ -233,6 +242,10 @@ namespace Arcade.UI
             if (btnOverMenu != null) btnOverMenu.clicked -= HandleMenuClicked;
 
             if (btnCloseOptions != null) btnCloseOptions.clicked -= HideOptions;
+            if (btnCloseHighscores != null) btnCloseHighscores.clicked -= HideHighScores;
+            if (btnResetHighscores != null) btnResetHighscores.clicked -= HandleResetHighScores;
+            if (btnCloseHowToPlay != null) btnCloseHowToPlay.clicked -= HideHowToPlay;
+
             if (btnFps != null) btnFps.clicked -= ToggleFpsSetting;
             hudLevelTabButtons.Clear();
 
@@ -344,12 +357,16 @@ namespace Arcade.UI
             levelClearModal = root.Q<VisualElement>("level-clear-modal");
             gameOverModal = root.Q<VisualElement>("game-over-modal");
             levelSettingsModal = root.Q<VisualElement>("level-settings-modal");
+            highscoresModal = root.Q<VisualElement>("highscores-modal");
+            howToPlayModal = root.Q<VisualElement>("how-to-play-modal");
 
             clearScoreLabel = root.Q<Label>("clear-score-label");
             overScoreLabel = root.Q<Label>("over-score-label");
             overHighLabel = root.Q<Label>("over-high-label");
 
             btnResume = root.Q<Button>("btn-resume");
+            btnHighscoresPause = root.Q<Button>("btn-highscores-pause");
+            btnHowToPlayPause = root.Q<Button>("btn-how-to-play-pause");
             btnLevelSettingsPause = root.Q<Button>("btn-level-settings-pause");
             btnRestartPause = root.Q<Button>("btn-restart-pause");
             btnMenuPause = root.Q<Button>("btn-menu-pause");
@@ -357,6 +374,9 @@ namespace Arcade.UI
             btnClearMenu = root.Q<Button>("btn-clear-menu");
             btnRetry = root.Q<Button>("btn-retry");
             btnOverMenu = root.Q<Button>("btn-over-menu");
+            btnCloseHighscores = root.Q<Button>("btn-close-highscores");
+            btnResetHighscores = root.Q<Button>("btn-reset-highscores");
+            btnCloseHowToPlay = root.Q<Button>("btn-close-how-to-play");
 
             sliderVolume = root.Q<Slider>("slider-volume");
             toggleMute = root.Q<Toggle>("toggle-mute");
@@ -401,6 +421,8 @@ namespace Arcade.UI
 
             // Wire modal buttons
             if (btnResume != null) btnResume.clicked += HandleResumeClicked;
+            if (btnHighscoresPause != null) btnHighscoresPause.clicked += ShowHighScores;
+            if (btnHowToPlayPause != null) btnHowToPlayPause.clicked += ShowHowToPlay;
             if (btnLevelSettingsPause != null) btnLevelSettingsPause.clicked += ShowLevelSettings;
             if (btnRestartPause != null) btnRestartPause.clicked += HandleRestartClicked;
             if (btnMenuPause != null) btnMenuPause.clicked += HandleMenuClicked;
@@ -412,6 +434,9 @@ namespace Arcade.UI
             if (btnOverMenu != null) btnOverMenu.clicked += HandleMenuClicked;
 
             if (btnCloseOptions != null) btnCloseOptions.clicked += HideOptions;
+            if (btnCloseHighscores != null) btnCloseHighscores.clicked += HideHighScores;
+            if (btnResetHighscores != null) btnResetHighscores.clicked += HandleResetHighScores;
+            if (btnCloseHowToPlay != null) btnCloseHowToPlay.clicked += HideHowToPlay;
 
             if (sliderVolume != null)
             {
@@ -1043,26 +1068,28 @@ namespace Arcade.UI
         private void HandleQuickPauseClicked()
         {
             if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.SuppressLaunch(0.35f);
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
             if (ArcadeGameManager.Instance != null)
             {
                 ArcadeGameManager.Instance.TogglePause();
-            }
-            if (Arcade.Input.ArcadeInputHandler.Instance != null)
-            {
-                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
             }
         }
 
         private void HandleResumeClicked()
         {
             if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.SuppressLaunch(0.35f);
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
             if (ArcadeGameManager.Instance != null)
             {
                 ArcadeGameManager.Instance.TogglePause();
-            }
-            if (Arcade.Input.ArcadeInputHandler.Instance != null)
-            {
-                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
             }
         }
 
@@ -1145,6 +1172,7 @@ namespace Arcade.UI
 
             if (Arcade.Input.ArcadeInputHandler.Instance != null)
             {
+                Arcade.Input.ArcadeInputHandler.Instance.SuppressLaunch(0.35f);
                 Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
             }
         }
@@ -1209,6 +1237,7 @@ namespace Arcade.UI
 
             if (Arcade.Input.ArcadeInputHandler.Instance != null)
             {
+                Arcade.Input.ArcadeInputHandler.Instance.SuppressLaunch(0.35f);
                 Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
             }
         }
@@ -1316,13 +1345,109 @@ namespace Arcade.UI
             if (btnFps != null) btnFps.text = $"{targetFps} FPS";
         }
 
+        public void ShowHighScores()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            PopulateHighScoresTable();
+            if (pauseModal != null) pauseModal.AddToClassList("modal-hidden");
+            if (highscoresModal != null) highscoresModal.RemoveFromClassList("modal-hidden");
+
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
+        }
+
+        public void HideHighScores()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            if (highscoresModal != null) highscoresModal.AddToClassList("modal-hidden");
+
+            if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State == GameState.Paused && pauseModal != null)
+            {
+                pauseModal.RemoveFromClassList("modal-hidden");
+            }
+
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.SuppressLaunch(0.35f);
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
+        }
+
+        private void HandleResetHighScores()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            HighScoreManager.ResetScores();
+            PopulateHighScoresTable();
+        }
+
+        private void PopulateHighScoresTable()
+        {
+            if (root == null) return;
+            var scores = HighScoreManager.GetTopScores();
+
+            for (int i = 0; i < HighScoreManager.MAX_SCORES; i++)
+            {
+                var valLabel = root.Q<Label>($"score-val-{i}");
+                var dateLabel = root.Q<Label>($"score-date-{i}");
+
+                if (valLabel != null)
+                {
+                    if (i < scores.Count && scores[i].score > 0)
+                        valLabel.text = scores[i].score.ToString("#,##0");
+                    else
+                        valLabel.text = "---";
+                }
+
+                if (dateLabel != null)
+                {
+                    if (i < scores.Count && scores[i].score > 0)
+                        dateLabel.text = scores[i].date;
+                    else
+                        dateLabel.text = "---";
+                }
+            }
+        }
+
+        public void ShowHowToPlay()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            if (pauseModal != null) pauseModal.AddToClassList("modal-hidden");
+            if (howToPlayModal != null) howToPlayModal.RemoveFromClassList("modal-hidden");
+
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
+        }
+
+        public void HideHowToPlay()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            if (howToPlayModal != null) howToPlayModal.AddToClassList("modal-hidden");
+
+            if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State == GameState.Paused && pauseModal != null)
+            {
+                pauseModal.RemoveFromClassList("modal-hidden");
+            }
+
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.SuppressLaunch(0.35f);
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
+        }
+
         public bool IsAnyModalVisible()
         {
             return (optionsModal != null && !optionsModal.ClassListContains("modal-hidden")) ||
                    (levelSettingsModal != null && !levelSettingsModal.ClassListContains("modal-hidden")) ||
                    (pauseModal != null && !pauseModal.ClassListContains("modal-hidden")) ||
                    (gameOverModal != null && !gameOverModal.ClassListContains("modal-hidden")) ||
-                   (levelClearModal != null && !levelClearModal.ClassListContains("modal-hidden"));
+                   (levelClearModal != null && !levelClearModal.ClassListContains("modal-hidden")) ||
+                   (highscoresModal != null && !highscoresModal.ClassListContains("modal-hidden")) ||
+                   (howToPlayModal != null && !howToPlayModal.ClassListContains("modal-hidden"));
         }
 
         public bool IsPointerOverUI(Vector2 screenPos)
