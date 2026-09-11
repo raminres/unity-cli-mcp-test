@@ -39,7 +39,9 @@ This file provides persistent, high-density project context across agent session
   - **Physical Strike Collider & Contact Normal Guard**:
     - Primary `BoxCollider` is strictly fitted to Tier 1 ($H = 0.24$, center $Y = +0.38$). Below $Y = -6.24$, there is zero collision volume.
     - Upward Normal Threshold: `BallController.IsValidPaddleBounceNormal(normal)` (`normal.y >= 0.25f`) guarantees that balls brushing the side wall or hitting from below are NOT deflected upward, falling cleanly into the killzone.
-  - **Deflection Formula**: bounce angle $\theta = 90^\circ - (\text{normalizedOffset} \times 60^\circ)$.
+  - **Optical Ray Deflection & Paddle Steering Formula**:
+    - Deflection computed via `BallController.CalculatePaddleDeflection(inVelocity, hitOffset, steerStrength = 32f, minAngleDeg = 25f, maxAngleDeg = 155f)`.
+    - Preserves incoming horizontal momentum (`rayAngleDeg = Mathf.Atan2(|inVelocity.y|, inVelocity.x) * Rad2Deg`), naturally reflecting incoming vectors without unnatural direction reversal, then applies subtle paddle steering based on contact offset `steer = -hitOffset * 32f` clamped to $[25^\circ, 155^\circ]$.
   - **Compounding Expansion with Spring Overshoot**:
     - $+10\%$ per expander ($W_n = W_{prev} \times 1.10$, clamped to max $12.0$, adaptive bounds $[-10 + \frac{W}{2}, 10 - \frac{W}{2}]$).
     - Features spring-damper overshoot animation ($\approx +16\%$ overshoot with $Y$-axis squash-and-stretch settling over $0.35\text{s}$) for tactile arcade feedback.
@@ -73,13 +75,15 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
 ## 5. Powerups & Special Brick Archetypes
 - **Collectible Powerup Drops ([PowerupCapsule.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/PowerupCapsule.cs))**:
   - Tactical powerups drop tumbling 3D collectible capsules ([MI_Powerup_Capsule.mat](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Materials/BlockBreaker/MI_Powerup_Capsule.mat)) that fall at $4.5\text{ units/s}$ with 3D rotational spin and vibrant neon emissive tint. Must be intercepted by the paddle to claim:
-    - **Paddle Expander (`PaddleExpander`)**: Drops neon cyan capsule; catching triggers spring overshoot expansion ($+10\%$).
-    - **Extra Heart (`ExtraHeart`)**: Drops radiant neon pink capsule; catching grants $+1$ life (up to 5 max) with HUD parabolic flight animation.
-    - **Shield (`Shield`)**: Drops electric blue capsule; catching activates 10-second defensive barrier with HUD countdown.
-    - **Multi-Ball (`MultiBall`)**: Drops neon magenta capsule; catching spawns 2 extra balls at $\pm 35^\circ$ diverging angles with distinct trail colors.
-- **Immediate Environmental / Scoring Modifiers**:
+    - **Foreground Depth ($Z = -0.90\text{f}$)**: Capsules strictly fall in front of all brick rows ($Z=0$, spanning $[-0.5, +0.5]$), eliminating brick occlusion/clipping when dropped from top rows.
+    - **Camera-Facing Billboard Icon**: Child `Icon_Billboard` with `SpriteRenderer` (`sortingOrder = 30`) dynamically locks `rotation = Quaternion.identity` in `LateUpdate()`, staying perfectly upright and readable while the 3D capsule body tumbles behind it.
+    - **Paddle Expander (`PaddleExpander`)**: Drops neon cyan capsule with arrow icon; catching triggers spring overshoot expansion ($+10\%$).
+    - **Extra Heart (`ExtraHeart`)**: Drops radiant neon pink capsule with heart icon; catching grants $+1$ life (up to 5 max) with HUD parabolic flight animation.
+    - **Shield (`Shield`)**: Drops electric blue capsule with shield icon; catching activates 10-second defensive barrier with HUD countdown.
+    - **Multi-Ball (`MultiBall`)**: Drops neon magenta capsule with multi-ball icon; catching spawns 2 extra balls at $\pm 35^\circ$ diverging angles with distinct trail colors.
+    - **Score Multipliers (`ScoreMultiplier2x`, `ScoreMultiplier3x`, `ScoreMultiplier4x`, `ScoreMultiplier5x`)**: Drops glowing gold (2X), fiery orange (3X), crimson (4X), or hyper-magenta (5X) capsule with extra points icon; catching activates a 10-second score multiplier buff on `ArcadeGameManager` with animated HUD status badge.
+- **Immediate Environmental Modifiers**:
   - **Bomb Bricks (`Bomb`)**: Explosive radius detonation ($2.5$ units) immediately detonating surrounding bricks with outward impulses. Protected by `isDestroyed` flag against recursive loops.
-  - **Score Multipliers (`ScoreMultiplier2x`, `ScoreMultiplier3x`)**: Immediately multiplies brick point value (e.g. 3x Blue = 90 pts).
   - **Glass-Enclosed Bricks (`GlassEnclosed`)**: Encased in a $1.18\times$ glass shell ([MI_Block_Glass.mat](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Materials/BlockBreaker/MI_Block_Glass.mat)). Requires 2 hits (Hit 1: shatters glass shell with crystal debris; Hit 2: breaks brick for $2\times$ points).
 - **World Space Badges ([BlockBadge.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockBadge.cs))**: Rendered via Unity 6 `PanelRenderer` in `WorldSpace` mode (`80px` fixed dimension, 100 PPU, clamped margins).
 
@@ -141,5 +145,5 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
 
 ## 10. Automated Test Suite
 - **Location**: `Assets/Tests/BlockBreakerCoreTests.cs`
-- **Total Tests**: **105 passing tests (100%)**, executing in ~160ms.
-- **Coverage**: Scoring multipliers, dynamic paddle deflection math, boundary clamping, life tracking, heart UI transitions, safe area insets, aspect-ratio frustum framing, compounding paddle widening, stepped pyramid geometry & tier ratios, spring overshoot expansion animation, powerup capsule collection (PaddleExpander, ExtraHeart, Shield), contact normal validation (`IsValidPaddleBounceNormal`), audio persistence, debris shader resolution, pause lifecycle, launch suppression window, direct touch controls, bomb radius blast, glass 2-hit durability, shield countdown & killzone intercept, multi-ball death tolerance, multi-ball distinct trail color assignment, dual-layer trail creation and curve decay, 7-level campaign existence, speed escalation, cyclic advancement, HighScoreManager sorting/clamping/resetting, and in-game/menu modal visibility states.
+- **Total Tests**: **110 passing tests (100%)**, executing in ~170ms.
+- **Coverage**: Scoring multipliers (2X, 3X, 4X, 5X), optical ray paddle deflection math & forward momentum preservation, boundary clamping, life tracking, heart UI transitions, safe area insets, aspect-ratio frustum framing, compounding paddle widening, stepped pyramid geometry & tier ratios, spring overshoot expansion animation, powerup capsule foreground depth ($Z = -0.90\text{f}$), billboard camera-facing icon lock, powerup capsule collection (PaddleExpander, ExtraHeart, Shield, 2X, 3X, 4X, 5X Multipliers), contact normal validation (`IsValidPaddleBounceNormal`), extended paddle collider depth, audio persistence, debris shader resolution, pause lifecycle, launch suppression window, direct touch controls, bomb radius blast, glass 2-hit durability, shield countdown & killzone intercept, multi-ball death tolerance, multi-ball distinct trail color assignment, dual-layer trail creation and curve decay, 7-level campaign existence, speed escalation, cyclic advancement, HighScoreManager sorting/clamping/resetting, and in-game/menu modal visibility states.

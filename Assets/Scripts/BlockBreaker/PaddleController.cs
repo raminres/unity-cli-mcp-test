@@ -77,12 +77,13 @@ namespace Arcade.BlockBreaker
                 rootRenderer.enabled = false;
             }
 
-            // Configure root strike BoxCollider to cover strictly the thin top deck
+            // Configure root strike BoxCollider to cover strictly the thin top deck with extended depth
             if (rootCollider == null) rootCollider = GetComponent<BoxCollider>();
+            if (rootCollider == null) rootCollider = gameObject.AddComponent<BoxCollider>();
             if (rootCollider != null)
             {
                 rootCollider.center = new Vector3(0f, 0.38f, 0f);
-                rootCollider.size = new Vector3(1.0f, 0.24f, 1.0f);
+                rootCollider.size = new Vector3(1.0f, 0.24f, 2.8f);
             }
         }
 

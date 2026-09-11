@@ -286,7 +286,7 @@ namespace Arcade.Editor
 
             var paddleCol = paddleGo.AddComponent<BoxCollider>();
             paddleCol.center = new Vector3(0f, 0.38f, 0f);
-            paddleCol.size = new Vector3(1.0f, 0.24f, 1.0f);
+            paddleCol.size = new Vector3(1.0f, 0.24f, 2.8f);
             paddleCol.sharedMaterial = bounceMat;
 
             var paddleRb = paddleGo.AddComponent<Rigidbody>();

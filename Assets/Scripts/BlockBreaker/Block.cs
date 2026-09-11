@@ -168,7 +168,11 @@ namespace Arcade.BlockBreaker
             bool isCollectibleBuff = (specialType == BlockSpecialType.PaddleExpander ||
                                       specialType == BlockSpecialType.ExtraHeart ||
                                       specialType == BlockSpecialType.Shield ||
-                                      specialType == BlockSpecialType.MultiBall);
+                                      specialType == BlockSpecialType.MultiBall ||
+                                      specialType == BlockSpecialType.ScoreMultiplier2x ||
+                                      specialType == BlockSpecialType.ScoreMultiplier3x ||
+                                      specialType == BlockSpecialType.ScoreMultiplier4x ||
+                                      specialType == BlockSpecialType.ScoreMultiplier5x);
 
             if (isCollectibleBuff && Application.isPlaying)
             {
@@ -227,21 +231,21 @@ namespace Arcade.BlockBreaker
                         ArcadeGameManager.Instance.SpawnMultiBall(transform.position, baseVel, speed);
                     }
                 }
+                else if (specialType == BlockSpecialType.ScoreMultiplier2x ||
+                         specialType == BlockSpecialType.ScoreMultiplier3x ||
+                         specialType == BlockSpecialType.ScoreMultiplier4x ||
+                         specialType == BlockSpecialType.ScoreMultiplier5x)
+                {
+                    if (ArcadeGameManager.Instance != null)
+                    {
+                        ArcadeGameManager.Instance.ActivateScoreMultiplier(scoreMultiplier, BlockModifierExtensions.DEFAULT_MULTIPLIER_DURATION);
+                    }
+                }
             }
 
             if (specialType == BlockSpecialType.Bomb)
             {
                 ExplodePerimeter();
-            }
-            else if (specialType == BlockSpecialType.ScoreMultiplier2x ||
-                     specialType == BlockSpecialType.ScoreMultiplier3x ||
-                     specialType == BlockSpecialType.ScoreMultiplier4x ||
-                     specialType == BlockSpecialType.ScoreMultiplier5x)
-            {
-                if (ArcadeGameManager.Instance != null)
-                {
-                    ArcadeGameManager.Instance.ActivateScoreMultiplier(scoreMultiplier, BlockModifierExtensions.DEFAULT_MULTIPLIER_DURATION);
-                }
             }
 
             // 4. Notify Game Manager with multiplied points

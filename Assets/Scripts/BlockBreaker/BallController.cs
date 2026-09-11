@@ -385,19 +385,49 @@ namespace Arcade.BlockBreaker
             }
         }
 
+        /// <summary>
+        /// Computes a physics-informed paddle deflection vector:
+        /// 1. Takes natural optical ray reflection off the horizontal paddle (preserving forward horizontal momentum).
+        /// 2. Applies paddle steering based on normalized contact hitOffset (-1 to +1).
+        /// 3. Clamps final bounce angle to playable arcade bounds (25° to 155°) to prevent horizontal locks.
+        /// </summary>
+        public static Vector3 CalculatePaddleDeflection(Vector3 inVelocity, float hitOffset, float steerStrength = 32f, float minAngleDeg = 25f, float maxAngleDeg = 155f)
+        {
+            float inX = inVelocity.x;
+            float inY = Mathf.Abs(inVelocity.y); // Upward reflection normal
+
+            // Fallback for near-zero incoming velocities
+            if (Mathf.Abs(inX) < 0.01f && inY < 0.01f)
+            {
+                inY = 1.0f;
+            }
+
+            // Natural optical ray reflection angle in degrees (0 to 180)
+            float rayAngleDeg = Mathf.Atan2(inY, inX) * Mathf.Rad2Deg;
+
+            // Paddle steering influence:
+            // Positive offset (right of center) biases angle toward shallow right (-deg).
+            // Negative offset (left of center) biases angle toward shallow left (+deg).
+            float steerAngleDeg = -hitOffset * steerStrength;
+
+            // Clamped final angle preserving natural momentum while allowing sharp cuts
+            float finalAngleDeg = Mathf.Clamp(rayAngleDeg + steerAngleDeg, minAngleDeg, maxAngleDeg);
+            float finalRad = finalAngleDeg * Mathf.Deg2Rad;
+
+            return new Vector3(Mathf.Cos(finalRad), Mathf.Sin(finalRad), 0f).normalized;
+        }
+
         private void HandlePaddleCollision(PaddleController hitPaddle)
         {
             float hitOffset = hitPaddle.CalculateHitOffset(transform.position.x);
 
-            // Angle mapping:
-            // hitOffset = 0 -> 90 deg (straight up)
-            // hitOffset = +1 -> 90 - 60 = 30 deg (shallow right)
-            // hitOffset = -1 -> 90 - (-60) = 150 deg (shallow left)
-            float bounceAngleDeg = 90f - (hitOffset * maxDeflectionAngleDegrees);
-            float bounceRad = bounceAngleDeg * Mathf.Deg2Rad;
+            Vector3 inVelocity = rb != null ? rb.linearVelocity : Vector3.down * currentSpeed;
+            Vector3 newDir = CalculatePaddleDeflection(inVelocity, hitOffset, 32f, 25f, 155f);
 
-            Vector3 newDir = new Vector3(Mathf.Cos(bounceRad), Mathf.Sin(bounceRad), 0f).normalized;
-            rb.linearVelocity = newDir * currentSpeed;
+            if (rb != null)
+            {
+                rb.linearVelocity = newDir * currentSpeed;
+            }
 
             if (ArcadeAudioManager.Instance != null)
             {

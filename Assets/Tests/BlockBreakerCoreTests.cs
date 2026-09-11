@@ -29,6 +29,7 @@ namespace Arcade.Tests
             paddleObj.transform.SetParent(testRoot.transform);
             paddleObj.transform.position = Vector3.zero;
             paddle = paddleObj.AddComponent<PaddleController>();
+            paddle.EnsureSteppedMeshHierarchy();
         }
 
         [TearDown]
@@ -2671,6 +2672,103 @@ namespace Arcade.Tests
 
             // Collision from underneath (negative Y normal)
             Assert.IsFalse(BallController.IsValidPaddleBounceNormal(Vector3.down), "Bottom collisions must NOT deflect upward.");
+        }
+
+        [Test]
+        public void BallController_CalculatePaddleDeflection_PreservesForwardMomentumAndSteers()
+        {
+            // Ball flying down-right
+            Vector3 inVelRight = new Vector3(8f, -10f, 0f);
+
+            // Center hit: should naturally reflect upward and right
+            Vector3 bounceCenter = BallController.CalculatePaddleDeflection(inVelRight, 0f);
+            Assert.Greater(bounceCenter.x, 0f, "Natural optical reflection must preserve rightward horizontal momentum.");
+            Assert.Greater(bounceCenter.y, 0f, "Reflected vector must point upward.");
+
+            // Left-edge hit on rightward ball: should steer steeper upward, but NOT unnaturally reverse left!
+            Vector3 bounceLeft = BallController.CalculatePaddleDeflection(inVelRight, -0.6f);
+            Assert.Greater(bounceLeft.x, 0f, "Hitting left half with rightward velocity must NOT flip horizontal travel.");
+            Assert.Greater(bounceLeft.y, bounceCenter.y, "Left steering on rightward ball should yield steeper upward exit.");
+
+            // Ball flying down-left
+            Vector3 inVelLeft = new Vector3(-8f, -10f, 0f);
+            Vector3 bounceLeftIn = BallController.CalculatePaddleDeflection(inVelLeft, 0f);
+            Assert.Less(bounceLeftIn.x, 0f, "Natural optical reflection must preserve leftward horizontal momentum.");
+            Assert.Greater(bounceLeftIn.y, 0f, "Reflected vector must point upward.");
+        }
+
+        [Test]
+        public void PowerupCapsule_SpawnsInForeground_AtMinusZeroPointNineZ()
+        {
+            Vector3 spawnPos = new Vector3(3f, 8f, 0f);
+            var capsule = PowerupCapsule.Spawn(spawnPos, BlockSpecialType.PaddleExpander);
+            Assert.IsNotNull(capsule);
+
+            Assert.AreEqual(PowerupCapsule.FOREGROUND_Z, capsule.transform.position.z, 0.001f,
+                "Powerup capsule must spawn at foreground depth Z = -0.90f to avoid occlusion behind lower bricks.");
+            Assert.AreEqual(-0.90f, capsule.transform.position.z, 0.001f);
+
+            var boxCol = capsule.GetComponent<BoxCollider>();
+            Assert.IsNotNull(boxCol, "Capsule should use BoxCollider with depth overlap.");
+            Assert.IsTrue(boxCol.isTrigger, "Capsule BoxCollider must be a trigger.");
+            Assert.GreaterOrEqual(boxCol.size.z, 2.5f, "BoxCollider depth must comfortably span the paddle plane.");
+
+            Object.DestroyImmediate(capsule.gameObject);
+        }
+
+        [Test]
+        public void PowerupCapsule_HasBillboardIconChild_WithSpriteAssigned()
+        {
+            var capsule = PowerupCapsule.Spawn(new Vector3(0f, 5f, 0f), BlockSpecialType.PaddleExpander);
+            Assert.IsNotNull(capsule);
+
+            Assert.IsNotNull(capsule.IconTransform, "Capsule must have IconTransform child.");
+            Assert.AreEqual("Icon_Billboard", capsule.IconTransform.name);
+            Assert.IsNotNull(capsule.IconRenderer, "IconTransform must have SpriteRenderer component.");
+            Assert.IsNotNull(capsule.IconRenderer.sprite, "Billboard icon must have a sprite assigned.");
+            Assert.AreEqual(30, capsule.IconRenderer.sortingOrder, "Billboard icon must have foreground sortingOrder.");
+
+            // Test LateUpdate orientation lock
+            capsule.transform.rotation = Quaternion.Euler(45f, 90f, 30f);
+            capsule.UpdateBillboardOrientation();
+
+            Assert.Less(Quaternion.Angle(capsule.IconTransform.rotation, Quaternion.identity), 0.1f,
+                "Billboard icon must stay upright and unrotated facing camera regardless of parent capsule rotation.");
+
+            Object.DestroyImmediate(capsule.gameObject);
+        }
+
+        [Test]
+        public void PowerupCapsule_Collect_ScoreMultipliers_ActivateMultiplierBuff()
+        {
+            // Test 2X
+            var capsule2x = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.ScoreMultiplier2x);
+            capsule2x.Collect(paddle);
+            Assert.AreEqual(2, gameManager.ActiveScoreMultiplier, "Collecting 2X capsule must activate 2X score multiplier.");
+            Assert.Greater(gameManager.MultiplierTimeRemaining, 0f);
+
+            // Test 3X
+            var capsule3x = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.ScoreMultiplier3x);
+            capsule3x.Collect(paddle);
+            Assert.AreEqual(3, gameManager.ActiveScoreMultiplier, "Collecting 3X capsule must activate 3X score multiplier.");
+
+            // Test 4X
+            var capsule4x = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.ScoreMultiplier4x);
+            capsule4x.Collect(paddle);
+            Assert.AreEqual(4, gameManager.ActiveScoreMultiplier, "Collecting 4X capsule must activate 4X score multiplier.");
+
+            // Test 5X
+            var capsule5x = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.ScoreMultiplier5x);
+            capsule5x.Collect(paddle);
+            Assert.AreEqual(5, gameManager.ActiveScoreMultiplier, "Collecting 5X capsule must activate 5X score multiplier.");
+        }
+
+        [Test]
+        public void PaddleController_RootCollider_HasExtendedDepth()
+        {
+            var boxCol = paddle.GetComponent<BoxCollider>();
+            Assert.IsNotNull(boxCol);
+            Assert.GreaterOrEqual(boxCol.size.z, 2.5f, "Paddle root collider must have depth >= 2.5 to intersect foreground capsules.");
         }
 
         #endregion
