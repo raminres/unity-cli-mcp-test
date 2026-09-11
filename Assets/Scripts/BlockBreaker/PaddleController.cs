@@ -1,3 +1,4 @@
+using System.Collections;
 using Arcade.Core;
 using Arcade.Input;
 using UnityEngine;
@@ -5,7 +6,8 @@ using UnityEngine;
 namespace Arcade.BlockBreaker
 {
     /// <summary>
-    /// Controls the player platform (paddle) with dynamic width expansion and boundary clamping.
+    /// Controls the player platform (paddle) featuring an inverted stepped pyramid/trapezoid geometry,
+    /// dynamic compounding width expansion with spring overshoot animation, and boundary clamping.
     /// </summary>
     public class PaddleController : MonoBehaviour
     {
@@ -18,14 +20,27 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float arenaHalfWidth = 10.0f;
         [SerializeField] private int expansionCount = 0;
 
+        [Header("Stepped Tiers")]
+        [SerializeField] private Transform stepTop;
+        [SerializeField] private Transform stepMid;
+        [SerializeField] private Transform stepBottom;
+
         [Header("References")]
         [SerializeField] private Rigidbody rb;
+        [SerializeField] private BoxCollider rootCollider;
+
+        private Coroutine expandCoroutine;
+        private Coroutine recoilCoroutine;
 
         public float Width => paddleWidth;
         public float BaseWidth => basePaddleWidth;
         public float MinX => minX;
         public float MaxX => maxX;
         public int ExpansionCount => expansionCount;
+
+        public Transform StepTop => stepTop;
+        public Transform StepMid => stepMid;
+        public Transform StepBottom => stepBottom;
 
         private void Awake()
         {
@@ -35,7 +50,40 @@ namespace Arcade.BlockBreaker
                 rb.isKinematic = true;
                 rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
             }
+
+            if (rootCollider == null) rootCollider = GetComponent<BoxCollider>();
+
+            EnsureSteppedMeshHierarchy();
             RecalculateBounds();
+        }
+
+        /// <summary>
+        /// Ensures the 3-tier inverted stepped pyramid children exist and that the strike collider is configured.
+        /// Tier 1: Top Strike Deck (100% width, H = 0.24, Y = +0.38).
+        /// Tier 2: Mid Chassis (72% width, H = 0.20, Y = +0.16).
+        /// Tier 3: Bottom Keel (44% width, H = 0.16, Y = -0.02).
+        /// </summary>
+        public void EnsureSteppedMeshHierarchy()
+        {
+            if (stepTop == null) stepTop = transform.Find("Step_Top");
+            if (stepMid == null) stepMid = transform.Find("Step_Mid");
+            if (stepBottom == null) stepBottom = transform.Find("Step_Bottom");
+
+            // Remove legacy root mesh renderer if single-cube legacy model is attached
+            var rootRenderer = GetComponent<MeshRenderer>();
+            var rootFilter = GetComponent<MeshFilter>();
+            if (stepTop != null && rootRenderer != null)
+            {
+                rootRenderer.enabled = false;
+            }
+
+            // Configure root strike BoxCollider to cover strictly the thin top deck
+            if (rootCollider == null) rootCollider = GetComponent<BoxCollider>();
+            if (rootCollider != null)
+            {
+                rootCollider.center = new Vector3(0f, 0.38f, 0f);
+                rootCollider.size = new Vector3(1.0f, 0.24f, 1.0f);
+            }
         }
 
         private void Update()
@@ -81,13 +129,83 @@ namespace Arcade.BlockBreaker
         }
 
         /// <summary>
-        /// Expands the paddle width compoundingly by the specified percentage (e.g. 0.10f for +10%).
+        /// Expands the paddle width compoundingly with spring overshoot animation (e.g. 0.10f for +10%).
         /// Multiple expander blocks compound: W_n = W_prev * (1 + percentage).
         /// </summary>
         public void ExpandWidth(float percentage = 0.10f)
         {
             expansionCount++;
-            SetWidth(paddleWidth * (1.0f + percentage));
+            float targetWidth = Mathf.Clamp(paddleWidth * (1.0f + percentage), 2.0f, 12.0f);
+
+            if (Application.isPlaying && gameObject.activeInHierarchy)
+            {
+                if (expandCoroutine != null) StopCoroutine(expandCoroutine);
+                expandCoroutine = StartCoroutine(AnimateExpandOvershoot(targetWidth, 0.35f));
+            }
+            else
+            {
+                SetWidth(targetWidth);
+            }
+        }
+
+        /// <summary>
+        /// Smooth spring overshoot animation curve for tactile arcade expansion feedback.
+        /// </summary>
+        private IEnumerator AnimateExpandOvershoot(float targetWidth, float duration)
+        {
+            float startWidth = paddleWidth;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float u = Mathf.Clamp01(elapsed / duration);
+
+                // Spring decay function with ~16% overshoot and settle
+                float springProgress = 1.0f - Mathf.Exp(-6f * u) * Mathf.Cos(u * Mathf.PI * 2.5f);
+                float currentW = Mathf.LerpUnclamped(startWidth, targetWidth, springProgress);
+
+                SetWidth(currentW);
+
+                // Tactile vertical squash & stretch during expansion pulse
+                float yFactor = 1.0f - (springProgress - 1.0f) * 0.35f;
+                transform.localScale = new Vector3(currentW, Mathf.Clamp(yFactor, 0.88f, 1.06f), 1.0f);
+
+                yield return null;
+            }
+
+            SetWidth(targetWidth);
+            transform.localScale = new Vector3(targetWidth, 1.0f, 1.0f);
+            expandCoroutine = null;
+        }
+
+        /// <summary>
+        /// Triggers a micro-squash recoil effect on ball contact.
+        /// </summary>
+        public void TriggerImpactRecoil()
+        {
+            if (!Application.isPlaying || !gameObject.activeInHierarchy) return;
+            if (recoilCoroutine != null) StopCoroutine(recoilCoroutine);
+            recoilCoroutine = StartCoroutine(AnimateImpactRecoil(0.12f));
+        }
+
+        private IEnumerator AnimateImpactRecoil(float duration)
+        {
+            float elapsed = 0f;
+            float currentW = transform.localScale.x;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float u = Mathf.Clamp01(elapsed / duration);
+                float squash = 1.0f - Mathf.Sin(u * Mathf.PI) * 0.12f;
+
+                transform.localScale = new Vector3(currentW, squash, 1.0f);
+                yield return null;
+            }
+
+            transform.localScale = new Vector3(currentW, 1.0f, 1.0f);
+            recoilCoroutine = null;
         }
 
         /// <summary>
@@ -95,18 +213,31 @@ namespace Arcade.BlockBreaker
         /// </summary>
         public void ResetWidth(float defaultWidth = 5.0f)
         {
+            if (expandCoroutine != null)
+            {
+                StopCoroutine(expandCoroutine);
+                expandCoroutine = null;
+            }
+
             basePaddleWidth = defaultWidth;
             expansionCount = 0;
+            transform.localScale = new Vector3(defaultWidth, 1.0f, 1.0f);
             SetWidth(defaultWidth);
         }
 
         /// <summary>
         /// Resets the paddle width to the cached level base width without changing base width itself.
-        /// Used when temporary expansion buffs expire.
         /// </summary>
         public void ResetToBaseWidth()
         {
+            if (expandCoroutine != null)
+            {
+                StopCoroutine(expandCoroutine);
+                expandCoroutine = null;
+            }
+
             expansionCount = 0;
+            transform.localScale = new Vector3(basePaddleWidth, 1.0f, 1.0f);
             SetWidth(basePaddleWidth);
         }
 

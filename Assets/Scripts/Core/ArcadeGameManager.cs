@@ -309,6 +309,26 @@ namespace Arcade.Core
             new Color(0.608f, 0.365f, 0.898f, 1f)  // Electric Purple (#9b5de5)
         };
 
+        public void ActivateMultiBall()
+        {
+            BallController primary = activeBalls.Count > 0 ? activeBalls[0] : FindAnyObjectByType<BallController>();
+            Vector3 origin = primary != null ? primary.transform.position : Vector3.zero;
+            Vector3 baseVel = Vector3.up * 14f;
+            float speed = 14f;
+
+            if (primary != null)
+            {
+                var rb = primary.GetComponent<Rigidbody>();
+                if (rb != null && rb.linearVelocity.sqrMagnitude > 0.1f)
+                {
+                    baseVel = rb.linearVelocity;
+                }
+                speed = primary.CurrentSpeed;
+            }
+
+            SpawnMultiBall(origin, baseVel, speed);
+        }
+
         public void SpawnMultiBall(Vector3 originPosition, Vector3 baseVelocity, float speed)
         {
             BallController primary = activeBalls.Count > 0 ? activeBalls[0] : FindAnyObjectByType<BallController>();

@@ -2529,6 +2529,151 @@ namespace Arcade.Tests
         }
 
         #endregion
+
+        #region 12. Stepped Pyramid Paddle & Powerup Capsule Tests
+
+        [Test]
+        public void Paddle_SteppedPyramid_DimensionsAndTapering()
+        {
+            var pObj = new GameObject("SteppedPaddleTest");
+            var col = pObj.AddComponent<BoxCollider>();
+            var pCtrl = pObj.AddComponent<PaddleController>();
+
+            // Construct 3-tier stepped children
+            var stepTop = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            stepTop.name = "Step_Top";
+            stepTop.transform.SetParent(pObj.transform, false);
+            stepTop.transform.localPosition = new Vector3(0f, 0.38f, 0f);
+            stepTop.transform.localScale = new Vector3(1.0f, 0.24f, 1.0f);
+            Object.DestroyImmediate(stepTop.GetComponent<Collider>());
+
+            var stepMid = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            stepMid.name = "Step_Mid";
+            stepMid.transform.SetParent(pObj.transform, false);
+            stepMid.transform.localPosition = new Vector3(0f, 0.16f, 0f);
+            stepMid.transform.localScale = new Vector3(0.72f, 0.20f, 0.88f);
+            Object.DestroyImmediate(stepMid.GetComponent<Collider>());
+
+            var stepBtm = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            stepBtm.name = "Step_Bottom";
+            stepBtm.transform.SetParent(pObj.transform, false);
+            stepBtm.transform.localPosition = new Vector3(0f, -0.02f, 0f);
+            stepBtm.transform.localScale = new Vector3(0.44f, 0.16f, 0.72f);
+            Object.DestroyImmediate(stepBtm.GetComponent<Collider>());
+
+            pCtrl.EnsureSteppedMeshHierarchy();
+
+            Assert.IsNotNull(pCtrl.StepTop, "Step_Top must be resolved.");
+            Assert.IsNotNull(pCtrl.StepMid, "Step_Mid must be resolved.");
+            Assert.IsNotNull(pCtrl.StepBottom, "Step_Bottom must be resolved.");
+
+            Assert.AreEqual(1.0f, pCtrl.StepTop.localScale.x, 0.001f);
+            Assert.AreEqual(0.72f, pCtrl.StepMid.localScale.x, 0.001f);
+            Assert.AreEqual(0.44f, pCtrl.StepBottom.localScale.x, 0.001f);
+
+            // Verify strike collider is aligned with top deck
+            Assert.AreEqual(0.38f, col.center.y, 0.001f);
+            Assert.AreEqual(0.24f, col.size.y, 0.001f);
+
+            Object.DestroyImmediate(pObj);
+        }
+
+        [Test]
+        public void Paddle_CompoundingExpansion_PreservesTaperingRatio()
+        {
+            var pObj = new GameObject("TaperingExpansionTest");
+            var col = pObj.AddComponent<BoxCollider>();
+            var pCtrl = pObj.AddComponent<PaddleController>();
+
+            var stepTop = new GameObject("Step_Top");
+            stepTop.transform.SetParent(pObj.transform, false);
+            stepTop.transform.localScale = new Vector3(1.0f, 0.24f, 1.0f);
+
+            var stepMid = new GameObject("Step_Mid");
+            stepMid.transform.SetParent(pObj.transform, false);
+            stepMid.transform.localScale = new Vector3(0.72f, 0.20f, 0.88f);
+
+            var stepBtm = new GameObject("Step_Bottom");
+            stepBtm.transform.SetParent(pObj.transform, false);
+            stepBtm.transform.localScale = new Vector3(0.44f, 0.16f, 0.72f);
+
+            pCtrl.EnsureSteppedMeshHierarchy();
+            pCtrl.ResetWidth(5.0f);
+
+            // Expand by +10% -> 5.5f
+            pCtrl.ExpandWidth(0.10f);
+            Assert.AreEqual(5.50f, pCtrl.Width, 0.001f);
+
+            // World widths of tiers are multiplied by parent scale
+            float topWorldW = pCtrl.Width * pCtrl.StepTop.localScale.x;
+            float midWorldW = pCtrl.Width * pCtrl.StepMid.localScale.x;
+            float btmWorldW = pCtrl.Width * pCtrl.StepBottom.localScale.x;
+
+            Assert.AreEqual(5.50f, topWorldW, 0.001f);
+            Assert.AreEqual(5.50f * 0.72f, midWorldW, 0.001f);
+            Assert.AreEqual(5.50f * 0.44f, btmWorldW, 0.001f);
+
+            Object.DestroyImmediate(pObj);
+        }
+
+        [Test]
+        public void PowerupCapsule_Collect_TriggersPaddleExpansion()
+        {
+            paddle.ResetWidth(5.0f);
+            var capsule = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.PaddleExpander);
+            Assert.IsNotNull(capsule);
+
+            capsule.Collect(paddle);
+            Assert.AreEqual(5.50f, paddle.Width, 0.001f, "Collecting PaddleExpander capsule must expand paddle.");
+            Assert.AreEqual(1, paddle.ExpansionCount);
+        }
+
+        [Test]
+        public void PowerupCapsule_Collect_ExtraHeart_AddsLife()
+        {
+            int startingLives = gameManager.Lives;
+
+            var capsule = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.ExtraHeart);
+            capsule.Collect(paddle);
+
+            Assert.AreEqual(startingLives + 1, gameManager.Lives, "Collecting ExtraHeart capsule must add 1 life.");
+        }
+
+        [Test]
+        public void PowerupCapsule_Collect_Shield_ActivatesShield()
+        {
+            Assert.IsFalse(gameManager.IsShieldActive);
+
+            var capsule = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.Shield);
+            capsule.Collect(paddle);
+
+            Assert.IsTrue(gameManager.IsShieldActive, "Collecting Shield capsule must activate defensive barrier.");
+            Assert.Greater(gameManager.ShieldTimeRemaining, 0f);
+        }
+
+        [Test]
+        public void BallController_IsValidPaddleBounceNormal_EnforcesUpwardContactsOnly()
+        {
+            // Pure vertical hit from top
+            Assert.IsTrue(BallController.IsValidPaddleBounceNormal(Vector3.up));
+
+            // Angled hit from top (45 deg)
+            Vector3 angledHit = new Vector3(0.707f, 0.707f, 0f);
+            Assert.IsTrue(BallController.IsValidPaddleBounceNormal(angledHit));
+
+            // Side wall collision (horizontal normal)
+            Assert.IsFalse(BallController.IsValidPaddleBounceNormal(Vector3.right), "Side wall hits must NOT deflect upward.");
+            Assert.IsFalse(BallController.IsValidPaddleBounceNormal(Vector3.left), "Side wall hits must NOT deflect upward.");
+
+            // Shallow side scrape with normal.y below 0.25f
+            Vector3 sideScrape = new Vector3(0.98f, 0.15f, 0f);
+            Assert.IsFalse(BallController.IsValidPaddleBounceNormal(sideScrape), "Side scrape below threshold must NOT deflect upward.");
+
+            // Collision from underneath (negative Y normal)
+            Assert.IsFalse(BallController.IsValidPaddleBounceNormal(Vector3.down), "Bottom collisions must NOT deflect upward.");
+        }
+
+        #endregion
     }
 }
 

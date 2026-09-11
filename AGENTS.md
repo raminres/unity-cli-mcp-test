@@ -30,10 +30,19 @@ This file provides persistent, high-density project context across agent session
 ---
 
 ## 3. Core Gameplay Architecture
-- **Paddle Math & Dynamic Deflection**:
-  - Size: 5:1 aspect ($5.0 \times 1.0 \times 1.0$), initial position $Y = -6.5$.
-  - Deflection formula: bounce angle $\theta = 90^\circ - (\text{normalizedOffset} \times 60^\circ)$.
-  - Compounding expansion: $+10\%$ per expander ($W_n = W_{prev} \times 1.10$, clamped to max $12.0$, adaptive bounds $[-10 + \frac{W}{2}, 10 - \frac{W}{2}]$).
+- **Inverted Stepped Pyramid Paddle & Dynamic Deflection**:
+  - **3-Tier Geometry**:
+    - Tier 1 (Top Strike Deck): $100\%$ width ($W = 5.0$), ultra-thin profile ($H = 0.24$, $Z = 1.0$) with glowing neon cyan rim ([MI_Paddle_Deck.mat](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Materials/BlockBreaker/MI_Paddle_Deck.mat)). Top surface preserved exactly at $Y = -6.0$ for consistent ball docking.
+    - Tier 2 (Mid Chassis): Stepped inward to $72\%$ width ($W = 3.6$), height $H = 0.20$, $Z = 0.88$ in dark brushed titanium ([MI_Paddle.mat](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Materials/BlockBreaker/MI_Paddle.mat)).
+    - Tier 3 (Bottom Keel / Thrusters): Stepped inward to $44\%$ width ($W = 2.2$), height $H = 0.16$, $Z = 0.72$ with engine vent glow ([MI_Paddle_Core.mat](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Materials/BlockBreaker/MI_Paddle_Core.mat)).
+    - Total combined vertical profile: $0.60$ (reduced from legacy $1.0$ cube), with lower sides stepped inward by up to $1.4$ units on each side to eliminate phantom side catches.
+  - **Physical Strike Collider & Contact Normal Guard**:
+    - Primary `BoxCollider` is strictly fitted to Tier 1 ($H = 0.24$, center $Y = +0.38$). Below $Y = -6.24$, there is zero collision volume.
+    - Upward Normal Threshold: `BallController.IsValidPaddleBounceNormal(normal)` (`normal.y >= 0.25f`) guarantees that balls brushing the side wall or hitting from below are NOT deflected upward, falling cleanly into the killzone.
+  - **Deflection Formula**: bounce angle $\theta = 90^\circ - (\text{normalizedOffset} \times 60^\circ)$.
+  - **Compounding Expansion with Spring Overshoot**:
+    - $+10\%$ per expander ($W_n = W_{prev} \times 1.10$, clamped to max $12.0$, adaptive bounds $[-10 + \frac{W}{2}, 10 - \frac{W}{2}]$).
+    - Features spring-damper overshoot animation ($\approx +16\%$ overshoot with $Y$-axis squash-and-stretch settling over $0.35\text{s}$) for tactile arcade feedback.
 - **Arena Dimensions**:
   - Top Wall: $Y = 24.25$, Left/Right Walls: $X = \pm 10.5$ (height $32.0$), Kill Zone: $Y = -9.0$ ([KillZone.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/KillZone.cs)).
   - Camera: Perspective $38^\circ$ FOV with [ResponsiveCameraController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/Core/ResponsiveCameraController.cs) dynamically adjusting $Z$-distance to guarantee 100% visible arena boundaries across any aspect ratio (16:9, 9:16, 9:19.5, etc.).
@@ -62,13 +71,16 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
 ---
 
 ## 5. Powerups & Special Brick Archetypes
-- **Paddle Expander (`PaddleExpander`)**: Widen paddle by $+10\%$, plays break + powerup audio, cyan particle burst.
-- **Score Multipliers (`ScoreMultiplier2x`, `ScoreMultiplier3x`)**: Multiplies brick point value (e.g. 3x Blue = 90 pts).
-- **Glass-Enclosed Bricks (`GlassEnclosed`)**: Encased in a $1.18\times$ glass shell ([MI_Block_Glass.mat](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Materials/BlockBreaker/MI_Block_Glass.mat)). Requires 2 hits (Hit 1: shatters glass shell with crystal debris; Hit 2: breaks brick for $2\times$ points).
-- **Bomb Bricks (`Bomb`)**: Explosive radius detonation ($2.5$ units) detonating surrounding bricks with outward impulses. Protected by `isDestroyed` flag against recursive loops.
-- **Shield Powerup (`Shield`)**: 10-second defensive barrier. Falling balls intercept safely into `ReadyToLaunch` docked on paddle without losing lives. Displays live countdown timer on HUD.
-- **Multi-Ball Powerup (`MultiBall`)**: Spawns 2 extra balls at $\pm 35^\circ$ diverging angles (3 balls active). Extra balls falling do NOT lose lives; only the final remaining ball causes life loss.
-- **Extra Heart Powerup (`ExtraHeart`)**: Grants $+1$ life (up to 5 max) with flying heart HUD parabolic animation.
+- **Collectible Powerup Drops ([PowerupCapsule.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/PowerupCapsule.cs))**:
+  - Tactical powerups drop tumbling 3D collectible capsules ([MI_Powerup_Capsule.mat](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Materials/BlockBreaker/MI_Powerup_Capsule.mat)) that fall at $4.5\text{ units/s}$ with 3D rotational spin and vibrant neon emissive tint. Must be intercepted by the paddle to claim:
+    - **Paddle Expander (`PaddleExpander`)**: Drops neon cyan capsule; catching triggers spring overshoot expansion ($+10\%$).
+    - **Extra Heart (`ExtraHeart`)**: Drops radiant neon pink capsule; catching grants $+1$ life (up to 5 max) with HUD parabolic flight animation.
+    - **Shield (`Shield`)**: Drops electric blue capsule; catching activates 10-second defensive barrier with HUD countdown.
+    - **Multi-Ball (`MultiBall`)**: Drops neon magenta capsule; catching spawns 2 extra balls at $\pm 35^\circ$ diverging angles with distinct trail colors.
+- **Immediate Environmental / Scoring Modifiers**:
+  - **Bomb Bricks (`Bomb`)**: Explosive radius detonation ($2.5$ units) immediately detonating surrounding bricks with outward impulses. Protected by `isDestroyed` flag against recursive loops.
+  - **Score Multipliers (`ScoreMultiplier2x`, `ScoreMultiplier3x`)**: Immediately multiplies brick point value (e.g. 3x Blue = 90 pts).
+  - **Glass-Enclosed Bricks (`GlassEnclosed`)**: Encased in a $1.18\times$ glass shell ([MI_Block_Glass.mat](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Materials/BlockBreaker/MI_Block_Glass.mat)). Requires 2 hits (Hit 1: shatters glass shell with crystal debris; Hit 2: breaks brick for $2\times$ points).
 - **World Space Badges ([BlockBadge.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockBadge.cs))**: Rendered via Unity 6 `PanelRenderer` in `WorldSpace` mode (`80px` fixed dimension, 100 PPU, clamped margins).
 
 ---
@@ -129,5 +141,5 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
 
 ## 10. Automated Test Suite
 - **Location**: `Assets/Tests/BlockBreakerCoreTests.cs`
-- **Total Tests**: **99 passing tests (100%)**, executing in ~150ms.
-- **Coverage**: Scoring multipliers, dynamic paddle deflection math, boundary clamping, life tracking, heart UI transitions, safe area insets, aspect-ratio frustum framing, compounding paddle widening, audio persistence, debris shader resolution, pause lifecycle, launch suppression window, direct touch controls, bomb radius blast, glass 2-hit durability, shield countdown & killzone intercept, multi-ball death tolerance, multi-ball distinct trail color assignment, dual-layer trail creation and curve decay, 7-level campaign existence, speed escalation, cyclic advancement, HighScoreManager sorting/clamping/resetting, and in-game/menu modal visibility states.
+- **Total Tests**: **105 passing tests (100%)**, executing in ~160ms.
+- **Coverage**: Scoring multipliers, dynamic paddle deflection math, boundary clamping, life tracking, heart UI transitions, safe area insets, aspect-ratio frustum framing, compounding paddle widening, stepped pyramid geometry & tier ratios, spring overshoot expansion animation, powerup capsule collection (PaddleExpander, ExtraHeart, Shield), contact normal validation (`IsValidPaddleBounceNormal`), audio persistence, debris shader resolution, pause lifecycle, launch suppression window, direct touch controls, bomb radius blast, glass 2-hit durability, shield countdown & killzone intercept, multi-ball death tolerance, multi-ball distinct trail color assignment, dual-layer trail creation and curve decay, 7-level campaign existence, speed escalation, cyclic advancement, HighScoreManager sorting/clamping/resetting, and in-game/menu modal visibility states.

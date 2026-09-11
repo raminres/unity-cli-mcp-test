@@ -165,60 +165,73 @@ namespace Arcade.BlockBreaker
             }
 
             // 3. Apply Special Modifier Effects
-            if (specialType == BlockSpecialType.PaddleExpander)
+            bool isCollectibleBuff = (specialType == BlockSpecialType.PaddleExpander ||
+                                      specialType == BlockSpecialType.ExtraHeart ||
+                                      specialType == BlockSpecialType.Shield ||
+                                      specialType == BlockSpecialType.MultiBall);
+
+            if (isCollectibleBuff && Application.isPlaying)
             {
-                if (ArcadeGameManager.Instance != null)
+                PowerupCapsule.Spawn(transform.position, specialType);
+            }
+            else
+            {
+                if (specialType == BlockSpecialType.PaddleExpander)
                 {
-                    ArcadeGameManager.Instance.ActivatePaddleExpander(BlockModifierExtensions.DEFAULT_PADDLE_EXPAND_DURATION);
-                }
-                else
-                {
-                    var paddle = FindAnyObjectByType<PaddleController>();
-                    if (paddle != null)
+                    if (ArcadeGameManager.Instance != null)
                     {
-                        paddle.ExpandWidth(paddleExpansionPercent);
+                        ArcadeGameManager.Instance.ActivatePaddleExpander(BlockModifierExtensions.DEFAULT_PADDLE_EXPAND_DURATION);
+                    }
+                    else
+                    {
+                        var paddle = FindAnyObjectByType<PaddleController>();
+                        if (paddle != null)
+                        {
+                            paddle.ExpandWidth(paddleExpansionPercent);
+                        }
+                    }
+                }
+                else if (specialType == BlockSpecialType.ExtraHeart)
+                {
+                    if (ArcadeGameManager.Instance != null)
+                    {
+                        ArcadeGameManager.Instance.AddLife(1);
+                    }
+
+                    if (UI.ArcadeUIManager.Instance != null)
+                    {
+                        UI.ArcadeUIManager.Instance.AnimateFlyingHeart(transform.position);
+                    }
+                }
+                else if (specialType == BlockSpecialType.Shield)
+                {
+                    if (ArcadeGameManager.Instance != null)
+                    {
+                        ArcadeGameManager.Instance.ActivateShield(BlockModifierExtensions.DEFAULT_SHIELD_DURATION);
+                    }
+                }
+                else if (specialType == BlockSpecialType.MultiBall)
+                {
+                    if (ArcadeGameManager.Instance != null)
+                    {
+                        var ball = FindAnyObjectByType<BallController>();
+                        Vector3 baseVel = Vector3.up;
+                        float speed = 14f;
+                        if (ball != null)
+                        {
+                            var rb = ball.GetComponent<Rigidbody>();
+                            if (rb != null && rb.linearVelocity.sqrMagnitude > 0.1f)
+                                baseVel = rb.linearVelocity;
+                            speed = ball.CurrentSpeed;
+                        }
+                        ArcadeGameManager.Instance.SpawnMultiBall(transform.position, baseVel, speed);
                     }
                 }
             }
-            else if (specialType == BlockSpecialType.ExtraHeart)
-            {
-                if (ArcadeGameManager.Instance != null)
-                {
-                    ArcadeGameManager.Instance.AddLife(1);
-                }
 
-                if (UI.ArcadeUIManager.Instance != null)
-                {
-                    UI.ArcadeUIManager.Instance.AnimateFlyingHeart(transform.position);
-                }
-            }
-            else if (specialType == BlockSpecialType.Bomb)
+            if (specialType == BlockSpecialType.Bomb)
             {
                 ExplodePerimeter();
-            }
-            else if (specialType == BlockSpecialType.Shield)
-            {
-                if (ArcadeGameManager.Instance != null)
-                {
-                    ArcadeGameManager.Instance.ActivateShield(BlockModifierExtensions.DEFAULT_SHIELD_DURATION);
-                }
-            }
-            else if (specialType == BlockSpecialType.MultiBall)
-            {
-                if (ArcadeGameManager.Instance != null)
-                {
-                    var ball = FindAnyObjectByType<BallController>();
-                    Vector3 baseVel = Vector3.up;
-                    float speed = 14f;
-                    if (ball != null)
-                    {
-                        var rb = ball.GetComponent<Rigidbody>();
-                        if (rb != null && rb.linearVelocity.sqrMagnitude > 0.1f)
-                            baseVel = rb.linearVelocity;
-                        speed = ball.CurrentSpeed;
-                    }
-                    ArcadeGameManager.Instance.SpawnMultiBall(transform.position, baseVel, speed);
-                }
             }
             else if (specialType == BlockSpecialType.ScoreMultiplier2x ||
                      specialType == BlockSpecialType.ScoreMultiplier3x ||

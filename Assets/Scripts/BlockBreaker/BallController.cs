@@ -329,15 +329,44 @@ namespace Arcade.BlockBreaker
             }
         }
 
+        public const float MIN_UPWARD_NORMAL_Y = 0.25f;
+
+        /// <summary>
+        /// Validates that a collision normal points predominantly upward, preventing side/bottom edge saves.
+        /// </summary>
+        public static bool IsValidPaddleBounceNormal(Vector3 normal)
+        {
+            return normal.y >= MIN_UPWARD_NORMAL_Y;
+        }
+
         private void OnCollisionEnter(Collision collision)
         {
             if (!isLaunched) return;
 
             // Check if we hit the paddle
-            PaddleController hitPaddle = collision.gameObject.GetComponent<PaddleController>();
+            PaddleController hitPaddle = collision.gameObject.GetComponent<PaddleController>()
+                ?? collision.gameObject.GetComponentInParent<PaddleController>();
             if (hitPaddle != null)
             {
+                // Contact Normal Guard:
+                // Only upward-facing contacts on the top strike deck count as paddle saves.
+                // If contactNormal.y < MIN_UPWARD_NORMAL_Y, it's a side-wall or underneath collision;
+                // do not trigger upward deflection so balls that missed the top drop into killzone.
+                if (collision.contacts.Length > 0)
+                {
+                    Vector3 contactNormal = collision.contacts[0].normal;
+                    if (!IsValidPaddleBounceNormal(contactNormal))
+                    {
+                        if (ArcadeAudioManager.Instance != null)
+                        {
+                            ArcadeAudioManager.Instance.PlayWallBounce();
+                        }
+                        return;
+                    }
+                }
+
                 HandlePaddleCollision(hitPaddle);
+                hitPaddle.TriggerImpactRecoil();
                 return;
             }
 
