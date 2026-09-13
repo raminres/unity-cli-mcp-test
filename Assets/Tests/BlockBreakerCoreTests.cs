@@ -1894,12 +1894,11 @@ namespace Arcade.Tests
         #region 13. Progressive 7-Level Campaign Tests
 
         [Test]
-        public void Campaign_AllSevenLevelsExist_AndEnforceProgressiveSpeedAndBlockScaling()
+        public void Campaign_AllFifteenLevelsExist_AndEnforceProgressiveSpeedAndLayoutVariety()
         {
             float lastSpeed = 0f;
-            int lastBlocks = 0;
 
-            for (int i = 1; i <= 7; i++)
+            for (int i = 1; i <= 15; i++)
             {
                 string path = $"Assets/Settings/Levels/SO_Level_{i:D2}.asset";
                 var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>(path);
@@ -1907,18 +1906,17 @@ namespace Arcade.Tests
                 Assert.AreEqual(i, config.LevelNumber, $"Level {i} must have matching LevelNumber.");
                 Assert.IsFalse(string.IsNullOrEmpty(config.LevelName), $"Level {i} must have a non-empty name.");
                 Assert.IsFalse(string.IsNullOrEmpty(config.Description), $"Level {i} must have a non-empty description.");
+                Assert.Greater(config.TotalBlocks, 0, $"Level {i} must have a positive block count.");
 
                 Assert.Greater(config.BallSpeedMultiplier, lastSpeed, $"Level {i} speed ({config.BallSpeedMultiplier}) must be strictly faster than Level {i - 1} speed ({lastSpeed}).");
-                Assert.GreaterOrEqual(config.TotalBlocks, lastBlocks, $"Level {i} blocks ({config.TotalBlocks}) must be >= Level {i - 1} blocks ({lastBlocks}).");
 
                 lastSpeed = config.BallSpeedMultiplier;
-                lastBlocks = config.TotalBlocks;
             }
 
             Assert.AreEqual(0.85f, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset").BallSpeedMultiplier, 0.001f);
-            Assert.AreEqual(1.38f, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_07.asset").BallSpeedMultiplier, 0.001f);
-            Assert.AreEqual(15, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset").TotalBlocks);
-            Assert.AreEqual(90, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_07.asset").TotalBlocks);
+            Assert.AreEqual(1.48f, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_15.asset").BallSpeedMultiplier, 0.001f);
+            Assert.AreEqual(LevelLayoutType.Pyramid, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset").LayoutType);
+            Assert.AreEqual(LevelLayoutType.Custom, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_15.asset").LayoutType);
         }
 
         [Test]
@@ -1927,11 +1925,12 @@ namespace Arcade.Tests
             var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset");
             Assert.IsNotNull(config);
 
-            // Level 1: 5 cols * 3 rows = 15 blocks
-            Assert.AreEqual(5, config.Columns);
+            // Level 1: 7 cols * 3 rows in a Stepped Pyramid = 15 blocks
+            Assert.AreEqual(7, config.Columns);
             Assert.AreEqual(1, config.RowsPerTier);
             Assert.AreEqual(3, config.TotalRows);
             Assert.AreEqual(15, config.TotalBlocks);
+            Assert.AreEqual(LevelLayoutType.Pyramid, config.LayoutType);
 
             // Generous warmup paddle and comfortable speed
             Assert.AreEqual(5.5f, config.InitialPaddleWidth, 0.001f);
@@ -1949,13 +1948,13 @@ namespace Arcade.Tests
         }
 
         [Test]
-        public void LevelGenerator_AdvanceToNextLevel_CyclesSevenLevelsSeamlessly()
+        public void LevelGenerator_AdvanceToNextLevel_CyclesFifteenLevelsSeamlessly()
         {
             var genObj = new GameObject("TestGenerator");
             var gen = genObj.AddComponent<LevelGenerator>();
 
-            var levelConfigs = new LevelConfiguration[7];
-            for (int i = 0; i < 7; i++)
+            var levelConfigs = new LevelConfiguration[15];
+            for (int i = 0; i < 15; i++)
             {
                 levelConfigs[i] = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i + 1:D2}.asset");
                 Assert.IsNotNull(levelConfigs[i]);
@@ -1963,8 +1962,8 @@ namespace Arcade.Tests
 
             var genSo = new UnityEditor.SerializedObject(gen);
             var presetsProp = genSo.FindProperty("levelPresets");
-            presetsProp.arraySize = 7;
-            for (int i = 0; i < 7; i++)
+            presetsProp.arraySize = 15;
+            for (int i = 0; i < 15; i++)
             {
                 presetsProp.GetArrayElementAtIndex(i).objectReferenceValue = levelConfigs[i];
             }
@@ -1974,27 +1973,27 @@ namespace Arcade.Tests
             gen.SelectAndLoadLevel(1);
             Assert.AreEqual(1, gen.CurrentConfig.LevelNumber);
 
-            // Advance through 2, 3, 4, 5, 6, 7
-            for (int expectedLvl = 2; expectedLvl <= 7; expectedLvl++)
+            // Advance through 2 to 15
+            for (int expectedLvl = 2; expectedLvl <= 15; expectedLvl++)
             {
                 gen.AdvanceToNextLevel();
                 Assert.AreEqual(expectedLvl, gen.CurrentConfig.LevelNumber, $"Expected advancing to Level {expectedLvl}.");
             }
 
-            // Advancing from Level 7 must loop back to Level 1
+            // Advancing from Level 15 must loop back to Level 1
             gen.AdvanceToNextLevel();
-            Assert.AreEqual(1, gen.CurrentConfig.LevelNumber, "Advancing beyond Level 7 must loop back to Level 1 for endless arcade progression.");
+            Assert.AreEqual(1, gen.CurrentConfig.LevelNumber, "Advancing beyond Level 15 must loop back to Level 1 for endless arcade progression.");
 
             Object.DestroyImmediate(genObj);
         }
 
         [Test]
-        public void LevelGenerator_SpecialBlockDistribution_MaintainsExactCountsWithoutCollisionsAcrossAll7Levels()
+        public void LevelGenerator_SpecialBlockDistribution_MaintainsExactCountsWithoutCollisionsAcrossAll15Levels()
         {
             var genObj = new GameObject("TestGenerator");
             var gen = genObj.AddComponent<LevelGenerator>();
 
-            for (int i = 1; i <= 7; i++)
+            for (int i = 1; i <= 15; i++)
             {
                 var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i:D2}.asset");
                 Assert.IsNotNull(config);
@@ -2049,6 +2048,135 @@ namespace Arcade.Tests
                 Assert.AreEqual(config.MultiBallCount, actualMulti);
             }
 
+            Object.DestroyImmediate(genObj);
+        }
+
+        [Test]
+        public void LevelConfiguration_AllSixteenLayoutTypes_EvaluateAccurately()
+        {
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+            config.SetColumns(8);
+            config.SetRowsPerTier(2); // 6 rows total
+
+            foreach (LevelLayoutType layout in System.Enum.GetValues(typeof(LevelLayoutType)))
+            {
+                config.SetLayoutType(layout);
+                if (layout == LevelLayoutType.Custom)
+                {
+                    config.SetCustomLayout("XXXX\n.XX.\n..XX");
+                }
+
+                Assert.Greater(config.TotalBlocks, 0, $"LayoutType {layout} must produce at least one block.");
+                Assert.LessOrEqual(config.TotalBlocks, config.Columns * config.TotalRows, $"LayoutType {layout} blocks must not exceed grid envelope.");
+
+                // Verify out of bounds queries return false
+                Assert.IsFalse(config.HasBlockAt(-1, 0));
+                Assert.IsFalse(config.HasBlockAt(0, -1));
+                Assert.IsFalse(config.HasBlockAt(config.TotalRows, 0));
+                Assert.IsFalse(config.HasBlockAt(0, config.Columns));
+            }
+
+            Object.DestroyImmediate(config);
+        }
+
+        [Test]
+        public void LevelConfiguration_CustomLayout_ParsesTextPattern_AndExplicitColors()
+        {
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+            config.SetLayoutType(LevelLayoutType.Custom);
+            config.SetColumns(6);
+            config.SetRowsPerTier(1); // 3 rows
+
+            string layout =
+                "B.G.R.\n" +
+                "XXXXXX\n" +
+                "......";
+
+            config.SetCustomLayout(layout);
+
+            // Row 0: B . G . R .
+            Assert.IsTrue(config.HasBlockAt(0, 0));
+            Assert.AreEqual(BlockColorTier.Blue, config.GetExplicitColorAt(0, 0));
+
+            Assert.IsFalse(config.HasBlockAt(0, 1));
+            Assert.IsNull(config.GetExplicitColorAt(0, 1));
+
+            Assert.IsTrue(config.HasBlockAt(0, 2));
+            Assert.AreEqual(BlockColorTier.Green, config.GetExplicitColorAt(0, 2));
+
+            Assert.IsFalse(config.HasBlockAt(0, 3));
+            Assert.IsNull(config.GetExplicitColorAt(0, 3));
+
+            Assert.IsTrue(config.HasBlockAt(0, 4));
+            Assert.AreEqual(BlockColorTier.Red, config.GetExplicitColorAt(0, 4));
+
+            Assert.IsFalse(config.HasBlockAt(0, 5));
+
+            // Row 1: All 6 filled
+            for (int c = 0; c < 6; c++)
+            {
+                Assert.IsTrue(config.HasBlockAt(1, c));
+                Assert.IsNull(config.GetExplicitColorAt(1, c), "Standard 'X' must not have explicit color override.");
+            }
+
+            // Row 2: All 6 empty
+            for (int c = 0; c < 6; c++)
+            {
+                Assert.IsFalse(config.HasBlockAt(2, c));
+            }
+
+            // Total filled blocks: 3 in row 0, 6 in row 1 = 9
+            Assert.AreEqual(9, config.TotalBlocks);
+
+            Object.DestroyImmediate(config);
+        }
+
+        [Test]
+        public void LevelConfiguration_Clone_CopiesLayoutAndCustomPattern()
+        {
+            var original = ScriptableObject.CreateInstance<LevelConfiguration>();
+            original.SetLayoutType(LevelLayoutType.Custom);
+            original.SetCustomLayout("..XX..\nXXXXXX");
+            original.SetColumns(6);
+            original.SetRowsPerTier(2);
+
+            var clone = original.Clone();
+
+            Assert.AreEqual(LevelLayoutType.Custom, clone.LayoutType);
+            Assert.AreEqual("..XX..\nXXXXXX", clone.CustomLayout);
+            Assert.AreEqual(original.TotalBlocks, clone.TotalBlocks);
+            Assert.AreEqual(original.Columns, clone.Columns);
+            Assert.AreEqual(original.TotalRows, clone.TotalRows);
+
+            Object.DestroyImmediate(original);
+            Object.DestroyImmediate(clone);
+        }
+
+        [Test]
+        public void LevelGenerator_LayoutWithEmptySpaces_SpawnsOnlyActiveBlocks_AndRegistersWithGameManager()
+        {
+            var genObj = new GameObject("TestLayoutGenerator");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+            config.SetLayoutType(LevelLayoutType.Pillars); // alternating columns
+            config.SetColumns(7);
+            config.SetRowsPerTier(1); // 3 rows
+            // In 7 cols with Pillars (c % 2 == 0): cols 0, 2, 4, 6 are filled (4 cols * 3 rows = 12 blocks)
+            Assert.AreEqual(12, config.TotalBlocks);
+
+            gen.LoadLevel(config);
+
+            var container = genObj.transform.Find("BlocksContainer");
+            Assert.IsNotNull(container, "BlocksContainer must be created.");
+            Assert.AreEqual(12, container.childCount, "BlocksContainer child count must match active TotalBlocks.");
+
+            if (ArcadeGameManager.Instance != null)
+            {
+                Assert.AreEqual(12, ArcadeGameManager.Instance.RemainingBlocks, "GameManager RemainingBlocks must match active TotalBlocks.");
+            }
+
+            Object.DestroyImmediate(config);
             Object.DestroyImmediate(genObj);
         }
 
@@ -2221,16 +2349,21 @@ namespace Arcade.Tests
         }
 
         [Test]
-        public void Campaign_Level6And7_Contain4xAnd5xMultipliers()
+        public void Campaign_LevelsContainProgressiveMultipliersUpTo5x()
         {
-            var lvl6 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_06.asset");
-            Assert.IsNotNull(lvl6);
-            Assert.AreEqual(1, lvl6.Multiplier4xCount, "Level 6 must introduce 1x 4X multiplier.");
+            var lvl9 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_09.asset");
+            Assert.IsNotNull(lvl9);
+            Assert.AreEqual(1, lvl9.Multiplier4xCount, "Level 9 must introduce 1x 4X multiplier.");
 
-            var lvl7 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_07.asset");
-            Assert.IsNotNull(lvl7);
-            Assert.AreEqual(2, lvl7.Multiplier4xCount, "Level 7 must contain 2x 4X multipliers.");
-            Assert.AreEqual(1, lvl7.Multiplier5xCount, "Level 7 must introduce 1x 5X multiplier.");
+            var lvl13 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_13.asset");
+            Assert.IsNotNull(lvl13);
+            Assert.AreEqual(2, lvl13.Multiplier4xCount, "Level 13 must contain 2x 4X multipliers.");
+            Assert.AreEqual(1, lvl13.Multiplier5xCount, "Level 13 must introduce 1x 5X multiplier.");
+
+            var lvl15 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_15.asset");
+            Assert.IsNotNull(lvl15);
+            Assert.AreEqual(2, lvl15.Multiplier4xCount, "Level 15 must contain 2x 4X multipliers.");
+            Assert.AreEqual(2, lvl15.Multiplier5xCount, "Level 15 must contain 2x 5X multipliers.");
         }
 
         [Test]

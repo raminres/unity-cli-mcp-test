@@ -178,9 +178,19 @@ namespace Arcade.BlockBreaker
             float totalHeight = (totalRows - 1) * spacingY;
             float topY = centerY + (totalHeight * 0.5f);
 
-            int totalBlocksCreated = cols * totalRows;
+            int totalActiveBlocks = 0;
+            for (int r = 0; r < totalRows; r++)
+            {
+                for (int c = 0; c < cols; c++)
+                {
+                    if (currentLevelConfig == null || currentLevelConfig.HasBlockAt(r, c))
+                    {
+                        totalActiveBlocks++;
+                    }
+                }
+            }
 
-            // Determine special block placements (unique indices)
+            // Determine special block placements (unique indices based on active blocks)
             int mult2x = currentLevelConfig != null ? currentLevelConfig.Multiplier2xCount : 1;
             int mult3x = currentLevelConfig != null ? currentLevelConfig.Multiplier3xCount : 0;
             int mult4x = currentLevelConfig != null ? currentLevelConfig.Multiplier4xCount : 0;
@@ -192,7 +202,7 @@ namespace Arcade.BlockBreaker
             int shieldCount = currentLevelConfig != null ? currentLevelConfig.ShieldCount : 0;
             int multiBallCount = currentLevelConfig != null ? currentLevelConfig.MultiBallCount : 0;
 
-            var specialMap = DistributeSpecialBlocks(totalBlocksCreated, mult2x, mult3x, mult4x, mult5x, expCount, bombCount, glassCount, heartCount, shieldCount, multiBallCount);
+            var specialMap = DistributeSpecialBlocks(totalActiveBlocks, mult2x, mult3x, mult4x, mult5x, expCount, bombCount, glassCount, heartCount, shieldCount, multiBallCount);
 
             int blockIndex = 0;
             for (int r = 0; r < totalRows; r++)
@@ -201,8 +211,19 @@ namespace Arcade.BlockBreaker
 
                 for (int c = 0; c < cols; c++)
                 {
+                    if (currentLevelConfig != null && !currentLevelConfig.HasBlockAt(r, c))
+                    {
+                        continue; // Skip empty space
+                    }
+
+                    BlockColorTier? explicitTier = currentLevelConfig != null ? currentLevelConfig.GetExplicitColorAt(r, c) : null;
                     BlockColorTier tier;
-                    if (pattern == BlockColorPattern.Randomized)
+
+                    if (explicitTier.HasValue)
+                    {
+                        tier = explicitTier.Value;
+                    }
+                    else if (pattern == BlockColorPattern.Randomized)
                     {
                         int rnd = Random.Range(0, 3);
                         tier = rnd == 0 ? BlockColorTier.Blue : (rnd == 1 ? BlockColorTier.Green : BlockColorTier.Red);
@@ -281,7 +302,7 @@ namespace Arcade.BlockBreaker
 
             if (ArcadeGameManager.Instance != null)
             {
-                ArcadeGameManager.Instance.RegisterLevelBlocks(totalBlocksCreated);
+                ArcadeGameManager.Instance.RegisterLevelBlocks(totalActiveBlocks);
             }
 
             // Randomize background gradient texture for each level

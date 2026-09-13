@@ -180,16 +180,10 @@
             <ui:VisualElement class="modal-card modal-card-wide">
                 <ui:Label text="LEVEL SETTINGS" class="modal-title" />
                 
-                <!-- Level Selector Tabs -->
-                <ui:VisualElement class="level-tabs-container">
-                    <ui:Button name="btn-lvl-1" text="LVL 1" class="level-tab-btn level-tab-active" />
-                    <ui:Button name="btn-lvl-2" text="LVL 2" class="level-tab-btn" />
-                    <ui:Button name="btn-lvl-3" text="LVL 3" class="level-tab-btn" />
-                    <ui:Button name="btn-lvl-4" text="LVL 4" class="level-tab-btn" />
-                    <ui:Button name="btn-lvl-5" text="LVL 5" class="level-tab-btn" />
-                    <ui:Button name="btn-lvl-6" text="LVL 6" class="level-tab-btn" />
-                    <ui:Button name="btn-lvl-7" text="LVL 7" class="level-tab-btn" />
-                </ui:VisualElement>
+                <!-- Level Selector ScrollView -->
+                <ui:ScrollView class="level-tabs-scroll-view">
+                    <ui:VisualElement name="level-tabs-container" class="level-tabs-container" />
+                </ui:ScrollView>
 
                 <ui:Label name="level-name-label" text="Level 1: Classic Inverted" class="level-name-display" />
                 <ui:Label name="level-desc-label" text="Classic 3-tier block setup with Red on bottom, Green in middle, and Blue on top." class="level-desc-display" />

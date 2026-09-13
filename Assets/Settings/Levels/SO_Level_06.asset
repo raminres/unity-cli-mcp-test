@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: SO_Level_06
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 6
-  levelName: 'Level 6: The High Roller'
-  levelDescription: High stakes, blistering velocity, and the rare x4 score multiplier combo. Precision and speed are rewarded.
+  levelName: 'Level 6: Royal Crown'
+  levelDescription: A triple-peaked royal crown with blazing 3X score multipliers and reinforced glass towers. Precision rebounds at high angles are rewarded.
+  layoutType: 14
   colorPattern: 0
   columns: 9
   rowsPerTier: 2
@@ -22,11 +23,13 @@ MonoBehaviour:
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
-  ballSpeedMultiplier: 1.28
+  customLayout: 
+  customLayoutRows: []
+  ballSpeedMultiplier: 1.1
   initialPaddleWidth: 5
   multiplier2xCount: 1
   multiplier3xCount: 2
-  multiplier4xCount: 1
+  multiplier4xCount: 0
   multiplier5xCount: 0
   paddleExpanderCount: 1
   bombCount: 2

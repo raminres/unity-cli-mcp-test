@@ -10,31 +10,41 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9216ae91f49a9ac4f8812d36de2d4b76, type: 3}
-  m_Name: SO_Level_07
+  m_Name: SO_Level_15
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
-  levelNumber: 7
-  levelName: 'Level 7: Neon Heart'
-  levelDescription: An arcade heart silhouette with extra heart drops. Keep the rhythm alive as ball velocity continues to accelerate.
-  layoutType: 10
-  colorPattern: 0
-  columns: 9
+  levelNumber: 15
+  levelName: 'Level 15: Chaos Labyrinth'
+  levelDescription: The ultimate 15-level grand climax! A master custom-authored ASCII labyrinth with tactical pockets, top velocity, and the entire powerup arsenal.
+  layoutType: 16
+  colorPattern: 1
+  columns: 10
   rowsPerTier: 2
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
-  customLayout: 
+  customLayout: 'XXXXXXXXXX
+
+    X..XX..XX.
+
+    XXXX.XXXXX
+
+    X..XX..XX.
+
+    XXXX.XXXXX
+
+    XXXXXXXXXX'
   customLayoutRows: []
-  ballSpeedMultiplier: 1.15
+  ballSpeedMultiplier: 1.48
   initialPaddleWidth: 5
   multiplier2xCount: 2
-  multiplier3xCount: 1
-  multiplier4xCount: 0
-  multiplier5xCount: 0
-  paddleExpanderCount: 1
-  bombCount: 1
-  glassEnclosedCount: 2
+  multiplier3xCount: 2
+  multiplier4xCount: 2
+  multiplier5xCount: 2
+  paddleExpanderCount: 2
+  bombCount: 4
+  glassEnclosedCount: 4
   extraHeartCount: 2
-  shieldCount: 1
-  multiBallCount: 1
+  shieldCount: 2
+  multiBallCount: 2
   shieldDuration: 10

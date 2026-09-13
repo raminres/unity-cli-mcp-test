@@ -12,7 +12,7 @@ This file provides persistent, high-density project context across agent session
 - **Render Pipeline**: Universal Render Pipeline (URP)
 - **Play Mode Start Scene**: `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (configured via [PlayModeSceneSetup.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/PlayModeSceneSetup.cs))
 - **Remote Repository**: `https://github.com/raminres/unity-cli-mcp-test.git`
-- **Active Branch**: `feature/paddle-geometry-and-gameplay` (based off `develop`, Git LFS enabled)
+- **Active Branch**: `feature/level-layout-system` (based off `develop`, Git LFS enabled)
 
 ### Active Scenes & Build Index
 1. `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0)
@@ -54,21 +54,33 @@ This file provides persistent, high-density project context across agent session
 
 ---
 
-## 4. Progressive 7-Level Campaign Arc
-Levels scale smoothly in block count, speed, and mechanic introduction, looping back endlessly ($7 \to 1$) while preserving cumulative score:
+## 4. Level Layout System & Progressive 15-Level Campaign Arc
+- **17 Layout Archetypes (`LevelLayoutType`)**:
+  - Procedural Geometric Shapes: `FullGrid`, `Diamond`, `Pyramid`, `InvertedPyramid`, `Hourglass`, `Cross`, `HollowBox`, `Pillars`, `Stripes`, `CheckerboardEmpty`, `Heart`, `Invader`, `Shield`, `Chevron`, `Crown`, `Castle`.
+  - Infinite Custom ASCII Mode: `Custom` mode parses multi-line text (`[TextArea]`) where `.`/` ` = empty cells, `X`/`#` = filled blocks (inheriting color patterns), and `B`/`G`/`R` = explicit color tiers.
+  - Active Block Counting: `TotalBlocks` dynamically evaluates `HasBlockAt(r, c)`, ensuring special blocks are strictly mapped to active blocks and level clears cleanly.
+  - Dynamic ScrollView UI: Level selector tabs in Main Menu and Level Settings use `<ui:ScrollView>` with programmatic button spawning, future-proof for adding new levels dynamically.
 
-| Level | Name | Theme & Star Mechanic | Cols $\times$ Rows | Blocks | Speed | Modifiers Breakdown |
-| :---: | :--- | :--- | :---: | :---: | :---: | :--- |
-| **1** | **First Flight** | **Warmup & Deflection Mastery** | $5 \times 3$ | **15** | `0.85x` (Paddle 5.5) | • 1x Paddle Expander<br>• *0x Hazards / Armored Bricks* |
-| **2** | **Glass & Gold** | **Durability & High Scores** | $6 \times 3$ | **18** | `0.95x` (Paddle 5.0) | • 1x 2X Multiplier, 2x Glass-Enclosed, 1x Expander |
-| **3** | **Chain Reaction** | **Explosive Cascades** | $7 \times 6$ | **42** | `1.05x` (Paddle 5.0) | • 2x Bombs, 2x 2X Multipliers, 1x Expander (`Checkerboard`) |
-| **4** | **Kinetic Aegis** | **Speed Surge & Protective Net** | $8 \times 6$ | **48** | `1.15x` (Paddle 5.0) | • 1x Shield, 1x Extra Heart, 1x Bomb, 2x Glass, 1x 2X |
-| **5** | **Multi-Ball Mayhem** | **Ball Juggling Rush** | $8 \times 6$ | **48** | `1.20x` (Paddle 5.0) | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass, 1x 2X (`Checkerboard`) |
-| **6** | **The High Roller** | **High Stakes & 3X Multiplier** | $9 \times 6$ | **54** | `1.28x` (Paddle 5.0) | • 1x 3X (90 pts on Blue!), 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass |
-| **7** | **Chaos Gauntlet** | **The Grand Climax** | $10 \times 9$ | **90** | `1.38x` (Paddle 5.0) | • 2x 3X, 2x 2X, 2x Expanders, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls (`Randomized`) |
+| Level | Name | Silhouette & Archetype | Cols $\times$ Rows | Blocks | Speed | Modifiers Breakdown |
+| :---: | :--- | :---: | :---: | :---: | :---: | :--- |
+| **1** | **First Flight** | `Pyramid` | $7 \times 3$ | **15** | `0.85x` (Paddle 5.5) | • 1x Paddle Expander |
+| **2** | **Glass & Gold** | `Diamond` | $7 \times 6$ | **22** | `0.90x` (Paddle 5.2) | • 1x 2X, 2x Glass, 1x Expander |
+| **3** | **Twin Pillars** | `Pillars` | $7 \times 6$ | **24** | `0.95x` (Paddle 5.0) | • 2x Bombs, 2x 2X, 1x Expander (`Checkerboard`) |
+| **4** | **Kinetic Shield** | `Shield` | $8 \times 6$ | **34** | `1.00x` (Paddle 5.0) | • 1x Shield, 1x Heart, 1x Bomb, 2x Glass |
+| **5** | **Multi-Ball Ring** | `HollowBox` | $8 \times 6$ | **24** | `1.05x` (Paddle 5.0) | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass (`Checkerboard`) |
+| **6** | **Royal Crown** | `Crown` | $9 \times 6$ | **52** | `1.10x` (Paddle 5.0) | • 1x 3X, 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass |
+| **7** | **Neon Heart** | `Heart` | $9 \times 6$ | **32** | `1.15x` (Paddle 5.0) | • 2x Hearts, 1x Shield, 1x 3X, 2x 2X, 1x Bomb, 2x Glass, 1x Multi-Ball |
+| **8** | **Space Invader** | `Invader` | $9 \times 6$ | **28** | `1.20x` (Paddle 5.0) | • 2x Bombs, 2x 2X, 2x 3X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Glass (`Randomized`) |
+| **9** | **Crossfire** | `Cross` | $9 \times 6$ | **30** | `1.24x` (Paddle 5.0) | • 1x 4X, 2x 2X, 1x 3X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball (`Checkerboard`) |
+| **10** | **The Hourglass** | `Hourglass` | $9 \times 6$ | **42** | `1.28x` (Paddle 5.0) | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball |
+| **11** | **Chevron Strike** | `Chevron` | $9 \times 6$ | **18** | `1.32x` (Paddle 5.0) | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 2x Multi-Balls (`Checkerboard`) |
+| **12** | **Castle Bastion** | `Castle` | $10 \times 6$ | **45** | `1.36x` (Paddle 5.0) | • 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls |
+| **13** | **Quantum Lattice** | `CheckerboardEmpty` | $10 \times 6$ | **30** | `1.40x` (Paddle 5.0) | • 1x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls (`Randomized`) |
+| **14** | **Striped Vault** | `Stripes` | $10 \times 6$ | **30** | `1.44x` (Paddle 5.0) | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls |
+| **15** | **Chaos Labyrinth** | `Custom` | $10 \times 6$ | **48** | `1.48x` (Paddle 5.0) | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 4x Bombs, 4x Glass, 2x Hearts, 2x Shields, 2x Multi-Balls (`Randomized`) |
 
-- **Asset Storage**: `Assets/Settings/Levels/SO_Level_01.asset` through `SO_Level_07.asset`.
-- **Automation**: [SetupBlockBreakerScenes.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupBlockBreakerScenes.cs) configures and wires all 7 presets into both scenes.
+- **Asset Storage**: `Assets/Settings/Levels/SO_Level_01.asset` through `SO_Level_15.asset`.
+- **Automation**: [SetupBlockBreakerScenes.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupBlockBreakerScenes.cs) configures and wires all 15 presets into both scenes.
 
 ---
 
@@ -154,5 +166,5 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
 
 ## 10. Automated Test Suite
 - **Location**: `Assets/Tests/BlockBreakerCoreTests.cs`
-- **Total Tests**: **115 passing tests (100%)**, executing in ~170ms.
-- **Coverage**: Cosmic gradient background randomization, consecutive repeat avoidance, clamped indexing, level generation triggers, gameplay scene background placement, scoring multipliers (2X, 3X, 4X, 5X), optical ray paddle deflection math & forward momentum preservation, boundary clamping, life tracking, heart UI transitions, safe area insets, aspect-ratio frustum framing, compounding paddle widening, stepped pyramid geometry & tier ratios, spring overshoot expansion animation, powerup capsule foreground depth ($Z = -1.0\text{f}$), billboard camera-facing icon lock, decoupled visual tumbler hierarchy & enlarged scales ($0.85$ capsule / $0.95$ icon), powerup capsule collection (PaddleExpander, ExtraHeart, Shield, 2X, 3X, 4X, 5X Multipliers), contact normal validation (`IsValidPaddleBounceNormal`), extended paddle collider depth, audio persistence, debris shader resolution, pause lifecycle, launch suppression window, direct touch controls, bomb radius blast, glass 2-hit durability, shield countdown & killzone intercept, multi-ball death tolerance, multi-ball distinct trail color assignment, dual-layer trail creation and curve decay, 7-level campaign existence, speed escalation, cyclic advancement, HighScoreManager sorting/clamping/resetting, and in-game/menu modal visibility states.
+- **Total Tests**: **119 passing tests (100%)**, executing in ~180ms.
+- **Coverage**: Cosmic gradient background randomization, consecutive repeat avoidance, clamped indexing, level generation triggers, gameplay scene background placement, scoring multipliers (2X, 3X, 4X, 5X), optical ray paddle deflection math & forward momentum preservation, boundary clamping, life tracking, heart UI transitions, safe area insets, aspect-ratio frustum framing, compounding paddle widening, stepped pyramid geometry & tier ratios, spring overshoot expansion animation, powerup capsule foreground depth ($Z = -1.0\text{f}$), billboard camera-facing icon lock, decoupled visual tumbler hierarchy & enlarged scales ($0.85$ capsule / $0.95$ icon), powerup capsule collection (PaddleExpander, ExtraHeart, Shield, 2X, 3X, 4X, 5X Multipliers), contact normal validation (`IsValidPaddleBounceNormal`), extended paddle collider depth, audio persistence, debris shader resolution, pause lifecycle, launch suppression window, direct touch controls, bomb radius blast, glass 2-hit durability, shield countdown & killzone intercept, multi-ball death tolerance, multi-ball distinct trail color assignment, dual-layer trail creation and curve decay, 15-level campaign existence, 17 layout archetypes (Diamond, Pyramid, Hourglass, Cross, HollowBox, Pillars, Stripes, Checkerboard, Heart, Invader, Shield, Chevron, Crown, Castle, Custom), custom ASCII pattern parsing with explicit color tier markers, speed escalation, cyclic advancement, HighScoreManager sorting/clamping/resetting, and in-game/menu modal visibility states.

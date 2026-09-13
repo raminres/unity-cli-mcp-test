@@ -244,24 +244,35 @@
     width: 510px;
 }
 
+.level-tabs-scroll-view {
+    max-height: 155px;
+    margin-bottom: 16px;
+}
+
+.level-tabs-scroll-view #unity-content-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
 .level-tabs-container {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    margin-bottom: 16px;
+    width: 100%;
 }
 
 .level-tab-btn {
     flex-grow: 1;
-    min-width: 92px;
-    height: 46px;
+    min-width: 80px;
+    height: 42px;
     margin: 4px;
-    border-radius: 14px;
+    border-radius: 12px;
     border-width: 1.5px;
     border-color: rgba(255, 255, 255, 0.18);
     background-color: rgba(255, 255, 255, 0.08);
     color: #cbd5e1;
-    font-size: 15px;
+    font-size: 14px;
     -unity-font-style: bold;
     letter-spacing: 0.5px;
     align-items: center;

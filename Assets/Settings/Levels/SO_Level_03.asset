@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: SO_Level_03
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 3
-  levelName: 'Level 3: Chain Reaction'
-  levelDescription: Denser checkerboard formation introducing explosive Bomb bricks. Trigger cascading perimeter blasts to clear columns rapidly.
+  levelName: 'Level 3: Twin Pillars'
+  levelDescription: Vertical block columns with open alleyways. Sneak the ball up the corridors for high-velocity top-row cascades, and trigger explosive Bomb bricks.
+  layoutType: 7
   colorPattern: 2
   columns: 7
   rowsPerTier: 2
@@ -22,7 +23,9 @@ MonoBehaviour:
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
-  ballSpeedMultiplier: 1.05
+  customLayout: 
+  customLayoutRows: []
+  ballSpeedMultiplier: 0.95
   initialPaddleWidth: 5
   multiplier2xCount: 2
   multiplier3xCount: 0

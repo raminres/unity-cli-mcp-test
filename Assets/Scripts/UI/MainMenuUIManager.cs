@@ -221,11 +221,14 @@ namespace Arcade.UI
             var tabsContainer = root.Q<VisualElement>(className: "level-tabs-container");
             if (tabsContainer != null)
             {
-                var buttons = tabsContainer.Query<Button>(className: "level-tab-btn").ToList();
-                for (int i = 0; i < buttons.Count; i++)
+                tabsContainer.Clear();
+                int totalLevels = levelPresets != null && levelPresets.Length > 0 ? levelPresets.Length : 15;
+                for (int i = 0; i < totalLevels; i++)
                 {
                     int lvlNum = i + 1;
-                    var btn = buttons[i];
+                    var btn = new Button { text = $"LVL {lvlNum}" };
+                    btn.AddToClassList("level-tab-btn");
+                    tabsContainer.Add(btn);
                     menuLevelTabButtons.Add(btn);
                     btn.clicked += () => SelectLevel(lvlNum);
                 }
