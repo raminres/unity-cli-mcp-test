@@ -23,6 +23,12 @@ namespace Arcade.BlockBreaker
         [SerializeField] private BallTrail ballTrail;
         [SerializeField] private Color primaryBallColor = new Color(0f, 0.95f, 1f, 1f); // Electric Cyan
 
+        [Header("Dynamic Volley Pacing")]
+        [SerializeField] private float speedRampInterval = 10f; // Seconds between speed boosts during volley
+        [SerializeField] private float speedRampStepMultiplier = 0.08f; // +8% of base speed per step (~ +1.1 - 1.4 units/s)
+        private float activeVolleyTime = 0f;
+        private float nextSpeedRampTime = 10f;
+
         private float currentSpeed;
         private bool isLaunched = false;
         private bool isPrimaryBall = true;
@@ -33,6 +39,9 @@ namespace Arcade.BlockBreaker
 
         public bool IsLaunched => isLaunched;
         public float CurrentSpeed => currentSpeed;
+        public float ActiveVolleyTime => activeVolleyTime;
+        public float NextSpeedRampTime => nextSpeedRampTime;
+        public float SpeedRampInterval => speedRampInterval;
         public BallTrail Trail => ballTrail != null ? ballTrail : (ballTrail = GetComponent<BallTrail>() ?? gameObject.AddComponent<BallTrail>());
         public bool IsPrimaryBall
         {
@@ -146,6 +155,12 @@ namespace Arcade.BlockBreaker
                 transform.position = pos;
             }
 
+            // Dynamic time-based speed escalation during active volleys
+            if (ArcadeGameManager.Instance == null || ArcadeGameManager.Instance.State == GameState.Playing)
+            {
+                ApplyTimeBasedSpeedRamp(Time.fixedDeltaTime);
+            }
+
             // Maintain target speed and prevent stagnation
             Vector3 vel = rb.linearVelocity;
             vel.z = 0f;
@@ -162,6 +177,23 @@ namespace Arcade.BlockBreaker
             }
         }
 
+        /// <summary>
+        /// Progressively escalates ball speed during prolonged volleys (e.g. every 10 seconds),
+        /// keeping volleys dynamic, preventing stalemates, and ramping up arcade excitement.
+        /// </summary>
+        public void ApplyTimeBasedSpeedRamp(float dt)
+        {
+            if (!isLaunched || dt <= 0f) return;
+
+            activeVolleyTime += dt;
+            while (activeVolleyTime >= nextSpeedRampTime)
+            {
+                float speedBoost = baseSpeed * speedRampStepMultiplier;
+                currentSpeed = Mathf.Min(currentSpeed + speedBoost, maxSpeed);
+                nextSpeedRampTime += speedRampInterval;
+            }
+        }
+
         public void SetSpeedMultiplier(float multiplier)
         {
             float m = Mathf.Clamp(multiplier, 0.5f, 3.0f);
@@ -170,6 +202,8 @@ namespace Arcade.BlockBreaker
             if (!isLaunched)
             {
                 currentSpeed = baseSpeed;
+                activeVolleyTime = 0f;
+                nextSpeedRampTime = speedRampInterval;
             }
         }
 
@@ -198,6 +232,8 @@ namespace Arcade.BlockBreaker
         public void StopAndDockBall()
         {
             isLaunched = false;
+            activeVolleyTime = 0f;
+            nextSpeedRampTime = speedRampInterval;
             currentSpeed = baseSpeed;
             if (rb != null)
             {
@@ -245,6 +281,8 @@ namespace Arcade.BlockBreaker
 
             SetBallActive(true);
             isLaunched = true;
+            activeVolleyTime = 0f;
+            nextSpeedRampTime = speedRampInterval;
             currentSpeed = baseSpeed;
 
             if (Trail != null)
@@ -269,6 +307,8 @@ namespace Arcade.BlockBreaker
             if (rb == null) rb = GetComponent<Rigidbody>();
             SetBallActive(true);
             isLaunched = true;
+            activeVolleyTime = 0f;
+            nextSpeedRampTime = speedRampInterval;
             currentSpeed = speed > 0f ? speed : baseSpeed;
 
             if (Trail != null)

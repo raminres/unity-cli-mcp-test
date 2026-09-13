@@ -27,16 +27,10 @@
             <ui:VisualElement class="modal-card modal-card-wide">
                 <ui:Label text="SELECT LEVEL" class="modal-title" />
 
-                <!-- Level Tabs -->
-                <ui:VisualElement class="level-tabs-container">
-                    <ui:Button name="btn-menu-lvl-1" text="LVL 1" class="level-tab-btn level-tab-active" />
-                    <ui:Button name="btn-menu-lvl-2" text="LVL 2" class="level-tab-btn" />
-                    <ui:Button name="btn-menu-lvl-3" text="LVL 3" class="level-tab-btn" />
-                    <ui:Button name="btn-menu-lvl-4" text="LVL 4" class="level-tab-btn" />
-                    <ui:Button name="btn-menu-lvl-5" text="LVL 5" class="level-tab-btn" />
-                    <ui:Button name="btn-menu-lvl-6" text="LVL 6" class="level-tab-btn" />
-                    <ui:Button name="btn-menu-lvl-7" text="LVL 7" class="level-tab-btn" />
-                </ui:VisualElement>
+                <!-- Level Tabs ScrollView -->
+                <ui:ScrollView class="level-tabs-scroll-view">
+                    <ui:VisualElement name="menu-level-tabs-container" class="level-tabs-container" />
+                </ui:ScrollView>
 
                 <ui:Label name="menu-level-name" text="Level 1: Classic Inverted" class="level-name-display" />
                 <ui:Label name="menu-level-desc" text="Classic 3-tier block setup with Red on bottom, Green in middle, and Blue on top. Features random x2 multiplier and paddle expander blocks." class="level-desc-display" />

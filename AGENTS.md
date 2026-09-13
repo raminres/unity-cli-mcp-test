@@ -12,7 +12,7 @@ This file provides persistent, high-density project context across agent session
 - **Render Pipeline**: Universal Render Pipeline (URP)
 - **Play Mode Start Scene**: `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (configured via [PlayModeSceneSetup.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/PlayModeSceneSetup.cs))
 - **Remote Repository**: `https://github.com/raminres/unity-cli-mcp-test.git`
-- **Active Branch**: `feature/paddle-geometry-and-gameplay` (based off `develop`, Git LFS enabled)
+- **Active Branch**: `feature/level-layout-system` (based off `develop`, Git LFS enabled)
 
 ### Active Scenes & Build Index
 1. `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0)
@@ -54,37 +54,58 @@ This file provides persistent, high-density project context across agent session
 
 ---
 
-## 4. Progressive 7-Level Campaign Arc
-Levels scale smoothly in block count, speed, and mechanic introduction, looping back endlessly ($7 \to 1$) while preserving cumulative score:
+## 4. Level Layout System & Progressive 15-Level Campaign Arc
+- **17 Layout Archetypes (`LevelLayoutType`)**:
+  - Procedural Geometric Shapes: `FullGrid`, `Diamond`, `Pyramid`, `InvertedPyramid`, `Hourglass`, `Cross`, `HollowBox`, `Pillars`, `Stripes`, `CheckerboardEmpty`, `Heart`, `Invader`, `Shield`, `Chevron`, `Crown`, `Castle`.
+  - Infinite Custom ASCII Mode: `Custom` mode parses multi-line text (`[TextArea]`) where `.`/` ` = empty cells, `X`/`#` = filled blocks (inheriting color patterns), and `B`/`G`/`R` = explicit color tiers.
+  - Active Block Counting: `TotalBlocks` dynamically evaluates `HasBlockAt(r, c)`, ensuring special blocks are strictly mapped to active blocks and level clears cleanly.
+  - Dynamic ScrollView UI: Level selector tabs in Main Menu and Level Settings use `<ui:ScrollView>` with programmatic button spawning, future-proof for adding new levels dynamically.
 
-| Level | Name | Theme & Star Mechanic | Cols $\times$ Rows | Blocks | Speed | Modifiers Breakdown |
-| :---: | :--- | :--- | :---: | :---: | :---: | :--- |
-| **1** | **First Flight** | **Warmup & Deflection Mastery** | $5 \times 3$ | **15** | `0.85x` (Paddle 5.5) | • 1x Paddle Expander<br>• *0x Hazards / Armored Bricks* |
-| **2** | **Glass & Gold** | **Durability & High Scores** | $6 \times 3$ | **18** | `0.95x` (Paddle 5.0) | • 1x 2X Multiplier, 2x Glass-Enclosed, 1x Expander |
-| **3** | **Chain Reaction** | **Explosive Cascades** | $7 \times 6$ | **42** | `1.05x` (Paddle 5.0) | • 2x Bombs, 2x 2X Multipliers, 1x Expander (`Checkerboard`) |
-| **4** | **Kinetic Aegis** | **Speed Surge & Protective Net** | $8 \times 6$ | **48** | `1.15x` (Paddle 5.0) | • 1x Shield, 1x Extra Heart, 1x Bomb, 2x Glass, 1x 2X |
-| **5** | **Multi-Ball Mayhem** | **Ball Juggling Rush** | $8 \times 6$ | **48** | `1.20x` (Paddle 5.0) | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass, 1x 2X (`Checkerboard`) |
-| **6** | **The High Roller** | **High Stakes & 3X Multiplier** | $9 \times 6$ | **54** | `1.28x` (Paddle 5.0) | • 1x 3X (90 pts on Blue!), 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass |
-| **7** | **Chaos Gauntlet** | **The Grand Climax** | $10 \times 9$ | **90** | `1.38x` (Paddle 5.0) | • 2x 3X, 2x 2X, 2x Expanders, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls (`Randomized`) |
 
-- **Asset Storage**: `Assets/Settings/Levels/SO_Level_01.asset` through `SO_Level_07.asset`.
-- **Automation**: [SetupBlockBreakerScenes.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupBlockBreakerScenes.cs) configures and wires all 7 presets into both scenes.
+| Level | Name | Silhouette & Archetype | Cols $\times$ Rows | Blocks | Speed | Modifiers Breakdown |
+| :---: | :--- | :---: | :---: | :---: | :---: | :--- |
+| **1** | **First Flight** | `Pyramid` | $7 \times 3$ | **15** | `0.92x` (Paddle 5.5) | • 1x Paddle Expander |
+| **2** | **Glass & Gold** | `Diamond` | $7 \times 6$ | **22** | `0.96x` (Paddle 5.2) | • 1x 2X, 2x Glass, 1x Expander |
+| **3** | **Twin Pillars** | `Pillars` | $7 \times 6$ | **24** | `1.00x` (Paddle 5.0) | • 2x Bombs, 2x 2X, 1x Expander (`Checkerboard`) |
+| **4** | **Kinetic Shield** | `Shield` | $8 \times 6$ | **34** | `1.04x` (Paddle 5.0) | • 1x Shield, 1x Heart, 1x Bomb, 2x Glass |
+| **5** | **Multi-Ball Ring** | `HollowBox` | $8 \times 6$ | **24** | `1.08x` (Paddle 5.0) | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass (`Checkerboard`) |
+| **6** | **Royal Crown** | `Crown` | $9 \times 6$ | **52** | `1.12x` (Paddle 5.0) | • 1x 3X, 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass |
+| **7** | **Neon Heart** | `Heart` | $9 \times 6$ | **32** | `1.16x` (Paddle 5.0) | • 2x Hearts, 1x Shield, 1x 3X, 2x 2X, 1x Bomb, 2x Glass, 1x Multi-Ball |
+| **8** | **Space Invader** | `Invader` | $9 \times 6$ | **28** | `1.20x` (Paddle 5.0) | • 2x Bombs, 2x 2X, 2x 3X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Glass (`Randomized`) |
+| **9** | **Crossfire** | `Cross` | $9 \times 6$ | **30** | `1.24x` (Paddle 5.0) | • 1x 4X, 2x 2X, 1x 3X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball (`Checkerboard`) |
+| **10** | **The Hourglass** | `Hourglass` | $9 \times 6$ | **42** | `1.28x` (Paddle 5.0) | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball |
+| **11** | **Chevron Strike** | `Chevron` | $9 \times 6$ | **18** | `1.32x` (Paddle 5.0) | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 2x Multi-Balls (`Checkerboard`) |
+| **12** | **Castle Bastion** | `Castle` | $10 \times 6$ | **45** | `1.36x` (Paddle 5.0) | • 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls |
+| **13** | **Quantum Lattice** | `CheckerboardEmpty` | $10 \times 6$ | **30** | `1.40x` (Paddle 5.0) | • 1x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls (`Randomized`) |
+| **14** | **Striped Vault** | `Stripes` | $10 \times 6$ | **30** | `1.44x` (Paddle 5.0) | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls |
+| **15** | **Chaos Labyrinth** | `Custom` | $10 \times 6$ | **48** | `1.48x` (Paddle 5.0) | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 4x Bombs, 4x Glass, 2x Hearts, 2x Shields, 2x Multi-Balls (`Randomized`) |
+
+- **Dynamic Volley Pacing**: `BallController` measures continuous active volley time. Every 10 seconds of active play, speed escalates progressively ($+8\%$ step multiplier) up to `maxSpeed`, eliminating stale stalemates and ramping up intensity. Resets back to level base speed on dock or life lost.
+- **Asset Storage**: `Assets/Settings/Levels/SO_Level_01.asset` through `SO_Level_15.asset`.
+- **Automation**: [SetupBlockBreakerScenes.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupBlockBreakerScenes.cs) configures and wires all 15 presets into both scenes.
 
 ---
 
 ## 5. Powerups & Special Brick Archetypes
 - **Collectible Powerup Drops ([PowerupCapsule.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/PowerupCapsule.cs))**:
   - Tactical powerups drop tumbling 3D collectible capsules ([MI_Powerup_Capsule.mat](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Materials/BlockBreaker/MI_Powerup_Capsule.mat)) that fall at $4.5\text{ units/s}$ with 3D rotational spin and vibrant neon emissive tint. Must be intercepted by the paddle to claim:
-    - **Decoupled Visual Hierarchy & Prominent Dimensions**:
-      - Root container `Powerup_{type}` maintains `scale = 1.0` and never rotates, ensuring smooth translation and rock-solid trigger physics.
-      - Child 1: `Visual_Capsule` (scaled up $2.1\times$ to $0.85 \times 0.85 \times 0.85$) performs all 3D tumbling rotation independently.
-      - Child 2: `Icon_Billboard` (scaled up $4.3\times$ to $0.95$, world width $\approx 1.22$ units) is positioned at local $Z = -0.60\text{f}$ strictly in front of the capsule mesh, locked to `rotation = Quaternion.identity` in `LateUpdate()`. It NEVER rotates or gets lost behind the tumbling body.
+    - **Clean Decoupled Visual Hierarchy (Zero Duplicate Primitives)**:
+      - Root container `Powerup_{type}` maintains `scale = 1.0` and never rotates, ensuring smooth translation and rock-solid trigger physics. Zero MeshRenderers or SpriteRenderers on the root container.
+      - Child 1: `Visual_Capsule` (scaled up $2.1\times$ to $0.85 \times 0.85 \times 0.85$) contains exclusively `MeshFilter` and `MeshRenderer` (zero SpriteRenderers, zero colliders) and performs all 3D tumbling rotation independently.
+      - Child 2: `Icon_Billboard` (scaled up $4.3\times$ to $0.95$, world width $\approx 1.22$ units) contains exclusively `SpriteRenderer` (`sortingOrder = 35`, zero meshes, zero colliders). Positioned at local $Z = -0.60\text{f}$ strictly in front of the capsule mesh, locked to `rotation = Quaternion.identity` in `LateUpdate()`. It NEVER rotates or gets lost behind the tumbling body.
+      - Total across entire capsule hierarchy: exactly 1 MeshRenderer and exactly 1 SpriteRenderer.
+    - **Cross-Platform iOS Metal Material Resolution**:
+      - `GetOrCreateCapsuleMaterial()` guarantees zero pink/unshaded materials on iOS Metal builds by dynamically compiling a Universal Render Pipeline fallback material (`Universal Render Pipeline/Lit` or `Arcade/VFX_BlockDebris`) if editor asset database is stripped in standalone player builds.
+      - `MI_Powerup_Capsule.mat` is serialized directly on `ArcadeGameManager` in the gameplay scene to force Unity's build asset pipeline to bundle the material and its URP shaders for iOS/macOS.
     - **Foreground Depth ($Z = -1.0\text{f}$)**: Capsules strictly fall in front of all brick rows ($Z=0$, spanning $[-0.5, +0.5]$), eliminating brick occlusion/clipping when dropped from top rows.
     - **Paddle Expander (`PaddleExpander`)**: Drops neon cyan capsule with arrow icon; catching triggers spring overshoot expansion ($+10\%$).
     - **Extra Heart (`ExtraHeart`)**: Drops radiant neon pink capsule with heart icon; catching grants $+1$ life (up to 5 max) with HUD parabolic flight animation.
     - **Shield (`Shield`)**: Drops electric blue capsule with shield icon; catching activates 10-second defensive barrier with HUD countdown.
     - **Multi-Ball (`MultiBall`)**: Drops neon magenta capsule with multi-ball icon; catching spawns 2 extra balls at $\pm 35^\circ$ diverging angles with distinct trail colors.
     - **Score Multipliers (`ScoreMultiplier2x`, `ScoreMultiplier3x`, `ScoreMultiplier4x`, `ScoreMultiplier5x`)**: Drops glowing gold (2X), fiery orange (3X), crimson (4X), or hyper-magenta (5X) capsule with extra points icon; catching activates a 10-second score multiplier buff on `ArcadeGameManager` with animated HUD status badge.
+    - **In-Flight Lifecycle & Docked Intercept Guard**:
+      - `PowerupCapsule.ClearAllFallingCapsules()` automatically clears and destroys all active falling capsules upon life loss, shield deflection save, level clear, game over, and level advancement, preventing stale capsules from lingering into docked state or subsequent levels.
+      - `PowerupCapsule.TryIntercept()` guards against collecting powerups while docked on the paddle (`ReadyToLaunch` or `BallLost`), ensuring balls cannot be triggered prematurely before player launch.
 - **Immediate Environmental Modifiers**:
   - **Bomb Bricks (`Bomb`)**: Explosive radius detonation ($2.5$ units) immediately detonating surrounding bricks with outward impulses. Protected by `isDestroyed` flag against recursive loops.
   - **Glass-Enclosed Bricks (`GlassEnclosed`)**: Encased in a $1.18\times$ glass shell ([MI_Block_Glass.mat](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Materials/BlockBreaker/MI_Block_Glass.mat)). Requires 2 hits (Hit 1: shatters glass shell with crystal debris; Hit 2: breaks brick for $2\times$ points).
@@ -93,7 +114,12 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
 ---
 
 ## 6. Graphics, VFX & Performance Architecture
-- **VFX System**: `Assets/VFX/VFX_BlockShatter.vfx` + physical 3D debris fragments.
+- **VFX System & Shaded URP Particle Bursts ([BlockVFXManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockVFXManager.cs))**:
+  - Employs dedicated URP-native particle burst shader `Assets/Shaders/VFX_ParticleBurst.shader` (`Arcade/VFX_ParticleBurst`) with material instance `Assets/Materials/BlockBreaker/MI_VFX_Burst.mat`, eliminating unshaded pink/magenta particle artifacts in Universal Render Pipeline.
+  - **Off-Screen Pool Containment (`_Pool_VFX`)**: All pooled particle bursts (`VFX_Burst_Instance`) and tumbling debris pieces (`SubBox_Debris`) are parented under a dedicated `_Pool_VFX` container situated at $Y = -500\text{f}$ far off-screen. Instantiated disabled (`SetActive(false)` before component addition) and automatically cleared (`ParticleSystem.Clear()`) and returned to $(0, -500\text{f}, 0)$ on recycle, guaranteeing zero VFX instances linger or appear in the level playfield.
+  - `PlayPowerupCollect(position, color)`: Emits 32 radiant spark particles matching the powerup's distinct neon emissive hue without spawning block debris cubes.
+  - `PlayBlockShatter(position, color, normal)`: Emits 24 spark particles in block color accompanied by 8 physical 3D debris fragments.
+  - Fail-safe runtime fallback: `GetOrCreateParticleMaterial()` guarantees that even if unassigned in test rigs, a safe URP particle material is automatically resolved.
 - **Cross-Platform Frame-0 Prewarming ([BlockVFXManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockVFXManager.cs))**:
   - Primes shaders and dispatches off-camera VFX simulation during `Start()` while in `ReadyToLaunch`. Forces Apple Metal, DX12, Vulkan, and WebGPU drivers to compile compute/raster PSOs upfront, eliminating first-hit hitching.
   - Zero-allocation `MaterialPropertyBlock` tinting: preserves 100% SRP Batcher compatibility without material cloning.
@@ -105,6 +131,9 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
   - Randomly selects and applies one of the four cosmic nebular gradients (`TX_Background_Gradient_A.png` through `TX_Background_Gradient_D.png`) via zero-allocation `MaterialPropertyBlock`.
   - Automatically randomizes on level generation (`LevelGenerator.GenerateLevel()`) avoiding consecutive repeats, providing a distinct atmosphere for each level.
 - **iOS Debris Material**: Custom Universal Render Pipeline shader `Assets/Shaders/VFX_BlockDebris.shader` (`Arcade/VFX_BlockDebris`) preventing uncompiled pink shaders on Apple Metal.
+- **Level Completion Reliability ([ArcadeGameManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/Core/ArcadeGameManager.cs))**:
+  - `RecordBlockDestroyed()` counts blocks destroyed across all active and transitional states (`Playing`, `ReadyToLaunch`, `BallLost`), only suppressing records if `GameOver` or `LevelClear`.
+  - `CheckLevelCompletion()` integrates a fallback physical inspection of `LevelGenerator.BlocksContainer`. If all active blocks are cleared (`childCount == 0` or all `isDestroyed`), level victory triggers automatically, guaranteeing the player is never trapped on a cleared level.
 
 ---
 
@@ -137,6 +166,11 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
   - Swift Xcode Project: `PlayerSettings.xcodeProjectType = XcodeProjectType.Swift`, targeting modern Swift lifecycle (`MainApp.swift`).
   - Build Profile: `Assets/Settings/Build Profiles/iOS.asset`.
   - Remote branch `develop`. macOS environment used for iOS device compilation.
+  - **Sequential Subfolder Build System ([BuildVersionUtility.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/Core/BuildVersionUtility.cs), [SetupIOSBuildProfile.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupIOSBuildProfile.cs))**:
+    - Build outputs are automatically routed into sequential versioned subfolders under `Builds/BlockBreakerBuilds/build_{N}` (e.g. `build_1`, `build_2`, `build_3`), preventing iterative builds on macOS from overwriting previous exports.
+    - Automatic Folder & Number Detection: Scans `Builds/BlockBreakerBuilds` for existing folder variations (`_build1`, `build_2`, `build3`, `_build_4`, `v5`), parses the highest existing index, compares against current `PlayerSettings.iOS.buildNumber`, and advances strictly forward to $\max(K, B) + 1$.
+    - Version Synchronization: Automatically iterates `PlayerSettings.iOS.buildNumber` (CFBundleVersion) and advances marketing patch version `PlayerSettings.bundleVersion` (`0.1.0` -> `0.1.1` -> `0.1.2`), calling `AssetDatabase.SaveAssets()` on each build.
+    - Interactive & CLI Access: Available via `Tools > Arcade > Build Xcode Project`, `Tools > Arcade > Prepare Next iOS Build Folder & Version`, and programmatic `SetupIOSBuildProfile.PrepareNextBuildDirectory()`.
 - **WebGPU / WebGL**: Configured in `PlayerSettings` as primary graphics API.
 
 ---
@@ -154,5 +188,6 @@ Levels scale smoothly in block count, speed, and mechanic introduction, looping 
 
 ## 10. Automated Test Suite
 - **Location**: `Assets/Tests/BlockBreakerCoreTests.cs`
-- **Total Tests**: **115 passing tests (100%)**, executing in ~170ms.
-- **Coverage**: Cosmic gradient background randomization, consecutive repeat avoidance, clamped indexing, level generation triggers, gameplay scene background placement, scoring multipliers (2X, 3X, 4X, 5X), optical ray paddle deflection math & forward momentum preservation, boundary clamping, life tracking, heart UI transitions, safe area insets, aspect-ratio frustum framing, compounding paddle widening, stepped pyramid geometry & tier ratios, spring overshoot expansion animation, powerup capsule foreground depth ($Z = -1.0\text{f}$), billboard camera-facing icon lock, decoupled visual tumbler hierarchy & enlarged scales ($0.85$ capsule / $0.95$ icon), powerup capsule collection (PaddleExpander, ExtraHeart, Shield, 2X, 3X, 4X, 5X Multipliers), contact normal validation (`IsValidPaddleBounceNormal`), extended paddle collider depth, audio persistence, debris shader resolution, pause lifecycle, launch suppression window, direct touch controls, bomb radius blast, glass 2-hit durability, shield countdown & killzone intercept, multi-ball death tolerance, multi-ball distinct trail color assignment, dual-layer trail creation and curve decay, 7-level campaign existence, speed escalation, cyclic advancement, HighScoreManager sorting/clamping/resetting, and in-game/menu modal visibility states.
+- **Total Tests**: **133 passing tests (100%)**, executing in ~210ms.
+- **Coverage**: Cosmic gradient background randomization, consecutive repeat avoidance, clamped indexing, level generation triggers, gameplay scene background placement, scoring multipliers (2X, 3X, 4X, 5X), optical ray paddle deflection math & forward momentum preservation, boundary clamping, life tracking, heart UI transitions, safe area insets, aspect-ratio frustum framing, compounding paddle widening, stepped pyramid geometry & tier ratios, spring overshoot expansion animation, powerup capsule foreground depth ($Z = -1.0\text{f}$), billboard camera-facing icon lock, decoupled visual tumbler hierarchy & enlarged scales ($0.85$ capsule / $0.95$ icon), exact single mesh and single sprite structure without duplicate primitives, cross-platform capsule URP material fallback resolution on iOS Metal, powerup capsule collection (PaddleExpander, ExtraHeart, Shield, 2X, 3X, 4X, 5X Multipliers), in-flight falling capsule clearing on life lost (`ClearAllFallingCapsules`), docked intercept prevention (`TryIntercept`), contact normal validation (`IsValidPaddleBounceNormal`), extended paddle collider depth, audio persistence, debris shader resolution, particle burst shader resolution (`Arcade/VFX_ParticleBurst`), dedicated powerup collection bursts without debris sub-boxes, off-screen pooled VFX instance containment (`_Pool_VFX` at $Y = -500\text{f}$), pause lifecycle, launch suppression window, direct touch controls, bomb radius blast, glass 2-hit durability, shield countdown & killzone intercept, multi-ball death tolerance, multi-ball distinct trail color assignment, dual-layer trail creation and curve decay, 15-level campaign existence, 17 layout archetypes (Diamond, Pyramid, Hourglass, Cross, HollowBox, Pillars, Stripes, Checkerboard, Heart, Invader, Shield, Chevron, Crown, Castle, Custom), custom ASCII pattern parsing with explicit color tier markers, snappier initial speeds (Levels 1–3) and strictly ascending progression, dynamic volley speed escalation over elapsed play intervals, fallback empty blocks container level completion, HighScoreManager sorting/clamping/resetting, sequential build directory regex pattern matching (`_build1`, `build_2`, `build3`), version string patch incrementation, existing folder collision avoidance, and PlayerSettings iOS buildNumber / bundleVersion automated preparation.
+

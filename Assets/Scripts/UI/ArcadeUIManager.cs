@@ -526,11 +526,14 @@ namespace Arcade.UI
                 var tabsContainer = levelSettingsModal.Q<VisualElement>(className: "level-tabs-container");
                 if (tabsContainer != null)
                 {
-                    var buttons = tabsContainer.Query<Button>(className: "level-tab-btn").ToList();
-                    for (int i = 0; i < buttons.Count; i++)
+                    tabsContainer.Clear();
+                    int totalLevels = levelGenerator != null ? levelGenerator.TotalLevels : 15;
+                    for (int i = 0; i < totalLevels; i++)
                     {
                         int lvlNum = i + 1;
-                        var btn = buttons[i];
+                        var btn = new Button { text = $"LVL {lvlNum}" };
+                        btn.AddToClassList("level-tab-btn");
+                        tabsContainer.Add(btn);
                         hudLevelTabButtons.Add(btn);
                         btn.clicked += () => SelectLevelTab(lvlNum);
                     }

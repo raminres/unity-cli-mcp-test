@@ -39,6 +39,9 @@ namespace Arcade.Core
         [SerializeField] private int activeScoreMultiplier = 1;
         [SerializeField] private float multiplierTimeRemaining = 0f;
 
+        [Header("Asset References")]
+        [SerializeField] private Material powerupCapsuleMaterial;
+
         private GameState previousStateBeforePause;
         private readonly System.Collections.Generic.List<BallController> activeBalls = new System.Collections.Generic.List<BallController>();
 
@@ -86,6 +89,10 @@ namespace Arcade.Core
             }
 
             Instance = this;
+            if (powerupCapsuleMaterial != null)
+            {
+                PowerupCapsule.SetDefaultMaterial(powerupCapsuleMaterial);
+            }
             highScore = HighScoreManager.HighestScore;
             HighScoreManager.OnHighScoresChanged += HandleHighScoresChanged;
         }
@@ -405,6 +412,7 @@ namespace Arcade.Core
             if (isShieldActive)
             {
                 // Shield saves the ball! Ball resets to paddle in ReadyToLaunch without losing life.
+                BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
                 if (ball != null)
                 {
                     ball.ResetBallToPaddle();
@@ -456,7 +464,7 @@ namespace Arcade.Core
 
         public void RecordBlockDestroyed(int points, int colorTier)
         {
-            if (currentState != GameState.Playing) return;
+            if (currentState == GameState.GameOver || currentState == GameState.LevelClear) return;
 
             int awardedPoints = points * activeScoreMultiplier;
             currentScore += awardedPoints;
@@ -471,7 +479,40 @@ namespace Arcade.Core
             OnScoreChanged?.Invoke(currentScore, awardedPoints);
             SaveCurrentGameSession();
 
-            if (totalBlocksInLevel > 0 && remainingBlocks <= 0)
+            CheckLevelCompletion();
+        }
+
+        public void CheckLevelCompletion()
+        {
+            if (currentState == GameState.GameOver || currentState == GameState.LevelClear) return;
+            if (totalBlocksInLevel <= 0) return;
+
+            bool allBlocksCleared = remainingBlocks <= 0;
+            if (!allBlocksCleared)
+            {
+                // Fallback check: verify physical blocks container so player is never stuck if count was desynced
+                var generator = FindAnyObjectByType<BlockBreaker.LevelGenerator>();
+                Transform container = generator != null ? (generator.BlocksContainer != null ? generator.BlocksContainer : generator.transform.Find("BlocksContainer")) : null;
+                if (container != null)
+                {
+                    int liveBlocks = 0;
+                    foreach (Transform child in container)
+                    {
+                        var block = child.GetComponent<BlockBreaker.Block>();
+                        if (block != null && !block.IsDestroyed)
+                        {
+                            liveBlocks++;
+                        }
+                    }
+                    if (liveBlocks == 0)
+                    {
+                        remainingBlocks = 0;
+                        allBlocksCleared = true;
+                    }
+                }
+            }
+
+            if (allBlocksCleared)
             {
                 HighScoreManager.RecordScore(currentScore);
                 OnLevelCleared();
@@ -481,6 +522,8 @@ namespace Arcade.Core
         public void RecordBallLost()
         {
             if (currentState != GameState.Playing) return;
+
+            BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
 
             DeactivateShield();
             DeactivatePaddleExpander();
@@ -516,6 +559,7 @@ namespace Arcade.Core
 
         private void OnLevelCleared()
         {
+            BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
             ClearExtraBalls();
             DeactivateShield();
             DeactivatePaddleExpander();
@@ -532,6 +576,7 @@ namespace Arcade.Core
 
         public void AdvanceToNextLevel()
         {
+            BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
             ClearExtraBalls();
             DeactivateShield();
             DeactivatePaddleExpander();
@@ -543,6 +588,7 @@ namespace Arcade.Core
 
         private void OnGameOver()
         {
+            BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
             ClearExtraBalls();
             DeactivateShield();
             DeactivatePaddleExpander();

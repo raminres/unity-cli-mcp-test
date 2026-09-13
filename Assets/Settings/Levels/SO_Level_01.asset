@@ -14,15 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 1
   levelName: 'Level 1: First Flight'
-  levelDescription: Gentle warmup grid with comfortable ball speed. Introduces the Paddle Expander to widen your paddle and master bounce angles.
+  levelDescription: Gentle warmup stepped pyramid with comfortable ball speed. Introduces the Paddle Expander to widen your paddle and master bounce angles.
+  layoutType: 2
   colorPattern: 0
-  columns: 5
+  columns: 7
   rowsPerTier: 1
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
-  ballSpeedMultiplier: 0.85
+  customLayout: 
+  customLayoutRows: []
+  ballSpeedMultiplier: 0.92
   initialPaddleWidth: 5.5
   multiplier2xCount: 0
   multiplier3xCount: 0

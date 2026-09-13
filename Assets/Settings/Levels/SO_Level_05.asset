@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: SO_Level_05
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 5
-  levelName: 'Level 5: Multi-Ball Mayhem'
-  levelDescription: High-octane arcade juggling! Trigger Multi-Ball to split into 3 active balls simultaneously, supported by emergency shields and 3X combo multipliers.
+  levelName: 'Level 5: Multi-Ball Ring'
+  levelDescription: A perimeter fortress framing a hollow bouncing chamber. Trigger Multi-Ball to unleash 3 balls ricocheting inside the inner sanctum!
+  layoutType: 6
   colorPattern: 2
   columns: 8
   rowsPerTier: 2
@@ -22,7 +23,9 @@ MonoBehaviour:
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
-  ballSpeedMultiplier: 1.2
+  customLayout: 
+  customLayoutRows: []
+  ballSpeedMultiplier: 1.08
   initialPaddleWidth: 5
   multiplier2xCount: 1
   multiplier3xCount: 1

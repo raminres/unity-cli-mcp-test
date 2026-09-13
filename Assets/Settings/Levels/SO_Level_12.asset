@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9216ae91f49a9ac4f8812d36de2d4b76, type: 3}
-  m_Name: SO_Level_04
+  m_Name: SO_Level_12
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
-  levelNumber: 4
-  levelName: 'Level 4: Kinetic Shield'
-  levelDescription: An imposing heraldic crest shield. Deploy the bottom laser Shield power-up for a 10-second safety net, and collect extra heart lives.
-  layoutType: 12
+  levelNumber: 12
+  levelName: 'Level 12: Castle Bastion'
+  levelDescription: Fortified medieval battlements with reinforced twin watchtower turrets, glass fortifications, and explosive armory vaults.
+  layoutType: 15
   colorPattern: 0
-  columns: 8
+  columns: 10
   rowsPerTier: 2
   blockSize: 1
   horizontalSpacing: 1.25
@@ -25,16 +25,16 @@ MonoBehaviour:
   startCenterY: 15.5
   customLayout: 
   customLayoutRows: []
-  ballSpeedMultiplier: 1.04
+  ballSpeedMultiplier: 1.36
   initialPaddleWidth: 5
-  multiplier2xCount: 1
-  multiplier3xCount: 0
-  multiplier4xCount: 0
+  multiplier2xCount: 2
+  multiplier3xCount: 2
+  multiplier4xCount: 2
   multiplier5xCount: 0
-  paddleExpanderCount: 1
-  bombCount: 1
-  glassEnclosedCount: 2
+  paddleExpanderCount: 2
+  bombCount: 3
+  glassEnclosedCount: 4
   extraHeartCount: 1
-  shieldCount: 1
-  multiBallCount: 0
+  shieldCount: 2
+  multiBallCount: 2
   shieldDuration: 10

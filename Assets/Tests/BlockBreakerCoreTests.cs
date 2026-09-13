@@ -1894,12 +1894,11 @@ namespace Arcade.Tests
         #region 13. Progressive 7-Level Campaign Tests
 
         [Test]
-        public void Campaign_AllSevenLevelsExist_AndEnforceProgressiveSpeedAndBlockScaling()
+        public void Campaign_AllFifteenLevelsExist_AndEnforceProgressiveSpeedAndLayoutVariety()
         {
             float lastSpeed = 0f;
-            int lastBlocks = 0;
 
-            for (int i = 1; i <= 7; i++)
+            for (int i = 1; i <= 15; i++)
             {
                 string path = $"Assets/Settings/Levels/SO_Level_{i:D2}.asset";
                 var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>(path);
@@ -1907,18 +1906,17 @@ namespace Arcade.Tests
                 Assert.AreEqual(i, config.LevelNumber, $"Level {i} must have matching LevelNumber.");
                 Assert.IsFalse(string.IsNullOrEmpty(config.LevelName), $"Level {i} must have a non-empty name.");
                 Assert.IsFalse(string.IsNullOrEmpty(config.Description), $"Level {i} must have a non-empty description.");
+                Assert.Greater(config.TotalBlocks, 0, $"Level {i} must have a positive block count.");
 
                 Assert.Greater(config.BallSpeedMultiplier, lastSpeed, $"Level {i} speed ({config.BallSpeedMultiplier}) must be strictly faster than Level {i - 1} speed ({lastSpeed}).");
-                Assert.GreaterOrEqual(config.TotalBlocks, lastBlocks, $"Level {i} blocks ({config.TotalBlocks}) must be >= Level {i - 1} blocks ({lastBlocks}).");
 
                 lastSpeed = config.BallSpeedMultiplier;
-                lastBlocks = config.TotalBlocks;
             }
 
-            Assert.AreEqual(0.85f, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset").BallSpeedMultiplier, 0.001f);
-            Assert.AreEqual(1.38f, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_07.asset").BallSpeedMultiplier, 0.001f);
-            Assert.AreEqual(15, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset").TotalBlocks);
-            Assert.AreEqual(90, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_07.asset").TotalBlocks);
+            Assert.AreEqual(0.92f, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset").BallSpeedMultiplier, 0.001f);
+            Assert.AreEqual(1.48f, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_15.asset").BallSpeedMultiplier, 0.001f);
+            Assert.AreEqual(LevelLayoutType.Pyramid, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset").LayoutType);
+            Assert.AreEqual(LevelLayoutType.Custom, UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_15.asset").LayoutType);
         }
 
         [Test]
@@ -1927,15 +1925,16 @@ namespace Arcade.Tests
             var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset");
             Assert.IsNotNull(config);
 
-            // Level 1: 5 cols * 3 rows = 15 blocks
-            Assert.AreEqual(5, config.Columns);
+            // Level 1: 7 cols * 3 rows in a Stepped Pyramid = 15 blocks
+            Assert.AreEqual(7, config.Columns);
             Assert.AreEqual(1, config.RowsPerTier);
             Assert.AreEqual(3, config.TotalRows);
             Assert.AreEqual(15, config.TotalBlocks);
+            Assert.AreEqual(LevelLayoutType.Pyramid, config.LayoutType);
 
             // Generous warmup paddle and comfortable speed
             Assert.AreEqual(5.5f, config.InitialPaddleWidth, 0.001f);
-            Assert.AreEqual(0.85f, config.BallSpeedMultiplier, 0.001f);
+            Assert.AreEqual(0.92f, config.BallSpeedMultiplier, 0.001f);
 
             // Single paddle expander reward, zero hazards
             Assert.AreEqual(1, config.PaddleExpanderCount);
@@ -1949,13 +1948,13 @@ namespace Arcade.Tests
         }
 
         [Test]
-        public void LevelGenerator_AdvanceToNextLevel_CyclesSevenLevelsSeamlessly()
+        public void LevelGenerator_AdvanceToNextLevel_CyclesFifteenLevelsSeamlessly()
         {
             var genObj = new GameObject("TestGenerator");
             var gen = genObj.AddComponent<LevelGenerator>();
 
-            var levelConfigs = new LevelConfiguration[7];
-            for (int i = 0; i < 7; i++)
+            var levelConfigs = new LevelConfiguration[15];
+            for (int i = 0; i < 15; i++)
             {
                 levelConfigs[i] = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i + 1:D2}.asset");
                 Assert.IsNotNull(levelConfigs[i]);
@@ -1963,8 +1962,8 @@ namespace Arcade.Tests
 
             var genSo = new UnityEditor.SerializedObject(gen);
             var presetsProp = genSo.FindProperty("levelPresets");
-            presetsProp.arraySize = 7;
-            for (int i = 0; i < 7; i++)
+            presetsProp.arraySize = 15;
+            for (int i = 0; i < 15; i++)
             {
                 presetsProp.GetArrayElementAtIndex(i).objectReferenceValue = levelConfigs[i];
             }
@@ -1974,27 +1973,27 @@ namespace Arcade.Tests
             gen.SelectAndLoadLevel(1);
             Assert.AreEqual(1, gen.CurrentConfig.LevelNumber);
 
-            // Advance through 2, 3, 4, 5, 6, 7
-            for (int expectedLvl = 2; expectedLvl <= 7; expectedLvl++)
+            // Advance through 2 to 15
+            for (int expectedLvl = 2; expectedLvl <= 15; expectedLvl++)
             {
                 gen.AdvanceToNextLevel();
                 Assert.AreEqual(expectedLvl, gen.CurrentConfig.LevelNumber, $"Expected advancing to Level {expectedLvl}.");
             }
 
-            // Advancing from Level 7 must loop back to Level 1
+            // Advancing from Level 15 must loop back to Level 1
             gen.AdvanceToNextLevel();
-            Assert.AreEqual(1, gen.CurrentConfig.LevelNumber, "Advancing beyond Level 7 must loop back to Level 1 for endless arcade progression.");
+            Assert.AreEqual(1, gen.CurrentConfig.LevelNumber, "Advancing beyond Level 15 must loop back to Level 1 for endless arcade progression.");
 
             Object.DestroyImmediate(genObj);
         }
 
         [Test]
-        public void LevelGenerator_SpecialBlockDistribution_MaintainsExactCountsWithoutCollisionsAcrossAll7Levels()
+        public void LevelGenerator_SpecialBlockDistribution_MaintainsExactCountsWithoutCollisionsAcrossAll15Levels()
         {
             var genObj = new GameObject("TestGenerator");
             var gen = genObj.AddComponent<LevelGenerator>();
 
-            for (int i = 1; i <= 7; i++)
+            for (int i = 1; i <= 15; i++)
             {
                 var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i:D2}.asset");
                 Assert.IsNotNull(config);
@@ -2049,6 +2048,135 @@ namespace Arcade.Tests
                 Assert.AreEqual(config.MultiBallCount, actualMulti);
             }
 
+            Object.DestroyImmediate(genObj);
+        }
+
+        [Test]
+        public void LevelConfiguration_AllSixteenLayoutTypes_EvaluateAccurately()
+        {
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+            config.SetColumns(8);
+            config.SetRowsPerTier(2); // 6 rows total
+
+            foreach (LevelLayoutType layout in System.Enum.GetValues(typeof(LevelLayoutType)))
+            {
+                config.SetLayoutType(layout);
+                if (layout == LevelLayoutType.Custom)
+                {
+                    config.SetCustomLayout("XXXX\n.XX.\n..XX");
+                }
+
+                Assert.Greater(config.TotalBlocks, 0, $"LayoutType {layout} must produce at least one block.");
+                Assert.LessOrEqual(config.TotalBlocks, config.Columns * config.TotalRows, $"LayoutType {layout} blocks must not exceed grid envelope.");
+
+                // Verify out of bounds queries return false
+                Assert.IsFalse(config.HasBlockAt(-1, 0));
+                Assert.IsFalse(config.HasBlockAt(0, -1));
+                Assert.IsFalse(config.HasBlockAt(config.TotalRows, 0));
+                Assert.IsFalse(config.HasBlockAt(0, config.Columns));
+            }
+
+            Object.DestroyImmediate(config);
+        }
+
+        [Test]
+        public void LevelConfiguration_CustomLayout_ParsesTextPattern_AndExplicitColors()
+        {
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+            config.SetLayoutType(LevelLayoutType.Custom);
+            config.SetColumns(6);
+            config.SetRowsPerTier(1); // 3 rows
+
+            string layout =
+                "B.G.R.\n" +
+                "XXXXXX\n" +
+                "......";
+
+            config.SetCustomLayout(layout);
+
+            // Row 0: B . G . R .
+            Assert.IsTrue(config.HasBlockAt(0, 0));
+            Assert.AreEqual(BlockColorTier.Blue, config.GetExplicitColorAt(0, 0));
+
+            Assert.IsFalse(config.HasBlockAt(0, 1));
+            Assert.IsNull(config.GetExplicitColorAt(0, 1));
+
+            Assert.IsTrue(config.HasBlockAt(0, 2));
+            Assert.AreEqual(BlockColorTier.Green, config.GetExplicitColorAt(0, 2));
+
+            Assert.IsFalse(config.HasBlockAt(0, 3));
+            Assert.IsNull(config.GetExplicitColorAt(0, 3));
+
+            Assert.IsTrue(config.HasBlockAt(0, 4));
+            Assert.AreEqual(BlockColorTier.Red, config.GetExplicitColorAt(0, 4));
+
+            Assert.IsFalse(config.HasBlockAt(0, 5));
+
+            // Row 1: All 6 filled
+            for (int c = 0; c < 6; c++)
+            {
+                Assert.IsTrue(config.HasBlockAt(1, c));
+                Assert.IsNull(config.GetExplicitColorAt(1, c), "Standard 'X' must not have explicit color override.");
+            }
+
+            // Row 2: All 6 empty
+            for (int c = 0; c < 6; c++)
+            {
+                Assert.IsFalse(config.HasBlockAt(2, c));
+            }
+
+            // Total filled blocks: 3 in row 0, 6 in row 1 = 9
+            Assert.AreEqual(9, config.TotalBlocks);
+
+            Object.DestroyImmediate(config);
+        }
+
+        [Test]
+        public void LevelConfiguration_Clone_CopiesLayoutAndCustomPattern()
+        {
+            var original = ScriptableObject.CreateInstance<LevelConfiguration>();
+            original.SetLayoutType(LevelLayoutType.Custom);
+            original.SetCustomLayout("..XX..\nXXXXXX");
+            original.SetColumns(6);
+            original.SetRowsPerTier(2);
+
+            var clone = original.Clone();
+
+            Assert.AreEqual(LevelLayoutType.Custom, clone.LayoutType);
+            Assert.AreEqual("..XX..\nXXXXXX", clone.CustomLayout);
+            Assert.AreEqual(original.TotalBlocks, clone.TotalBlocks);
+            Assert.AreEqual(original.Columns, clone.Columns);
+            Assert.AreEqual(original.TotalRows, clone.TotalRows);
+
+            Object.DestroyImmediate(original);
+            Object.DestroyImmediate(clone);
+        }
+
+        [Test]
+        public void LevelGenerator_LayoutWithEmptySpaces_SpawnsOnlyActiveBlocks_AndRegistersWithGameManager()
+        {
+            var genObj = new GameObject("TestLayoutGenerator");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+            config.SetLayoutType(LevelLayoutType.Pillars); // alternating columns
+            config.SetColumns(7);
+            config.SetRowsPerTier(1); // 3 rows
+            // In 7 cols with Pillars (c % 2 == 0): cols 0, 2, 4, 6 are filled (4 cols * 3 rows = 12 blocks)
+            Assert.AreEqual(12, config.TotalBlocks);
+
+            gen.LoadLevel(config);
+
+            var container = genObj.transform.Find("BlocksContainer");
+            Assert.IsNotNull(container, "BlocksContainer must be created.");
+            Assert.AreEqual(12, container.childCount, "BlocksContainer child count must match active TotalBlocks.");
+
+            if (ArcadeGameManager.Instance != null)
+            {
+                Assert.AreEqual(12, ArcadeGameManager.Instance.RemainingBlocks, "GameManager RemainingBlocks must match active TotalBlocks.");
+            }
+
+            Object.DestroyImmediate(config);
             Object.DestroyImmediate(genObj);
         }
 
@@ -2221,16 +2349,21 @@ namespace Arcade.Tests
         }
 
         [Test]
-        public void Campaign_Level6And7_Contain4xAnd5xMultipliers()
+        public void Campaign_LevelsContainProgressiveMultipliersUpTo5x()
         {
-            var lvl6 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_06.asset");
-            Assert.IsNotNull(lvl6);
-            Assert.AreEqual(1, lvl6.Multiplier4xCount, "Level 6 must introduce 1x 4X multiplier.");
+            var lvl9 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_09.asset");
+            Assert.IsNotNull(lvl9);
+            Assert.AreEqual(1, lvl9.Multiplier4xCount, "Level 9 must introduce 1x 4X multiplier.");
 
-            var lvl7 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_07.asset");
-            Assert.IsNotNull(lvl7);
-            Assert.AreEqual(2, lvl7.Multiplier4xCount, "Level 7 must contain 2x 4X multipliers.");
-            Assert.AreEqual(1, lvl7.Multiplier5xCount, "Level 7 must introduce 1x 5X multiplier.");
+            var lvl13 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_13.asset");
+            Assert.IsNotNull(lvl13);
+            Assert.AreEqual(2, lvl13.Multiplier4xCount, "Level 13 must contain 2x 4X multipliers.");
+            Assert.AreEqual(1, lvl13.Multiplier5xCount, "Level 13 must introduce 1x 5X multiplier.");
+
+            var lvl15 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_15.asset");
+            Assert.IsNotNull(lvl15);
+            Assert.AreEqual(2, lvl15.Multiplier4xCount, "Level 15 must contain 2x 4X multipliers.");
+            Assert.AreEqual(2, lvl15.Multiplier5xCount, "Level 15 must contain 2x 5X multipliers.");
         }
 
         [Test]
@@ -2912,6 +3045,335 @@ namespace Arcade.Tests
 
             UnityEditor.SceneManagement.EditorSceneManager.CloseScene(scene, true);
         }
+
+        #endregion
+
+        #region Bug Fixes: Shaders, Powerup Cleanup & Level Completion Tests
+
+        [Test]
+        public void BlockVFXManager_ParticleMaterial_UsesValidURPShader_AndFallbackIsSafe()
+        {
+            var vfxGo = new GameObject("TestVFXManager");
+            var vfx = vfxGo.AddComponent<BlockVFXManager>();
+
+            var fallbackMat = vfx.GetOrCreateParticleMaterial();
+            Assert.IsNotNull(fallbackMat, "Fallback particle material must not be null.");
+            Assert.IsNotNull(fallbackMat.shader, "Fallback particle material must have a valid shader.");
+            Assert.AreNotEqual("Hidden/InternalErrorShader", fallbackMat.shader.name, "Shader must not be error shader.");
+            Assert.AreNotEqual("Standard", fallbackMat.shader.name, "Fallback shader must not be legacy built-in Standard.");
+
+            var customMat = new Material(Shader.Find("Arcade/VFX_ParticleBurst") ?? Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+            vfx.SetParticleMaterial(customMat);
+            Assert.AreEqual(customMat, vfx.ParticleMaterial, "Explicit particle material must be assigned and accessible.");
+            Assert.AreEqual(customMat, vfx.GetOrCreateParticleMaterial(), "GetOrCreateParticleMaterial must return the assigned material.");
+
+            Object.DestroyImmediate(vfxGo);
+            Object.DestroyImmediate(customMat);
+        }
+
+        [Test]
+        public void BlockVFXManager_PlayPowerupCollect_SpawnsActiveVFX_WithoutDebrisSubBoxes()
+        {
+            var vfxGo = new GameObject("TestVFXManager");
+            var vfx = vfxGo.AddComponent<BlockVFXManager>();
+            BlockVFXManager.SetInstanceForTesting(vfx);
+
+            // Collecting a powerup triggers a particle burst, NOT shattered block cubes
+            vfx.PlayPowerupCollect(Vector3.zero, new Color(0.88f, 0.34f, 0.99f)); // MultiBall neon purple/magenta
+
+            Assert.AreEqual(1, vfx.ActiveVfxCount, "PlayPowerupCollect must track exactly 1 active VFX burst.");
+            Assert.AreEqual(0, vfx.ActiveDebrisCount, "PlayPowerupCollect must NOT spawn block debris cubes.");
+
+            // Verify particle system renderer exists and has valid non-error material
+            var ps = vfxGo.GetComponentInChildren<ParticleSystem>();
+            Assert.IsNotNull(ps, "Must have active ParticleSystem child.");
+            var psr = ps.GetComponent<ParticleSystemRenderer>();
+            Assert.IsNotNull(psr.sharedMaterial, "ParticleSystemRenderer must have a sharedMaterial assigned.");
+            Assert.AreNotEqual("Hidden/InternalErrorShader", psr.sharedMaterial.shader.name, "Particle shader must not be pink missing shader.");
+
+            vfx.ClearAllActive();
+            Assert.AreEqual(0, vfx.ActiveVfxCount, "ClearAllActive must reset active VFX count.");
+
+            Object.DestroyImmediate(vfxGo);
+        }
+
+        [Test]
+        public void PowerupCapsule_ClearAllFallingCapsules_DestroysAllFallingInstances()
+        {
+            PowerupCapsule.ClearAllFallingCapsules();
+
+            var cap1 = PowerupCapsule.Spawn(new Vector3(-2f, 5f, 0f), BlockSpecialType.MultiBall);
+            var cap2 = PowerupCapsule.Spawn(new Vector3(2f, 5f, 0f), BlockSpecialType.PaddleExpander);
+
+            var existing = Object.FindObjectsByType<PowerupCapsule>(FindObjectsSortMode.None);
+            Assert.AreEqual(2, existing.Length, "Must have 2 active capsules in scene.");
+
+            PowerupCapsule.ClearAllFallingCapsules();
+
+            var remaining = Object.FindObjectsByType<PowerupCapsule>(FindObjectsSortMode.None);
+            Assert.AreEqual(0, remaining.Length, "ClearAllFallingCapsules must destroy all falling capsules.");
+        }
+
+        [Test]
+        public void PowerupCapsule_CannotCollectWhileDockedInReadyToLaunch()
+        {
+            gameManager.SetState(GameState.ReadyToLaunch);
+
+            var cap = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.MultiBall);
+            bool interceptedWhileDocked = cap.TryIntercept(paddle);
+
+            // Because game is in ReadyToLaunch and not Playing, capsule must NOT be intercepted
+            Assert.IsFalse(interceptedWhileDocked, "TryIntercept must return false when docked in ReadyToLaunch.");
+            var remaining = Object.FindObjectsByType<PowerupCapsule>(FindObjectsSortMode.None);
+            Assert.AreEqual(1, remaining.Length, "Capsule must not be collected while docked in ReadyToLaunch.");
+            Assert.AreEqual(0, gameManager.ActiveBallCount, "MultiBall must not spawn extra balls while docked.");
+
+            // When game transitions to Playing, intercept succeeds
+            gameManager.SetState(GameState.Playing);
+            bool interceptedWhilePlaying = cap.TryIntercept(paddle);
+            Assert.IsTrue(interceptedWhilePlaying, "TryIntercept must succeed when game is Playing.");
+        }
+
+        [Test]
+        public void ArcadeGameManager_RecordBallLost_ClearsFallingCapsules()
+        {
+            gameManager.SetState(GameState.Playing);
+
+            var cap = PowerupCapsule.Spawn(new Vector3(0f, 5f, 0f), BlockSpecialType.Shield);
+            Assert.AreEqual(1, Object.FindObjectsByType<PowerupCapsule>(FindObjectsSortMode.None).Length);
+
+            gameManager.RecordBallLost();
+
+            Assert.AreEqual(0, Object.FindObjectsByType<PowerupCapsule>(FindObjectsSortMode.None).Length, "Losing life must clear all falling capsules.");
+        }
+
+        [Test]
+        public void ArcadeGameManager_BlocksContainerEmpty_TriggersLevelSuccessFallback()
+        {
+            gameManager.SetState(GameState.Playing);
+            gameManager.RegisterLevelBlocks(10);
+
+            // Simulating desync where remainingBlocks was stuck at 2
+            var genGo = new GameObject("LevelGen");
+            genGo.transform.SetParent(testRoot.transform);
+            var gen = genGo.AddComponent<LevelGenerator>();
+            var containerGo = new GameObject("BlocksContainer");
+            containerGo.transform.SetParent(genGo.transform);
+
+            // BlocksContainer has 0 blocks
+            gameManager.CheckLevelCompletion();
+
+            Assert.AreEqual(GameState.LevelClear, gameManager.State, "CheckLevelCompletion must trigger LevelClear when BlocksContainer has 0 live blocks.");
+            Assert.AreEqual(0, gameManager.RemainingBlocks, "Remaining blocks must be clamped to 0.");
+        }
+
+        [Test]
+        public void BlockVFXManager_PooledInstances_ArePlacedOffscreen_OutsideLevelPlayfield()
+        {
+            var vfxGo = new GameObject("VFXManager_Test");
+            vfxGo.transform.SetParent(testRoot.transform);
+            var vfx = vfxGo.AddComponent<BlockVFXManager>();
+            vfx.InitializePool();
+            BlockVFXManager.SetInstanceForTesting(vfx);
+
+            // Pool container must exist and be placed far off-screen
+            var poolContainer = vfxGo.transform.Find("_Pool_VFX");
+            Assert.IsNotNull(poolContainer, "_Pool_VFX container must be created.");
+            Assert.Less(poolContainer.position.y, -100f, "Pool container must be situated comfortably outside playfield.");
+
+            // Verify burst instances are disabled and positioned off-screen
+            int burstCount = 0;
+            for (int i = 0; i < poolContainer.childCount; i++)
+            {
+                var child = poolContainer.GetChild(i);
+                if (child.name == "VFX_Burst_Instance")
+                {
+                    burstCount++;
+                    Assert.IsFalse(child.gameObject.activeSelf, "Pooled VFX burst must be inactive by default.");
+                    Assert.Less(child.position.y, -100f, "Pooled VFX burst instance must never be located in the playfield.");
+                }
+            }
+            Assert.Greater(burstCount, 0, "Burst pool instances must be created.");
+        }
+
+        [Test]
+        public void PowerupCapsule_CleanVisualHierarchy_ExactlyOneMesh_ExactlyOneSprite_ZeroDuplicates()
+        {
+            var cap = PowerupCapsule.Spawn(new Vector3(0f, 5f, 0f), BlockSpecialType.PaddleExpander);
+            Assert.IsNotNull(cap);
+
+            // 1. Root container must have ZERO meshes and ZERO sprites
+            Assert.IsNull(cap.GetComponent<MeshRenderer>(), "Root capsule container must not have MeshRenderer.");
+            Assert.IsNull(cap.GetComponent<SpriteRenderer>(), "Root capsule container must not have SpriteRenderer.");
+
+            // 2. Exactly 2 children: Visual_Capsule and Icon_Billboard
+            Assert.AreEqual(2, cap.transform.childCount, "Powerup capsule must have exactly 2 children (1 visual mesh child, 1 billboard sprite child).");
+
+            var visual = cap.VisualCapsuleTransform;
+            var icon = cap.IconTransform;
+            Assert.IsNotNull(visual, "Visual_Capsule child must exist.");
+            Assert.IsNotNull(icon, "Icon_Billboard child must exist.");
+            Assert.AreEqual("Visual_Capsule", visual.name);
+            Assert.AreEqual("Icon_Billboard", icon.name);
+
+            // 3. Visual_Capsule has 1 mesh, 0 sprites, 0 colliders
+            var visualMesh = visual.GetComponent<MeshRenderer>();
+            var visualSprite = visual.GetComponent<SpriteRenderer>();
+            var visualCollider = visual.GetComponent<Collider>();
+            Assert.IsNotNull(visualMesh, "Visual_Capsule must have MeshRenderer.");
+            Assert.IsNull(visualSprite, "Visual_Capsule must NOT have SpriteRenderer.");
+            Assert.IsNull(visualCollider, "Visual_Capsule must NOT have Collider (trigger belongs on root).");
+
+            // 4. Icon_Billboard has 1 sprite, 0 meshes, 0 colliders
+            var iconSprite = icon.GetComponent<SpriteRenderer>();
+            var iconMesh = icon.GetComponent<MeshRenderer>();
+            var iconCollider = icon.GetComponent<Collider>();
+            Assert.IsNotNull(iconSprite, "Icon_Billboard must have SpriteRenderer.");
+            Assert.IsNull(iconMesh, "Icon_Billboard must NOT have MeshRenderer.");
+            Assert.IsNull(iconCollider, "Icon_Billboard must NOT have Collider.");
+
+            // 5. Total counts across entire hierarchy
+            var allMeshRenderers = cap.GetComponentsInChildren<MeshRenderer>(true);
+            var allSpriteRenderers = cap.GetComponentsInChildren<SpriteRenderer>(true);
+            Assert.AreEqual(1, allMeshRenderers.Length, "There must be exactly 1 MeshRenderer across the entire powerup capsule hierarchy.");
+            Assert.AreEqual(1, allSpriteRenderers.Length, "There must be exactly 1 SpriteRenderer across the entire powerup capsule hierarchy.");
+
+            Object.DestroyImmediate(cap.gameObject);
+        }
+
+        [Test]
+        public void PowerupCapsule_MaterialResolution_FallbackReturnsValidURPShader()
+        {
+            Material mat = PowerupCapsule.GetOrCreateCapsuleMaterial();
+            Assert.IsNotNull(mat, "Powerup capsule material must resolve successfully.");
+            Assert.IsNotNull(mat.shader, "Powerup capsule material must have a valid shader.");
+            Assert.AreNotEqual("Hidden/InternalErrorShader", mat.shader.name, "Shader must not be the pink error shader.");
+        }
+
+        [Test]
+        public void BallController_DynamicVolleyPacing_AcceleratesAfterInterval()
+        {
+            var ballGo = new GameObject("Ball_Pacing_Test");
+            ballGo.transform.SetParent(testRoot.transform);
+            var rb = ballGo.AddComponent<Rigidbody>();
+            var bc = ballGo.AddComponent<BallController>();
+
+            bc.SetSpeedMultiplier(1.0f);
+            bc.LaunchWithDirection(Vector3.up, 14f);
+
+            float initialSpeed = bc.CurrentSpeed;
+            Assert.AreEqual(14f, initialSpeed, 0.001f);
+            Assert.AreEqual(0f, bc.ActiveVolleyTime);
+
+            // Advance time past 10-second threshold
+            bc.ApplyTimeBasedSpeedRamp(10.5f);
+
+            Assert.Greater(bc.CurrentSpeed, initialSpeed, "Ball speed must accelerate after 10 seconds of active volley.");
+            Assert.GreaterOrEqual(bc.ActiveVolleyTime, 10.5f);
+
+            // Docking ball must reset volley timer and speed
+            bc.StopAndDockBall();
+            Assert.AreEqual(0f, bc.ActiveVolleyTime, "Docking ball must reset active volley time to 0.");
+            Assert.AreEqual(14f, bc.CurrentSpeed, 0.001f, "Docking ball must restore base speed.");
+
+            Object.DestroyImmediate(ballGo);
+        }
+
+        [Test]
+        public void BuildVersionUtility_ParseBuildNumber_RecognizesPatterns()
+        {
+            Assert.AreEqual(1, BuildVersionUtility.ParseBuildNumber("_build1"));
+            Assert.AreEqual(2, BuildVersionUtility.ParseBuildNumber("build_2"));
+            Assert.AreEqual(3, BuildVersionUtility.ParseBuildNumber("build3"));
+            Assert.AreEqual(4, BuildVersionUtility.ParseBuildNumber("_build_4"));
+            Assert.AreEqual(5, BuildVersionUtility.ParseBuildNumber("build-5"));
+            Assert.AreEqual(6, BuildVersionUtility.ParseBuildNumber("v6"));
+            Assert.AreEqual(7, BuildVersionUtility.ParseBuildNumber("build_07"));
+            Assert.AreEqual(10, BuildVersionUtility.ParseBuildNumber("build_10"));
+
+            Assert.AreEqual(-1, BuildVersionUtility.ParseBuildNumber("BlockBreakerBuild"));
+            Assert.AreEqual(-1, BuildVersionUtility.ParseBuildNumber("build_random"));
+            Assert.AreEqual(-1, BuildVersionUtility.ParseBuildNumber(""));
+            Assert.AreEqual(-1, BuildVersionUtility.ParseBuildNumber(null));
+        }
+
+        [Test]
+        public void BuildVersionUtility_IncrementVersionString_AdvancesPatchOrInteger()
+        {
+            Assert.AreEqual("0.1.1", BuildVersionUtility.IncrementVersionString("0.1.0"));
+            Assert.AreEqual("0.1.10", BuildVersionUtility.IncrementVersionString("0.1.9"));
+            Assert.AreEqual("1.0.1", BuildVersionUtility.IncrementVersionString("1.0.0"));
+            Assert.AreEqual("1.3", BuildVersionUtility.IncrementVersionString("1.2"));
+            Assert.AreEqual("2", BuildVersionUtility.IncrementVersionString("1"));
+            Assert.AreEqual("0.1.1", BuildVersionUtility.IncrementVersionString(""));
+            Assert.AreEqual("0.1.1", BuildVersionUtility.IncrementVersionString(null));
+        }
+
+        [Test]
+        public void BuildVersionUtility_GetNextBuildNumber_ResolvesSequentialFolders()
+        {
+            string tempBase = System.IO.Path.Combine(Application.temporaryCachePath, "TestBuilds_" + System.Guid.NewGuid().ToString("N"));
+            try
+            {
+                System.IO.Directory.CreateDirectory(tempBase);
+                System.IO.Directory.CreateDirectory(System.IO.Path.Combine(tempBase, "_build1"));
+                System.IO.Directory.CreateDirectory(System.IO.Path.Combine(tempBase, "build_2"));
+
+                int highest = BuildVersionUtility.GetHighestExistingBuildNumber(tempBase);
+                Assert.AreEqual(2, highest);
+
+                int next = BuildVersionUtility.GetNextBuildNumber(tempBase, 0);
+                Assert.AreEqual(3, next);
+
+                string folderName = BuildVersionUtility.FormatBuildFolderName(next);
+                Assert.AreEqual("build_3", folderName);
+
+                // If current build setting is higher, next must advance past it
+                int nextWithHigherCurrent = BuildVersionUtility.GetNextBuildNumber(tempBase, 5);
+                Assert.AreEqual(6, nextWithHigherCurrent);
+            }
+            finally
+            {
+                if (System.IO.Directory.Exists(tempBase))
+                {
+                    System.IO.Directory.Delete(tempBase, true);
+                }
+            }
+        }
+
+#if UNITY_EDITOR
+        [Test]
+        public void BuildVersionUtility_PrepareNextBuild_IncrementsSettingsAndCreatesSubfolder()
+        {
+            string tempBase = System.IO.Path.Combine(Application.temporaryCachePath, "TestPrepare_" + System.Guid.NewGuid().ToString("N"));
+            string originalBuildNum = UnityEditor.PlayerSettings.iOS.buildNumber;
+            string originalBundleVer = UnityEditor.PlayerSettings.bundleVersion;
+
+            try
+            {
+                UnityEditor.PlayerSettings.iOS.buildNumber = "4";
+                UnityEditor.PlayerSettings.bundleVersion = "0.1.0";
+
+                string createdPath = BuildVersionUtility.PrepareNextBuild(tempBase, true);
+
+                Assert.IsTrue(System.IO.Directory.Exists(createdPath), "Build subfolder must exist on disk.");
+                Assert.IsTrue(createdPath.EndsWith("build_5"), $"Expected path to end with build_5, but got {createdPath}");
+                Assert.AreEqual("5", UnityEditor.PlayerSettings.iOS.buildNumber, "iOS buildNumber must be incremented to 5.");
+                Assert.AreEqual("0.1.1", UnityEditor.PlayerSettings.bundleVersion, "bundleVersion must be incremented to 0.1.1.");
+            }
+            finally
+            {
+                UnityEditor.PlayerSettings.iOS.buildNumber = originalBuildNum;
+                UnityEditor.PlayerSettings.bundleVersion = originalBundleVer;
+                UnityEditor.AssetDatabase.SaveAssets();
+
+                if (System.IO.Directory.Exists(tempBase))
+                {
+                    System.IO.Directory.Delete(tempBase, true);
+                }
+            }
+        }
+#endif
 
         #endregion
     }
