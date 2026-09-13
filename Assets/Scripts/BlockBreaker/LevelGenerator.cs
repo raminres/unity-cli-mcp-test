@@ -46,6 +46,7 @@ namespace Arcade.BlockBreaker
         public LevelConfiguration CurrentConfig => currentLevelConfig;
         public LevelConfiguration[] LevelPresets => levelPresets;
         public int TotalLevels => levelPresets != null && levelPresets.Length > 0 ? levelPresets.Length : 1;
+        public Transform BlocksContainer => blocksContainer;
 
         private void Awake()
         {

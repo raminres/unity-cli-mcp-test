@@ -25,7 +25,7 @@ MonoBehaviour:
   startCenterY: 15.5
   customLayout: 
   customLayoutRows: []
-  ballSpeedMultiplier: 1
+  ballSpeedMultiplier: 1.04
   initialPaddleWidth: 5
   multiplier2xCount: 1
   multiplier3xCount: 0

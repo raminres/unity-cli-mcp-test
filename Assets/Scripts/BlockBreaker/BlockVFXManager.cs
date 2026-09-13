@@ -5,8 +5,9 @@ using UnityEngine.VFX;
 namespace Arcade.BlockBreaker
 {
     /// <summary>
-    /// Spawns GPU VFX Graph bursts and physical 3D sub-cube debris particles when blocks shatter.
+    /// Spawns particle bursts and physical 3D sub-cube debris particles when blocks shatter and powerups are collected.
     /// Optimized for zero GC allocations per frame and instant frame-0 PSO prewarming across iOS (Metal), PC (DX12/Vulkan), and Web (WebGPU).
+    /// Employs dedicated URP-native materials and shaders with zero unshaded or pink fallback artifacts.
     /// </summary>
     public class BlockVFXManager : MonoBehaviour
     {
@@ -14,6 +15,7 @@ namespace Arcade.BlockBreaker
 
         [Header("VFX Configuration")]
         [SerializeField] private VisualEffectAsset shatterVfxAsset;
+        [SerializeField] private Material particleMaterial;
         [SerializeField] private int poolSize = 10;
 
         [Header("Sub-Box Physics Debris")]
@@ -23,10 +25,16 @@ namespace Arcade.BlockBreaker
         [SerializeField] private Material debrisMaterial;
 
         public Material DebrisMaterial => debrisMaterial;
+        public Material ParticleMaterial => particleMaterial;
 
         public void SetDebrisMaterial(Material mat)
         {
             debrisMaterial = mat;
+        }
+
+        public void SetParticleMaterial(Material mat)
+        {
+            particleMaterial = mat;
         }
 
         public static void SetInstanceForTesting(BlockVFXManager instance)
@@ -35,8 +43,10 @@ namespace Arcade.BlockBreaker
         }
 
         private Material cachedFallbackMaterial;
+        private Material cachedFallbackParticleMaterial;
         private static MaterialPropertyBlock debrisPropBlock;
 
+        private readonly Queue<GameObject> burstPool = new Queue<GameObject>();
         private readonly Queue<VisualEffect> vfxPool = new Queue<VisualEffect>();
         private readonly Queue<GameObject> debrisPool = new Queue<GameObject>();
 
@@ -52,9 +62,11 @@ namespace Arcade.BlockBreaker
             public float duration;
         }
 
-        // Struct-based zero-allocation tracking for active VFX Graph bursts
+        // Struct-based zero-allocation tracking for active particle bursts
         private struct ActiveVFX
         {
+            public GameObject gameObject;
+            public ParticleSystem particleSystem;
             public VisualEffect effect;
             public float elapsed;
             public float duration;
@@ -70,7 +82,7 @@ namespace Arcade.BlockBreaker
         private static readonly int EmissionColorPropId = Shader.PropertyToID("_EmissionColor");
         private static readonly Vector3 Gravity = new Vector3(0f, -14f, 0f);
 
-        public int AvailableVfxCount => vfxPool.Count;
+        public int AvailableVfxCount => burstPool.Count + vfxPool.Count;
         public int AvailableDebrisCount => debrisPool.Count;
         public int ActiveDebrisCount => activeDebrisList.Count;
         public int ActiveVfxCount => activeVfxList.Count;
@@ -104,14 +116,40 @@ namespace Arcade.BlockBreaker
             ClearAllActive();
         }
 
+        private Transform poolContainer;
+
+        private Transform GetOrCreatePoolContainer()
+        {
+            if (poolContainer == null)
+            {
+                var existing = transform.Find("_Pool_VFX");
+                if (existing != null)
+                {
+                    poolContainer = existing;
+                }
+                else
+                {
+                    var poolGo = new GameObject("_Pool_VFX");
+                    poolGo.transform.SetParent(transform);
+                    poolGo.transform.position = new Vector3(0f, -500f, 0f);
+                    poolContainer = poolGo.transform;
+                }
+            }
+            return poolContainer;
+        }
+
         public void InitializePool()
         {
-            // VFX Graph pool
+            var container = GetOrCreatePoolContainer();
+
+            // Particle burst pool with dedicated shaded materials
             for (int i = 0; i < poolSize; i++)
             {
-                VisualEffect effect = CreateNewVFXInstance();
-                effect.gameObject.SetActive(false);
-                vfxPool.Enqueue(effect);
+                GameObject burst = CreateNewBurstInstance();
+                burst.SetActive(false);
+                burst.transform.SetParent(container);
+                burst.transform.position = new Vector3(0f, -500f, 0f);
+                burstPool.Enqueue(burst);
             }
 
             // Debris mini-cubes pool
@@ -122,6 +160,8 @@ namespace Arcade.BlockBreaker
                 {
                     GameObject debris = CreateDebrisPiece();
                     debris.SetActive(false);
+                    debris.transform.SetParent(container);
+                    debris.transform.position = new Vector3(0f, -500f, 0f);
                     debrisPool.Enqueue(debris);
                 }
             }
@@ -129,38 +169,32 @@ namespace Arcade.BlockBreaker
 
         /// <summary>
         /// Frame-0 PSO and shader prewarming to eliminate first-hit pipeline compilation hitches.
-        /// Prewarms raster shaders, compiles VFX Graph compute kernels, and prepares MaterialPropertyBlock
+        /// Prewarms raster shaders, compiles particle PSOs, and prepares MaterialPropertyBlock
         /// across Metal (iOS), DirectX 12 / Vulkan (PC), and WebGPU (Web).
         /// </summary>
         public void Prewarm()
         {
-            // 1. Warm up raster shaders in memory on standalone player builds (iOS, PC, Web)
             if (!Application.isEditor)
             {
                 Shader.WarmupAllShaders();
             }
 
-            // 2. Prewarm 1 VFX Graph instance to force driver compute & particle PSO compilation
-            if (vfxPool.Count > 0)
+            // 1. Prewarm particle material and burst instance
+            if (burstPool.Count > 0)
             {
-                VisualEffect vfx = vfxPool.Peek();
-                if (vfx != null)
+                GameObject burst = burstPool.Peek();
+                if (burst != null)
                 {
-                    // Move far off-camera so it does not draw on screen
-                    vfx.transform.position = new Vector3(0f, -500f, 0f);
-                    vfx.gameObject.SetActive(true);
-
-                    if (vfx.HasVector4(ColorPropertyId)) vfx.SetVector4(ColorPropertyId, Vector4.one);
-                    if (vfx.HasVector3(NormalPropertyId)) vfx.SetVector3(NormalPropertyId, Vector3.up);
-
-                    vfx.Play();
-                    vfx.Simulate(0.016f);
-                    vfx.Stop();
-                    vfx.gameObject.SetActive(false);
+                    var psr = burst.GetComponent<ParticleSystemRenderer>();
+                    if (psr != null)
+                    {
+                        Material baseMat = GetOrCreateParticleMaterial();
+                        if (baseMat != null) psr.sharedMaterial = baseMat;
+                    }
                 }
             }
 
-            // 3. Prewarm debris renderer & MaterialPropertyBlock
+            // 2. Prewarm debris renderer & MaterialPropertyBlock
             if (spawnPhysicalSubBoxes && debrisPool.Count > 0)
             {
                 GameObject debris = debrisPool.Peek();
@@ -183,17 +217,75 @@ namespace Arcade.BlockBreaker
             }
         }
 
-        private VisualEffect CreateNewVFXInstance()
+        public Material GetOrCreateParticleMaterial()
         {
-            GameObject go = new GameObject("VFX_BlockShatter_Instance");
-            go.transform.SetParent(transform);
-            VisualEffect vfx = go.AddComponent<VisualEffect>();
-            if (shatterVfxAsset != null)
+            if (particleMaterial != null) return particleMaterial;
+
+            if (cachedFallbackParticleMaterial == null)
             {
-                vfx.visualEffectAsset = shatterVfxAsset;
+#if UNITY_EDITOR
+                particleMaterial = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_VFX_Burst.mat");
+                if (particleMaterial != null) return particleMaterial;
+#endif
+                var shader = Shader.Find("Arcade/VFX_ParticleBurst") ?? Shader.Find("Universal Render Pipeline/Particles/Unlit");
+                if (shader != null)
+                {
+                    cachedFallbackParticleMaterial = new Material(shader) { name = "M_VFX_Burst_Fallback" };
+                }
             }
-            vfx.playRate = 1.0f;
-            return vfx;
+            return cachedFallbackParticleMaterial;
+        }
+
+        private GameObject CreateNewBurstInstance()
+        {
+            GameObject go = new GameObject("VFX_Burst_Instance");
+            go.SetActive(false); // Crucial: ensure particle system does not awake/emit in the playfield
+            go.transform.SetParent(GetOrCreatePoolContainer());
+            go.transform.position = new Vector3(0f, -500f, 0f);
+
+            var ps = go.AddComponent<ParticleSystem>();
+            var psr = go.GetComponent<ParticleSystemRenderer>();
+
+            var main = ps.main;
+            main.playOnAwake = false;
+            main.loop = false;
+            main.startLifetime = 0.55f;
+            main.startSpeed = new ParticleSystem.MinMaxCurve(5f, 11f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.12f, 0.26f);
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.stopAction = ParticleSystemStopAction.None;
+
+            var emission = ps.emission;
+            emission.enabled = false;
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = 0.25f;
+
+            var colOverLifetime = ps.colorOverLifetime;
+            colOverLifetime.enabled = true;
+            Gradient grad = new Gradient();
+            grad.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0f, 1f) }
+            );
+            colOverLifetime.color = grad;
+
+            var sizeOverLifetime = ps.sizeOverLifetime;
+            sizeOverLifetime.enabled = true;
+            AnimationCurve curve = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(1f, 0f));
+            sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, curve);
+
+            if (psr != null)
+            {
+                Material mat = GetOrCreateParticleMaterial();
+                if (mat != null)
+                {
+                    psr.sharedMaterial = mat;
+                }
+            }
+
+            return go;
         }
 
         public Material GetOrCreateDebrisMaterial()
@@ -215,7 +307,9 @@ namespace Arcade.BlockBreaker
         {
             GameObject debris = GameObject.CreatePrimitive(PrimitiveType.Cube);
             debris.name = "SubBox_Debris";
-            debris.transform.SetParent(transform);
+            debris.SetActive(false);
+            debris.transform.SetParent(GetOrCreatePoolContainer());
+            debris.transform.position = new Vector3(0f, -500f, 0f);
             debris.transform.localScale = Vector3.one * 0.45f;
 
             // Remove default collider so particles don't interfere with ball physics
@@ -241,21 +335,86 @@ namespace Arcade.BlockBreaker
             return debris;
         }
 
+        /// <summary>
+        /// Fires a radiant particle burst when a powerup capsule is intercepted by the paddle.
+        /// Emits glowing sparks in the powerup's distinct neon emissive hue with zero pink/missing shader artifacts.
+        /// </summary>
+        public void PlayPowerupCollect(Vector3 position, Color powerupColor)
+        {
+            GameObject burstObj = burstPool.Count > 0 ? burstPool.Dequeue() : CreateNewBurstInstance();
+            burstObj.transform.position = position;
+            burstObj.SetActive(true);
+
+            var ps = burstObj.GetComponent<ParticleSystem>();
+            if (ps != null)
+            {
+                var psr = burstObj.GetComponent<ParticleSystemRenderer>();
+                if (psr != null)
+                {
+                    Material mat = GetOrCreateParticleMaterial();
+                    if (mat != null && psr.sharedMaterial != mat)
+                    {
+                        psr.sharedMaterial = mat;
+                    }
+                }
+
+                ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams
+                {
+                    startColor = powerupColor * 1.5f,
+                    startLifetime = 0.55f,
+                    applyShapeToPosition = true
+                };
+                ps.Emit(emitParams, 32);
+            }
+
+            activeVfxList.Add(new ActiveVFX
+            {
+                gameObject = burstObj,
+                particleSystem = ps,
+                elapsed = 0f,
+                duration = 0.65f
+            });
+        }
+
+        /// <summary>
+        /// Shatters a block into spark particles and 8 physical 3D tumbling debris sub-boxes.
+        /// </summary>
         public void PlayBlockShatter(Vector3 position, Color blockColor, Vector3 hitNormal)
         {
-            // 1. Play GPU VFX Graph burst
-            VisualEffect effect = vfxPool.Count > 0 ? vfxPool.Dequeue() : CreateNewVFXInstance();
-            effect.transform.position = position;
-            effect.gameObject.SetActive(true);
+            // 1. Play shaded particle spark burst
+            GameObject burstObj = burstPool.Count > 0 ? burstPool.Dequeue() : CreateNewBurstInstance();
+            burstObj.transform.position = position;
+            burstObj.SetActive(true);
 
-            Color hdrColor = blockColor * 1.6f;
-            hdrColor.a = 1.0f;
+            var ps = burstObj.GetComponent<ParticleSystem>();
+            if (ps != null)
+            {
+                var psr = burstObj.GetComponent<ParticleSystemRenderer>();
+                if (psr != null)
+                {
+                    Material mat = GetOrCreateParticleMaterial();
+                    if (mat != null && psr.sharedMaterial != mat)
+                    {
+                        psr.sharedMaterial = mat;
+                    }
+                }
 
-            if (effect.HasVector4(ColorPropertyId)) effect.SetVector4(ColorPropertyId, (Vector4)hdrColor);
-            if (effect.HasVector3(NormalPropertyId)) effect.SetVector3(NormalPropertyId, hitNormal);
+                ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams
+                {
+                    startColor = blockColor * 1.4f,
+                    startLifetime = 0.5f,
+                    applyShapeToPosition = true
+                };
+                ps.Emit(emitParams, 24);
+            }
 
-            effect.Play();
-            activeVfxList.Add(new ActiveVFX { effect = effect, elapsed = 0f, duration = 1.2f });
+            activeVfxList.Add(new ActiveVFX
+            {
+                gameObject = burstObj,
+                particleSystem = ps,
+                elapsed = 0f,
+                duration = 0.65f
+            });
 
             // 2. Spawn physical sub-box particles exploding in 3D
             if (spawnPhysicalSubBoxes)
@@ -354,6 +513,7 @@ namespace Arcade.BlockBreaker
                 if (item.elapsed >= item.duration)
                 {
                     item.gameObject.SetActive(false);
+                    item.gameObject.transform.position = new Vector3(0f, -500f, 0f);
                     debrisPool.Enqueue(item.gameObject);
                     activeDebrisList.RemoveAt(i);
                 }
@@ -363,11 +523,11 @@ namespace Arcade.BlockBreaker
                 }
             }
 
-            // 2. Zero-allocation update for active VFX Graph bursts
+            // 2. Zero-allocation update for active particle bursts
             for (int i = activeVfxList.Count - 1; i >= 0; i--)
             {
                 ActiveVFX item = activeVfxList[i];
-                if (item.effect == null)
+                if (item.gameObject == null)
                 {
                     activeVfxList.RemoveAt(i);
                     continue;
@@ -376,9 +536,14 @@ namespace Arcade.BlockBreaker
                 item.elapsed += dt;
                 if (item.elapsed >= item.duration)
                 {
-                    item.effect.Stop();
-                    item.effect.gameObject.SetActive(false);
-                    vfxPool.Enqueue(item.effect);
+                    if (item.particleSystem != null)
+                    {
+                        item.particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                        item.particleSystem.Clear();
+                    }
+                    item.gameObject.SetActive(false);
+                    item.gameObject.transform.position = new Vector3(0f, -500f, 0f);
+                    burstPool.Enqueue(item.gameObject);
                     activeVfxList.RemoveAt(i);
                 }
                 else
@@ -399,6 +564,7 @@ namespace Arcade.BlockBreaker
                 if (item.gameObject != null)
                 {
                     item.gameObject.SetActive(false);
+                    item.gameObject.transform.position = new Vector3(0f, -500f, 0f);
                     debrisPool.Enqueue(item.gameObject);
                 }
             }
@@ -407,11 +573,16 @@ namespace Arcade.BlockBreaker
             for (int i = activeVfxList.Count - 1; i >= 0; i--)
             {
                 ActiveVFX item = activeVfxList[i];
-                if (item.effect != null)
+                if (item.gameObject != null)
                 {
-                    item.effect.Stop();
-                    item.effect.gameObject.SetActive(false);
-                    vfxPool.Enqueue(item.effect);
+                    if (item.particleSystem != null)
+                    {
+                        item.particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                        item.particleSystem.Clear();
+                    }
+                    item.gameObject.SetActive(false);
+                    item.gameObject.transform.position = new Vector3(0f, -500f, 0f);
+                    burstPool.Enqueue(item.gameObject);
                 }
             }
             activeVfxList.Clear();

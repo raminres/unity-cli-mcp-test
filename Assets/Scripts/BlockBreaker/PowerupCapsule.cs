@@ -42,6 +42,45 @@ namespace Arcade.BlockBreaker
         public SpriteRenderer IconRenderer => iconRenderer;
         public Transform IconTransform => iconTransform;
 
+        private static Material defaultCapsuleMaterial;
+
+        public static void SetDefaultMaterial(Material mat)
+        {
+            defaultCapsuleMaterial = mat;
+        }
+
+        public static Material GetOrCreateCapsuleMaterial()
+        {
+            if (defaultCapsuleMaterial != null) return defaultCapsuleMaterial;
+
+#if UNITY_EDITOR
+            var editorMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Powerup_Capsule.mat");
+            if (editorMat != null)
+            {
+                defaultCapsuleMaterial = editorMat;
+                return defaultCapsuleMaterial;
+            }
+#endif
+
+            // Standalone / iOS fallback shader resolution (eliminates pink missing shaders on Metal)
+            var shader = Shader.Find("Universal Render Pipeline/Lit")
+                      ?? Shader.Find("Arcade/VFX_BlockDebris")
+                      ?? Shader.Find("Universal Render Pipeline/Unlit");
+
+            if (shader != null)
+            {
+                defaultCapsuleMaterial = new Material(shader)
+                {
+                    name = "M_Powerup_Capsule_RuntimeFallback"
+                };
+                defaultCapsuleMaterial.SetFloat("_Metallic", 0.8f);
+                defaultCapsuleMaterial.SetFloat("_Smoothness", 0.9f);
+                defaultCapsuleMaterial.EnableKeyword("_EMISSION");
+            }
+
+            return defaultCapsuleMaterial;
+        }
+
         private void Awake()
         {
             var col = GetComponent<Collider>();
@@ -51,11 +90,12 @@ namespace Arcade.BlockBreaker
             }
 
             propBlock = new MaterialPropertyBlock();
-            EnsureBillboardIcon();
+            // Note: Visual hierarchy is managed cleanly in EnsureVisualHierarchy/Initialize
         }
 
         private void Start()
         {
+            EnsureVisualHierarchy();
             ApplyGlowColor();
         }
 
@@ -116,23 +156,9 @@ namespace Arcade.BlockBreaker
             glowColor = color;
 
             if (visual != null) visualCapsuleTransform = visual;
-            if (icon != null)
-            {
-                iconTransform = icon;
-                iconRenderer = icon.GetComponent<SpriteRenderer>();
-            }
+            if (icon != null) iconTransform = icon;
 
-            EnsureBillboardIcon();
-
-            if (capsuleRenderer == null && visualCapsuleTransform != null)
-            {
-                capsuleRenderer = visualCapsuleTransform.GetComponent<Renderer>();
-            }
-            if (sharedMat != null && capsuleRenderer != null)
-            {
-                capsuleRenderer.sharedMaterial = sharedMat;
-            }
-
+            EnsureVisualHierarchy(sharedMat);
             ApplyGlowColor();
 
             Sprite sprite = GetSpriteForType(type);
@@ -143,63 +169,120 @@ namespace Arcade.BlockBreaker
             }
         }
 
-        public void EnsureBillboardIcon()
+        /// <summary>
+        /// Ensures exactly 1 rotating 3D capsule mesh child (Visual_Capsule) and exactly 1 non-rotating upright
+        /// camera-facing billboard sprite child (Icon_Billboard), stripping any duplicate components or pink shaders.
+        /// </summary>
+        public void EnsureVisualHierarchy(Material baseMat = null)
         {
-            if (visualCapsuleTransform == null)
-            {
-                var visualChild = transform.Find("Visual_Capsule");
-                if (visualChild != null)
-                {
-                    visualCapsuleTransform = visualChild;
-                    capsuleRenderer = visualChild.GetComponent<Renderer>();
-                }
-                else
-                {
-                    // Fallback to self renderer if legacy primitive or create child
-                    capsuleRenderer = GetComponent<Renderer>();
-                    if (capsuleRenderer == null)
-                    {
-                        var visualGo = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                        visualGo.name = "Visual_Capsule";
-                        visualGo.transform.SetParent(transform, false);
-                        visualGo.transform.localPosition = Vector3.zero;
-                        visualGo.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
-                        var meshCol = visualGo.GetComponent<Collider>();
-                        if (meshCol != null)
-                        {
-                            if (Application.isPlaying) Destroy(meshCol);
-                            else DestroyImmediate(meshCol);
-                        }
+            // 1. Ensure Root container does NOT have any stray MeshRenderer, MeshFilter, or SpriteRenderer
+            var rootMr = GetComponent<MeshRenderer>();
+            if (rootMr != null) { if (Application.isPlaying) Destroy(rootMr); else DestroyImmediate(rootMr); }
+            var rootMf = GetComponent<MeshFilter>();
+            if (rootMf != null) { if (Application.isPlaying) Destroy(rootMf); else DestroyImmediate(rootMf); }
+            var rootSr = GetComponent<SpriteRenderer>();
+            if (rootSr != null) { if (Application.isPlaying) Destroy(rootSr); else DestroyImmediate(rootSr); }
 
-                        visualCapsuleTransform = visualGo.transform;
-                        capsuleRenderer = visualGo.GetComponent<Renderer>();
+            // 2. Clean up duplicate Visual_Capsule children (keep only the first)
+            Transform primaryVisual = null;
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = transform.GetChild(i);
+                if (child.name == "Visual_Capsule")
+                {
+                    if (primaryVisual == null)
+                    {
+                        primaryVisual = child;
                     }
                     else
                     {
-                        visualCapsuleTransform = transform;
+                        if (Application.isPlaying) Destroy(child.gameObject);
+                        else DestroyImmediate(child.gameObject);
                     }
                 }
             }
 
-            if (iconTransform == null)
+            // 3. Clean up duplicate Icon_Billboard children (keep only the first)
+            Transform primaryIcon = null;
+            for (int i = transform.childCount - 1; i >= 0; i--)
             {
-                var child = transform.Find("Icon_Billboard");
-                if (child != null)
+                Transform child = transform.GetChild(i);
+                if (child.name == "Icon_Billboard")
                 {
-                    iconTransform = child;
-                    iconRenderer = child.GetComponent<SpriteRenderer>();
-                }
-                else
-                {
-                    var iconGo = new GameObject("Icon_Billboard");
-                    iconTransform = iconGo.transform;
-                    iconTransform.SetParent(transform, false);
-                    iconTransform.localPosition = new Vector3(0f, 0f, -0.60f);
-                    iconTransform.localScale = new Vector3(0.95f, 0.95f, 0.95f);
-                    iconRenderer = iconGo.AddComponent<SpriteRenderer>();
-                    iconRenderer.sortingOrder = 35;
+                    if (primaryIcon == null)
+                    {
+                        primaryIcon = child;
+                    }
+                    else
+                    {
+                        if (Application.isPlaying) Destroy(child.gameObject);
+                        else DestroyImmediate(child.gameObject);
+                    }
                 }
             }
+
+            // 4. Configure Visual_Capsule (3D rotating mesh child)
+            if (primaryVisual == null)
+            {
+                var visualGo = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                visualGo.name = "Visual_Capsule";
+                visualGo.transform.SetParent(transform, false);
+                visualGo.transform.localPosition = Vector3.zero;
+                visualGo.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
+                primaryVisual = visualGo.transform;
+            }
+
+            visualCapsuleTransform = primaryVisual;
+
+            // Strip any collider and any stray SpriteRenderer on the visual mesh child
+            var col = visualCapsuleTransform.GetComponent<Collider>();
+            if (col != null) { if (Application.isPlaying) Destroy(col); else DestroyImmediate(col); }
+            var straySr = visualCapsuleTransform.GetComponent<SpriteRenderer>();
+            if (straySr != null) { if (Application.isPlaying) Destroy(straySr); else DestroyImmediate(straySr); }
+
+            capsuleRenderer = visualCapsuleTransform.GetComponent<MeshRenderer>();
+            if (capsuleRenderer == null)
+            {
+                capsuleRenderer = visualCapsuleTransform.gameObject.AddComponent<MeshRenderer>();
+            }
+
+            Material resolvedMat = baseMat ?? GetOrCreateCapsuleMaterial();
+            if (resolvedMat != null && capsuleRenderer.sharedMaterial != resolvedMat)
+            {
+                capsuleRenderer.sharedMaterial = resolvedMat;
+            }
+
+            // 5. Configure Icon_Billboard (2D non-rotating camera-facing sprite child)
+            if (primaryIcon == null)
+            {
+                var iconGo = new GameObject("Icon_Billboard");
+                iconGo.transform.SetParent(transform, false);
+                iconGo.transform.localPosition = new Vector3(0f, 0f, -0.60f);
+                iconGo.transform.localScale = new Vector3(0.95f, 0.95f, 0.95f);
+                primaryIcon = iconGo.transform;
+            }
+
+            iconTransform = primaryIcon;
+
+            // Strip any MeshFilter, MeshRenderer, or Collider on the icon child
+            var strayMf = iconTransform.GetComponent<MeshFilter>();
+            if (strayMf != null) { if (Application.isPlaying) Destroy(strayMf); else DestroyImmediate(strayMf); }
+            var strayMr = iconTransform.GetComponent<MeshRenderer>();
+            if (strayMr != null) { if (Application.isPlaying) Destroy(strayMr); else DestroyImmediate(strayMr); }
+            var strayCol = iconTransform.GetComponent<Collider>();
+            if (strayCol != null) { if (Application.isPlaying) Destroy(strayCol); else DestroyImmediate(strayCol); }
+
+            iconRenderer = iconTransform.GetComponent<SpriteRenderer>();
+            if (iconRenderer == null)
+            {
+                iconRenderer = iconTransform.gameObject.AddComponent<SpriteRenderer>();
+            }
+            iconRenderer.sortingOrder = 35;
+        }
+
+        public void EnsureBillboardIcon()
+        {
+            EnsureVisualHierarchy(null);
         }
 
         private void ApplyGlowColor()
@@ -231,8 +314,25 @@ namespace Arcade.BlockBreaker
             var paddle = other.GetComponent<PaddleController>() ?? other.GetComponentInParent<PaddleController>();
             if (paddle != null)
             {
-                Collect(paddle);
+                TryIntercept(paddle);
             }
+        }
+
+        /// <summary>
+        /// Attempts to intercept the falling capsule with the paddle.
+        /// Returns false and does not collect if the game is not actively playing (e.g. while docked in ReadyToLaunch or BallLost).
+        /// </summary>
+        public bool TryIntercept(PaddleController paddle)
+        {
+            if (isCollected) return false;
+
+            if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State != GameState.Playing)
+            {
+                return false;
+            }
+
+            Collect(paddle);
+            return true;
         }
 
         /// <summary>
@@ -317,13 +417,29 @@ namespace Arcade.BlockBreaker
                     break;
             }
 
-            // 3. VFX Burst
+            // 3. VFX Burst using dedicated URP shaded particles
             if (BlockVFXManager.Instance != null)
             {
-                BlockVFXManager.Instance.PlayBlockShatter(transform.position, glowColor, Vector3.up);
+                BlockVFXManager.Instance.PlayPowerupCollect(transform.position, glowColor);
             }
 
             DestroySelf();
+        }
+
+        /// <summary>
+        /// Clears and destroys all active falling powerup capsules in the scene.
+        /// Called when a ball is lost, when a level is cleared, or on game over to prevent stale pickups while docked.
+        /// </summary>
+        public static void ClearAllFallingCapsules()
+        {
+            var capsules = FindObjectsByType<PowerupCapsule>(FindObjectsSortMode.None);
+            for (int i = 0; i < capsules.Length; i++)
+            {
+                if (capsules[i] != null)
+                {
+                    capsules[i].DestroySelf();
+                }
+            }
         }
 
         private void DestroySelf()
@@ -397,7 +513,7 @@ namespace Arcade.BlockBreaker
 
         /// <summary>
         /// Factory method to spawn a 3D collectible powerup capsule.
-        /// Decoupled hierarchy: non-rotating container with tumbling visual capsule child and independent foreground billboard icon.
+        /// Decoupled hierarchy: non-rotating container with exactly 1 tumbling visual capsule child and 1 independent foreground billboard icon.
         /// </summary>
         public static PowerupCapsule Spawn(Vector3 position, BlockSpecialType type, Material baseMat = null)
         {
@@ -420,38 +536,11 @@ namespace Arcade.BlockBreaker
 
             var comp = rootGo.AddComponent<PowerupCapsule>();
 
-            // 2. Child 1: Visual Capsule (Chunky 3D Mesh, only this child rotates)
-            var visualGo = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            visualGo.name = "Visual_Capsule";
-            visualGo.transform.SetParent(rootGo.transform, false);
-            visualGo.transform.localPosition = Vector3.zero;
-            visualGo.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
-            var meshCol = visualGo.GetComponent<Collider>();
-            if (meshCol != null)
-            {
-                if (Application.isPlaying) Destroy(meshCol);
-                else DestroyImmediate(meshCol);
-            }
-
-            // 3. Child 2: Billboard Icon (Large, upright, always in front of capsule)
-            var iconGo = new GameObject("Icon_Billboard");
-            iconGo.transform.SetParent(rootGo.transform, false);
-            iconGo.transform.localPosition = new Vector3(0f, 0f, -0.60f);
-            iconGo.transform.localScale = new Vector3(0.95f, 0.95f, 0.95f);
-
-            var sr = iconGo.AddComponent<SpriteRenderer>();
-            sr.sortingOrder = 35;
-
+            baseMat = baseMat ?? GetOrCreateCapsuleMaterial();
             Color color = type.GetBadgeColor();
 
-            if (baseMat == null)
-            {
-#if UNITY_EDITOR
-                baseMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Powerup_Capsule.mat");
-#endif
-            }
-
-            comp.Initialize(type, color, baseMat, visualGo.transform, iconGo.transform);
+            // Initialize ensures exactly 1 Visual_Capsule mesh child and 1 Icon_Billboard sprite child
+            comp.Initialize(type, color, baseMat);
             return comp;
         }
     }

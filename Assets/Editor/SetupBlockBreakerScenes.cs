@@ -36,43 +36,43 @@ namespace Arcade.Editor
             // Level 1: First Flight (Pyramid)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_01.asset", 1, "Level 1: First Flight",
                 "Gentle warmup stepped pyramid with comfortable ball speed. Introduces the Paddle Expander to widen your paddle and master bounce angles.",
-                BlockColorPattern.InvertedTiered, LevelLayoutType.Pyramid, 7, 1, 0.85f, 5.5f,
+                BlockColorPattern.InvertedTiered, LevelLayoutType.Pyramid, 7, 1, 0.92f, 5.5f,
                 mult2x: 0, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 0, glass: 0, heart: 0, shield: 0, multiBall: 0);
 
             // Level 2: Glass & Gold (Diamond)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_02.asset", 2, "Level 2: Glass & Gold",
                 "A sparkling diamond gem formation. Introduces durable glass-encased bricks requiring two strikes and score multiplier targets for big points.",
-                BlockColorPattern.InvertedTiered, LevelLayoutType.Diamond, 7, 2, 0.90f, 5.2f,
+                BlockColorPattern.InvertedTiered, LevelLayoutType.Diamond, 7, 2, 0.96f, 5.2f,
                 mult2x: 1, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 0, glass: 2, heart: 0, shield: 0, multiBall: 0);
 
             // Level 3: Twin Pillars (Pillars)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_03.asset", 3, "Level 3: Twin Pillars",
                 "Vertical block columns with open alleyways. Sneak the ball up the corridors for high-velocity top-row cascades, and trigger explosive Bomb bricks.",
-                BlockColorPattern.Checkerboard, LevelLayoutType.Pillars, 7, 2, 0.95f, 5.0f,
+                BlockColorPattern.Checkerboard, LevelLayoutType.Pillars, 7, 2, 1.00f, 5.0f,
                 mult2x: 2, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 0, heart: 0, shield: 0, multiBall: 0);
 
             // Level 4: Kinetic Shield (Shield)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_04.asset", 4, "Level 4: Kinetic Shield",
                 "An imposing heraldic crest shield. Deploy the bottom laser Shield power-up for a 10-second safety net, and collect extra heart lives.",
-                BlockColorPattern.InvertedTiered, LevelLayoutType.Shield, 8, 2, 1.00f, 5.0f,
+                BlockColorPattern.InvertedTiered, LevelLayoutType.Shield, 8, 2, 1.04f, 5.0f,
                 mult2x: 1, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 1, glass: 2, heart: 1, shield: 1, multiBall: 0);
 
             // Level 5: Multi-Ball Ring (HollowBox)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_05.asset", 5, "Level 5: Multi-Ball Ring",
                 "A perimeter fortress framing a hollow bouncing chamber. Trigger Multi-Ball to unleash 3 balls ricocheting inside the inner sanctum!",
-                BlockColorPattern.Checkerboard, LevelLayoutType.HollowBox, 8, 2, 1.05f, 5.0f,
+                BlockColorPattern.Checkerboard, LevelLayoutType.HollowBox, 8, 2, 1.08f, 5.0f,
                 mult2x: 1, mult3x: 1, mult4x: 0, mult5x: 0, expanders: 0, bombs: 1, glass: 2, heart: 0, shield: 1, multiBall: 2);
 
             // Level 6: Royal Crown (Crown)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_06.asset", 6, "Level 6: Royal Crown",
                 "A triple-peaked royal crown with blazing 3X score multipliers and reinforced glass towers. Precision rebounds at high angles are rewarded.",
-                BlockColorPattern.InvertedTiered, LevelLayoutType.Crown, 9, 2, 1.10f, 5.0f,
+                BlockColorPattern.InvertedTiered, LevelLayoutType.Crown, 9, 2, 1.12f, 5.0f,
                 mult2x: 1, mult3x: 2, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 1);
 
             // Level 7: Neon Heart (Heart)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_07.asset", 7, "Level 7: Neon Heart",
                 "An arcade heart silhouette with extra heart drops. Keep the rhythm alive as ball velocity continues to accelerate.",
-                BlockColorPattern.InvertedTiered, LevelLayoutType.Heart, 9, 2, 1.15f, 5.0f,
+                BlockColorPattern.InvertedTiered, LevelLayoutType.Heart, 9, 2, 1.16f, 5.0f,
                 mult2x: 2, mult3x: 1, mult4x: 0, mult5x: 0, expanders: 1, bombs: 1, glass: 2, heart: 2, shield: 1, multiBall: 1);
 
             // Level 8: Space Invader (Invader)
@@ -319,6 +319,7 @@ namespace Arcade.Editor
             var blueMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Blue.mat");
             var vfxAsset = AssetDatabase.LoadAssetAtPath<VisualEffectAsset>("Assets/VFX/VFX_BlockShatter.vfx");
             var debrisMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Debris.mat");
+            var burstMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_VFX_Burst.mat");
 
             // 6. Playfield Boundaries
             var boundariesRoot = new GameObject("Boundaries");
@@ -437,13 +438,21 @@ namespace Arcade.Editor
 
             // 10. Game Coordinators
             var gmGo = new GameObject("GameManager");
-            gmGo.AddComponent<ArcadeGameManager>();
+            var gm = gmGo.AddComponent<ArcadeGameManager>();
+            var capsuleMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Powerup_Capsule.mat");
+            if (capsuleMat != null)
+            {
+                var gmSo = new SerializedObject(gm);
+                gmSo.FindProperty("powerupCapsuleMaterial").objectReferenceValue = capsuleMat;
+                gmSo.ApplyModifiedProperties();
+            }
             gmGo.AddComponent<ArcadeInputHandler>();
 
             var vfxMgr = gmGo.AddComponent<BlockVFXManager>();
             var vfxSo = new SerializedObject(vfxMgr);
             if (vfxAsset != null) vfxSo.FindProperty("shatterVfxAsset").objectReferenceValue = vfxAsset;
             if (debrisMat != null) vfxSo.FindProperty("debrisMaterial").objectReferenceValue = debrisMat;
+            if (burstMat != null) vfxSo.FindProperty("particleMaterial").objectReferenceValue = burstMat;
             vfxSo.ApplyModifiedProperties();
 
             var levelGen = gmGo.AddComponent<LevelGenerator>();

@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using Arcade.Core;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Profile;
@@ -84,6 +85,22 @@ namespace Arcade.Editor
             Debug.Log($"[SetupIOSBuildProfile] Successfully applied iOS build profile & player settings for {ProductName} ({BundleIdentifier}).");
         }
 
+        [MenuItem("Tools/Arcade/Prepare Next iOS Build Folder & Version")]
+        public static string PrepareNextBuildFolderMenu()
+        {
+            string path = BuildVersionUtility.PrepareNextBuild(OutputBuildPath);
+            Debug.Log($"[SetupIOSBuildProfile] Prepared next iOS build folder: {path} (buildNumber: {PlayerSettings.iOS.buildNumber}, bundleVersion: {PlayerSettings.bundleVersion})");
+            return path;
+        }
+
+        /// <summary>
+        /// Public helper for CLI or scripts to advance build/version and create the next subfolder.
+        /// </summary>
+        public static string PrepareNextBuildDirectory(string baseDirectory = OutputBuildPath)
+        {
+            return BuildVersionUtility.PrepareNextBuild(baseDirectory);
+        }
+
         [MenuItem("Tools/Arcade/Build Xcode Project")]
         public static void BuildXcode()
         {
@@ -101,11 +118,8 @@ namespace Arcade.Editor
                 return;
             }
 
-            string outPath = OutputBuildPath;
-            if (!Directory.Exists(outPath))
-            {
-                Directory.CreateDirectory(outPath);
-            }
+            // Advance version and create sequential subfolder (e.g. Builds/BlockBreakerBuilds/build_1)
+            string outPath = BuildVersionUtility.PrepareNextBuild(OutputBuildPath);
 
             var buildOptions = new BuildPlayerOptions
             {
@@ -116,9 +130,9 @@ namespace Arcade.Editor
                 options = BuildOptions.None
             };
 
-            Debug.Log($"[SetupIOSBuildProfile] Starting build to {outPath}...");
+            Debug.Log($"[SetupIOSBuildProfile] Starting iOS build #{PlayerSettings.iOS.buildNumber} ({PlayerSettings.bundleVersion}) to: {outPath}...");
             var report = BuildPipeline.BuildPlayer(buildOptions);
-            Debug.Log($"[SetupIOSBuildProfile] Build completed with result: {report.summary.result} ({report.summary.totalErrors} errors).");
+            Debug.Log($"[SetupIOSBuildProfile] Build completed with result: {report.summary.result} ({report.summary.totalErrors} errors). Output directory: {outPath}");
         }
     }
 }
