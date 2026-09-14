@@ -401,6 +401,26 @@ namespace Arcade.Editor
             if (borderMat != null) topWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
             topWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
+            // Top-Left 45° Corner Chamfer (redirects vertical balls diagonally into playfield)
+            var chamferTopLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            chamferTopLeft.name = "Chamfer_TopLeft";
+            chamferTopLeft.transform.SetParent(boundariesRoot.transform);
+            chamferTopLeft.transform.position = new Vector3(-8.85f, 22.85f, 0f);
+            chamferTopLeft.transform.rotation = Quaternion.Euler(0f, 0f, 45f);
+            chamferTopLeft.transform.localScale = new Vector3(3.8f, 0.5f, 2f);
+            if (borderMat != null) chamferTopLeft.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
+            chamferTopLeft.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+
+            // Top-Right 45° Corner Chamfer (redirects vertical balls diagonally into playfield)
+            var chamferTopRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            chamferTopRight.name = "Chamfer_TopRight";
+            chamferTopRight.transform.SetParent(boundariesRoot.transform);
+            chamferTopRight.transform.position = new Vector3(8.85f, 22.85f, 0f);
+            chamferTopRight.transform.rotation = Quaternion.Euler(0f, 0f, -45f);
+            chamferTopRight.transform.localScale = new Vector3(3.8f, 0.5f, 2f);
+            if (borderMat != null) chamferTopRight.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
+            chamferTopRight.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+
             // Bottom Kill Zone Trigger
             var killZone = new GameObject("KillZone");
             killZone.tag = "KillZone";

@@ -55,6 +55,7 @@ namespace Arcade.BlockBreaker
 
         private void Start()
         {
+            EnsureCornerChamfers();
             GenerateLevel();
         }
 
@@ -464,6 +465,49 @@ namespace Arcade.BlockBreaker
 
             var badge = badgeGo.AddComponent<BlockBadge>();
             badge.Setup(special, badgePanelSettings, badgeVisualTreeAsset);
+        }
+
+        public void EnsureCornerChamfers()
+        {
+            var boundariesRoot = GameObject.Find("Boundaries") ?? GameObject.Find("ArenaBoundaries");
+            if (boundariesRoot == null) return;
+
+            Transform topWall = boundariesRoot.transform.Find("TopWall");
+            Material borderMat = null;
+            PhysicsMaterial bounceMat = null;
+            if (topWall != null)
+            {
+                var rend = topWall.GetComponent<MeshRenderer>();
+                if (rend != null) borderMat = rend.sharedMaterial;
+                var col = topWall.GetComponent<BoxCollider>();
+                if (col != null) bounceMat = col.sharedMaterial;
+            }
+
+            Transform leftChamfer = boundariesRoot.transform.Find("Chamfer_TopLeft");
+            if (leftChamfer == null)
+            {
+                var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                go.name = "Chamfer_TopLeft";
+                go.transform.SetParent(boundariesRoot.transform);
+                go.transform.position = new Vector3(-8.85f, 22.85f, 0f);
+                go.transform.rotation = Quaternion.Euler(0f, 0f, 45f);
+                go.transform.localScale = new Vector3(3.8f, 0.5f, 2f);
+                if (borderMat != null) go.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
+                if (bounceMat != null) go.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+            }
+
+            Transform rightChamfer = boundariesRoot.transform.Find("Chamfer_TopRight");
+            if (rightChamfer == null)
+            {
+                var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                go.name = "Chamfer_TopRight";
+                go.transform.SetParent(boundariesRoot.transform);
+                go.transform.position = new Vector3(8.85f, 22.85f, 0f);
+                go.transform.rotation = Quaternion.Euler(0f, 0f, -45f);
+                go.transform.localScale = new Vector3(3.8f, 0.5f, 2f);
+                if (borderMat != null) go.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
+                if (bounceMat != null) go.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+            }
         }
     }
 }
