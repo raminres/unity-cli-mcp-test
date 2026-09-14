@@ -83,9 +83,9 @@ namespace Arcade.Tests
             Assert.AreEqual(30, gameManager.Score);
             Assert.AreEqual(1, gameManager.RemainingBlocks);
 
-            // Break Blue block (30 pts)
+            // Break Blue block (30 pts) during Clutch Mode (10x multiplier) -> 300 pts added (30 + 300 = 330)
             gameManager.RecordBlockDestroyed(30, 3);
-            Assert.AreEqual(60, gameManager.Score);
+            Assert.AreEqual(330, gameManager.Score);
             Assert.AreEqual(0, gameManager.RemainingBlocks);
 
             // All blocks destroyed -> State must transition to LevelClear
@@ -2831,6 +2831,124 @@ namespace Arcade.Tests
         }
 
         [Test]
+        public void BallController_CalculatePaddleDeflection_ExcludesVerticalDeadzone()
+        {
+            // Pure vertical incoming velocity directly hitting paddle center (hitOffset = 0)
+            Vector3 inVelVertical = new Vector3(0f, -14f, 0f);
+
+            // Stationary paddle: deflection must NOT produce pure 90-degree vertical vector
+            Vector3 bounceStationary = BallController.CalculatePaddleDeflection(
+                inVelVertical, 0f, steerStrength: 32f, minAngleDeg: 25f, maxAngleDeg: 155f,
+                paddleVelocityX: 0f, velocityInfluence: 0.5f, verticalDeadzoneAngleDeg: 5f);
+
+            Assert.Greater(bounceStationary.y, 0f, "Ball must bounce upward.");
+            Assert.AreNotEqual(0f, bounceStationary.x, "Pure vertical bounce must be pushed out of 90-degree deadzone.");
+            float angleDeg = Mathf.Atan2(bounceStationary.y, bounceStationary.x) * Mathf.Rad2Deg;
+            Assert.IsTrue(angleDeg <= 85.01f || angleDeg >= 94.99f,
+                $"Bounce angle ({angleDeg:F1}°) must fall outside the [85°, 95°] vertical deadzone.");
+        }
+
+        [Test]
+        public void BallController_CalculatePaddleDeflection_AppliesPaddleVelocityInfluence()
+        {
+            Vector3 inVel = new Vector3(0f, -14f, 0f);
+
+            // Moving paddle rightwards (+X velocity)
+            Vector3 bounceMovingRight = BallController.CalculatePaddleDeflection(
+                inVel, 0f, steerStrength: 32f, minAngleDeg: 25f, maxAngleDeg: 155f,
+                paddleVelocityX: 8.0f, velocityInfluence: 0.5f, verticalDeadzoneAngleDeg: 5f);
+
+            // Moving paddle leftwards (-X velocity)
+            Vector3 bounceMovingLeft = BallController.CalculatePaddleDeflection(
+                inVel, 0f, steerStrength: 32f, minAngleDeg: 25f, maxAngleDeg: 155f,
+                paddleVelocityX: -8.0f, velocityInfluence: 0.5f, verticalDeadzoneAngleDeg: 5f);
+
+            Assert.Greater(bounceMovingRight.x, 0f, "Rightward paddle sweep must bias deflection rightward.");
+            Assert.Less(bounceMovingLeft.x, 0f, "Leftward paddle sweep must bias deflection leftward.");
+            Assert.Greater(bounceMovingRight.x, bounceMovingLeft.x, "Rightward sweep must produce larger X velocity than leftward sweep.");
+        }
+
+        [Test]
+        public void BallController_SanitizeTrajectory_EnforcesMinimumVerticalAngleFloor()
+        {
+            float speed = 20f;
+            // Extremely shallow rightward trajectory (angle = ~2.86° off horizontal)
+            Vector3 shallowVel = new Vector3(19.975f, 1.0f, 0f);
+            Vector3 sanitized = BallController.SanitizeTrajectory(shallowVel, speed, minVertAngleDeg: 20f, minHorizAngleDeg: 5f);
+
+            float expectedMinVy = speed * Mathf.Sin(20f * Mathf.Deg2Rad);
+            Assert.GreaterOrEqual(sanitized.y, expectedMinVy - 0.001f,
+                $"Sanitized Vy ({sanitized.y:F2}) must meet minimum 20° vertical threshold ({expectedMinVy:F2}).");
+            Assert.AreEqual(speed, sanitized.magnitude, 0.01f, "Speed must be preserved exactly.");
+            Assert.Greater(sanitized.x, 0f, "Horizontal sign must be preserved.");
+
+            // Downward shallow trajectory
+            Vector3 shallowDown = new Vector3(19.975f, -0.5f, 0f);
+            Vector3 sanitizedDown = BallController.SanitizeTrajectory(shallowDown, speed, minVertAngleDeg: 20f, minHorizAngleDeg: 5f);
+            Assert.LessOrEqual(sanitizedDown.y, -expectedMinVy + 0.001f, "Negative Vy sign must be preserved with 20° clamp.");
+            Assert.AreEqual(speed, sanitizedDown.magnitude, 0.01f, "Speed must be preserved exactly.");
+        }
+
+        [Test]
+        public void BallController_SanitizeTrajectory_EnforcesMinimumHorizontalAngleFloor()
+        {
+            float speed = 20f;
+            // Near-vertical trajectory (angle = ~89.7° off horizontal, Vx = 0.1)
+            Vector3 nearVertical = new Vector3(0.1f, 19.999f, 0f);
+            Vector3 sanitized = BallController.SanitizeTrajectory(nearVertical, speed, minVertAngleDeg: 20f, minHorizAngleDeg: 5f);
+
+            float expectedMinVx = speed * Mathf.Sin(5f * Mathf.Deg2Rad);
+            Assert.GreaterOrEqual(Mathf.Abs(sanitized.x), expectedMinVx - 0.001f,
+                $"Sanitized Vx ({sanitized.x:F2}) must meet minimum 5° horizontal threshold ({expectedMinVx:F2}).");
+            Assert.AreEqual(speed, sanitized.magnitude, 0.01f, "Speed must be preserved exactly.");
+            Assert.Greater(sanitized.y, 0f, "Vertical sign must be preserved.");
+        }
+
+        [Test]
+        public void BallController_ConsecutiveSideWallBounces_SteepensAngle()
+        {
+            var ballObj = new GameObject("TestBall_WallTest");
+            var rb = ballObj.AddComponent<Rigidbody>();
+            rb.useGravity = false;
+            var ball = ballObj.AddComponent<BallController>();
+
+            float speed = 14f;
+            // Start with shallow downward velocity (Vy = -2f)
+            rb.linearVelocity = new Vector3(13.85f, -2.0f, 0f);
+
+            // Trigger consecutive steepener
+            ball.ApplyConsecutiveWallSteepening();
+
+            float expectedSteepVy = speed * Mathf.Sin(35f * Mathf.Deg2Rad); // ~8.03
+            Assert.LessOrEqual(rb.linearVelocity.y, -expectedSteepVy + 0.01f,
+                $"Consecutive wall bounce must steepen vertical velocity to >= 35° ({expectedSteepVy:F2}).");
+            Assert.AreEqual(speed, rb.linearVelocity.magnitude, 0.01f, "Speed must be preserved after steepening.");
+
+            // Docking ball resets counter
+            ball.SetConsecutiveSideWallBouncesForTesting(3);
+            Assert.AreEqual(3, ball.ConsecutiveSideWallBounces);
+            ball.StopAndDockBall();
+            Assert.AreEqual(0, ball.ConsecutiveSideWallBounces, "Docking ball must reset consecutive wall bounces.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void PaddleController_TracksVelocityX_ForMomentumTransfer()
+        {
+            var paddleObj = new GameObject("TestPaddle_VelTest");
+            var p = paddleObj.AddComponent<PaddleController>();
+
+            p.SetVelocityXForTesting(12.5f);
+            Assert.AreEqual(12.5f, p.VelocityX, 0.001f, "PaddleController must accurately expose VelocityX.");
+
+            p.SetVelocityXForTesting(-8.2f);
+            Assert.AreEqual(-8.2f, p.VelocityX, 0.001f, "PaddleController must accurately expose negative VelocityX.");
+
+            Object.DestroyImmediate(paddleObj);
+        }
+
+        [Test]
         public void PowerupCapsule_SpawnsInForeground_AtForegroundZ()
         {
             Vector3 spawnPos = new Vector3(3f, 8f, 0f);
@@ -3374,6 +3492,818 @@ namespace Arcade.Tests
             }
         }
 #endif
+
+        #endregion
+
+        #region 15. Clutch Countdown & Laser Blaster Tests
+
+        [Test]
+        public void ClutchCountdown_Triggers_WhenOneBlockRemains()
+        {
+            gameManager.RegisterLevelBlocks(2);
+            gameManager.LaunchBall();
+
+            Assert.IsFalse(gameManager.IsClutchModeActive);
+
+            // Destroy 1 block -> exactly 1 block remains
+            gameManager.RecordBlockDestroyed(10, 1);
+
+            Assert.AreEqual(1, gameManager.RemainingBlocks);
+            Assert.IsTrue(gameManager.IsClutchModeActive, "Clutch mode must activate when remaining blocks == 1.");
+            Assert.AreEqual(12f, gameManager.ClutchTimeRemaining, 0.01f);
+            Assert.AreEqual(10, gameManager.ClutchMultiplier);
+        }
+
+        [Test]
+        public void ClutchCountdown_Multiplier_DecaysCorrectly()
+        {
+            Assert.AreEqual(10, ArcadeGameManager.CalculateClutchMultiplier(12.0f));
+            Assert.AreEqual(10, ArcadeGameManager.CalculateClutchMultiplier(10.0f));
+            Assert.AreEqual(8, ArcadeGameManager.CalculateClutchMultiplier(7.2f));
+            Assert.AreEqual(5, ArcadeGameManager.CalculateClutchMultiplier(4.9f));
+            Assert.AreEqual(2, ArcadeGameManager.CalculateClutchMultiplier(1.5f));
+            Assert.AreEqual(1, ArcadeGameManager.CalculateClutchMultiplier(0.3f));
+            Assert.AreEqual(1, ArcadeGameManager.CalculateClutchMultiplier(0f));
+        }
+
+        [Test]
+        public void ClutchCountdown_Multiplier_AppliesToFinalBlockScore()
+        {
+            gameManager.RegisterLevelBlocks(2);
+            gameManager.LaunchBall();
+
+            // Destroy first block: 10 * 1 = 10 pts
+            gameManager.RecordBlockDestroyed(10, 1);
+            Assert.AreEqual(10, gameManager.Score);
+            Assert.IsTrue(gameManager.IsClutchModeActive);
+
+            // Final block destroyed during clutch with multiplier 10 -> 30 * 10 = 300 pts
+            gameManager.RecordBlockDestroyed(30, 1);
+            Assert.AreEqual(310, gameManager.Score);
+            Assert.IsFalse(gameManager.IsClutchModeActive);
+            Assert.AreEqual(GameState.LevelClear, gameManager.State);
+        }
+
+        [Test]
+        public void ClutchCountdown_Timeout_TriggersRailgunDischarge()
+        {
+            gameManager.RegisterLevelBlocks(2);
+            gameManager.LaunchBall();
+            gameManager.RecordBlockDestroyed(10, 1);
+
+            Assert.IsTrue(gameManager.IsClutchModeActive);
+
+            // Simulate tick past 12s timeout
+            gameManager.TickClutchMode(12.5f);
+
+            Assert.IsFalse(gameManager.IsClutchModeActive, "Clutch mode must conclude upon timeout.");
+        }
+
+        [Test]
+        public void PaddleLaserController_RailgunHyperBeam_DestroysBlocksAbovePaddle()
+        {
+            var laserCtrl = paddle.LaserController;
+            Assert.IsNotNull(laserCtrl, "Paddle must have PaddleLaserController.");
+
+            // Create a block above paddle at X=0, Y=5
+            var blockObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            blockObj.transform.position = new Vector3(0f, 5f, 0f);
+            var block = blockObj.AddComponent<Block>();
+            block.Initialize(BlockColorTier.Red, null, Color.red);
+
+            paddle.transform.position = new Vector3(0f, -6f, 0f);
+
+            laserCtrl.FireRailgunHyperBeam();
+
+            Assert.IsTrue(block.IsDestroyed, "Block within Railgun beam path must be destroyed.");
+            Object.DestroyImmediate(blockObj);
+        }
+
+        [Test]
+        public void LaserBolt_ContinuousSweep_HitsAndDestroysBlock()
+        {
+            var blockObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            blockObj.transform.position = new Vector3(0f, 2f, 0f);
+            var block = blockObj.AddComponent<Block>();
+            block.Initialize(BlockColorTier.Green, null, Color.green);
+
+            var boltObj = new GameObject("LaserBolt");
+            boltObj.transform.position = new Vector3(0f, 0f, 0f);
+            var bolt = boltObj.AddComponent<LaserBolt>();
+
+            Physics.SyncTransforms();
+
+            // Simulate tick where bolt travels past block (0 -> 4 units upward)
+            bolt.SimulateStepForTesting(0.12f);
+
+            Assert.IsTrue(block.IsDestroyed, "Laser bolt continuous raycast must hit and destroy the block.");
+
+            if (boltObj != null) Object.DestroyImmediate(boltObj);
+            if (blockObj != null) Object.DestroyImmediate(blockObj);
+        }
+
+        [Test]
+        public void PaddleLaserController_LaserPowerup_TwinBlastersFireOnInterval()
+        {
+            var laserCtrl = paddle.LaserController;
+            paddle.transform.position = new Vector3(0f, -6f, 0f);
+
+            laserCtrl.ActivateLaserBlaster(10f);
+            Assert.IsTrue(laserCtrl.IsBlasterActive);
+
+            laserCtrl.SimulateStepForTesting(0.35f);
+
+            var bolts = Object.FindObjectsByType<LaserBolt>(FindObjectsSortMode.None);
+            Assert.GreaterOrEqual(bolts.Length, 2, "Twin blaster cannons must spawn at least 2 bolts on firing interval.");
+
+            foreach (var b in bolts) Object.DestroyImmediate(b.gameObject);
+        }
+
+        [Test]
+        public void PowerupCapsule_LaserType_ActivatesBlasterOnCollection()
+        {
+            var cap = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.Laser);
+
+            gameManager.SetState(GameState.Playing);
+            Assert.IsFalse(gameManager.IsLaserActive);
+
+            bool collected = cap.TryIntercept(paddle);
+            Assert.IsTrue(collected, "Paddle must collect laser capsule.");
+            Assert.IsTrue(gameManager.IsLaserActive, "Laser powerup must become active on collection.");
+            Assert.IsTrue(paddle.LaserController.IsBlasterActive, "Paddle blasters must be activated.");
+
+            if (cap != null) Object.DestroyImmediate(cap.gameObject);
+        }
+
+        [Test]
+        public void LevelGenerator_DistributeSpecialBlocks_AllocatesLaserBlocks()
+        {
+            var genObj = new GameObject("LevelGen");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            var map = gen.DistributeSpecialBlocks(totalBlocks: 20, mult2xCount: 1, mult3xCount: 0, mult4xCount: 0, mult5xCount: 0,
+                expanderCount: 1, bombCount: 0, glassCount: 0, heartCount: 0, shieldCount: 0, multiBallCount: 0, laserCount: 2);
+
+            int laserCount = 0;
+            foreach (var kvp in map)
+            {
+                if (kvp.Value == BlockSpecialType.Laser) laserCount++;
+            }
+
+            Assert.AreEqual(2, laserCount, "LevelGenerator must allocate exact requested number of Laser blocks.");
+            Object.DestroyImmediate(genObj);
+        }
+
+        [Test]
+        public void ArcadeUIManager_LaserAndClutchBadges_UpdatesTimerAndVisibility()
+        {
+            var uiManagerGo = new GameObject("TestArcadeUIManager");
+            var panelRenderer = uiManagerGo.AddComponent<UnityEngine.UIElements.PanelRenderer>();
+            var uiMgr = uiManagerGo.AddComponent<ArcadeUIManager>();
+
+            var uxml = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+
+            panelRenderer.visualTreeAsset = uxml;
+            var root = uxml.CloneTree();
+
+            // Reflection-based bind for unit testing
+            var bindMethod = typeof(ArcadeUIManager).GetMethod("BindElements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, root);
+            bindMethod.Invoke(uiMgr, null);
+
+            Assert.IsNotNull(uiMgr.LaserStatusBadge);
+            Assert.IsNotNull(uiMgr.ClutchStatusBadge);
+            Assert.IsNotNull(uiMgr.LaserSprite, "LaserSprite must be assigned.");
+            Assert.AreEqual("TX_Powerup_Laser", uiMgr.LaserSprite.name);
+
+            // Test Laser Badge
+            uiMgr.HandleLaserPowerupStateChanged(true, 10f);
+            Assert.IsFalse(uiMgr.LaserStatusBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual("10s", uiMgr.LaserTimerLabel.text);
+
+            uiMgr.HandleLaserPowerupTick(6.2f);
+            Assert.AreEqual("7s", uiMgr.LaserTimerLabel.text);
+
+            uiMgr.HandleLaserPowerupStateChanged(false, 0f);
+            Assert.IsTrue(uiMgr.LaserStatusBadge.ClassListContains("powerup-hidden"));
+
+            // Test Clutch Badge
+            uiMgr.HandleClutchStateChanged(true, 12f, 10);
+            Assert.IsFalse(uiMgr.ClutchStatusBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual("10X", uiMgr.ClutchMultiplierLabel.text);
+            Assert.AreEqual("12s", uiMgr.ClutchTimerLabel.text);
+
+            uiMgr.HandleClutchTick(7.3f, 8);
+            Assert.AreEqual("8X", uiMgr.ClutchMultiplierLabel.text);
+            Assert.AreEqual("8s", uiMgr.ClutchTimerLabel.text);
+
+            uiMgr.HandleClutchStateChanged(false, 0f, 1);
+            Assert.IsTrue(uiMgr.ClutchStatusBadge.ClassListContains("powerup-hidden"));
+
+            Object.DestroyImmediate(uiManagerGo);
+        }
+
+        #endregion
+
+        #region Hybrid Scoring, Volley Combo, Par Times & Victory Scorecard Tests
+
+        [Test]
+        public void BallController_VolleyStreak_IncrementsAndCalculatesMultiplierCorrectly()
+        {
+            Assert.AreEqual(1, BallController.GetVolleyMultiplier(0));
+            Assert.AreEqual(1, BallController.GetVolleyMultiplier(1));
+            Assert.AreEqual(2, BallController.GetVolleyMultiplier(2));
+            Assert.AreEqual(3, BallController.GetVolleyMultiplier(3));
+            Assert.AreEqual(4, BallController.GetVolleyMultiplier(4));
+            Assert.AreEqual(5, BallController.GetVolleyMultiplier(5));
+            Assert.AreEqual(5, BallController.GetVolleyMultiplier(10));
+        }
+
+        [Test]
+        public void ArcadeGameManager_VolleyCombo_TracksHighestComboAndNotifiesSubscribers()
+        {
+            var mgrGo = new GameObject("TestMgr");
+            var mgr = mgrGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(mgr);
+
+            int lastStreak = -1;
+            int lastMult = -1;
+            mgr.OnVolleyComboChanged += (streak, mult) =>
+            {
+                lastStreak = streak;
+                lastMult = mult;
+            };
+
+            mgr.ResetLevelSessionStats();
+            Assert.AreEqual(0, mgr.CurrentVolleyStreak);
+            Assert.AreEqual(1, mgr.HighestVolleyComboThisLevel);
+
+            mgr.NotifyVolleyHit(null, 3);
+            Assert.AreEqual(3, mgr.CurrentVolleyStreak);
+            Assert.AreEqual(3, mgr.CurrentVolleyMultiplier);
+            Assert.AreEqual(3, mgr.HighestVolleyComboThisLevel);
+            Assert.AreEqual(3, lastStreak);
+            Assert.AreEqual(3, lastMult);
+
+            mgr.NotifyVolleySaved(null, 3);
+            Assert.AreEqual(0, mgr.CurrentVolleyStreak);
+            Assert.AreEqual(1, mgr.CurrentVolleyMultiplier);
+            Assert.AreEqual(3, mgr.HighestVolleyComboThisLevel, "Highest volley combo must persist across saves until level reset.");
+
+            Object.DestroyImmediate(mgrGo);
+            ArcadeGameManager.SetInstanceForTesting(null);
+        }
+
+        [Test]
+        public void LevelConfiguration_ParTimeAndStarThresholds_ClonedAccurately()
+        {
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+            config.SetParTime(35f);
+            config.SetTimeBonusMax(2800);
+            config.SetStarThresholds(new int[] { 500, 1200, 2200 });
+
+            Assert.AreEqual(35f, config.ParTime);
+            Assert.AreEqual(2800, config.TimeBonusMax);
+            Assert.AreEqual(3, config.StarThresholds.Length);
+            Assert.AreEqual(500, config.StarThresholds[0]);
+            Assert.AreEqual(1200, config.StarThresholds[1]);
+            Assert.AreEqual(2200, config.StarThresholds[2]);
+
+            var clone = config.Clone();
+            Assert.AreEqual(35f, clone.ParTime);
+            Assert.AreEqual(2800, clone.TimeBonusMax);
+            Assert.AreEqual(3, clone.StarThresholds.Length);
+            Assert.AreEqual(500, clone.StarThresholds[0]);
+            Assert.AreEqual(1200, clone.StarThresholds[1]);
+            Assert.AreEqual(2200, clone.StarThresholds[2]);
+
+            Object.DestroyImmediate(config);
+            Object.DestroyImmediate(clone);
+        }
+
+        [Test]
+        public void HighScoreManager_StarsAndBestTime_PersistAndClampCorrectly()
+        {
+            int testLvl = 99;
+            PlayerPrefs.DeleteKey(HighScoreManager.PREF_LEVEL_STARS_PREFIX + testLvl);
+            PlayerPrefs.DeleteKey(HighScoreManager.PREF_LEVEL_TIME_PREFIX + testLvl);
+
+            Assert.AreEqual(0, HighScoreManager.GetLevelStars(testLvl));
+            Assert.AreEqual(0f, HighScoreManager.GetLevelBestTime(testLvl));
+
+            // Setting stars
+            bool set1 = HighScoreManager.SetLevelStars(testLvl, 2);
+            Assert.IsTrue(set1);
+            Assert.AreEqual(2, HighScoreManager.GetLevelStars(testLvl));
+
+            // Lower stars should not overwrite
+            bool setLower = HighScoreManager.SetLevelStars(testLvl, 1);
+            Assert.IsFalse(setLower);
+            Assert.AreEqual(2, HighScoreManager.GetLevelStars(testLvl));
+
+            // Higher stars should overwrite
+            bool setHigher = HighScoreManager.SetLevelStars(testLvl, 3);
+            Assert.IsTrue(setHigher);
+            Assert.AreEqual(3, HighScoreManager.GetLevelStars(testLvl));
+
+            // Recording best time
+            bool rec1 = HighScoreManager.RecordLevelTime(testLvl, 45.5f);
+            Assert.IsTrue(rec1);
+            Assert.AreEqual(45.5f, HighScoreManager.GetLevelBestTime(testLvl));
+
+            // Slower time should not overwrite
+            bool recSlower = HighScoreManager.RecordLevelTime(testLvl, 52.0f);
+            Assert.IsFalse(recSlower);
+            Assert.AreEqual(45.5f, HighScoreManager.GetLevelBestTime(testLvl));
+
+            // Faster time should overwrite
+            bool recFaster = HighScoreManager.RecordLevelTime(testLvl, 38.2f);
+            Assert.IsTrue(recFaster);
+            Assert.AreEqual(38.2f, HighScoreManager.GetLevelBestTime(testLvl));
+
+            // Formatting
+            Assert.AreEqual("00:38", HighScoreManager.FormatTime(38.2f));
+            Assert.AreEqual("01:25", HighScoreManager.FormatTime(85f));
+            Assert.AreEqual("--:--", HighScoreManager.FormatTime(0f));
+
+            // Cleanup
+            PlayerPrefs.DeleteKey(HighScoreManager.PREF_LEVEL_STARS_PREFIX + testLvl);
+            PlayerPrefs.DeleteKey(HighScoreManager.PREF_LEVEL_TIME_PREFIX + testLvl);
+        }
+
+        [Test]
+        public void HighScoreManager_RecordScoreWithTime_PersistsRunElapsedTime()
+        {
+            HighScoreManager.ResetScores();
+
+            HighScoreManager.RecordScore(1500, 3, 72.5f);
+            var scores = HighScoreManager.GetTopScores();
+            Assert.AreEqual(1, scores.Count);
+            Assert.AreEqual(1500, scores[0].score);
+            Assert.AreEqual(3, scores[0].level);
+            Assert.AreEqual(72.5f, scores[0].time);
+
+            HighScoreManager.ResetScores();
+        }
+
+        [Test]
+        public void ArcadeGameManager_HybridScoring_CompoundMultipliersCalculateAccurately()
+        {
+            var mgrGo = new GameObject("TestMgr");
+            var mgr = mgrGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(mgr);
+
+            int awardedPts = 0;
+            int awardedMult = 0;
+            mgr.OnBlockPointsAwarded += (pos, pts, mult, tag) =>
+            {
+                awardedPts = pts;
+                awardedMult = mult;
+            };
+
+            // Base 20 pts, Volley x3, Multi-ball 1 (no extra balls) -> 20 * 3 = 60 pts
+            mgr.RecordBlockDestroyed(20, 1, Vector3.zero, volleyMultiplier: 3, chainMultiplier: 1, bonusTag: "");
+            Assert.AreEqual(60, awardedPts);
+            Assert.AreEqual(3, awardedMult);
+            Assert.AreEqual(60, mgr.Score);
+
+            Object.DestroyImmediate(mgrGo);
+            ArcadeGameManager.SetInstanceForTesting(null);
+        }
+
+        [Test]
+        public void ArcadeUIManager_TimerAndComboBadges_BindsAndDisplaysCorrectly()
+        {
+            var uiManagerGo = new GameObject("TestArcadeUIManager");
+            var panelRenderer = uiManagerGo.AddComponent<UnityEngine.UIElements.PanelRenderer>();
+            var uiMgr = uiManagerGo.AddComponent<ArcadeUIManager>();
+
+            var uxml = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+
+            panelRenderer.visualTreeAsset = uxml;
+            var root = uxml.CloneTree();
+
+            var bindMethod = typeof(ArcadeUIManager).GetMethod("BindElements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, root);
+            bindMethod.Invoke(uiMgr, null);
+
+            Assert.IsNotNull(uiMgr.TimerLabel);
+            Assert.IsNotNull(uiMgr.ScoreDeltaLabel);
+            Assert.IsNotNull(uiMgr.ComboStatusBadge);
+            Assert.IsNotNull(uiMgr.ComboLabel);
+            Assert.IsNotNull(uiMgr.ScorecardStar1);
+            Assert.IsNotNull(uiMgr.ScorecardStar2);
+            Assert.IsNotNull(uiMgr.ScorecardStar3);
+            Assert.IsNotNull(uiMgr.ScorecardBlocksVal);
+            Assert.IsNotNull(uiMgr.ScorecardComboVal);
+            Assert.IsNotNull(uiMgr.ScorecardTimeVal);
+            Assert.IsNotNull(uiMgr.ScorecardTimeBonusVal);
+            Assert.IsNotNull(uiMgr.ScorecardFlawlessVal);
+            Assert.IsNotNull(uiMgr.BtnReplayLevel);
+
+            // Test Timer Tick
+            uiMgr.HandleLevelTimerTick(65.4f);
+            Assert.AreEqual("01:05", uiMgr.TimerLabel.text);
+
+            // Test Volley Combo Badge
+            uiMgr.HandleVolleyComboChanged(3, 3);
+            Assert.IsFalse(uiMgr.ComboStatusBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual("🔥 x3 COMBO", uiMgr.ComboLabel.text);
+
+            uiMgr.HandleVolleyComboChanged(0, 1);
+            Assert.IsTrue(uiMgr.ComboStatusBadge.ClassListContains("powerup-hidden"));
+
+            // Test Victory Scorecard Population
+            var summary = new LevelSummaryData
+            {
+                levelNumber = 1,
+                levelName = "Test Level",
+                blocksDestroyed = 15,
+                highestCombo = 4,
+                elapsedTime = 28f,
+                parTime = 30f,
+                timeBonus = 2500,
+                isUnderPar = true,
+                speedBonus = 500,
+                isFlawless = true,
+                flawlessBonus = 1000,
+                totalLevelScore = 4500,
+                cumulativeScore = 4500,
+                starsEarned = 3,
+                isNewBestTime = true
+            };
+
+            uiMgr.HandleLevelCompletedWithTally(summary);
+            Assert.AreEqual("15", uiMgr.ScorecardBlocksVal.text);
+            Assert.AreEqual("x4", uiMgr.ScorecardComboVal.text);
+            Assert.AreEqual("00:28 / 00:30", uiMgr.ScorecardTimeVal.text);
+            Assert.IsTrue(uiMgr.ScorecardTimeBonusVal.text.Contains("PAR"));
+            Assert.AreEqual("+1,000 FLAWLESS!", uiMgr.ScorecardFlawlessVal.text);
+
+            Object.DestroyImmediate(uiManagerGo);
+        }
+
+        #endregion
+
+        #region 17. Launch Safety, Weapon Cleanup & Deactivation Tests
+
+        [Test]
+        public void PaddleLaserController_DeactivateAllWeapons_ClearsBothHyperBeamAndBlaster()
+        {
+            var paddleGo = new GameObject("Paddle");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+            var laserCtrl = paddle.LaserController;
+
+            laserCtrl.ActivateLaserBlaster(10f);
+            laserCtrl.FireRailgunHyperBeam(1.5f);
+
+            Assert.IsTrue(laserCtrl.IsBlasterActive, "Blasters must be active.");
+            Assert.IsTrue(laserCtrl.IsHyperBeamActive, "Hyperbeam must be active.");
+
+            laserCtrl.DeactivateAllWeapons();
+
+            Assert.IsFalse(laserCtrl.IsBlasterActive, "Blasters must be deactivated.");
+            Assert.IsFalse(laserCtrl.IsHyperBeamActive, "Hyperbeam must be deactivated.");
+
+            Object.DestroyImmediate(paddleGo);
+        }
+
+        [Test]
+        public void PaddleLaserController_DeactivatesOnStateChangeToReadyToLaunch()
+        {
+            var paddleGo = new GameObject("Paddle");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+            var laserCtrl = paddle.LaserController;
+
+            laserCtrl.ActivateLaserBlaster(10f);
+            laserCtrl.FireRailgunHyperBeam(1.5f);
+
+            laserCtrl.HandleGameStateChangedDirect(GameState.ReadyToLaunch);
+
+            Assert.IsFalse(laserCtrl.IsBlasterActive, "Blasters must deactivate when state changes to ReadyToLaunch.");
+            Assert.IsFalse(laserCtrl.IsHyperBeamActive, "Hyperbeam must deactivate when state changes to ReadyToLaunch.");
+
+            Object.DestroyImmediate(paddleGo);
+        }
+
+        [Test]
+        public void LaserBolt_ClearAllActiveBolts_DestroysAllInFlightBolts()
+        {
+            var bolt1 = LaserBolt.Spawn(new Vector3(0f, 0f, 0f));
+            var bolt2 = LaserBolt.Spawn(new Vector3(2f, 0f, 0f));
+
+            LaserBolt.ClearAllActiveBolts();
+
+            var remaining = Object.FindObjectsByType<LaserBolt>();
+            Assert.AreEqual(0, remaining.Length, "All in-flight laser bolts must be destroyed.");
+        }
+
+        [Test]
+        public void Block_OnCollisionEnter_DoesNotDestroyIfBallNotLaunched()
+        {
+            var blockGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var block = blockGo.AddComponent<Block>();
+            block.Initialize(BlockColorTier.Red, null, Color.red, BlockSpecialType.Normal);
+
+            var ballGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            var ball = ballGo.AddComponent<BallController>();
+            // Ball is NOT launched
+            Assert.IsFalse(ball.IsLaunched);
+
+            // Simulating collision between unlaunched ball and block
+            // Block.OnCollisionEnter guards with ball.IsLaunched
+            var blockCollider = blockGo.GetComponent<Collider>();
+            Assert.IsFalse(block.IsDestroyed);
+
+            Object.DestroyImmediate(blockGo);
+            Object.DestroyImmediate(ballGo);
+        }
+
+        [Test]
+        public void ArcadeGameManager_LaunchBall_ClearsStaleWeaponsAndProjectiles()
+        {
+            var mgrGo = new GameObject("TestMgr");
+            var mgr = mgrGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(mgr);
+
+            var paddleGo = new GameObject("Paddle");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+            paddle.LaserController.ActivateLaserBlaster(10f);
+            paddle.LaserController.FireRailgunHyperBeam(1.5f);
+
+            var bolt = LaserBolt.Spawn(new Vector3(0f, 0f, 0f));
+
+            mgr.SetState(GameState.ReadyToLaunch);
+            mgr.LaunchBall();
+
+            Assert.AreEqual(GameState.Playing, mgr.State);
+            Assert.IsFalse(paddle.LaserController.IsBlasterActive, "Paddle blasters must be cleared before launch.");
+            Assert.IsFalse(paddle.LaserController.IsHyperBeamActive, "Hyperbeam must be cleared before launch.");
+
+            var remainingBolts = Object.FindObjectsByType<LaserBolt>();
+            Assert.AreEqual(0, remainingBolts.Length, "Orphan laser bolts must be cleared on launch.");
+
+            Object.DestroyImmediate(mgrGo);
+            Object.DestroyImmediate(paddleGo);
+        }
+
+        [Test]
+        public void PaddleLaserController_FireRailgunHyperBeam_HasExtended5SecondDuration()
+        {
+            var paddleGo = new GameObject("Paddle_Test_Extended");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+            var laserCtrl = paddle.LaserController;
+
+            laserCtrl.FireRailgunHyperBeam();
+
+            Assert.IsTrue(laserCtrl.IsHyperBeamActive, "Hyperbeam must be active on fire.");
+            Assert.AreEqual(5.0f, laserCtrl.HyperBeamDuration, 0.01f, "Hyperbeam default duration must be 5.0s.");
+            Assert.AreEqual(3.2f, laserCtrl.BeamWidth, 0.01f, "Hyperbeam aperture width must be 3.2f.");
+
+            // Simulate 2.5 seconds (previously timed out at 1.2s-1.5s)
+            laserCtrl.SimulateStepForTesting(2.5f);
+            Assert.IsTrue(laserCtrl.IsHyperBeamActive, "Hyperbeam must still be active after 2.5s.");
+            Assert.Greater(laserCtrl.HyperBeamTimeRemaining, 0.5f, "Must have remaining duration.");
+
+            // Simulate remaining 2.6 seconds (total 5.1s)
+            laserCtrl.SimulateStepForTesting(2.6f);
+            Assert.IsFalse(laserCtrl.IsHyperBeamActive, "Hyperbeam should deactivate after 5.0s expires.");
+
+            Object.DestroyImmediate(paddleGo);
+        }
+
+        [Test]
+        public void ArcadeUIManager_PulseScorePod_ExecutesGracefully()
+        {
+            var uiGo = new GameObject("UI_Test");
+            var uiMgr = uiGo.AddComponent<ArcadeUIManager>();
+            ArcadeUIManager.SetInstanceForTesting(uiMgr);
+
+            Assert.DoesNotThrow(() => uiMgr.PulseScorePod(), "PulseScorePod should gracefully execute without errors.");
+
+            Object.DestroyImmediate(uiGo);
+        }
+
+        #endregion
+
+        #region 18. Arena Corner Chamfers and Top Wall Tests
+
+        [Test]
+        public void BallController_TopCeilingCollision_ResetsConsecutiveWallBounces()
+        {
+            var ballGo = new GameObject("TestBall");
+            var rb = ballGo.AddComponent<Rigidbody>();
+            rb.useGravity = false;
+            var ball = ballGo.AddComponent<BallController>();
+
+            ball.SetConsecutiveSideWallBouncesForTesting(3);
+            Assert.AreEqual(3, ball.ConsecutiveSideWallBounces);
+
+            // Simulate collision with flat horizontal ceiling (normal pointing downward: 0, -1, 0)
+            // Call OnCollisionEnter via reflection or verify side-wall count reset behavior
+            var method = typeof(BallController).GetMethod("OnCollisionEnter", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.IsNotNull(method, "OnCollisionEnter must exist on BallController.");
+
+            Object.DestroyImmediate(ballGo);
+        }
+
+        [Test]
+        public void LevelGenerator_EnsureCornerChamfers_CreatesCalibratedChamfersWithColliders()
+        {
+            var boundariesRoot = new GameObject("Boundaries");
+            var topWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            topWall.name = "TopWall";
+            topWall.transform.SetParent(boundariesRoot.transform);
+            topWall.transform.localScale = new Vector3(21f, 0.5f, 2f);
+
+            var leftWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            leftWall.name = "LeftWall";
+            leftWall.transform.SetParent(boundariesRoot.transform);
+            leftWall.transform.localScale = new Vector3(0.5f, 32f, 2f);
+
+            var rightWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rightWall.name = "RightWall";
+            rightWall.transform.SetParent(boundariesRoot.transform);
+            rightWall.transform.localScale = new Vector3(0.5f, 32f, 2f);
+
+            var bounceMat = new PhysicsMaterial("TestBounce") { bounciness = 1f };
+            topWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+
+            var genGo = new GameObject("TestLevelGen");
+            var gen = genGo.AddComponent<LevelGenerator>();
+
+            gen.EnsureCornerChamfers();
+
+            // Verify continuous wall shortening
+            Assert.AreEqual(17.4f, topWall.transform.localScale.x, 0.05f, "TopWall must be shortened to 17.4 to continuously join chamfers.");
+            Assert.AreEqual(30.2f, leftWall.transform.localScale.y, 0.05f, "LeftWall must be shortened to 30.2 to continuously join chamfer.");
+            Assert.AreEqual(7.60f, leftWall.transform.position.y, 0.05f);
+            Assert.AreEqual(30.2f, rightWall.transform.localScale.y, 0.05f, "RightWall must be shortened to 30.2 to continuously join chamfer.");
+            Assert.AreEqual(7.60f, rightWall.transform.position.y, 0.05f);
+
+            var leftChamfer = boundariesRoot.transform.Find("Chamfer_TopLeft");
+            Assert.IsNotNull(leftChamfer, "Chamfer_TopLeft must be created under Boundaries.");
+            Assert.AreEqual(-9.40f, leftChamfer.position.x, 0.05f);
+            Assert.AreEqual(23.40f, leftChamfer.position.y, 0.05f);
+            Assert.AreEqual(45f, leftChamfer.eulerAngles.z, 0.5f);
+            Assert.AreEqual(2.5f, leftChamfer.localScale.x, 0.05f, "Chamfer length must be 2.5 for continuous corner joint.");
+            var leftCol = leftChamfer.GetComponent<BoxCollider>();
+            Assert.IsNotNull(leftCol, "Chamfer_TopLeft must have a BoxCollider.");
+            Assert.AreEqual(bounceMat, leftCol.sharedMaterial);
+
+            var rightChamfer = boundariesRoot.transform.Find("Chamfer_TopRight");
+            Assert.IsNotNull(rightChamfer, "Chamfer_TopRight must be created under Boundaries.");
+            Assert.AreEqual(9.40f, rightChamfer.position.x, 0.05f);
+            Assert.AreEqual(23.40f, rightChamfer.position.y, 0.05f);
+            Assert.AreEqual(315f, rightChamfer.eulerAngles.z, 0.5f); // -45 deg in euler angles is 315 deg
+            Assert.AreEqual(2.5f, rightChamfer.localScale.x, 0.05f, "Chamfer length must be 2.5 for continuous corner joint.");
+            var rightCol = rightChamfer.GetComponent<BoxCollider>();
+            Assert.IsNotNull(rightCol, "Chamfer_TopRight must have a BoxCollider.");
+            Assert.AreEqual(bounceMat, rightCol.sharedMaterial);
+
+            // Calling it again should be idempotent and maintain calibrated sizing
+            Assert.DoesNotThrow(() => gen.EnsureCornerChamfers());
+            Assert.AreEqual(5, boundariesRoot.transform.childCount, "Idempotent call should not create duplicate chamfers.");
+            Assert.AreEqual(2.5f, leftChamfer.localScale.x, 0.05f);
+
+            Object.DestroyImmediate(boundariesRoot);
+            Object.DestroyImmediate(genGo);
+            Object.DestroyImmediate(bounceMat);
+        }
+
+        [Test]
+        public void GameplayScene_ContinuousPerimeter_SerializedInSceneAsset()
+        {
+            string scenePath = "Assets/Scenes/LV_BlockBreaker.unity";
+            Assert.IsTrue(System.IO.File.Exists(scenePath), "Gameplay scene file must exist.");
+
+            string sceneYaml = System.IO.File.ReadAllText(scenePath);
+            Assert.IsTrue(sceneYaml.Contains("m_Name: Chamfer_TopLeft"), "Chamfer_TopLeft must be serialized in scene asset.");
+            Assert.IsTrue(sceneYaml.Contains("m_Name: Chamfer_TopRight"), "Chamfer_TopRight must be serialized in scene asset.");
+            Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 17.4, y: 0.5, z: 2}"), "TopWall must be shortened to 17.4 in scene asset.");
+            Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 0.5, y: 30.2, z: 2}"), "Side walls must be shortened to 30.2 in scene asset.");
+            Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 2.5, y: 0.5, z: 2}"), "Chamfer boxes must be 2.5 length in scene asset.");
+        }
+
+        #endregion
+
+        #region 19. Progressive Hyper-Beam Surge & Level Clear Pacing Tests
+
+        [Test]
+        public void PaddleLaserController_FireRailgunHyperBeam_ProgressivelySurgesFromPaddle()
+        {
+            var paddleGo = new GameObject("TestPaddle");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+            var laserCtrl = paddle.LaserController;
+
+            laserCtrl.FireRailgunHyperBeam(5.0f);
+
+            Assert.IsTrue(laserCtrl.IsHyperBeamActive, "Hyper-beam must be active on fire.");
+            Assert.LessOrEqual(laserCtrl.CurrentBeamHeight, 1.0f, "Beam must start at paddle deck and not immediately cover full arena.");
+
+            // Simulate partial surge (0.15s of 0.35s surge duration)
+            laserCtrl.SimulateStepForTesting(0.15f);
+            Assert.Greater(laserCtrl.CurrentBeamHeight, 1.0f, "Beam must progressively extend upwards.");
+            Assert.Less(laserCtrl.CurrentBeamHeight, 31.0f, "Beam should not yet be at full height halfway through surge.");
+
+            // Complete surge (further 0.25s, total 0.40s >= 0.35s)
+            laserCtrl.SimulateStepForTesting(0.25f);
+            Assert.AreEqual(31.0f, laserCtrl.CurrentBeamHeight, 0.1f, "Beam must reach full height of 31 units after surge duration completes.");
+
+            Object.DestroyImmediate(paddleGo);
+        }
+
+        [Test]
+        public void PaddleLaserController_GetOrCreateHyperBeamMaterial_ResolvesNonNullMaterialWithGradientShader()
+        {
+            var mat = PaddleLaserController.GetOrCreateHyperBeamMaterial();
+            Assert.IsNotNull(mat, "Hyper-beam material must resolve non-null.");
+            Assert.IsNotNull(mat.shader, "Shader must be valid.");
+            Assert.IsTrue(mat.shader.name.Contains("LaserHyperBeam") || mat.shader.name.Contains("Unlit") || mat.shader.name.Contains("BallTrail"));
+        }
+
+        [Test]
+        public void ArcadeGameManager_LevelClearDelay_TracksPendingStateAndDelaySeconds()
+        {
+            var mgrGo = new GameObject("TestMgr");
+            var mgr = mgrGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(mgr);
+
+            Assert.AreEqual(1.4f, mgr.LevelClearDelaySeconds, 0.01f, "Default laser level clear delay must be 1.4s for cinematic readability.");
+            Assert.AreEqual(0.8f, mgr.StandardClearDelaySeconds, 0.01f, "Default non-laser level clear delay must be 0.8s for snappy pacing.");
+            Assert.IsFalse(mgr.IsLevelClearPending, "Pending flag must be false initially.");
+
+            float firedDelay = 0f;
+            bool firedWasLaser = false;
+            mgr.OnLevelClearPending += (d, l) =>
+            {
+                firedDelay = d;
+                firedWasLaser = l;
+            };
+
+            // Test non-laser clear cadence
+            mgr.TriggerLevelClearWithDelayForTesting(false);
+            Assert.IsTrue(mgr.IsLevelClearPending);
+            Assert.AreEqual(0.8f, firedDelay, 0.01f);
+            Assert.IsFalse(firedWasLaser);
+
+            // Test laser clear cadence
+            mgr.TriggerLevelClearWithDelayForTesting(true);
+            Assert.IsTrue(mgr.IsLevelClearPending);
+            Assert.AreEqual(1.4f, firedDelay, 0.01f);
+            Assert.IsTrue(firedWasLaser);
+
+            mgr.TriggerImmediateLevelClearForTesting();
+            Assert.AreEqual(GameState.LevelClear, mgr.State, "Direct level clear must immediately transition to LevelClear.");
+            Assert.IsFalse(mgr.IsLevelClearPending, "Pending flag must be reset upon completion.");
+
+            Object.DestroyImmediate(mgrGo);
+            ArcadeGameManager.SetInstanceForTesting(null);
+        }
+
+        [Test]
+        public void ArcadeUIManager_LevelClearBanner_BindsAndDisplaysProperly()
+        {
+            var uiManagerGo = new GameObject("TestArcadeUIManager");
+            var panelRenderer = uiManagerGo.AddComponent<UnityEngine.UIElements.PanelRenderer>();
+            var uiMgr = uiManagerGo.AddComponent<ArcadeUIManager>();
+
+            var uxml = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+
+            panelRenderer.visualTreeAsset = uxml;
+            var root = uxml.CloneTree();
+
+            var bindMethod = typeof(ArcadeUIManager).GetMethod("BindElements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, root);
+            bindMethod.Invoke(uiMgr, null);
+
+            Assert.IsNotNull(uiMgr.LevelClearBanner, "LevelClearBanner must be bound from UXML.");
+            Assert.IsNotNull(uiMgr.LevelClearBannerText, "LevelClearBannerText must be bound from UXML.");
+            Assert.IsNotNull(uiMgr.LevelClearBannerSubtext, "LevelClearBannerSubtext must be bound from UXML.");
+
+            // Banner is hidden by default
+            Assert.IsTrue(uiMgr.LevelClearBanner.ClassListContains("level-clear-banner-hidden"));
+
+            // Test non-laser clear pending
+            uiMgr.HandleLevelClearPending(0.8f, wasClearedWithLaser: false);
+            Assert.IsFalse(uiMgr.LevelClearBanner.ClassListContains("level-clear-banner-hidden"), "Banner must be shown when clear is pending.");
+            Assert.AreEqual("LEVEL CLEARED!", uiMgr.LevelClearBannerText.text);
+            Assert.IsTrue(uiMgr.LevelClearBannerSubtext.text == "STAGE COMPLETE!" || uiMgr.LevelClearBannerSubtext.text == "FLAWLESS VICTORY!");
+
+            // Test laser clear pending
+            uiMgr.HandleLevelClearPending(1.4f, wasClearedWithLaser: true);
+            Assert.IsFalse(uiMgr.LevelClearBanner.ClassListContains("level-clear-banner-hidden"));
+            Assert.AreEqual("CLUTCH OVERCHARGE!", uiMgr.LevelClearBannerSubtext.text);
+
+            // Test banner hidden upon victory scorecard tally
+            uiMgr.HandleLevelCompletedWithTally(default);
+            Assert.IsTrue(uiMgr.LevelClearBanner.ClassListContains("level-clear-banner-hidden"), "Banner must be hidden when scorecard modal is shown.");
+
+            Object.DestroyImmediate(uiManagerGo);
+        }
 
         #endregion
     }

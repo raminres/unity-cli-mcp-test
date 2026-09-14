@@ -50,6 +50,13 @@
     align-items: center;
     border-color: rgba(33, 212, 253, 0.3);
     box-shadow: 0 0 12px rgba(33, 212, 253, 0.18);
+    transition-property: scale;
+    transition-duration: 0.10s;
+    transition-timing-function: ease-out-back;
+}
+
+.score-pop {
+    scale: 1.15 1.15;
 }
 
 .score-main {
@@ -187,6 +194,16 @@
     box-shadow: 0 0 14px rgba(213, 0, 249, 0.9);
 }
 
+.laser-badge {
+    border-color: #ff2a47;
+    box-shadow: 0 0 14px rgba(255, 42, 71, 0.85);
+}
+
+.clutch-badge {
+    border-color: #ff007f;
+    box-shadow: 0 0 16px rgba(255, 0, 127, 0.9);
+}
+
 .powerup-status-icon {
     width: 30px;
     height: 30px;
@@ -214,6 +231,11 @@
     -unity-background-image-tint-color: #ffd700;
 }
 
+.icon-laser {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Laser.png?fileID=6929069846237195201&guid=0cc75b28432e5eb4eb69983ca4601ab8&type=3#TX_Powerup_Laser_0");
+    -unity-background-image-tint-color: #ff2a47;
+}
+
 .powerup-timer-label {
     font-size: 18px;
     -unity-font-style: bold;
@@ -225,6 +247,14 @@
     font-size: 18px;
     -unity-font-style: bold;
     margin-right: 5px;
+}
+
+.clutch-val-text {
+    font-size: 18px;
+    -unity-font-style: bold;
+    margin-right: 5px;
+    color: #ff007f;
+    text-shadow: 0 0 10px rgba(255, 0, 127, 0.9);
 }
 
 .shield-badge .powerup-timer-label {
@@ -240,6 +270,16 @@
 .paddle-badge .powerup-timer-label {
     color: #00e5ff;
     text-shadow: 0 0 8px rgba(0, 229, 255, 0.8);
+}
+
+.laser-badge .powerup-timer-label {
+    color: #ff2a47;
+    text-shadow: 0 0 8px rgba(255, 42, 71, 0.85);
+}
+
+.clutch-badge .powerup-timer-label {
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(255, 0, 127, 0.85);
 }
 
 .mult-tier-2x .multiplier-val-text {
@@ -391,6 +431,55 @@
     color: #ffffff;
     letter-spacing: 2px;
     text-shadow: 0 0 10px rgba(33, 212, 253, 0.8);
+}
+
+/* Level Clear Center Banner */
+.level-clear-banner {
+    position: absolute;
+    top: 36%;
+    align-self: center;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(10, 14, 26, 0.92);
+    border-width: 2px;
+    border-color: rgba(255, 215, 0, 0.85);
+    border-radius: 22px;
+    padding: 18px 44px;
+    pointer-events: none;
+    transition-property: scale, opacity;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out-back;
+    scale: 1 1;
+    opacity: 1;
+}
+
+.level-clear-banner-hidden {
+    display: none;
+    scale: 0.7 0.7;
+    opacity: 0;
+}
+
+.level-clear-banner-text {
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: #ffd700;
+    letter-spacing: 3px;
+    -unity-text-align: middle-center;
+    text-shadow: 0 0 16px rgba(255, 215, 0, 0.9);
+    margin-bottom: 4px;
+}
+
+.level-clear-banner-subtext {
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: #00f2fe;
+    letter-spacing: 2.5px;
+    -unity-text-align: middle-center;
+    text-shadow: 0 0 10px rgba(0, 242, 254, 0.8);
 }
 
 /* Modals */
@@ -906,4 +995,237 @@
     font-size: 14px;
     color: #cbd5e1;
     white-space: normal;
+}
+
+/* Timer Pod */
+.timer-pod {
+    flex-direction: row;
+    align-items: center;
+    padding: 0 16px;
+    height: 48px;
+    background-color: rgba(23, 28, 44, 0.75);
+    border-radius: 24px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.15);
+    margin-left: 10px;
+}
+
+.timer-icon {
+    width: 20px;
+    height: 20px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Speed.png?fileID=21300000&guid=e131922c07022c04fa24072387e3848b&type=3#TX_Powerup_Speed");
+    margin-right: 8px;
+    -unity-background-image-tint-color: #21d4fd;
+}
+
+.timer-main {
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #e2e8f0;
+    letter-spacing: 1px;
+}
+
+/* Score Delta Pop */
+.score-delta {
+    position: absolute;
+    bottom: -22px;
+    align-self: center;
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: #ffd700;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+    transition-property: opacity, translate;
+    transition-duration: 0.35s;
+}
+
+.delta-hidden {
+    opacity: 0;
+    translate: 0 8px;
+}
+
+.delta-visible {
+    opacity: 1;
+    translate: 0 -4px;
+}
+
+/* Flying Score Label Animation */
+.flying-score {
+    position: absolute;
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.9);
+    padding: 3px 10px;
+    border-radius: 12px;
+    background-color: rgba(14, 18, 30, 0.85);
+    border-width: 1px;
+    border-color: rgba(255, 215, 0, 0.6);
+    -unity-text-align: middle-center;
+    pointer-events: none;
+    letter-spacing: 0.5px;
+}
+
+.flying-score-normal {
+    color: #ffd700;
+    border-color: rgba(255, 215, 0, 0.65);
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.9);
+}
+
+.flying-score-combo {
+    color: #00f2fe;
+    border-color: rgba(0, 242, 254, 0.75);
+    text-shadow: 0 0 12px rgba(0, 242, 254, 0.95);
+}
+
+.flying-score-bomb {
+    color: #ff8400;
+    border-color: rgba(255, 132, 0, 0.85);
+    text-shadow: 0 0 14px rgba(255, 132, 0, 1);
+}
+
+.flying-score-clutch {
+    color: #ff2a6d;
+    border-color: rgba(255, 42, 109, 0.9);
+    text-shadow: 0 0 14px rgba(255, 42, 109, 1);
+}
+
+/* Combo Badge */
+.combo-badge {
+    background-color: rgba(255, 42, 109, 0.2);
+    border-color: #ff2a6d;
+}
+
+.combo-val-text {
+    color: #ff2a6d;
+    -unity-font-style: bold;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+/* Scorecard Modal */
+.scorecard-card {
+    width: 480px;
+    background-color: #151928;
+    border-radius: 28px;
+    border-width: 1.5px;
+    border-color: rgba(33, 212, 253, 0.4);
+    padding: 28px 24px;
+    align-items: center;
+}
+
+.scorecard-title {
+    font-size: 26px;
+    color: #21d4fd;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+}
+
+.scorecard-stars-row {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.scorecard-star {
+    width: 48px;
+    height: 48px;
+    margin: 0 8px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Medal_Gold.png?fileID=21300000&guid=3a8e99e033fb9404285d85c8f74e64f7&type=3#TX_Medal_Gold");
+    transition-property: scale, opacity;
+    transition-duration: 0.3s;
+}
+
+.star-empty {
+    opacity: 0.2;
+    scale: 0.85;
+    -unity-background-image-tint-color: #64748b;
+}
+
+.star-earned {
+    opacity: 1.0;
+    scale: 1.15;
+    -unity-background-image-tint-color: #ffd700;
+}
+
+.scorecard-table {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    padding: 16px 18px;
+    margin-bottom: 20px;
+}
+
+.scorecard-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.scorecard-row-label {
+    font-size: 14px;
+    color: #94a3b8;
+}
+
+.scorecard-row-val {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: #f1f5f9;
+}
+
+.val-combo {
+    color: #ff2a6d;
+}
+
+.val-time {
+    color: #38bdf8;
+}
+
+.val-bonus {
+    color: #ffd700;
+}
+
+.val-flawless {
+    color: #4ade80;
+}
+
+.scorecard-total-row {
+    border-top-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.15);
+    padding-top: 10px;
+    margin-top: 6px;
+    margin-bottom: 0;
+}
+
+.scorecard-total-label {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #ffffff;
+    letter-spacing: 1px;
+}
+
+.scorecard-total-val {
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: #ffd700;
+}
+
+.scorecard-btn-row {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.scorecard-action-btn {
+    flex-grow: 1;
+    margin: 0 5px;
+    height: 46px;
+    font-size: 14px;
 }

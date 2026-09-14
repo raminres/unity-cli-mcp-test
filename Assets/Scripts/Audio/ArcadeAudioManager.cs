@@ -27,6 +27,7 @@ namespace Arcade.Audio
         [SerializeField] private AudioClip clipBombExplosion;   // AU_Bomb_Explosioon.mp3 / AU_Bomb_Explosion.mp3 (bomb detonation)
         [SerializeField] private AudioClip clipShieldDeflect;   // Shield protection intercept sound
         [SerializeField] private AudioClip clipMultiBall;       // Multi-ball spawn sound
+        [SerializeField] private AudioClip clipLaserShoot;      // AU_Powerup_Laser.mp3 (paddle laser blast / railgun discharge)
 
         [Header("Legacy / Fallback Clip Overrides")]
         [SerializeField] private AudioClip clipPaddleBounce;
@@ -51,6 +52,8 @@ namespace Arcade.Audio
         public AudioClip ClipLifeLost => clipLifeLost;
         public AudioClip ClipShieldDeflect => clipShieldDeflect;
         public AudioClip ClipMultiBall => clipMultiBall;
+        public AudioClip ClipLaserShoot => clipLaserShoot;
+        public void SetClipLaserShootForTesting(AudioClip clip) => clipLaserShoot = clip;
 
         public float Volume
         {
@@ -132,6 +135,11 @@ namespace Arcade.Audio
                 if (clipShieldDeflect == null) clipShieldDeflect = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Powerup_Shield.wav");
                 if (clipShieldDeflect == null) clipShieldDeflect = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Shield_Deflect.mp3");
             }
+            if (clipLaserShoot == null)
+            {
+                clipLaserShoot = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Powerup_Laser.mp3");
+                if (clipLaserShoot == null) clipLaserShoot = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Powerup_Laser.wav");
+            }
 #endif
 
             if (clipPaddleBounce == null) clipPaddleBounce = clipPop;
@@ -175,16 +183,63 @@ namespace Arcade.Audio
         }
 
         /// <summary>
-        /// Plays Break sound (AU_Break.mp3) when the ball hits/destroys a brick.
+        /// Plays Break sound (AU_Break.mp3) when the ball hits/destroys a brick,
+        /// dynamically pitch-scaling upwards by +1 semitone per consecutive volley combo streak.
         /// </summary>
-        public void PlayBreak()
+        public void PlayBreak(int comboStreak = 0)
         {
-            PlaySound(clipBreak != null ? clipBreak : clipBlockHitRed, 1.0f);
+            float pitch = 1.0f;
+            if (comboStreak > 1)
+            {
+                // Each streak hit scales up by 1 semitone: 2^((streak - 1)/12)
+                int semitones = Mathf.Clamp(comboStreak - 1, 0, 9);
+                pitch = Mathf.Pow(1.059463f, semitones);
+            }
+            PlaySound(clipBreak != null ? clipBreak : clipBlockHitRed, pitch);
         }
 
         public void PlayBlockHit(int colorTier = 1)
         {
-            PlayBreak();
+            PlayBreak(0);
+        }
+
+        /// <summary>
+        /// Plays triumphant banking chime when an active unreturned volley streak returns to the paddle.
+        /// </summary>
+        public void PlayComboBank()
+        {
+            if (synthComboBankClip == null)
+            {
+                synthComboBankClip = SynthesizeComboBankChime();
+            }
+            if (synthComboBankClip != null)
+            {
+                PlaySound(synthComboBankClip, 1.0f);
+            }
+            else
+            {
+                PlayPop();
+            }
+        }
+
+        /// <summary>
+        /// Plays celebratory star-earned chime (index 1, 2, or 3) during the end-of-level scorecard reveal.
+        /// </summary>
+        public void PlayStarEarned(int starIndex)
+        {
+            if (synthStarClip == null)
+            {
+                synthStarClip = SynthesizeStarChime();
+            }
+            float pitch = 1.0f + Mathf.Clamp(starIndex - 1, 0, 2) * 0.25f;
+            if (synthStarClip != null)
+            {
+                PlaySound(synthStarClip, pitch);
+            }
+            else
+            {
+                PlayPowerup();
+            }
         }
 
         /// <summary>
@@ -226,6 +281,109 @@ namespace Arcade.Audio
             {
                 PlaySound(clipBreak != null ? clipBreak : clipBlockHitRed, 0.65f);
             }
+        }
+
+        private AudioClip synthLaserClip;
+
+        /// <summary>
+        /// Plays laser blast sound (AU_Powerup_Laser.mp3) when firing paddle laser or railgun beam.
+        /// </summary>
+        public void PlayLaserShoot()
+        {
+            if (clipLaserShoot != null)
+            {
+                PlaySound(clipLaserShoot, 1.0f);
+            }
+            else
+            {
+                if (synthLaserClip == null)
+                {
+                    synthLaserClip = SynthesizeLaserChirp();
+                }
+                if (synthLaserClip != null)
+                {
+                    PlaySound(synthLaserClip, 0.9f);
+                }
+                else
+                {
+                    PlayPop();
+                }
+            }
+        }
+
+        private AudioClip SynthesizeLaserChirp()
+        {
+            int sampleRate = 44100;
+            float duration = 0.12f;
+            int sampleCount = Mathf.RoundToInt(sampleRate * duration);
+            float[] samples = new float[sampleCount];
+            float startFreq = 1600f;
+            float endFreq = 280f;
+            float phase = 0f;
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float t = (float)i / sampleCount;
+                float currentFreq = Mathf.Lerp(startFreq, endFreq, t * t);
+                phase += 2f * Mathf.PI * currentFreq / sampleRate;
+                float envelope = 1f - t;
+                samples[i] = Mathf.Sin(phase) * envelope * 0.45f;
+            }
+
+            var clip = AudioClip.Create("SynthLaser", sampleCount, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
+        }
+
+        private AudioClip synthComboBankClip;
+        private AudioClip synthStarClip;
+
+        private AudioClip SynthesizeComboBankChime()
+        {
+            int sampleRate = 44100;
+            float duration = 0.28f;
+            int sampleCount = Mathf.RoundToInt(sampleRate * duration);
+            float[] samples = new float[sampleCount];
+            float[] freqs = new float[] { 523.25f, 659.25f, 783.99f }; // C5 - E5 - G5 major triad arpeggio
+            float noteDuration = duration / freqs.Length;
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float t = (float)i / sampleCount;
+                int noteIndex = Mathf.Clamp(Mathf.FloorToInt(t * freqs.Length), 0, freqs.Length - 1);
+                float noteT = (t * freqs.Length) - noteIndex;
+                float envelope = Mathf.Exp(-4f * noteT);
+                float phase = 2f * Mathf.PI * freqs[noteIndex] * (i / (float)sampleRate);
+                samples[i] = Mathf.Sin(phase) * envelope * 0.4f;
+            }
+
+            var clip = AudioClip.Create("SynthComboBank", sampleCount, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
+        }
+
+        private AudioClip SynthesizeStarChime()
+        {
+            int sampleRate = 44100;
+            float duration = 0.38f;
+            int sampleCount = Mathf.RoundToInt(sampleRate * duration);
+            float[] samples = new float[sampleCount];
+            float baseFreq = 880f; // A5 bell chime
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float t = (float)i / sampleCount;
+                float envelope = Mathf.Exp(-5f * t);
+                // Fundamental + octave + 5th overtone for metallic sparkle
+                float s1 = Mathf.Sin(2f * Mathf.PI * baseFreq * t);
+                float s2 = 0.5f * Mathf.Sin(2f * Mathf.PI * baseFreq * 2f * t);
+                float s3 = 0.25f * Mathf.Sin(2f * Mathf.PI * baseFreq * 3.01f * t);
+                samples[i] = (s1 + s2 + s3) * envelope * 0.4f;
+            }
+
+            var clip = AudioClip.Create("SynthStar", sampleCount, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
         }
 
         /// <summary>

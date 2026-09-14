@@ -55,6 +55,7 @@ namespace Arcade.BlockBreaker
 
         private void Start()
         {
+            EnsureCornerChamfers();
             GenerateLevel();
         }
 
@@ -155,7 +156,10 @@ namespace Arcade.BlockBreaker
                 }
             }
 
-            // Clear any existing blocks
+            // Clear any existing blocks, in-flight projectiles, and falling capsules
+            PowerupCapsule.ClearAllFallingCapsules();
+            LaserBolt.ClearAllActiveBolts();
+
             for (int i = blocksContainer.childCount - 1; i >= 0; i--)
             {
                 var child = blocksContainer.GetChild(i).gameObject;
@@ -202,8 +206,9 @@ namespace Arcade.BlockBreaker
             int heartCount = currentLevelConfig != null ? currentLevelConfig.ExtraHeartCount : 0;
             int shieldCount = currentLevelConfig != null ? currentLevelConfig.ShieldCount : 0;
             int multiBallCount = currentLevelConfig != null ? currentLevelConfig.MultiBallCount : 0;
+            int laserCount = currentLevelConfig != null ? currentLevelConfig.LaserCount : 0;
 
-            var specialMap = DistributeSpecialBlocks(totalActiveBlocks, mult2x, mult3x, mult4x, mult5x, expCount, bombCount, glassCount, heartCount, shieldCount, multiBallCount);
+            var specialMap = DistributeSpecialBlocks(totalActiveBlocks, mult2x, mult3x, mult4x, mult5x, expCount, bombCount, glassCount, heartCount, shieldCount, multiBallCount, laserCount);
 
             int blockIndex = 0;
             for (int r = 0; r < totalRows; r++)
@@ -303,7 +308,7 @@ namespace Arcade.BlockBreaker
 
             if (ArcadeGameManager.Instance != null)
             {
-                ArcadeGameManager.Instance.RegisterLevelBlocks(totalActiveBlocks);
+                ArcadeGameManager.Instance.RegisterLevelBlocks(totalActiveBlocks, currentLevelConfig != null ? currentLevelConfig.LevelNumber : 1);
             }
 
             // Randomize background gradient texture for each level
@@ -338,7 +343,7 @@ namespace Arcade.BlockBreaker
             return DistributeSpecialBlocks(totalBlocks, mult2xCount, mult3xCount, 0, 0, expanderCount, bombCount, glassCount, heartCount, shieldCount, multiBallCount);
         }
 
-        public Dictionary<int, BlockSpecialType> DistributeSpecialBlocks(int totalBlocks, int mult2xCount, int mult3xCount, int mult4xCount, int mult5xCount, int expanderCount, int bombCount, int glassCount, int heartCount, int shieldCount, int multiBallCount)
+        public Dictionary<int, BlockSpecialType> DistributeSpecialBlocks(int totalBlocks, int mult2xCount, int mult3xCount, int mult4xCount, int mult5xCount, int expanderCount, int bombCount, int glassCount, int heartCount, int shieldCount, int multiBallCount, int laserCount = 0)
         {
             var map = new Dictionary<int, BlockSpecialType>();
             if (totalBlocks <= 0) return map;
@@ -404,6 +409,11 @@ namespace Arcade.BlockBreaker
                 map[availableIndices[cursor]] = BlockSpecialType.MultiBall;
             }
 
+            for (int i = 0; i < laserCount && cursor < availableIndices.Count; i++, cursor++)
+            {
+                map[availableIndices[cursor]] = BlockSpecialType.Laser;
+            }
+
             return map;
         }
 
@@ -455,6 +465,79 @@ namespace Arcade.BlockBreaker
 
             var badge = badgeGo.AddComponent<BlockBadge>();
             badge.Setup(special, badgePanelSettings, badgeVisualTreeAsset);
+        }
+
+        public void EnsureCornerChamfers()
+        {
+            var boundariesRoot = GameObject.Find("Boundaries") ?? GameObject.Find("ArenaBoundaries");
+            if (boundariesRoot == null) return;
+
+            Transform topWall = boundariesRoot.transform.Find("TopWall");
+            Material borderMat = null;
+            PhysicsMaterial bounceMat = null;
+            if (topWall != null)
+            {
+                var rend = topWall.GetComponent<MeshRenderer>();
+                if (rend != null) borderMat = rend.sharedMaterial;
+                var col = topWall.GetComponent<BoxCollider>();
+                if (col != null) bounceMat = col.sharedMaterial;
+
+                // Ensure TopWall is shortened so the perimeter forms a continuous polygonal frame
+                topWall.position = new Vector3(0f, 24.25f, 0f);
+                topWall.localScale = new Vector3(17.4f, 0.5f, 2f);
+            }
+
+            Transform leftWall = boundariesRoot.transform.Find("LeftWall");
+            if (leftWall != null)
+            {
+                leftWall.position = new Vector3(-10.25f, 7.60f, 0f);
+                leftWall.localScale = new Vector3(0.5f, 30.2f, 2f);
+            }
+
+            Transform rightWall = boundariesRoot.transform.Find("RightWall");
+            if (rightWall != null)
+            {
+                rightWall.position = new Vector3(10.25f, 7.60f, 0f);
+                rightWall.localScale = new Vector3(0.5f, 30.2f, 2f);
+            }
+
+            Transform leftChamfer = boundariesRoot.transform.Find("Chamfer_TopLeft");
+            if (leftChamfer == null)
+            {
+                var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                go.name = "Chamfer_TopLeft";
+                go.transform.SetParent(boundariesRoot.transform);
+                go.transform.position = new Vector3(-9.40f, 23.40f, 0f);
+                go.transform.rotation = Quaternion.Euler(0f, 0f, 45f);
+                go.transform.localScale = new Vector3(2.5f, 0.5f, 2f);
+                if (borderMat != null) go.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
+                if (bounceMat != null) go.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+            }
+            else
+            {
+                leftChamfer.position = new Vector3(-9.40f, 23.40f, 0f);
+                leftChamfer.rotation = Quaternion.Euler(0f, 0f, 45f);
+                leftChamfer.localScale = new Vector3(2.5f, 0.5f, 2f);
+            }
+
+            Transform rightChamfer = boundariesRoot.transform.Find("Chamfer_TopRight");
+            if (rightChamfer == null)
+            {
+                var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                go.name = "Chamfer_TopRight";
+                go.transform.SetParent(boundariesRoot.transform);
+                go.transform.position = new Vector3(9.40f, 23.40f, 0f);
+                go.transform.rotation = Quaternion.Euler(0f, 0f, -45f);
+                go.transform.localScale = new Vector3(2.5f, 0.5f, 2f);
+                if (borderMat != null) go.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
+                if (bounceMat != null) go.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+            }
+            else
+            {
+                rightChamfer.position = new Vector3(9.40f, 23.40f, 0f);
+                rightChamfer.rotation = Quaternion.Euler(0f, 0f, -45f);
+                rightChamfer.localScale = new Vector3(2.5f, 0.5f, 2f);
+            }
         }
     }
 }

@@ -10,14 +10,16 @@ namespace Arcade.Core
         public int score;
         public int level;
         public string date;
+        public float time; // run elapsed time in seconds
 
         public HighScoreEntry() { }
 
-        public HighScoreEntry(int score, int level = 1, string date = "")
+        public HighScoreEntry(int score, int level = 1, string date = "", float time = 0f)
         {
             this.score = score;
             this.level = level;
             this.date = string.IsNullOrEmpty(date) ? DateTime.Now.ToString("yyyy-MM-dd") : date;
+            this.time = time;
         }
     }
 
@@ -88,7 +90,7 @@ namespace Arcade.Core
             return new List<HighScoreEntry>(cachedScores);
         }
 
-        public static bool RecordScore(int score, int level = 1)
+        public static bool RecordScore(int score, int level = 1, float time = 0f)
         {
             if (score <= 0) return false;
 
@@ -100,7 +102,7 @@ namespace Arcade.Core
                 return false;
             }
 
-            cachedScores.Add(new HighScoreEntry(score, level));
+            cachedScores.Add(new HighScoreEntry(score, level, "", time));
             SortAndClampScores();
             SaveScores();
 
@@ -147,5 +149,63 @@ namespace Arcade.Core
         {
             cachedScores = null;
         }
+
+        #region Level Star Ratings & Best Clear Times
+
+        public const string PREF_LEVEL_STARS_PREFIX = "BlockBreaker_Stars_Level_";
+        public const string PREF_LEVEL_TIME_PREFIX = "BlockBreaker_BestTime_Level_";
+
+        public static event Action<int, int> OnLevelStarsChanged; // (levelNumber, stars)
+        public static event Action<int, float> OnLevelBestTimeChanged; // (levelNumber, bestTime)
+
+        public static int GetLevelStars(int levelNumber)
+        {
+            return PlayerPrefs.GetInt(PREF_LEVEL_STARS_PREFIX + levelNumber, 0);
+        }
+
+        public static bool SetLevelStars(int levelNumber, int stars)
+        {
+            if (stars <= 0) return false;
+            int currentStars = GetLevelStars(levelNumber);
+            if (stars > currentStars)
+            {
+                PlayerPrefs.SetInt(PREF_LEVEL_STARS_PREFIX + levelNumber, Mathf.Clamp(stars, 1, 3));
+                PlayerPrefs.Save();
+                OnLevelStarsChanged?.Invoke(levelNumber, stars);
+                return true;
+            }
+            return false;
+        }
+
+        public static float GetLevelBestTime(int levelNumber)
+        {
+            return PlayerPrefs.GetFloat(PREF_LEVEL_TIME_PREFIX + levelNumber, 0f);
+        }
+
+        public static bool RecordLevelTime(int levelNumber, float timeSeconds)
+        {
+            if (timeSeconds <= 0f) return false;
+            float currentBest = GetLevelBestTime(levelNumber);
+            // If no recorded time yet, or new time is faster
+            if (currentBest <= 0f || timeSeconds < currentBest)
+            {
+                PlayerPrefs.SetFloat(PREF_LEVEL_TIME_PREFIX + levelNumber, timeSeconds);
+                PlayerPrefs.Save();
+                OnLevelBestTimeChanged?.Invoke(levelNumber, timeSeconds);
+                return true;
+            }
+            return false;
+        }
+
+        public static string FormatTime(float timeSeconds)
+        {
+            if (timeSeconds <= 0f) return "--:--";
+            int totalSeconds = Mathf.FloorToInt(timeSeconds);
+            int minutes = totalSeconds / 60;
+            int seconds = totalSeconds % 60;
+            return $"{minutes:D2}:{seconds:D2}";
+        }
+
+        #endregion
     }
 }

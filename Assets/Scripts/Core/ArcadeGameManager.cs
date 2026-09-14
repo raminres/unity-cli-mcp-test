@@ -6,6 +6,27 @@ using UnityEngine.SceneManagement;
 
 namespace Arcade.Core
 {
+    [Serializable]
+    public struct LevelSummaryData
+    {
+        public int levelNumber;
+        public string levelName;
+        public int blocksDestroyed;
+        public int baseBlockPoints;
+        public int highestCombo;
+        public float elapsedTime;
+        public float parTime;
+        public int timeBonus;
+        public bool isUnderPar;
+        public int speedBonus;
+        public bool isFlawless;
+        public int flawlessBonus;
+        public int totalLevelScore;
+        public int cumulativeScore;
+        public int starsEarned;
+        public bool isNewBestTime;
+    }
+
     /// <summary>
     /// Central game coordinator managing state machine, scoring, lives, and high-level gameplay events.
     /// </summary>
@@ -25,11 +46,33 @@ namespace Arcade.Core
 
         [Header("Runtime State")]
         [SerializeField] private GameState currentState = GameState.ReadyToLaunch;
+        [SerializeField] private int currentLevel = 1;
         [SerializeField] private int currentScore = 0;
         [SerializeField] private int highScore = 0;
         [SerializeField] private int remainingLives = 3;
         [SerializeField] private int remainingBlocks = 0;
         [SerializeField] private int totalBlocksInLevel = 0;
+
+        // Level Session Statistics
+        private float levelElapsedTime = 0f;
+        private float totalRunElapsedTime = 0f;
+        private int currentVolleyStreak = 0;
+        private int highestVolleyComboThisLevel = 1;
+        private int blocksDestroyedThisLevel = 0;
+        private int baseBlockPointsThisLevel = 0;
+        private int livesLostThisLevel = 0;
+        private LevelSummaryData currentLevelSummary;
+
+        [Header("Level Clear Pacing")]
+        [SerializeField] private float levelClearDelaySeconds = 1.4f;
+        [SerializeField] private float standardClearDelaySeconds = 0.8f;
+        private bool isLevelClearPending = false;
+        private Coroutine levelClearCoroutine;
+
+        public bool IsLevelClearPending => isLevelClearPending;
+        public float LevelClearDelaySeconds => levelClearDelaySeconds;
+        public float StandardClearDelaySeconds => standardClearDelaySeconds;
+        public int LivesLostThisLevel => livesLostThisLevel;
 
         [Header("Power-Up States")]
         [SerializeField] private bool isShieldActive = false;
@@ -38,6 +81,13 @@ namespace Arcade.Core
         [SerializeField] private float paddleExpandTimeRemaining = 0f;
         [SerializeField] private int activeScoreMultiplier = 1;
         [SerializeField] private float multiplierTimeRemaining = 0f;
+        [SerializeField] private bool isLaserActive = false;
+        [SerializeField] private float laserTimeRemaining = 0f;
+        [SerializeField] private float laserDuration = 10f;
+        [SerializeField] private bool isClutchModeActive = false;
+        [SerializeField] private float clutchTimeRemaining = 0f;
+        [SerializeField] private float clutchDuration = 12f;
+        [SerializeField] private int clutchMultiplier = 1;
 
         [Header("Asset References")]
         [SerializeField] private Material powerupCapsuleMaterial;
@@ -57,19 +107,41 @@ namespace Arcade.Core
         public event Action<float> OnPaddleExpandTick;
         public event Action<bool, int, float> OnScoreMultiplierStateChanged;
         public event Action<float> OnScoreMultiplierTick;
+        public event Action<bool, float> OnLaserPowerupStateChanged;
+        public event Action<float> OnLaserPowerupTick;
+        public event Action<bool, float, int> OnClutchStateChanged;
+        public event Action<float, int> OnClutchTick;
+        public event Action<float> OnLevelTimerTick;
+        public event Action<int, int> OnVolleyComboChanged; // (currentStreak, multiplier)
+        public event Action<Vector3, int, int, string> OnBlockPointsAwarded; // (worldPos, awardedPoints, totalMultiplier, tag)
+        public event Action<LevelSummaryData> OnLevelCompletedWithTally;
+        public event Action<float, bool> OnLevelClearPending; // (delaySeconds, wasClearedWithLaser)
 
         public GameState State => currentState;
+        public int CurrentLevel => currentLevel;
         public int Score => currentScore;
         public int HighScore => highScore;
         public int Lives => remainingLives;
         public int RemainingBlocks => remainingBlocks;
         public int TotalBlocks => totalBlocksInLevel;
+        public float LevelElapsedTime => levelElapsedTime;
+        public float TotalRunElapsedTime => totalRunElapsedTime;
+        public int CurrentVolleyStreak => currentVolleyStreak;
+        public int CurrentVolleyMultiplier => BallController.GetVolleyMultiplier(currentVolleyStreak);
+        public int HighestVolleyComboThisLevel => highestVolleyComboThisLevel;
+        public LevelSummaryData CurrentLevelSummary => currentLevelSummary;
         public bool IsShieldActive => isShieldActive;
         public float ShieldTimeRemaining => shieldTimeRemaining;
         public bool IsPaddleExpanded => isPaddleExpanded;
         public float PaddleExpandTimeRemaining => paddleExpandTimeRemaining;
         public int ActiveScoreMultiplier => activeScoreMultiplier;
         public float MultiplierTimeRemaining => multiplierTimeRemaining;
+        public bool IsLaserActive => isLaserActive;
+        public float LaserTimeRemaining => laserTimeRemaining;
+        public bool IsClutchModeActive => isClutchModeActive;
+        public float ClutchTimeRemaining => clutchTimeRemaining;
+        public int ClutchMultiplier => clutchMultiplier;
+        public float ClutchDuration => clutchDuration;
         public System.Collections.Generic.IReadOnlyList<BallController> ActiveBalls => activeBalls;
         public int ActiveBallCount => activeBalls.Count;
 
@@ -135,6 +207,10 @@ namespace Arcade.Core
         {
             if (currentState == GameState.Playing)
             {
+                levelElapsedTime += Time.deltaTime;
+                totalRunElapsedTime += Time.deltaTime;
+                OnLevelTimerTick?.Invoke(levelElapsedTime);
+
                 if (isShieldActive)
                 {
                     TickShield(Time.deltaTime);
@@ -146,6 +222,14 @@ namespace Arcade.Core
                 if (activeScoreMultiplier > 1)
                 {
                     TickScoreMultiplier(Time.deltaTime);
+                }
+                if (isLaserActive)
+                {
+                    TickLaserPowerup(Time.deltaTime);
+                }
+                if (isClutchModeActive)
+                {
+                    TickClutchMode(Time.deltaTime);
                 }
             }
         }
@@ -269,6 +353,109 @@ namespace Arcade.Core
             }
         }
 
+        public void ActivateLaserPowerup(float duration = 10f)
+        {
+            isLaserActive = true;
+            laserTimeRemaining = Mathf.Max(laserTimeRemaining, duration);
+
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null && paddle.LaserController != null)
+            {
+                paddle.LaserController.ActivateLaserBlaster(duration);
+            }
+
+            OnLaserPowerupStateChanged?.Invoke(true, laserTimeRemaining);
+            OnLaserPowerupTick?.Invoke(laserTimeRemaining);
+        }
+
+        public void DeactivateLaserPowerup()
+        {
+            isLaserActive = false;
+            laserTimeRemaining = 0f;
+
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null && paddle.LaserController != null)
+            {
+                paddle.LaserController.DeactivateAllWeapons();
+            }
+
+            OnLaserPowerupStateChanged?.Invoke(false, 0f);
+        }
+
+        public void TickLaserPowerup(float delta)
+        {
+            if (!isLaserActive) return;
+
+            laserTimeRemaining -= delta;
+            OnLaserPowerupTick?.Invoke(Mathf.Max(0f, laserTimeRemaining));
+
+            if (laserTimeRemaining <= 0f)
+            {
+                DeactivateLaserPowerup();
+            }
+        }
+
+        public void StartClutchMode(float duration = 12f)
+        {
+            if (isClutchModeActive) return;
+            isClutchModeActive = true;
+            clutchTimeRemaining = duration > 0f ? duration : clutchDuration;
+            clutchMultiplier = CalculateClutchMultiplier(clutchTimeRemaining);
+            OnClutchStateChanged?.Invoke(true, clutchTimeRemaining, clutchMultiplier);
+            OnClutchTick?.Invoke(clutchTimeRemaining, clutchMultiplier);
+        }
+
+        public void EndClutchMode()
+        {
+            isClutchModeActive = false;
+            clutchTimeRemaining = 0f;
+            clutchMultiplier = 1;
+
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null && paddle.LaserController != null)
+            {
+                paddle.LaserController.DeactivateHyperBeam();
+            }
+
+            OnClutchStateChanged?.Invoke(false, 0f, 1);
+        }
+
+        public static int CalculateClutchMultiplier(float timeRemaining)
+        {
+            if (timeRemaining <= 0f) return 1;
+            int mult = Mathf.CeilToInt(timeRemaining);
+            return Mathf.Clamp(mult, 1, 10);
+        }
+
+        public void TickClutchMode(float delta)
+        {
+            if (!isClutchModeActive) return;
+
+            clutchTimeRemaining -= delta;
+            int newMult = CalculateClutchMultiplier(clutchTimeRemaining);
+            if (newMult != clutchMultiplier)
+            {
+                clutchMultiplier = newMult;
+            }
+
+            OnClutchTick?.Invoke(Mathf.Max(0f, clutchTimeRemaining), clutchMultiplier);
+
+            if (clutchTimeRemaining <= 0f)
+            {
+                TriggerRailgunDischarge();
+            }
+        }
+
+        private void TriggerRailgunDischarge()
+        {
+            EndClutchMode();
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null && paddle.LaserController != null)
+            {
+                paddle.LaserController.FireRailgunHyperBeam(5.0f);
+            }
+        }
+
         public void RegisterBall(BallController ball)
         {
             if (ball == null) return;
@@ -381,7 +568,7 @@ namespace Arcade.Core
 
         public void HandleBallFell(BallController ball)
         {
-            if (currentState != GameState.Playing) return;
+            if (currentState != GameState.Playing || isLevelClearPending) return;
 
             if (activeBalls.Count > 1)
             {
@@ -432,15 +619,62 @@ namespace Arcade.Core
             RecordBallLost();
         }
 
-        public void RegisterLevelBlocks(int blockCount)
+        public void RegisterLevelBlocks(int blockCount, int levelNumber = 1)
         {
             totalBlocksInLevel = blockCount;
             remainingBlocks = blockCount;
+            currentLevel = levelNumber;
+            ResetLevelSessionStats();
+        }
+
+        public void ResetLevelSessionStats()
+        {
+            if (levelClearCoroutine != null)
+            {
+                StopCoroutine(levelClearCoroutine);
+                levelClearCoroutine = null;
+            }
+            isLevelClearPending = false;
+            levelElapsedTime = 0f;
+            currentVolleyStreak = 0;
+            highestVolleyComboThisLevel = 1;
+            blocksDestroyedThisLevel = 0;
+            baseBlockPointsThisLevel = 0;
+            livesLostThisLevel = 0;
+            OnVolleyComboChanged?.Invoke(0, 1);
+            OnLevelTimerTick?.Invoke(0f);
+        }
+
+        public void NotifyVolleyHit(BallController ball, int streak)
+        {
+            currentVolleyStreak = streak;
+            int mult = BallController.GetVolleyMultiplier(streak);
+            if (mult > highestVolleyComboThisLevel)
+            {
+                highestVolleyComboThisLevel = mult;
+            }
+            OnVolleyComboChanged?.Invoke(streak, mult);
+        }
+
+        public void NotifyVolleySaved(BallController ball, int streak)
+        {
+            currentVolleyStreak = 0;
+            OnVolleyComboChanged?.Invoke(0, 1);
         }
 
         public void SetState(GameState newState)
         {
             if (currentState == newState) return;
+
+            if (newState != GameState.Playing && newState != GameState.LevelClear)
+            {
+                if (levelClearCoroutine != null)
+                {
+                    StopCoroutine(levelClearCoroutine);
+                    levelClearCoroutine = null;
+                }
+                isLevelClearPending = false;
+            }
 
             currentState = newState;
             OnStateChanged?.Invoke(currentState);
@@ -449,6 +683,14 @@ namespace Arcade.Core
         public void LaunchBall()
         {
             if (currentState != GameState.ReadyToLaunch && currentState != GameState.BallLost) return;
+
+            // Guarantee all weapons and in-flight projectiles are cleared before launch to prevent premature block destruction
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null && paddle.LaserController != null)
+            {
+                paddle.LaserController.DeactivateAllWeapons();
+            }
+            BlockBreaker.LaserBolt.ClearAllActiveBolts();
 
             SetState(GameState.Playing);
 
@@ -464,20 +706,64 @@ namespace Arcade.Core
 
         public void RecordBlockDestroyed(int points, int colorTier)
         {
+            RecordBlockDestroyed(points, colorTier, Vector3.zero, 1, 0, 1, "");
+        }
+
+        public void RecordBlockDestroyed(
+            int points,
+            int colorTier,
+            Vector3 worldPos,
+            int volleyMultiplier = 1,
+            int volleyStreak = 0,
+            int chainMultiplier = 1,
+            string bonusTag = "")
+        {
             if (currentState == GameState.GameOver || currentState == GameState.LevelClear) return;
 
-            int awardedPoints = points * activeScoreMultiplier;
+            int effectiveMultiplier = activeScoreMultiplier;
+            if (isClutchModeActive)
+            {
+                effectiveMultiplier = Mathf.Max(effectiveMultiplier, clutchMultiplier);
+            }
+
+            int multiBallMult = Mathf.Max(1, activeBalls.Count);
+            int totalMult = effectiveMultiplier * Mathf.Max(1, volleyMultiplier) * Mathf.Max(1, chainMultiplier) * multiBallMult;
+            int awardedPoints = points * totalMult;
+
             currentScore += awardedPoints;
             remainingBlocks = Mathf.Max(0, remainingBlocks - 1);
+
+            blocksDestroyedThisLevel++;
+            baseBlockPointsThisLevel += points;
+            if (volleyMultiplier > highestVolleyComboThisLevel)
+            {
+                highestVolleyComboThisLevel = volleyMultiplier;
+            }
 
             if (currentScore > highScore)
             {
                 highScore = currentScore;
-                HighScoreManager.RecordScore(currentScore);
+                HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime);
             }
 
+            string displayTag = bonusTag;
+            if (string.IsNullOrEmpty(displayTag))
+            {
+                if (isClutchModeActive) displayTag = $"CLUTCH {clutchMultiplier}X!";
+                else if (chainMultiplier > 1) displayTag = $"CHAIN x{chainMultiplier}!";
+                else if (volleyMultiplier > 1) displayTag = $"COMBO x{volleyMultiplier}!";
+                else if (multiBallMult > 1) displayTag = $"x{multiBallMult} MULTI-BALL!";
+            }
+
+            OnBlockPointsAwarded?.Invoke(worldPos, awardedPoints, totalMult, displayTag);
             OnScoreChanged?.Invoke(currentScore, awardedPoints);
             SaveCurrentGameSession();
+
+            // Trigger 12-second Clutch Railgun Overcharge if exactly 1 block remains
+            if (remainingBlocks == 1 && !isClutchModeActive && currentState == GameState.Playing)
+            {
+                StartClutchMode();
+            }
 
             CheckLevelCompletion();
         }
@@ -514,8 +800,30 @@ namespace Arcade.Core
 
             if (allBlocksCleared)
             {
-                HighScoreManager.RecordScore(currentScore);
-                OnLevelCleared();
+                HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime);
+                bool wasClearedWithLaser = false;
+                var paddle = FindAnyObjectByType<PaddleController>();
+                if (paddle != null && paddle.LaserController != null && paddle.LaserController.IsHyperBeamActive)
+                {
+                    wasClearedWithLaser = true;
+                }
+
+                float delay = wasClearedWithLaser ? levelClearDelaySeconds : standardClearDelaySeconds;
+
+                if (Application.isPlaying && gameObject.activeInHierarchy)
+                {
+                    if (!isLevelClearPending)
+                    {
+                        isLevelClearPending = true;
+                        OnLevelClearPending?.Invoke(delay, wasClearedWithLaser);
+                        levelClearCoroutine = StartCoroutine(DelayedLevelClearRoutine(delay));
+                    }
+                }
+                else
+                {
+                    OnLevelClearPending?.Invoke(delay, wasClearedWithLaser);
+                    OnLevelCleared();
+                }
             }
         }
 
@@ -524,12 +832,18 @@ namespace Arcade.Core
             if (currentState != GameState.Playing) return;
 
             BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
+            BlockBreaker.LaserBolt.ClearAllActiveBolts();
 
             DeactivateShield();
             DeactivatePaddleExpander();
             DeactivateScoreMultiplier();
+            DeactivateLaserPowerup();
+            EndClutchMode();
 
             remainingLives--;
+            livesLostThisLevel++;
+            currentVolleyStreak = 0;
+            OnVolleyComboChanged?.Invoke(0, 1);
             OnLivesChanged?.Invoke(remainingLives);
 
             if (ArcadeAudioManager.Instance != null)
@@ -557,31 +871,158 @@ namespace Arcade.Core
             SaveCurrentGameSession();
         }
 
+        private System.Collections.IEnumerator DelayedLevelClearRoutine(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            isLevelClearPending = false;
+            levelClearCoroutine = null;
+            OnLevelCleared();
+        }
+
+        public void TriggerImmediateLevelClearForTesting()
+        {
+            if (levelClearCoroutine != null)
+            {
+                StopCoroutine(levelClearCoroutine);
+                levelClearCoroutine = null;
+            }
+            isLevelClearPending = false;
+            OnLevelCleared();
+        }
+
+        public void SetLevelClearDelaySecondsForTesting(float delay) => levelClearDelaySeconds = delay;
+        public void SetStandardClearDelaySecondsForTesting(float delay) => standardClearDelaySeconds = delay;
+        public void TriggerLevelClearWithDelayForTesting(bool wasClearedWithLaser)
+        {
+            float delay = wasClearedWithLaser ? levelClearDelaySeconds : standardClearDelaySeconds;
+            isLevelClearPending = true;
+            OnLevelClearPending?.Invoke(delay, wasClearedWithLaser);
+        }
+
         private void OnLevelCleared()
         {
+            if (levelClearCoroutine != null)
+            {
+                StopCoroutine(levelClearCoroutine);
+                levelClearCoroutine = null;
+            }
+            isLevelClearPending = false;
+
             BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
+            BlockBreaker.LaserBolt.ClearAllActiveBolts();
             ClearExtraBalls();
             DeactivateShield();
             DeactivatePaddleExpander();
             DeactivateScoreMultiplier();
+            DeactivateLaserPowerup();
+            EndClutchMode();
             SetState(GameState.LevelClear);
+
+            // Fetch current level configuration
+            var generator = FindAnyObjectByType<BlockBreaker.LevelGenerator>();
+            var config = generator != null ? (generator.CurrentConfig ?? generator.GetLevelConfig(currentLevel)) : null;
+
+            float parTime = config != null ? config.ParTime : 40f;
+            int timeBonusPool = config != null ? config.TimeBonusMax : 3000;
+            int timeBonus = Mathf.Max(0, timeBonusPool - Mathf.FloorToInt(levelElapsedTime * 35f));
+            bool isUnderPar = levelElapsedTime <= parTime;
+            int speedBonus = isUnderPar ? 500 : 0;
+            bool isFlawless = livesLostThisLevel == 0;
+            int flawlessBonus = isFlawless ? 1000 : 0;
+
+            int totalBonuses = timeBonus + speedBonus + flawlessBonus;
+            currentScore += totalBonuses;
+
+            if (currentScore > highScore)
+            {
+                highScore = currentScore;
+            }
+
+            int[] thresholds = config != null ? config.StarThresholds : new int[] { 800, 1500, 2500 };
+            int stars = 1; // 1 star for clearing the level
+            if (currentScore >= thresholds[1]) stars = 2;
+            if (currentScore >= thresholds[2]) stars = 3;
+
+            bool isNewBestTime = HighScoreManager.RecordLevelTime(currentLevel, levelElapsedTime);
+            HighScoreManager.SetLevelStars(currentLevel, stars);
+            HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime);
+
+            currentLevelSummary = new LevelSummaryData
+            {
+                levelNumber = currentLevel,
+                levelName = config != null ? config.LevelName : $"Level {currentLevel}",
+                blocksDestroyed = blocksDestroyedThisLevel,
+                baseBlockPoints = baseBlockPointsThisLevel,
+                highestCombo = highestVolleyComboThisLevel,
+                elapsedTime = levelElapsedTime,
+                parTime = parTime,
+                timeBonus = timeBonus,
+                isUnderPar = isUnderPar,
+                speedBonus = speedBonus,
+                isFlawless = isFlawless,
+                flawlessBonus = flawlessBonus,
+                totalLevelScore = (baseBlockPointsThisLevel * highestVolleyComboThisLevel) + totalBonuses,
+                cumulativeScore = currentScore,
+                starsEarned = stars,
+                isNewBestTime = isNewBestTime
+            };
 
             if (ArcadeAudioManager.Instance != null)
             {
                 ArcadeAudioManager.Instance.PlayLevelClear();
             }
 
+            OnLevelCompletedWithTally?.Invoke(currentLevelSummary);
             SaveCurrentGameSession();
         }
 
         public void AdvanceToNextLevel()
         {
             BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
+            BlockBreaker.LaserBolt.ClearAllActiveBolts();
             ClearExtraBalls();
             DeactivateShield();
             DeactivatePaddleExpander();
             DeactivateScoreMultiplier();
+            DeactivateLaserPowerup();
+            EndClutchMode();
             Time.timeScale = 1f;
+
+            var generator = FindAnyObjectByType<BlockBreaker.LevelGenerator>();
+            if (generator != null)
+            {
+                generator.AdvanceToNextLevel();
+                currentLevel = generator.CurrentConfig != null ? generator.CurrentConfig.LevelNumber : currentLevel + 1;
+            }
+            else
+            {
+                currentLevel++;
+            }
+
+            ResetLevelSessionStats();
+            SetState(GameState.ReadyToLaunch);
+            SaveCurrentGameSession();
+        }
+
+        public void ReplayCurrentLevel()
+        {
+            BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
+            BlockBreaker.LaserBolt.ClearAllActiveBolts();
+            ClearExtraBalls();
+            DeactivateShield();
+            DeactivatePaddleExpander();
+            DeactivateScoreMultiplier();
+            DeactivateLaserPowerup();
+            EndClutchMode();
+            Time.timeScale = 1f;
+
+            var generator = FindAnyObjectByType<BlockBreaker.LevelGenerator>();
+            if (generator != null)
+            {
+                generator.SelectAndLoadLevel(currentLevel);
+            }
+
+            ResetLevelSessionStats();
             SetState(GameState.ReadyToLaunch);
             SaveCurrentGameSession();
         }
@@ -589,13 +1030,16 @@ namespace Arcade.Core
         private void OnGameOver()
         {
             BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
+            BlockBreaker.LaserBolt.ClearAllActiveBolts();
             ClearExtraBalls();
             DeactivateShield();
             DeactivatePaddleExpander();
             DeactivateScoreMultiplier();
+            DeactivateLaserPowerup();
+            EndClutchMode();
             if (currentScore > 0)
             {
-                HighScoreManager.RecordScore(currentScore);
+                HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime);
             }
             SetState(GameState.GameOver);
             ClearSavedGame();

@@ -28,19 +28,26 @@ namespace Arcade.BlockBreaker
         [Header("References")]
         [SerializeField] private Rigidbody rb;
         [SerializeField] private BoxCollider rootCollider;
+        [SerializeField] private PaddleLaserController laserController;
 
         private Coroutine expandCoroutine;
         private Coroutine recoilCoroutine;
+        private float currentVelocityX;
+        private float previousPositionX;
 
         public float Width => paddleWidth;
         public float BaseWidth => basePaddleWidth;
         public float MinX => minX;
         public float MaxX => maxX;
         public int ExpansionCount => expansionCount;
+        public float VelocityX => currentVelocityX;
+        public PaddleLaserController LaserController => laserController != null ? laserController : (laserController = GetComponent<PaddleLaserController>() ?? gameObject.AddComponent<PaddleLaserController>());
 
         public Transform StepTop => stepTop;
         public Transform StepMid => stepMid;
         public Transform StepBottom => stepBottom;
+
+        public void SetVelocityXForTesting(float velX) => currentVelocityX = velX;
 
         private void Awake()
         {
@@ -52,9 +59,11 @@ namespace Arcade.BlockBreaker
             }
 
             if (rootCollider == null) rootCollider = GetComponent<BoxCollider>();
+            if (laserController == null) laserController = GetComponent<PaddleLaserController>() ?? gameObject.AddComponent<PaddleLaserController>();
 
             EnsureSteppedMeshHierarchy();
             RecalculateBounds();
+            previousPositionX = transform.position.x;
         }
 
         /// <summary>
@@ -89,10 +98,16 @@ namespace Arcade.BlockBreaker
 
         private void Update()
         {
+            float prevX = transform.position.x;
+
             if (ArcadeGameManager.Instance != null && (ArcadeGameManager.Instance.State == GameState.Paused ||
                                                       ArcadeGameManager.Instance.State == GameState.LevelClear ||
                                                       ArcadeGameManager.Instance.State == GameState.GameOver))
+            {
+                currentVelocityX = 0f;
+                previousPositionX = prevX;
                 return;
+            }
 
             if (ArcadeInputHandler.Instance != null && ArcadeInputHandler.Instance.HasDirectTargetX)
             {
@@ -111,6 +126,10 @@ namespace Arcade.BlockBreaker
                     transform.position = pos;
                 }
             }
+
+            float dt = Time.deltaTime;
+            currentVelocityX = dt > 0.0001f ? (transform.position.x - prevX) / dt : 0f;
+            previousPositionX = transform.position.x;
         }
 
         /// <summary>

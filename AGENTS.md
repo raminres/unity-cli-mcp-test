@@ -40,17 +40,36 @@ This file provides persistent, high-density project context across agent session
     - Primary `BoxCollider` is strictly fitted to Tier 1 ($H = 0.24$, center $Y = +0.38$). Below $Y = -6.24$, there is zero collision volume.
     - Upward Normal Threshold: `BallController.IsValidPaddleBounceNormal(normal)` (`normal.y >= 0.25f`) guarantees that balls brushing the side wall or hitting from below are NOT deflected upward, falling cleanly into the killzone.
   - **Optical Ray Deflection & Paddle Steering Formula**:
-    - Deflection computed via `BallController.CalculatePaddleDeflection(inVelocity, hitOffset, steerStrength = 32f, minAngleDeg = 25f, maxAngleDeg = 155f)`.
-    - Preserves incoming horizontal momentum (`rayAngleDeg = Mathf.Atan2(|inVelocity.y|, inVelocity.x) * Rad2Deg`), naturally reflecting incoming vectors without unnatural direction reversal, then applies subtle paddle steering based on contact offset `steer = -hitOffset * 32f` clamped to $[25^\circ, 155^\circ]$.
+    - Deflection computed via `BallController.CalculatePaddleDeflection(inVelocity, hitOffset, steerStrength = 32f, minAngleDeg = 25f, maxAngleDeg = 155f, paddleVelocityX, velocityInfluence = 0.5f, verticalDeadzoneAngleDeg = 5f)`.
+    - Preserves incoming horizontal momentum (`rayAngleDeg = Mathf.Atan2(|inVelocity.y|, inVelocity.x) * Rad2Deg`), naturally reflecting incoming vectors without unnatural direction reversal, applies subtle paddle steering based on contact offset `steer = -hitOffset * 32f`, incorporates paddle momentum transfer `clamp(-paddleVelocityX * 0.5f, -12°, +12°)`, strictly excludes near-vertical deadzone $[85^\circ, 95^\circ]$, and clamps final angle to $[25^\circ, 155^\circ]$.
+  - **Anti-Trap Ball Physics (Options A3 & B3)**:
+    - **Minimum Vertical Floor ($20^\circ$)**: In `FixedUpdate()`, `SanitizeTrajectory()` mathematically enforces $|v_y| \ge \text{currentSpeed} \cdot \sin(20^\circ)$, preventing shallow horizontal traps between arena walls while preserving exact speed and sign.
+    - **Consecutive Side-Wall Steepener ($35^\circ$)**: Tracks `consecutiveSideWallBounces`. On $\ge 2$ consecutive side-wall hits without hitting paddle or block, steepens vertical trajectory to $\ge 35^\circ$ ($\sin(35^\circ) \approx 0.574$), forcing rapid vertical progression. Resets to 0 on block impact, paddle save, launch, or dock.
+    - **Vertical Exclusion Deadzone ($[85^\circ, 95^\circ]$)**: Deflection angle and initial launch strictly exclude the $\pm 5^\circ$ vertical cone around $90^\circ$. Continuous play enforces $|v_x| \ge \text{currentSpeed} \cdot \sin(5^\circ)$, causing straight vertical trajectories to subtly drift away from center and eliminating endless vertical ping-pong loops.
+    - **Continuous Perimeter & Top Corner $45^\circ$ Chamfers**: The playfield boundary forms a continuous polygonal frame. The horizontal ceiling `TopWall` is shortened to width $17.4$ ($X \in [-8.70, +8.70]$ at $Y = 24.25$), and vertical side walls `LeftWall`/`RightWall` are shortened to height $30.2$ ($Y \in [-7.50, +22.70]$ at $X = \pm 10.25$). Calibrated angled boundary wedges (`Chamfer_TopLeft` at $(-9.40, 23.40, 0)$ with $+45^\circ$ rotation and `Chamfer_TopRight` at $(9.40, 23.40, 0)$ with $-45^\circ$ rotation, scale $2.5 \times 0.5 \times 2.0$) seamlessly connect the top and side walls with zero corner gaps. Serialized directly in `Assets/Scenes/LV_BlockBreaker.unity`, configured in `SetupBlockBreakerScenes.cs`, and guaranteed at runtime via `LevelGenerator.EnsureCornerChamfers()`.
+    - **Paddle Velocity Momentum Transfer**: `PaddleController.VelocityX` dynamically measures instantaneous horizontal movement velocity, imparting tactile directional steering when sweeping the paddle during impact.
   - **Compounding Expansion with Spring Overshoot**:
     - $+10\%$ per expander ($W_n = W_{prev} \times 1.10$, clamped to max $12.0$, adaptive bounds $[-10 + \frac{W}{2}, 10 - \frac{W}{2}]$).
     - Features spring-damper overshoot animation ($\approx +16\%$ overshoot with $Y$-axis squash-and-stretch settling over $0.35\text{s}$) for tactile arcade feedback.
 - **Arena Dimensions**:
-  - Top Wall: $Y = 24.25$, Left/Right Walls: $X = \pm 10.5$ (height $32.0$), Kill Zone: $Y = -9.0$ ([KillZone.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/KillZone.cs)).
+  - Top Wall: $Y = 24.25$, width $17.4$; Left/Right Walls: $X = \pm 10.25$, height $30.2$; Top Chamfers: $(\pm 9.40, 23.40)$, length $2.5$; Kill Zone: $Y = -9.0$ ([KillZone.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/KillZone.cs)).
   - Camera: Perspective $38^\circ$ FOV with [ResponsiveCameraController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/Core/ResponsiveCameraController.cs) dynamically adjusting $Z$-distance to guarantee 100% visible arena boundaries across any aspect ratio (16:9, 9:16, 9:19.5, etc.).
-- **Lives & Scoring**:
+- **Lives & Hybrid Skill-Based Scoring**:
   - Starting lives: 3 (expandable up to max 5 via Extra Heart powerup).
   - Tiers: Red = 10 pts (bottom), Green = 20 pts (middle), Blue = 30 pts (top).
+  - **Volley Combo Multiplier**:
+    - Unreturned ball rallies increment streak: Hits 1–2 = $1\times$, Hits 3–4 = $2\times$, Hits 5–7 = $3\times$, Hits 8–10 = $4\times$, Hits 11+ = $5\times$ (MAX).
+    - Safely banks into score upon paddle impact with audio chime; resets streak if ball falls into kill zone.
+    - Ascending musical pitch scaling on consecutive break SFX ($+1$ semitone per hit up to $1.68\times$).
+  - **Powerup & Chain Synergies**:
+    - Bomb blasts apply compounding chain multipliers ($\text{base} \times 1.5^{\text{chainIndex}}$).
+    - Multi-ball multiplies all points earned by live ball count ($2\times$ or $3\times$).
+  - **Dual-Layer Real-Time Score Feedback**:
+    - **World-Space Floating Popups (`FloatingScoreManager.cs`)**: Spawns at impact point at $Z = -0.8\text{f}$ (`+30`, `+150 x3!`, `+450 BOMB!`) drifting up $+1.2$ units over $0.65\text{s}$.
+    - **HUD Dashboard Indicators**: Glowing score delta ticker (`score-delta-label`) popping `+150` next to score, live combo meter (`🔥 x3 COMBO`), and digital level stopwatch (`timer-pod`).
+  - **End-of-Level Victory Scorecard & 3-Star Rating**:
+    - Scorecard modal (`modal-scorecard`) tallies blocks destroyed, max volley combo, clear time vs par time, time bonus pool, under-par speed bonus (+500), and flawless life bonus (+1,000).
+    - Awards 1–3 stars evaluated against level thresholds and records personal Best Clear Time in `HighScoreManager`. Interactive `Replay`, `Next Level`, and `Main Menu` actions.
 
 ---
 
@@ -66,19 +85,19 @@ This file provides persistent, high-density project context across agent session
 | :---: | :--- | :---: | :---: | :---: | :---: | :--- |
 | **1** | **First Flight** | `Pyramid` | $7 \times 3$ | **15** | `0.92x` (Paddle 5.5) | • 1x Paddle Expander |
 | **2** | **Glass & Gold** | `Diamond` | $7 \times 6$ | **22** | `0.96x` (Paddle 5.2) | • 1x 2X, 2x Glass, 1x Expander |
-| **3** | **Twin Pillars** | `Pillars` | $7 \times 6$ | **24** | `1.00x` (Paddle 5.0) | • 2x Bombs, 2x 2X, 1x Expander (`Checkerboard`) |
+| **3** | **Twin Pillars** | `Pillars` | $7 \times 6$ | **24** | `1.00x` (Paddle 5.0) | • 2x Bombs, 2x 2X, 1x Expander, 1x Laser (`Checkerboard`) |
 | **4** | **Kinetic Shield** | `Shield` | $8 \times 6$ | **34** | `1.04x` (Paddle 5.0) | • 1x Shield, 1x Heart, 1x Bomb, 2x Glass |
 | **5** | **Multi-Ball Ring** | `HollowBox` | $8 \times 6$ | **24** | `1.08x` (Paddle 5.0) | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass (`Checkerboard`) |
-| **6** | **Royal Crown** | `Crown` | $9 \times 6$ | **52** | `1.12x` (Paddle 5.0) | • 1x 3X, 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass |
+| **6** | **Royal Crown** | `Crown` | $9 \times 6$ | **52** | `1.12x` (Paddle 5.0) | • 1x 3X, 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass, 1x Laser |
 | **7** | **Neon Heart** | `Heart` | $9 \times 6$ | **32** | `1.16x` (Paddle 5.0) | • 2x Hearts, 1x Shield, 1x 3X, 2x 2X, 1x Bomb, 2x Glass, 1x Multi-Ball |
-| **8** | **Space Invader** | `Invader` | $9 \times 6$ | **28** | `1.20x` (Paddle 5.0) | • 2x Bombs, 2x 2X, 2x 3X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Glass (`Randomized`) |
+| **8** | **Space Invader** | `Invader` | $9 \times 6$ | **28** | `1.20x` (Paddle 5.0) | • 2x Bombs, 2x 2X, 2x 3X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Glass, 1x Laser (`Randomized`) |
 | **9** | **Crossfire** | `Cross` | $9 \times 6$ | **30** | `1.24x` (Paddle 5.0) | • 1x 4X, 2x 2X, 1x 3X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball (`Checkerboard`) |
 | **10** | **The Hourglass** | `Hourglass` | $9 \times 6$ | **42** | `1.28x` (Paddle 5.0) | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball |
-| **11** | **Chevron Strike** | `Chevron` | $9 \times 6$ | **18** | `1.32x` (Paddle 5.0) | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 2x Multi-Balls (`Checkerboard`) |
+| **11** | **Chevron Strike** | `Chevron` | $9 \times 6$ | **18** | `1.32x` (Paddle 5.0) | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 2x Multi-Balls, 1x Laser (`Checkerboard`) |
 | **12** | **Castle Bastion** | `Castle` | $10 \times 6$ | **45** | `1.36x` (Paddle 5.0) | • 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls |
 | **13** | **Quantum Lattice** | `CheckerboardEmpty` | $10 \times 6$ | **30** | `1.40x` (Paddle 5.0) | • 1x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls (`Randomized`) |
-| **14** | **Striped Vault** | `Stripes` | $10 \times 6$ | **30** | `1.44x` (Paddle 5.0) | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls |
-| **15** | **Chaos Labyrinth** | `Custom` | $10 \times 6$ | **48** | `1.48x` (Paddle 5.0) | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 4x Bombs, 4x Glass, 2x Hearts, 2x Shields, 2x Multi-Balls (`Randomized`) |
+| **14** | **Striped Vault** | `Stripes` | $10 \times 6$ | **30** | `1.44x` (Paddle 5.0) | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls, 1x Laser |
+| **15** | **Chaos Labyrinth** | `Custom` | $10 \times 6$ | **48** | `1.48x` (Paddle 5.0) | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 4x Bombs, 4x Glass, 2x Hearts, 2x Shields, 2x Multi-Balls, 2x Lasers (`Randomized`) |
 
 - **Dynamic Volley Pacing**: `BallController` measures continuous active volley time. Every 10 seconds of active play, speed escalates progressively ($+8\%$ step multiplier) up to `maxSpeed`, eliminating stale stalemates and ramping up intensity. Resets back to level base speed on dock or life lost.
 - **Asset Storage**: `Assets/Settings/Levels/SO_Level_01.asset` through `SO_Level_15.asset`.
@@ -103,13 +122,24 @@ This file provides persistent, high-density project context across agent session
     - **Shield (`Shield`)**: Drops electric blue capsule with shield icon; catching activates 10-second defensive barrier with HUD countdown.
     - **Multi-Ball (`MultiBall`)**: Drops neon magenta capsule with multi-ball icon; catching spawns 2 extra balls at $\pm 35^\circ$ diverging angles with distinct trail colors.
     - **Score Multipliers (`ScoreMultiplier2x`, `ScoreMultiplier3x`, `ScoreMultiplier4x`, `ScoreMultiplier5x`)**: Drops glowing gold (2X), fiery orange (3X), crimson (4X), or hyper-magenta (5X) capsule with extra points icon; catching activates a 10-second score multiplier buff on `ArcadeGameManager` with animated HUD status badge.
+    - **Laser Blaster (`Laser`)**: Drops glowing ruby red capsule with laser icon ([TX_Powerup_Laser.png](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/UI/Icons/TX_Powerup_Laser.png)); catching deploys twin plasma laser cannons mounted on paddle edges ([PaddleLaserController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/PaddleLaserController.cs)) firing high-velocity laser bolts ([LaserBolt.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LaserBolt.cs), $34\text{ units/s}$, ruby glow, SFX [AU_Powerup_Laser.mp3](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Audio/AU_Powerup_Laser.mp3)) at $0.32\text{s}$ intervals for 10 seconds. Bolts deal standard damage on block impact (`TakeHit(Vector3.down)`).
     - **In-Flight Lifecycle & Docked Intercept Guard**:
       - `PowerupCapsule.ClearAllFallingCapsules()` automatically clears and destroys all active falling capsules upon life loss, shield deflection save, level clear, game over, and level advancement, preventing stale capsules from lingering into docked state or subsequent levels.
       - `PowerupCapsule.TryIntercept()` guards against collecting powerups while docked on the paddle (`ReadyToLaunch` or `BallLost`), ensuring balls cannot be triggered prematurely before player launch.
+- **Lone Block Clutch Countdown & Option B Hyper-Beam Railgun**:
+  - **Clutch Countdown**: When exactly 1 block remains in the level (`remainingBlocks == 1`), `ArcadeGameManager` activates Clutch Countdown mode with a 12-second live timer, accompanied by an animated HUD status badge (`clutch-status-badge`) displaying remaining seconds and current multiplier.
+  - **Decaying Score Multiplier**: Hitting the lone final block while the clutch timer is active rewards a decaying score multiplier from $10\times$ down to $1\times$ based on remaining seconds ($\text{multiplier} = \text{clamp}(\lfloor\text{timeRemaining}\rfloor + 1, 1, 10)$).
+  - **Option B Hyper-Beam Railgun**: If the 12-second timer expires without hitting the block, the paddle engages emergency Railgun Overcharge. A wide vertical hyper-beam ($W \approx 3.2$, $H \approx 31$) surges progressively upward from the paddle deck to the arena ceiling over $0.35\text{s}$, slicing through bricks as it extends. Rendered via a dedicated URP gradient shader `Assets/Shaders/VFX_LaserHyperBeam.shader` on a foreground Quad ($Z = -0.3$), featuring a brilliant white-hot central core, electric pink inner glow, neon ruby outer aura with soft lateral falloff, solar amber muzzle flare at the paddle deck, and animated plasma energy ripple.
+  - **Dual-Cadence Level Clear Pacing & Celebratory Center Banner**:
+    - **Celebratory Banner (`level-clear-banner`)**: Immediately upon clearing the final brick, a high-contrast golden neon center banner displays `"LEVEL CLEARED!"` with context-aware cyan subtext (`"STAGE COMPLETE!"`, `"FLAWLESS VICTORY!"`, or `"CLUTCH OVERCHARGE!"`).
+    - **Dual Delay Cadence**:
+      - Standard Non-Beam Clear (ball/bomb hits): Quick, snappy $0.8\text{s}$ delay (`standardClearDelaySeconds = 0.8f`) allowing the floating points and shatter bursts to resolve before the victory scorecard opens.
+      - Clutch Hyper-Beam Railgun Clear: Full $1.4\text{s}$ delay (`levelClearDelaySeconds = 1.4f`) to preserve the progressive beam surge ($0.35\text{s}$) and clutch bonus flight into the score ticker.
+    - Safeguarded against life loss or ball resets while clear is pending (`isLevelClearPending = true`). Banner is cleanly dismissed once the victory scorecard modal opens.
 - **Immediate Environmental Modifiers**:
   - **Bomb Bricks (`Bomb`)**: Explosive radius detonation ($2.5$ units) immediately detonating surrounding bricks with outward impulses. Protected by `isDestroyed` flag against recursive loops.
   - **Glass-Enclosed Bricks (`GlassEnclosed`)**: Encased in a $1.18\times$ glass shell ([MI_Block_Glass.mat](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Materials/BlockBreaker/MI_Block_Glass.mat)). Requires 2 hits (Hit 1: shatters glass shell with crystal debris; Hit 2: breaks brick for $2\times$ points).
-- **World Space Badges ([BlockBadge.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockBadge.cs))**: Rendered via Unity 6 `PanelRenderer` in `WorldSpace` mode (`80px` fixed dimension, 100 PPU, clamped margins).
+- **World Space Badges ([BlockBadge.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockBadge.cs))**: Rendered via Unity 6 `PanelRenderer` in `WorldSpace` mode (`80px` fixed dimension, 100 PPU, clamped margins). Supports Laser badge icon (`badge-icon-laser`) and plate (`badge-plate-laser`).
 
 ---
 

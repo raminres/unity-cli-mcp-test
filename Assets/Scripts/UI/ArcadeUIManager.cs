@@ -19,6 +19,7 @@ namespace Arcade.UI
 
         // Top bar elements
         private Label scoreLabel;
+        private VisualElement scoreContainer;
         private Label highscoreLabel;
         private VisualElement[] lifePips;
         private Button btnQuickLevels;
@@ -35,6 +36,9 @@ namespace Arcade.UI
 
         // Banner
         private VisualElement launchBanner;
+        private VisualElement levelClearBanner;
+        private Label levelClearBannerText;
+        private Label levelClearBannerSubtext;
 
         // Modals
         private VisualElement pauseModal;
@@ -49,6 +53,27 @@ namespace Arcade.UI
         private Label clearScoreLabel;
         private Label overScoreLabel;
         private Label overHighLabel;
+
+        // Level Timer, Volley Combo & Score Delta
+        private Label timerLabel;
+        private Label scoreDeltaLabel;
+        private VisualElement comboStatusBadge;
+        private Label comboLabel;
+        private Coroutine scoreDeltaCoroutine;
+        private Coroutine scorePulseCoroutine;
+        private Coroutine scorecardStarsCoroutine;
+
+        // Scorecard Modal Elements
+        private Label scorecardTitle;
+        private VisualElement scorecardStar1;
+        private VisualElement scorecardStar2;
+        private VisualElement scorecardStar3;
+        private Label scorecardBlocksVal;
+        private Label scorecardComboVal;
+        private Label scorecardTimeVal;
+        private Label scorecardTimeBonusVal;
+        private Label scorecardFlawlessVal;
+        private Button btnReplayLevel;
 
         private Button btnResume;
         private Button btnHighscoresPause;
@@ -97,6 +122,8 @@ namespace Arcade.UI
         private Label valShield;
         private SliderInt sliderMultiBall;
         private Label valMultiBall;
+        private SliderInt sliderLaser;
+        private Label valLaser;
 
         // Active Powerup Badges
         private VisualElement shieldStatusBadge;
@@ -108,6 +135,11 @@ namespace Arcade.UI
         private VisualElement multiplierStatusBadge;
         private Label multiplierValueLabel;
         private Label multiplierTimerLabel;
+        private VisualElement laserStatusBadge;
+        private Label laserTimerLabel;
+        private VisualElement clutchStatusBadge;
+        private Label clutchMultiplierLabel;
+        private Label clutchTimerLabel;
 
         private Button btnApplyLevel;
         private Button btnCloseLevelSettings;
@@ -121,6 +153,7 @@ namespace Arcade.UI
         [SerializeField] private Sprite multiBallSprite;
         [SerializeField] private Sprite paddleExpandSprite;
         [SerializeField] private Sprite multiplierSprite;
+        [SerializeField] private Sprite laserSprite;
 
         [Header("Quick Control Icons")]
         [SerializeField] private Sprite levelSettingsSprite;
@@ -152,11 +185,33 @@ namespace Arcade.UI
         public VisualElement MultiplierStatusBadge => multiplierStatusBadge;
         public Label MultiplierValueLabel => multiplierValueLabel;
         public Label MultiplierTimerLabel => multiplierTimerLabel;
+        public VisualElement LaserStatusBadge => laserStatusBadge;
+        public Label LaserTimerLabel => laserTimerLabel;
+        public VisualElement ClutchStatusBadge => clutchStatusBadge;
+        public Label ClutchMultiplierLabel => clutchMultiplierLabel;
+        public Label ClutchTimerLabel => clutchTimerLabel;
+        public Label TimerLabel => timerLabel;
+        public Label ScoreDeltaLabel => scoreDeltaLabel;
+        public VisualElement ComboStatusBadge => comboStatusBadge;
+        public Label ComboLabel => comboLabel;
+        public VisualElement ScorecardStar1 => scorecardStar1;
+        public VisualElement ScorecardStar2 => scorecardStar2;
+        public VisualElement ScorecardStar3 => scorecardStar3;
+        public Label ScorecardBlocksVal => scorecardBlocksVal;
+        public Label ScorecardComboVal => scorecardComboVal;
+        public Label ScorecardTimeVal => scorecardTimeVal;
+        public Label ScorecardTimeBonusVal => scorecardTimeBonusVal;
+        public Label ScorecardFlawlessVal => scorecardFlawlessVal;
+        public Button BtnReplayLevel => btnReplayLevel;
         public Sprite PaddleExpandSprite => paddleExpandSprite;
         public Sprite MultiplierSprite => multiplierSprite;
         public Sprite ShieldSprite => shieldSprite;
         public Sprite MultiBallSprite => multiBallSprite;
+        public Sprite LaserSprite => laserSprite;
         public Sprite HeartSprite => heartFillSprite;
+        public VisualElement LevelClearBanner => levelClearBanner;
+        public Label LevelClearBannerText => levelClearBannerText;
+        public Label LevelClearBannerSubtext => levelClearBannerSubtext;
 
         private bool wasPausedByOptions = false;
         private bool wasPausedByLevelSettings = false;
@@ -297,6 +352,24 @@ namespace Arcade.UI
 
             if (btnNextLevel != null) btnNextLevel.clicked -= HandleNextLevelClicked;
             if (btnClearMenu != null) btnClearMenu.clicked -= HandleMenuClicked;
+            if (btnReplayLevel != null) btnReplayLevel.clicked -= HandleReplayLevelClicked;
+
+            if (scoreDeltaCoroutine != null)
+            {
+                StopCoroutine(scoreDeltaCoroutine);
+                scoreDeltaCoroutine = null;
+            }
+            if (scorePulseCoroutine != null)
+            {
+                StopCoroutine(scorePulseCoroutine);
+                scorePulseCoroutine = null;
+            }
+            if (scorecardStarsCoroutine != null)
+            {
+                StopCoroutine(scorecardStarsCoroutine);
+                scorecardStarsCoroutine = null;
+            }
+            scoreContainer = null;
 
             if (btnRetry != null) btnRetry.clicked -= HandleRestartClicked;
             if (btnOverMenu != null) btnOverMenu.clicked -= HandleMenuClicked;
@@ -311,6 +384,10 @@ namespace Arcade.UI
 
             if (btnApplyLevel != null) btnApplyLevel.clicked -= ApplyLevelSettingsAndRestart;
             if (btnCloseLevelSettings != null) btnCloseLevelSettings.clicked -= HideLevelSettings;
+
+            levelClearBanner = null;
+            levelClearBannerText = null;
+            levelClearBannerSubtext = null;
         }
 
         private void BindElements()
@@ -318,7 +395,23 @@ namespace Arcade.UI
             if (root == null) return;
 
             scoreLabel = root.Q<Label>("score-label");
+            scoreContainer = root.Q<VisualElement>("score-container");
             highscoreLabel = root.Q<Label>("highscore-label");
+            timerLabel = root.Q<Label>("timer-label");
+            scoreDeltaLabel = root.Q<Label>("score-delta-label");
+            comboStatusBadge = root.Q<VisualElement>("combo-status-badge");
+            comboLabel = root.Q<Label>("combo-label");
+
+            scorecardTitle = root.Q<Label>("scorecard-title");
+            scorecardStar1 = root.Q<VisualElement>("scorecard-star-1");
+            scorecardStar2 = root.Q<VisualElement>("scorecard-star-2");
+            scorecardStar3 = root.Q<VisualElement>("scorecard-star-3");
+            scorecardBlocksVal = root.Q<Label>("scorecard-blocks-val");
+            scorecardComboVal = root.Q<Label>("scorecard-combo-val");
+            scorecardTimeVal = root.Q<Label>("scorecard-time-val");
+            scorecardTimeBonusVal = root.Q<Label>("scorecard-timebonus-val");
+            scorecardFlawlessVal = root.Q<Label>("scorecard-flawless-val");
+            btnReplayLevel = root.Q<Button>("btn-replay-level");
 
             lifePips = new[]
             {
@@ -363,6 +456,8 @@ namespace Arcade.UI
                 paddleExpandSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
             if (multiplierSprite == null)
                 multiplierSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
+            if (laserSprite == null)
+                laserSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Laser.png");
 #endif
 
             shieldStatusBadge = root.Q<VisualElement>("shield-status-badge");
@@ -374,6 +469,11 @@ namespace Arcade.UI
             multiplierStatusBadge = root.Q<VisualElement>("multiplier-status-badge");
             multiplierValueLabel = root.Q<Label>("multiplier-value-label");
             multiplierTimerLabel = root.Q<Label>("multiplier-timer-label");
+            laserStatusBadge = root.Q<VisualElement>("laser-status-badge");
+            laserTimerLabel = root.Q<Label>("laser-timer-label");
+            clutchStatusBadge = root.Q<VisualElement>("clutch-status-badge");
+            clutchMultiplierLabel = root.Q<Label>("clutch-multiplier-label");
+            clutchTimerLabel = root.Q<Label>("clutch-timer-label");
 
             var iconShield = root.Q<VisualElement>("shield-status-icon");
             if (iconShield != null && shieldSprite != null)
@@ -390,6 +490,14 @@ namespace Arcade.UI
             var iconMultiplier = root.Q<VisualElement>("multiplier-status-icon");
             if (iconMultiplier != null && multiplierSprite != null)
                 iconMultiplier.style.backgroundImage = new StyleBackground(multiplierSprite);
+
+            var iconLaser = root.Q<VisualElement>("laser-status-icon");
+            if (iconLaser != null && laserSprite != null)
+                iconLaser.style.backgroundImage = new StyleBackground(laserSprite);
+
+            var iconClutch = root.Q<VisualElement>("clutch-status-icon");
+            if (iconClutch != null && laserSprite != null)
+                iconClutch.style.backgroundImage = new StyleBackground(laserSprite);
 
             btnQuickLevels = root.Q<Button>("btn-quick-levels");
             btnQuickMute = root.Q<Button>("btn-quick-mute");
@@ -411,6 +519,9 @@ namespace Arcade.UI
                 iconQuickOptions.style.rotate = new StyleRotate(new Rotate(Angle.Degrees(0f)));
 
             launchBanner = root.Q<VisualElement>("launch-banner");
+            levelClearBanner = root.Q<VisualElement>("level-clear-banner");
+            levelClearBannerText = root.Q<Label>("level-clear-banner-text");
+            levelClearBannerSubtext = root.Q<Label>("level-clear-banner-subtext");
 
             pauseModal = root.Q<VisualElement>("pause-modal");
             optionsModal = root.Q<VisualElement>("options-modal");
@@ -469,6 +580,8 @@ namespace Arcade.UI
             valShield = root.Q<Label>("val-shield");
             sliderMultiBall = root.Q<SliderInt>("slider-multiball");
             valMultiBall = root.Q<Label>("val-multiball");
+            sliderLaser = root.Q<SliderInt>("slider-laser");
+            valLaser = root.Q<Label>("val-laser");
 
             btnApplyLevel = root.Q<Button>("btn-apply-level");
             btnCloseLevelSettings = root.Q<Button>("btn-close-level-settings");
@@ -489,6 +602,7 @@ namespace Arcade.UI
 
             if (btnNextLevel != null) btnNextLevel.clicked += HandleNextLevelClicked;
             if (btnClearMenu != null) btnClearMenu.clicked += HandleMenuClicked;
+            if (btnReplayLevel != null) btnReplayLevel.clicked += HandleReplayLevelClicked;
 
             if (btnRetry != null) btnRetry.clicked += HandleRestartClicked;
             if (btnOverMenu != null) btnOverMenu.clicked += HandleMenuClicked;
@@ -531,7 +645,9 @@ namespace Arcade.UI
                     for (int i = 0; i < totalLevels; i++)
                     {
                         int lvlNum = i + 1;
-                        var btn = new Button { text = $"LVL {lvlNum}" };
+                        int stars = HighScoreManager.GetLevelStars(lvlNum);
+                        string starSuffix = stars > 0 ? $" ({stars}★)" : "";
+                        var btn = new Button { text = $"LVL {lvlNum}{starSuffix}" };
                         btn.AddToClassList("level-tab-btn");
                         tabsContainer.Add(btn);
                         hudLevelTabButtons.Add(btn);
@@ -639,6 +755,15 @@ namespace Arcade.UI
                 });
             }
 
+            if (sliderLaser != null)
+            {
+                sliderLaser.RegisterValueChangedCallback(evt =>
+                {
+                    if (activeEditableConfig != null) activeEditableConfig.SetLaserCount(evt.newValue);
+                    if (valLaser != null) valLaser.text = evt.newValue.ToString();
+                });
+            }
+
             if (btnApplyLevel != null) btnApplyLevel.clicked += ApplyLevelSettingsAndRestart;
             if (btnCloseLevelSettings != null) btnCloseLevelSettings.clicked += HideLevelSettings;
         }
@@ -659,6 +784,15 @@ namespace Arcade.UI
                 ArcadeGameManager.Instance.OnPaddleExpandTick += HandlePaddleExpandTick;
                 ArcadeGameManager.Instance.OnScoreMultiplierStateChanged += HandleScoreMultiplierStateChanged;
                 ArcadeGameManager.Instance.OnScoreMultiplierTick += HandleScoreMultiplierTick;
+                ArcadeGameManager.Instance.OnLaserPowerupStateChanged += HandleLaserPowerupStateChanged;
+                ArcadeGameManager.Instance.OnLaserPowerupTick += HandleLaserPowerupTick;
+                ArcadeGameManager.Instance.OnClutchStateChanged += HandleClutchStateChanged;
+                ArcadeGameManager.Instance.OnClutchTick += HandleClutchTick;
+                ArcadeGameManager.Instance.OnLevelTimerTick += HandleLevelTimerTick;
+                ArcadeGameManager.Instance.OnVolleyComboChanged += HandleVolleyComboChanged;
+                ArcadeGameManager.Instance.OnBlockPointsAwarded += HandleBlockPointsAwarded;
+                ArcadeGameManager.Instance.OnLevelCompletedWithTally += HandleLevelCompletedWithTally;
+                ArcadeGameManager.Instance.OnLevelClearPending += HandleLevelClearPending;
             }
         }
 
@@ -676,6 +810,15 @@ namespace Arcade.UI
                 ArcadeGameManager.Instance.OnPaddleExpandTick -= HandlePaddleExpandTick;
                 ArcadeGameManager.Instance.OnScoreMultiplierStateChanged -= HandleScoreMultiplierStateChanged;
                 ArcadeGameManager.Instance.OnScoreMultiplierTick -= HandleScoreMultiplierTick;
+                ArcadeGameManager.Instance.OnLaserPowerupStateChanged -= HandleLaserPowerupStateChanged;
+                ArcadeGameManager.Instance.OnLaserPowerupTick -= HandleLaserPowerupTick;
+                ArcadeGameManager.Instance.OnClutchStateChanged -= HandleClutchStateChanged;
+                ArcadeGameManager.Instance.OnClutchTick -= HandleClutchTick;
+                ArcadeGameManager.Instance.OnLevelTimerTick -= HandleLevelTimerTick;
+                ArcadeGameManager.Instance.OnVolleyComboChanged -= HandleVolleyComboChanged;
+                ArcadeGameManager.Instance.OnBlockPointsAwarded -= HandleBlockPointsAwarded;
+                ArcadeGameManager.Instance.OnLevelCompletedWithTally -= HandleLevelCompletedWithTally;
+                ArcadeGameManager.Instance.OnLevelClearPending -= HandleLevelClearPending;
             }
         }
 
@@ -690,6 +833,10 @@ namespace Arcade.UI
                 HandleActiveBallCountChanged(ArcadeGameManager.Instance.ActiveBallCount);
                 HandlePaddleExpandStateChanged(ArcadeGameManager.Instance.IsPaddleExpanded, ArcadeGameManager.Instance.PaddleExpandTimeRemaining);
                 HandleScoreMultiplierStateChanged(ArcadeGameManager.Instance.ActiveScoreMultiplier > 1, ArcadeGameManager.Instance.ActiveScoreMultiplier, ArcadeGameManager.Instance.MultiplierTimeRemaining);
+                HandleLaserPowerupStateChanged(ArcadeGameManager.Instance.IsLaserActive, ArcadeGameManager.Instance.LaserTimeRemaining);
+                HandleClutchStateChanged(ArcadeGameManager.Instance.IsClutchModeActive, ArcadeGameManager.Instance.ClutchTimeRemaining, ArcadeGameManager.Instance.ClutchMultiplier);
+                if (timerLabel != null) timerLabel.text = HighScoreManager.FormatTime(ArcadeGameManager.Instance.LevelElapsedTime);
+                HandleVolleyComboChanged(ArcadeGameManager.Instance.CurrentVolleyStreak, ArcadeGameManager.Instance.CurrentVolleyMultiplier);
             }
 
             if (ArcadeAudioManager.Instance != null)
@@ -704,6 +851,11 @@ namespace Arcade.UI
             targetFps = PlayerPrefs.GetInt("Arcade_TargetFPS", 60);
             Application.targetFrameRate = targetFps;
             if (btnFps != null) btnFps.text = $"{targetFps} FPS";
+
+            if (levelClearBanner != null)
+            {
+                levelClearBanner.AddToClassList("level-clear-banner-hidden");
+            }
         }
 
         public void UpdateScoreDisplay(int currentScore, int delta)
@@ -863,6 +1015,11 @@ namespace Arcade.UI
                     launchBanner.AddToClassList("launch-banner-hidden");
             }
 
+            if (levelClearBanner != null && state != GameState.Playing)
+            {
+                levelClearBanner.AddToClassList("level-clear-banner-hidden");
+            }
+
             // Pause Modal
             if (pauseModal != null)
             {
@@ -876,15 +1033,20 @@ namespace Arcade.UI
                 if (state == GameState.LevelClear)
                 {
                     if (clearScoreLabel != null && ArcadeGameManager.Instance != null)
-                        clearScoreLabel.text = $"FINAL SCORE: {ArcadeGameManager.Instance.Score}";
+                        clearScoreLabel.text = ArcadeGameManager.Instance.Score.ToString("#,##0");
 
                     if (btnNextLevel != null)
                     {
                         if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
                         int currentLvl = levelGenerator != null && levelGenerator.CurrentConfig != null ? levelGenerator.CurrentConfig.LevelNumber : 1;
                         int nextLvl = currentLvl + 1;
-                        int total = levelGenerator != null ? levelGenerator.TotalLevels : 3;
+                        int total = levelGenerator != null ? levelGenerator.TotalLevels : 15;
                         btnNextLevel.text = nextLvl > total ? "PLAY AGAIN (LOOP)" : $"NEXT LEVEL ({nextLvl})";
+                    }
+
+                    if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.CurrentLevelSummary.levelNumber > 0)
+                    {
+                        HandleLevelCompletedWithTally(ArcadeGameManager.Instance.CurrentLevelSummary);
                     }
 
                     levelClearModal.RemoveFromClassList("modal-hidden");
@@ -1001,6 +1163,388 @@ namespace Arcade.UI
         {
             if (multiplierTimerLabel != null)
                 multiplierTimerLabel.text = $"{Mathf.CeilToInt(timeRemaining)}s";
+        }
+
+        public void HandleLaserPowerupStateChanged(bool active, float remaining)
+        {
+            if (laserStatusBadge == null) return;
+            if (active)
+            {
+                laserStatusBadge.RemoveFromClassList("powerup-hidden");
+                laserStatusBadge.style.display = DisplayStyle.Flex;
+                if (laserTimerLabel != null) laserTimerLabel.text = $"{Mathf.CeilToInt(remaining)}s";
+            }
+            else
+            {
+                laserStatusBadge.AddToClassList("powerup-hidden");
+                laserStatusBadge.style.display = DisplayStyle.None;
+            }
+        }
+
+        public void HandleLaserPowerupTick(float timeRemaining)
+        {
+            if (laserTimerLabel != null)
+                laserTimerLabel.text = $"{Mathf.CeilToInt(timeRemaining)}s";
+        }
+
+        public void HandleClutchStateChanged(bool active, float remaining, int multiplier)
+        {
+            if (clutchStatusBadge == null) return;
+            if (active)
+            {
+                clutchStatusBadge.RemoveFromClassList("powerup-hidden");
+                clutchStatusBadge.style.display = DisplayStyle.Flex;
+                if (clutchMultiplierLabel != null) clutchMultiplierLabel.text = $"{multiplier}X";
+                if (clutchTimerLabel != null) clutchTimerLabel.text = $"{Mathf.CeilToInt(remaining)}s";
+            }
+            else
+            {
+                clutchStatusBadge.AddToClassList("powerup-hidden");
+                clutchStatusBadge.style.display = DisplayStyle.None;
+            }
+        }
+
+        public void HandleClutchTick(float timeRemaining, int multiplier)
+        {
+            if (clutchMultiplierLabel != null)
+                clutchMultiplierLabel.text = $"{multiplier}X";
+            if (clutchTimerLabel != null)
+                clutchTimerLabel.text = $"{Mathf.CeilToInt(timeRemaining)}s";
+        }
+
+        public void HandleLevelTimerTick(float elapsed)
+        {
+            if (timerLabel != null)
+            {
+                timerLabel.text = HighScoreManager.FormatTime(elapsed);
+            }
+        }
+
+        public void HandleVolleyComboChanged(int streak, int multiplier)
+        {
+            if (comboStatusBadge == null) return;
+
+            if (multiplier > 1)
+            {
+                comboStatusBadge.RemoveFromClassList("powerup-hidden");
+                comboStatusBadge.style.display = DisplayStyle.Flex;
+                if (comboLabel != null)
+                {
+                    comboLabel.text = $"🔥 x{multiplier} COMBO";
+                }
+            }
+            else
+            {
+                comboStatusBadge.AddToClassList("powerup-hidden");
+                comboStatusBadge.style.display = DisplayStyle.None;
+            }
+        }
+
+        public void HandleBlockPointsAwarded(Vector3 worldPos, int awardedPoints, int totalMultiplier, string bonusTag)
+        {
+            if (worldPos != Vector3.zero)
+            {
+                AnimateFlyingScore(worldPos, awardedPoints, totalMultiplier, bonusTag);
+            }
+            else if (scoreDeltaLabel != null)
+            {
+                if (scoreDeltaCoroutine != null) StopCoroutine(scoreDeltaCoroutine);
+                if (gameObject.activeInHierarchy) scoreDeltaCoroutine = StartCoroutine(DoScoreDeltaAnimation(awardedPoints, totalMultiplier));
+            }
+        }
+
+        public void AnimateFlyingScore(Vector3 worldPosition, int awardedPoints, int totalMultiplier, string bonusTag)
+        {
+            if (gameObject.activeInHierarchy)
+            {
+                StartCoroutine(DoFlyingScoreAnimation(worldPosition, awardedPoints, totalMultiplier, bonusTag));
+            }
+        }
+
+        private System.Collections.IEnumerator DoFlyingScoreAnimation(Vector3 worldPos, int points, int multiplier, string bonusTag)
+        {
+            if (root == null) yield break;
+
+            Camera cam = Camera.main;
+            Vector2 startPanelPos;
+            if (cam != null)
+            {
+                Vector3 screenPt = cam.WorldToScreenPoint(worldPos);
+                startPanelPos = new Vector2(screenPt.x, Screen.height - screenPt.y);
+                if (root.panel != null)
+                {
+                    startPanelPos = RuntimePanelUtils.ScreenToPanel(root.panel, startPanelPos);
+                }
+            }
+            else
+            {
+                startPanelPos = new Vector2(root.resolvedStyle.width * 0.5f, root.resolvedStyle.height * 0.5f);
+            }
+
+            Vector2 targetPanelPos;
+            if (scoreContainer != null && scoreContainer.worldBound.width > 0)
+            {
+                targetPanelPos = scoreContainer.worldBound.center;
+            }
+            else if (scoreLabel != null && scoreLabel.worldBound.width > 0)
+            {
+                targetPanelPos = scoreLabel.worldBound.center;
+            }
+            else
+            {
+                targetPanelPos = new Vector2(root.resolvedStyle.width * 0.5f, 35f);
+            }
+
+            Label flyingLabel = new Label();
+            flyingLabel.AddToClassList("flying-score");
+
+            // Format label text and apply visual hierarchy classes
+            if (!string.IsNullOrEmpty(bonusTag) && (bonusTag.Contains("BOMB") || bonusTag.Contains("CLUTCH")))
+            {
+                flyingLabel.text = $"+{points} {bonusTag}";
+                if (bonusTag.Contains("CLUTCH"))
+                    flyingLabel.AddToClassList("flying-score-clutch");
+                else
+                    flyingLabel.AddToClassList("flying-score-bomb");
+            }
+            else if (multiplier > 1)
+            {
+                flyingLabel.text = $"+{points} x{multiplier}";
+                flyingLabel.AddToClassList("flying-score-combo");
+            }
+            else
+            {
+                flyingLabel.text = $"+{points}";
+                flyingLabel.AddToClassList("flying-score-normal");
+            }
+
+            flyingLabel.pickingMode = PickingMode.Ignore;
+            flyingLabel.style.left = startPanelPos.x - 30f;
+            flyingLabel.style.top = startPanelPos.y - 12f;
+            root.Add(flyingLabel);
+
+            // Give a slight arc variance so multiple exploding blocks (e.g. bomb chains) fan out distinctly
+            float arcX = (startPanelPos.x - targetPanelPos.x) * 0.25f + UnityEngine.Random.Range(-20f, 20f);
+            float arcY = -40f - UnityEngine.Random.Range(10f, 30f);
+
+            float duration = 0.65f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float curvedT = Mathf.SmoothStep(0f, 1f, t);
+
+                Vector2 currentPos = Vector2.Lerp(startPanelPos, targetPanelPos, curvedT);
+                float sinT = Mathf.Sin(t * Mathf.PI);
+                currentPos.x += sinT * arcX;
+                currentPos.y += sinT * arcY;
+
+                flyingLabel.style.left = currentPos.x - 30f;
+                flyingLabel.style.top = currentPos.y - 12f;
+
+                // Scale: Pop up quickly to 1.35x, then settle and scale down to 0.85x on arrival
+                float scale = t < 0.2f
+                    ? Mathf.Lerp(0.8f, 1.35f, t / 0.2f)
+                    : Mathf.Lerp(1.35f, 0.85f, (t - 0.2f) / 0.8f);
+
+                flyingLabel.style.scale = new StyleScale(new Scale(new Vector2(scale, scale)));
+
+                // Fade out slightly near the very end
+                if (t > 0.85f)
+                {
+                    flyingLabel.style.opacity = Mathf.Lerp(1f, 0.2f, (t - 0.85f) / 0.15f);
+                }
+
+                yield return null;
+            }
+
+            if (root.Contains(flyingLabel))
+            {
+                root.Remove(flyingLabel);
+            }
+
+            // Punch score container on arrival
+            PulseScorePod();
+        }
+
+        public void PulseScorePod()
+        {
+            if (scoreContainer == null && scoreLabel == null) return;
+            if (gameObject.activeInHierarchy)
+            {
+                if (scorePulseCoroutine != null) StopCoroutine(scorePulseCoroutine);
+                scorePulseCoroutine = StartCoroutine(DoScorePulse());
+            }
+        }
+
+        private System.Collections.IEnumerator DoScorePulse()
+        {
+            var target = scoreContainer ?? (VisualElement)scoreLabel;
+            if (target == null) yield break;
+
+            target.AddToClassList("score-pop");
+            yield return new WaitForSecondsRealtime(0.10f);
+            target.RemoveFromClassList("score-pop");
+            scorePulseCoroutine = null;
+        }
+
+        private System.Collections.IEnumerator DoScoreDeltaAnimation(int points, int multiplier)
+        {
+            if (scoreDeltaLabel == null) yield break;
+
+            scoreDeltaLabel.text = multiplier > 1 ? $"+{points} (x{multiplier})" : $"+{points}";
+            scoreDeltaLabel.RemoveFromClassList("delta-hidden");
+            scoreDeltaLabel.AddToClassList("delta-visible");
+
+            yield return new WaitForSecondsRealtime(0.65f);
+
+            scoreDeltaLabel.RemoveFromClassList("delta-visible");
+            scoreDeltaLabel.AddToClassList("delta-hidden");
+            scoreDeltaCoroutine = null;
+        }
+
+        public void HandleLevelClearPending(float delay, bool wasClearedWithLaser)
+        {
+            if (levelClearBanner != null)
+            {
+                if (levelClearBannerText != null)
+                {
+                    levelClearBannerText.text = "LEVEL CLEARED!";
+                }
+
+                if (levelClearBannerSubtext != null)
+                {
+                    if (wasClearedWithLaser)
+                    {
+                        levelClearBannerSubtext.text = "CLUTCH OVERCHARGE!";
+                    }
+                    else if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.LivesLostThisLevel == 0)
+                    {
+                        levelClearBannerSubtext.text = "FLAWLESS VICTORY!";
+                    }
+                    else
+                    {
+                        levelClearBannerSubtext.text = "STAGE COMPLETE!";
+                    }
+                }
+
+                levelClearBanner.RemoveFromClassList("level-clear-banner-hidden");
+            }
+        }
+
+        public void HandleLevelCompletedWithTally(LevelSummaryData tally)
+        {
+            if (levelClearBanner != null)
+            {
+                levelClearBanner.AddToClassList("level-clear-banner-hidden");
+            }
+
+            if (scorecardBlocksVal != null) scorecardBlocksVal.text = tally.blocksDestroyed.ToString();
+            if (scorecardComboVal != null) scorecardComboVal.text = $"x{tally.highestCombo}";
+            if (scorecardTimeVal != null) scorecardTimeVal.text = $"{HighScoreManager.FormatTime(tally.elapsedTime)} / {HighScoreManager.FormatTime(tally.parTime)}";
+            if (scorecardTimeBonusVal != null)
+            {
+                scorecardTimeBonusVal.text = tally.speedBonus > 0
+                    ? $"+{tally.timeBonus} (+500 PAR)"
+                    : $"+{tally.timeBonus}";
+            }
+            if (scorecardFlawlessVal != null)
+            {
+                scorecardFlawlessVal.text = tally.isFlawless ? "+1,000 FLAWLESS!" : "---";
+            }
+            if (clearScoreLabel != null)
+            {
+                clearScoreLabel.text = tally.cumulativeScore.ToString("#,##0");
+            }
+
+            // Reset stars to empty initial state
+            ResetScorecardStars();
+
+            if (gameObject.activeInHierarchy)
+            {
+                if (scorecardStarsCoroutine != null) StopCoroutine(scorecardStarsCoroutine);
+                scorecardStarsCoroutine = StartCoroutine(AnimateScorecardStars(tally.starsEarned));
+            }
+            else
+            {
+                SetScorecardStarsInstant(tally.starsEarned);
+            }
+        }
+
+        private void ResetScorecardStars()
+        {
+            VisualElement[] stars = { scorecardStar1, scorecardStar2, scorecardStar3 };
+            for (int i = 0; i < stars.Length; i++)
+            {
+                if (stars[i] != null)
+                {
+                    stars[i].RemoveFromClassList("star-earned");
+                    stars[i].AddToClassList("star-empty");
+                }
+            }
+        }
+
+        private void SetScorecardStarsInstant(int starsEarned)
+        {
+            VisualElement[] stars = { scorecardStar1, scorecardStar2, scorecardStar3 };
+            for (int i = 0; i < stars.Length; i++)
+            {
+                if (stars[i] != null)
+                {
+                    if (i < starsEarned)
+                    {
+                        stars[i].RemoveFromClassList("star-empty");
+                        stars[i].AddToClassList("star-earned");
+                    }
+                    else
+                    {
+                        stars[i].RemoveFromClassList("star-earned");
+                        stars[i].AddToClassList("star-empty");
+                    }
+                }
+            }
+        }
+
+        private System.Collections.IEnumerator AnimateScorecardStars(int starsEarned)
+        {
+            VisualElement[] stars = { scorecardStar1, scorecardStar2, scorecardStar3 };
+            yield return new WaitForSecondsRealtime(0.2f);
+
+            for (int i = 0; i < starsEarned && i < stars.Length; i++)
+            {
+                if (stars[i] != null)
+                {
+                    stars[i].RemoveFromClassList("star-empty");
+                    stars[i].AddToClassList("star-earned");
+                    if (ArcadeAudioManager.Instance != null)
+                    {
+                        ArcadeAudioManager.Instance.PlayStarEarned(i + 1);
+                    }
+                }
+                yield return new WaitForSecondsRealtime(0.28f);
+            }
+            scorecardStarsCoroutine = null;
+        }
+
+        private void HandleReplayLevelClicked()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            if (scorecardStarsCoroutine != null)
+            {
+                StopCoroutine(scorecardStarsCoroutine);
+                scorecardStarsCoroutine = null;
+            }
+            if (levelClearModal != null) levelClearModal.AddToClassList("modal-hidden");
+            if (ArcadeGameManager.Instance != null)
+            {
+                ArcadeGameManager.Instance.ReplayCurrentLevel();
+            }
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
         }
 
         private void HandleQuickMuteClicked()
@@ -1170,16 +1714,22 @@ namespace Arcade.UI
         private void HandleNextLevelClicked()
         {
             if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
-            if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
-
-            if (levelGenerator != null)
+            if (scorecardStarsCoroutine != null)
             {
-                levelGenerator.AdvanceToNextLevel();
+                StopCoroutine(scorecardStarsCoroutine);
+                scorecardStarsCoroutine = null;
             }
-
             if (ArcadeGameManager.Instance != null)
             {
                 ArcadeGameManager.Instance.AdvanceToNextLevel();
+            }
+            else
+            {
+                if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
+                if (levelGenerator != null)
+                {
+                    levelGenerator.AdvanceToNextLevel();
+                }
             }
 
             if (levelClearModal != null) levelClearModal.AddToClassList("modal-hidden");
@@ -1370,6 +1920,9 @@ namespace Arcade.UI
 
             if (sliderMultiBall != null) sliderMultiBall.value = activeEditableConfig.MultiBallCount;
             if (valMultiBall != null) valMultiBall.text = activeEditableConfig.MultiBallCount.ToString();
+
+            if (sliderLaser != null) sliderLaser.value = activeEditableConfig.LaserCount;
+            if (valLaser != null) valLaser.text = activeEditableConfig.LaserCount.ToString();
         }
 
         private void ApplyLevelSettingsAndRestart()
@@ -1468,7 +2021,10 @@ namespace Arcade.UI
                 if (dateLabel != null)
                 {
                     if (i < scores.Count && scores[i].score > 0)
-                        dateLabel.text = scores[i].date;
+                    {
+                        string timeStr = scores[i].time > 0f ? $" • {HighScoreManager.FormatTime(scores[i].time)}" : "";
+                        dateLabel.text = $"L{scores[i].level}{timeStr} • {scores[i].date}";
+                    }
                     else
                         dateLabel.text = "---";
                 }

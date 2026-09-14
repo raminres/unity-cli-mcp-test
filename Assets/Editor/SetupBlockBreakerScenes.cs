@@ -37,85 +37,113 @@ namespace Arcade.Editor
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_01.asset", 1, "Level 1: First Flight",
                 "Gentle warmup stepped pyramid with comfortable ball speed. Introduces the Paddle Expander to widen your paddle and master bounce angles.",
                 BlockColorPattern.InvertedTiered, LevelLayoutType.Pyramid, 7, 1, 0.92f, 5.5f,
-                mult2x: 0, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 0, glass: 0, heart: 0, shield: 0, multiBall: 0);
+                mult2x: 0, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 0, glass: 0, heart: 0, shield: 0, multiBall: 0,
+                laser: 0, customLayout: null, shieldDuration: 10f,
+                parTime: 30f, timeBonusMax: 2500, starThresholds: new[] { 300, 800, 1400 });
 
             // Level 2: Glass & Gold (Diamond)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_02.asset", 2, "Level 2: Glass & Gold",
                 "A sparkling diamond gem formation. Introduces durable glass-encased bricks requiring two strikes and score multiplier targets for big points.",
                 BlockColorPattern.InvertedTiered, LevelLayoutType.Diamond, 7, 2, 0.96f, 5.2f,
-                mult2x: 1, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 0, glass: 2, heart: 0, shield: 0, multiBall: 0);
+                mult2x: 1, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 0, glass: 2, heart: 0, shield: 0, multiBall: 0,
+                laser: 0, customLayout: null, shieldDuration: 10f,
+                parTime: 35f, timeBonusMax: 3000, starThresholds: new[] { 600, 1400, 2400 });
 
             // Level 3: Twin Pillars (Pillars)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_03.asset", 3, "Level 3: Twin Pillars",
                 "Vertical block columns with open alleyways. Sneak the ball up the corridors for high-velocity top-row cascades, and trigger explosive Bomb bricks.",
                 BlockColorPattern.Checkerboard, LevelLayoutType.Pillars, 7, 2, 1.00f, 5.0f,
-                mult2x: 2, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 0, heart: 0, shield: 0, multiBall: 0);
+                mult2x: 2, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 0, heart: 0, shield: 0, multiBall: 0,
+                laser: 1, customLayout: null, shieldDuration: 10f,
+                parTime: 40f, timeBonusMax: 3000, starThresholds: new[] { 900, 2000, 3200 });
 
             // Level 4: Kinetic Shield (Shield)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_04.asset", 4, "Level 4: Kinetic Shield",
                 "An imposing heraldic crest shield. Deploy the bottom laser Shield power-up for a 10-second safety net, and collect extra heart lives.",
                 BlockColorPattern.InvertedTiered, LevelLayoutType.Shield, 8, 2, 1.04f, 5.0f,
-                mult2x: 1, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 1, glass: 2, heart: 1, shield: 1, multiBall: 0);
+                mult2x: 1, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 1, glass: 2, heart: 1, shield: 1, multiBall: 0,
+                laser: 0, customLayout: null, shieldDuration: 10f,
+                parTime: 45f, timeBonusMax: 3500, starThresholds: new[] { 1200, 2800, 4200 });
 
             // Level 5: Multi-Ball Ring (HollowBox)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_05.asset", 5, "Level 5: Multi-Ball Ring",
                 "A perimeter fortress framing a hollow bouncing chamber. Trigger Multi-Ball to unleash 3 balls ricocheting inside the inner sanctum!",
                 BlockColorPattern.Checkerboard, LevelLayoutType.HollowBox, 8, 2, 1.08f, 5.0f,
-                mult2x: 1, mult3x: 1, mult4x: 0, mult5x: 0, expanders: 0, bombs: 1, glass: 2, heart: 0, shield: 1, multiBall: 2);
+                mult2x: 1, mult3x: 1, mult4x: 0, mult5x: 0, expanders: 0, bombs: 1, glass: 2, heart: 0, shield: 1, multiBall: 2,
+                laser: 0, customLayout: null, shieldDuration: 10f,
+                parTime: 40f, timeBonusMax: 3500, starThresholds: new[] { 1600, 3600, 5500 });
 
             // Level 6: Royal Crown (Crown)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_06.asset", 6, "Level 6: Royal Crown",
                 "A triple-peaked royal crown with blazing 3X score multipliers and reinforced glass towers. Precision rebounds at high angles are rewarded.",
                 BlockColorPattern.InvertedTiered, LevelLayoutType.Crown, 9, 2, 1.12f, 5.0f,
-                mult2x: 1, mult3x: 2, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 1);
+                mult2x: 1, mult3x: 2, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 1,
+                laser: 1, customLayout: null, shieldDuration: 10f,
+                parTime: 55f, timeBonusMax: 4000, starThresholds: new[] { 2200, 5000, 7500 });
 
             // Level 7: Neon Heart (Heart)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_07.asset", 7, "Level 7: Neon Heart",
                 "An arcade heart silhouette with extra heart drops. Keep the rhythm alive as ball velocity continues to accelerate.",
                 BlockColorPattern.InvertedTiered, LevelLayoutType.Heart, 9, 2, 1.16f, 5.0f,
-                mult2x: 2, mult3x: 1, mult4x: 0, mult5x: 0, expanders: 1, bombs: 1, glass: 2, heart: 2, shield: 1, multiBall: 1);
+                mult2x: 2, mult3x: 1, mult4x: 0, mult5x: 0, expanders: 1, bombs: 1, glass: 2, heart: 2, shield: 1, multiBall: 1,
+                laser: 0, customLayout: null, shieldDuration: 10f,
+                parTime: 45f, timeBonusMax: 4000, starThresholds: new[] { 2800, 6200, 9200 });
 
             // Level 8: Space Invader (Invader)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_08.asset", 8, "Level 8: Space Invader",
                 "Retro 8-bit space invader alien silhouette! Battle past explosive perimeter bombs and collect 3X multipliers while juggling multi-balls.",
                 BlockColorPattern.Randomized, LevelLayoutType.Invader, 9, 2, 1.20f, 5.0f,
-                mult2x: 2, mult3x: 2, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 2, heart: 1, shield: 1, multiBall: 1);
+                mult2x: 2, mult3x: 2, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 2, heart: 1, shield: 1, multiBall: 1,
+                laser: 1, customLayout: null, shieldDuration: 10f,
+                parTime: 45f, timeBonusMax: 4500, starThresholds: new[] { 3500, 7500, 11000 });
 
             // Level 9: Crossfire (Cross)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_09.asset", 9, "Level 9: Crossfire",
                 "Four intersecting firing arms meet at an explosive nexus. Introduces the rare 4X score multiplier and devastating bomb chain reactions.",
                 BlockColorPattern.Checkerboard, LevelLayoutType.Cross, 9, 2, 1.24f, 5.0f,
-                mult2x: 2, mult3x: 1, mult4x: 1, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 1);
+                mult2x: 2, mult3x: 1, mult4x: 1, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 1,
+                laser: 0, customLayout: null, shieldDuration: 10f,
+                parTime: 50f, timeBonusMax: 4500, starThresholds: new[] { 4200, 9000, 13000 });
 
             // Level 10: The Hourglass (Hourglass)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_10.asset", 10, "Level 10: The Hourglass",
                 "A high-tension hourglass funnel pinching the center. Thread the ball through the bottleneck to sweep out the upper chamber.",
                 BlockColorPattern.InvertedTiered, LevelLayoutType.Hourglass, 9, 2, 1.28f, 5.0f,
-                mult2x: 2, mult3x: 2, mult4x: 1, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 1);
+                mult2x: 2, mult3x: 2, mult4x: 1, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 1,
+                laser: 0, customLayout: null, shieldDuration: 10f,
+                parTime: 55f, timeBonusMax: 5000, starThresholds: new[] { 5000, 10500, 15000 });
 
             // Level 11: Chevron Strike (Chevron)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_11.asset", 11, "Level 11: Chevron Strike",
                 "Aggressive forward arrowhead formation. Deflect angled strikes cleanly and ride high-velocity multi-ball surges.",
                 BlockColorPattern.Checkerboard, LevelLayoutType.Chevron, 9, 2, 1.32f, 5.0f,
-                mult2x: 2, mult3x: 2, mult4x: 1, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 2);
+                mult2x: 2, mult3x: 2, mult4x: 1, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 2,
+                laser: 1, customLayout: null, shieldDuration: 10f,
+                parTime: 40f, timeBonusMax: 5000, starThresholds: new[] { 6000, 12000, 17500 });
 
             // Level 12: Castle Bastion (Castle)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_12.asset", 12, "Level 12: Castle Bastion",
                 "Fortified medieval battlements with reinforced twin watchtower turrets, glass fortifications, and explosive armory vaults.",
                 BlockColorPattern.InvertedTiered, LevelLayoutType.Castle, 10, 2, 1.36f, 5.0f,
-                mult2x: 2, mult3x: 2, mult4x: 2, mult5x: 0, expanders: 2, bombs: 3, glass: 4, heart: 1, shield: 2, multiBall: 2);
+                mult2x: 2, mult3x: 2, mult4x: 2, mult5x: 0, expanders: 2, bombs: 3, glass: 4, heart: 1, shield: 2, multiBall: 2,
+                laser: 0, customLayout: null, shieldDuration: 10f,
+                parTime: 60f, timeBonusMax: 5500, starThresholds: new[] { 7000, 14000, 20000 });
 
             // Level 13: Quantum Lattice (CheckerboardEmpty)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_13.asset", 13, "Level 13: Quantum Lattice",
                 "A 50% density quantum lattice mesh with high-frequency empty gaps. Unlocks the supreme 5X combo multiplier!",
                 BlockColorPattern.Randomized, LevelLayoutType.CheckerboardEmpty, 10, 2, 1.40f, 5.0f,
-                mult2x: 2, mult3x: 2, mult4x: 2, mult5x: 1, expanders: 2, bombs: 3, glass: 4, heart: 1, shield: 2, multiBall: 2);
+                mult2x: 2, mult3x: 2, mult4x: 2, mult5x: 1, expanders: 2, bombs: 3, glass: 4, heart: 1, shield: 2, multiBall: 2,
+                laser: 0, customLayout: null, shieldDuration: 10f,
+                parTime: 50f, timeBonusMax: 5500, starThresholds: new[] { 8200, 16000, 23000 });
 
             // Level 14: Striped Vault (Stripes)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_14.asset", 14, "Level 14: Striped Vault",
                 "Horizontal clearance tiers separating fortified block bands. Precision bank shots between layers rack up massive scores with 5X multipliers.",
                 BlockColorPattern.InvertedTiered, LevelLayoutType.Stripes, 10, 2, 1.44f, 5.0f,
-                mult2x: 2, mult3x: 2, mult4x: 2, mult5x: 2, expanders: 2, bombs: 3, glass: 4, heart: 1, shield: 2, multiBall: 2);
+                mult2x: 2, mult3x: 2, mult4x: 2, mult5x: 2, expanders: 2, bombs: 3, glass: 4, heart: 1, shield: 2, multiBall: 2,
+                laser: 1, customLayout: null, shieldDuration: 10f,
+                parTime: 55f, timeBonusMax: 6000, starThresholds: new[] { 9500, 18500, 26500 });
 
             // Level 15: Chaos Labyrinth (Custom)
             string lvl15Custom =
@@ -129,7 +157,8 @@ namespace Arcade.Editor
                 "The ultimate 15-level grand climax! A master custom-authored ASCII labyrinth with tactical pockets, top velocity, and the entire powerup arsenal.",
                 BlockColorPattern.Randomized, LevelLayoutType.Custom, 10, 2, 1.48f, 5.0f,
                 mult2x: 2, mult3x: 2, mult4x: 2, mult5x: 2, expanders: 2, bombs: 4, glass: 4, heart: 2, shield: 2, multiBall: 2,
-                customLayout: lvl15Custom);
+                laser: 2, customLayout: lvl15Custom, shieldDuration: 10f,
+                parTime: 65f, timeBonusMax: 7000, starThresholds: new[] { 11000, 22000, 31000 });
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -138,7 +167,8 @@ namespace Arcade.Editor
         private static void CreateOrConfigureLevel(string path, int levelNumber, string name, string desc,
             BlockColorPattern pattern, LevelLayoutType layoutType, int cols, int rowsPerTier, float speed, float paddleWidth,
             int mult2x, int mult3x, int mult4x, int mult5x, int expanders, int bombs, int glass, int heart, int shield, int multiBall,
-            string customLayout = null, float shieldDuration = 10f)
+            int laser = 0, string customLayout = null, float shieldDuration = 10f,
+            float parTime = 40f, int timeBonusMax = 3000, int[] starThresholds = null)
         {
             var config = AssetDatabase.LoadAssetAtPath<LevelConfiguration>(path);
             if (config == null)
@@ -172,7 +202,27 @@ namespace Arcade.Editor
             so.FindProperty("extraHeartCount").intValue = heart;
             so.FindProperty("shieldCount").intValue = shield;
             so.FindProperty("multiBallCount").intValue = multiBall;
+            var laserProp = so.FindProperty("laserCount");
+            if (laserProp != null) laserProp.intValue = laser;
             so.FindProperty("shieldDuration").floatValue = shieldDuration;
+
+            var parProp = so.FindProperty("parTime");
+            if (parProp != null) parProp.floatValue = parTime;
+            var bonusProp = so.FindProperty("timeBonusMax");
+            if (bonusProp != null) bonusProp.intValue = timeBonusMax;
+            if (starThresholds != null && starThresholds.Length == 3)
+            {
+                var starsProp = so.FindProperty("starThresholds");
+                if (starsProp != null && starsProp.isArray)
+                {
+                    starsProp.arraySize = 3;
+                    for (int s = 0; s < 3; s++)
+                    {
+                        starsProp.GetArrayElementAtIndex(s).intValue = starThresholds[s];
+                    }
+                }
+            }
+
             so.ApplyModifiedProperties();
             EditorUtility.SetDirty(config);
         }
@@ -324,32 +374,52 @@ namespace Arcade.Editor
             // 6. Playfield Boundaries
             var boundariesRoot = new GameObject("Boundaries");
 
-            // Left Wall
+            // Left Wall (shortened to 30.2 to join continuous 45° corner chamfer)
             var leftWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
             leftWall.name = "LeftWall";
             leftWall.transform.SetParent(boundariesRoot.transform);
-            leftWall.transform.position = new Vector3(-10.25f, 8.5f, 0f);
-            leftWall.transform.localScale = new Vector3(0.5f, 32f, 2f);
+            leftWall.transform.position = new Vector3(-10.25f, 7.60f, 0f);
+            leftWall.transform.localScale = new Vector3(0.5f, 30.2f, 2f);
             if (borderMat != null) leftWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
             leftWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
-            // Right Wall
+            // Right Wall (shortened to 30.2 to join continuous 45° corner chamfer)
             var rightWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
             rightWall.name = "RightWall";
             rightWall.transform.SetParent(boundariesRoot.transform);
-            rightWall.transform.position = new Vector3(10.25f, 8.5f, 0f);
-            rightWall.transform.localScale = new Vector3(0.5f, 32f, 2f);
+            rightWall.transform.position = new Vector3(10.25f, 7.60f, 0f);
+            rightWall.transform.localScale = new Vector3(0.5f, 30.2f, 2f);
             if (borderMat != null) rightWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
             rightWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
-            // Top Wall
+            // Top Wall (shortened to 17.4 to join continuous 45° corner chamfers)
             var topWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
             topWall.name = "TopWall";
             topWall.transform.SetParent(boundariesRoot.transform);
             topWall.transform.position = new Vector3(0f, 24.25f, 0f);
-            topWall.transform.localScale = new Vector3(21f, 0.5f, 2f);
+            topWall.transform.localScale = new Vector3(17.4f, 0.5f, 2f);
             if (borderMat != null) topWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
             topWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+
+            // Top-Left 45° Corner Chamfer (redirects vertical balls diagonally into playfield, continuous perimeter)
+            var chamferTopLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            chamferTopLeft.name = "Chamfer_TopLeft";
+            chamferTopLeft.transform.SetParent(boundariesRoot.transform);
+            chamferTopLeft.transform.position = new Vector3(-9.40f, 23.40f, 0f);
+            chamferTopLeft.transform.rotation = Quaternion.Euler(0f, 0f, 45f);
+            chamferTopLeft.transform.localScale = new Vector3(2.5f, 0.5f, 2f);
+            if (borderMat != null) chamferTopLeft.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
+            chamferTopLeft.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+
+            // Top-Right 45° Corner Chamfer (redirects vertical balls diagonally into playfield, continuous perimeter)
+            var chamferTopRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            chamferTopRight.name = "Chamfer_TopRight";
+            chamferTopRight.transform.SetParent(boundariesRoot.transform);
+            chamferTopRight.transform.position = new Vector3(9.40f, 23.40f, 0f);
+            chamferTopRight.transform.rotation = Quaternion.Euler(0f, 0f, -45f);
+            chamferTopRight.transform.localScale = new Vector3(2.5f, 0.5f, 2f);
+            if (borderMat != null) chamferTopRight.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
+            chamferTopRight.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
             // Bottom Kill Zone Trigger
             var killZone = new GameObject("KillZone");
