@@ -6,6 +6,27 @@ using UnityEngine.SceneManagement;
 
 namespace Arcade.Core
 {
+    [Serializable]
+    public struct LevelSummaryData
+    {
+        public int levelNumber;
+        public string levelName;
+        public int blocksDestroyed;
+        public int baseBlockPoints;
+        public int highestCombo;
+        public float elapsedTime;
+        public float parTime;
+        public int timeBonus;
+        public bool isUnderPar;
+        public int speedBonus;
+        public bool isFlawless;
+        public int flawlessBonus;
+        public int totalLevelScore;
+        public int cumulativeScore;
+        public int starsEarned;
+        public bool isNewBestTime;
+    }
+
     /// <summary>
     /// Central game coordinator managing state machine, scoring, lives, and high-level gameplay events.
     /// </summary>
@@ -25,11 +46,22 @@ namespace Arcade.Core
 
         [Header("Runtime State")]
         [SerializeField] private GameState currentState = GameState.ReadyToLaunch;
+        [SerializeField] private int currentLevel = 1;
         [SerializeField] private int currentScore = 0;
         [SerializeField] private int highScore = 0;
         [SerializeField] private int remainingLives = 3;
         [SerializeField] private int remainingBlocks = 0;
         [SerializeField] private int totalBlocksInLevel = 0;
+
+        // Level Session Statistics
+        private float levelElapsedTime = 0f;
+        private float totalRunElapsedTime = 0f;
+        private int currentVolleyStreak = 0;
+        private int highestVolleyComboThisLevel = 1;
+        private int blocksDestroyedThisLevel = 0;
+        private int baseBlockPointsThisLevel = 0;
+        private int livesLostThisLevel = 0;
+        private LevelSummaryData currentLevelSummary;
 
         [Header("Power-Up States")]
         [SerializeField] private bool isShieldActive = false;
@@ -40,12 +72,11 @@ namespace Arcade.Core
         [SerializeField] private float multiplierTimeRemaining = 0f;
         [SerializeField] private bool isLaserActive = false;
         [SerializeField] private float laserTimeRemaining = 0f;
-
-        [Header("Clutch Railgun Overcharge")]
-        [SerializeField] private float clutchDuration = 12f;
+        [SerializeField] private float laserDuration = 10f;
         [SerializeField] private bool isClutchModeActive = false;
         [SerializeField] private float clutchTimeRemaining = 0f;
-        [SerializeField] private int clutchMultiplier = 10;
+        [SerializeField] private float clutchDuration = 12f;
+        [SerializeField] private int clutchMultiplier = 1;
 
         [Header("Asset References")]
         [SerializeField] private Material powerupCapsuleMaterial;
@@ -69,13 +100,24 @@ namespace Arcade.Core
         public event Action<float> OnLaserPowerupTick;
         public event Action<bool, float, int> OnClutchStateChanged;
         public event Action<float, int> OnClutchTick;
+        public event Action<float> OnLevelTimerTick;
+        public event Action<int, int> OnVolleyComboChanged; // (currentStreak, multiplier)
+        public event Action<Vector3, int, int, string> OnBlockPointsAwarded; // (worldPos, awardedPoints, totalMultiplier, tag)
+        public event Action<LevelSummaryData> OnLevelCompletedWithTally;
 
         public GameState State => currentState;
+        public int CurrentLevel => currentLevel;
         public int Score => currentScore;
         public int HighScore => highScore;
         public int Lives => remainingLives;
         public int RemainingBlocks => remainingBlocks;
         public int TotalBlocks => totalBlocksInLevel;
+        public float LevelElapsedTime => levelElapsedTime;
+        public float TotalRunElapsedTime => totalRunElapsedTime;
+        public int CurrentVolleyStreak => currentVolleyStreak;
+        public int CurrentVolleyMultiplier => BallController.GetVolleyMultiplier(currentVolleyStreak);
+        public int HighestVolleyComboThisLevel => highestVolleyComboThisLevel;
+        public LevelSummaryData CurrentLevelSummary => currentLevelSummary;
         public bool IsShieldActive => isShieldActive;
         public float ShieldTimeRemaining => shieldTimeRemaining;
         public bool IsPaddleExpanded => isPaddleExpanded;
@@ -87,6 +129,7 @@ namespace Arcade.Core
         public bool IsClutchModeActive => isClutchModeActive;
         public float ClutchTimeRemaining => clutchTimeRemaining;
         public int ClutchMultiplier => clutchMultiplier;
+        public float ClutchDuration => clutchDuration;
         public System.Collections.Generic.IReadOnlyList<BallController> ActiveBalls => activeBalls;
         public int ActiveBallCount => activeBalls.Count;
 
@@ -152,6 +195,10 @@ namespace Arcade.Core
         {
             if (currentState == GameState.Playing)
             {
+                levelElapsedTime += Time.deltaTime;
+                totalRunElapsedTime += Time.deltaTime;
+                OnLevelTimerTick?.Invoke(levelElapsedTime);
+
                 if (isShieldActive)
                 {
                     TickShield(Time.deltaTime);
@@ -556,10 +603,41 @@ namespace Arcade.Core
             RecordBallLost();
         }
 
-        public void RegisterLevelBlocks(int blockCount)
+        public void RegisterLevelBlocks(int blockCount, int levelNumber = 1)
         {
             totalBlocksInLevel = blockCount;
             remainingBlocks = blockCount;
+            currentLevel = levelNumber;
+            ResetLevelSessionStats();
+        }
+
+        public void ResetLevelSessionStats()
+        {
+            levelElapsedTime = 0f;
+            currentVolleyStreak = 0;
+            highestVolleyComboThisLevel = 1;
+            blocksDestroyedThisLevel = 0;
+            baseBlockPointsThisLevel = 0;
+            livesLostThisLevel = 0;
+            OnVolleyComboChanged?.Invoke(0, 1);
+            OnLevelTimerTick?.Invoke(0f);
+        }
+
+        public void NotifyVolleyHit(BallController ball, int streak)
+        {
+            currentVolleyStreak = streak;
+            int mult = BallController.GetVolleyMultiplier(streak);
+            if (mult > highestVolleyComboThisLevel)
+            {
+                highestVolleyComboThisLevel = mult;
+            }
+            OnVolleyComboChanged?.Invoke(streak, mult);
+        }
+
+        public void NotifyVolleySaved(BallController ball, int streak)
+        {
+            currentVolleyStreak = 0;
+            OnVolleyComboChanged?.Invoke(0, 1);
         }
 
         public void SetState(GameState newState)
@@ -588,6 +666,18 @@ namespace Arcade.Core
 
         public void RecordBlockDestroyed(int points, int colorTier)
         {
+            RecordBlockDestroyed(points, colorTier, Vector3.zero, 1, 0, 1, "");
+        }
+
+        public void RecordBlockDestroyed(
+            int points,
+            int colorTier,
+            Vector3 worldPos,
+            int volleyMultiplier = 1,
+            int volleyStreak = 0,
+            int chainMultiplier = 1,
+            string bonusTag = "")
+        {
             if (currentState == GameState.GameOver || currentState == GameState.LevelClear) return;
 
             int effectiveMultiplier = activeScoreMultiplier;
@@ -596,16 +686,36 @@ namespace Arcade.Core
                 effectiveMultiplier = Mathf.Max(effectiveMultiplier, clutchMultiplier);
             }
 
-            int awardedPoints = points * effectiveMultiplier;
+            int multiBallMult = Mathf.Max(1, activeBalls.Count);
+            int totalMult = effectiveMultiplier * Mathf.Max(1, volleyMultiplier) * Mathf.Max(1, chainMultiplier) * multiBallMult;
+            int awardedPoints = points * totalMult;
+
             currentScore += awardedPoints;
             remainingBlocks = Mathf.Max(0, remainingBlocks - 1);
+
+            blocksDestroyedThisLevel++;
+            baseBlockPointsThisLevel += points;
+            if (volleyMultiplier > highestVolleyComboThisLevel)
+            {
+                highestVolleyComboThisLevel = volleyMultiplier;
+            }
 
             if (currentScore > highScore)
             {
                 highScore = currentScore;
-                HighScoreManager.RecordScore(currentScore);
+                HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime);
             }
 
+            string displayTag = bonusTag;
+            if (string.IsNullOrEmpty(displayTag))
+            {
+                if (isClutchModeActive) displayTag = $"CLUTCH {clutchMultiplier}X!";
+                else if (chainMultiplier > 1) displayTag = $"CHAIN x{chainMultiplier}!";
+                else if (volleyMultiplier > 1) displayTag = $"COMBO x{volleyMultiplier}!";
+                else if (multiBallMult > 1) displayTag = $"x{multiBallMult} MULTI-BALL!";
+            }
+
+            OnBlockPointsAwarded?.Invoke(worldPos, awardedPoints, totalMult, displayTag);
             OnScoreChanged?.Invoke(currentScore, awardedPoints);
             SaveCurrentGameSession();
 
@@ -650,7 +760,7 @@ namespace Arcade.Core
 
             if (allBlocksCleared)
             {
-                HighScoreManager.RecordScore(currentScore);
+                HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime);
                 OnLevelCleared();
             }
         }
@@ -668,6 +778,9 @@ namespace Arcade.Core
             EndClutchMode();
 
             remainingLives--;
+            livesLostThisLevel++;
+            currentVolleyStreak = 0;
+            OnVolleyComboChanged?.Invoke(0, 1);
             OnLivesChanged?.Invoke(remainingLives);
 
             if (ArcadeAudioManager.Instance != null)
@@ -706,11 +819,61 @@ namespace Arcade.Core
             EndClutchMode();
             SetState(GameState.LevelClear);
 
+            // Fetch current level configuration
+            var generator = FindAnyObjectByType<BlockBreaker.LevelGenerator>();
+            var config = generator != null ? (generator.CurrentConfig ?? generator.GetLevelConfig(currentLevel)) : null;
+
+            float parTime = config != null ? config.ParTime : 40f;
+            int timeBonusPool = config != null ? config.TimeBonusMax : 3000;
+            int timeBonus = Mathf.Max(0, timeBonusPool - Mathf.FloorToInt(levelElapsedTime * 35f));
+            bool isUnderPar = levelElapsedTime <= parTime;
+            int speedBonus = isUnderPar ? 500 : 0;
+            bool isFlawless = livesLostThisLevel == 0;
+            int flawlessBonus = isFlawless ? 1000 : 0;
+
+            int totalBonuses = timeBonus + speedBonus + flawlessBonus;
+            currentScore += totalBonuses;
+
+            if (currentScore > highScore)
+            {
+                highScore = currentScore;
+            }
+
+            int[] thresholds = config != null ? config.StarThresholds : new int[] { 800, 1500, 2500 };
+            int stars = 1; // 1 star for clearing the level
+            if (currentScore >= thresholds[1]) stars = 2;
+            if (currentScore >= thresholds[2]) stars = 3;
+
+            bool isNewBestTime = HighScoreManager.RecordLevelTime(currentLevel, levelElapsedTime);
+            HighScoreManager.SetLevelStars(currentLevel, stars);
+            HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime);
+
+            currentLevelSummary = new LevelSummaryData
+            {
+                levelNumber = currentLevel,
+                levelName = config != null ? config.LevelName : $"Level {currentLevel}",
+                blocksDestroyed = blocksDestroyedThisLevel,
+                baseBlockPoints = baseBlockPointsThisLevel,
+                highestCombo = highestVolleyComboThisLevel,
+                elapsedTime = levelElapsedTime,
+                parTime = parTime,
+                timeBonus = timeBonus,
+                isUnderPar = isUnderPar,
+                speedBonus = speedBonus,
+                isFlawless = isFlawless,
+                flawlessBonus = flawlessBonus,
+                totalLevelScore = (baseBlockPointsThisLevel * highestVolleyComboThisLevel) + totalBonuses,
+                cumulativeScore = currentScore,
+                starsEarned = stars,
+                isNewBestTime = isNewBestTime
+            };
+
             if (ArcadeAudioManager.Instance != null)
             {
                 ArcadeAudioManager.Instance.PlayLevelClear();
             }
 
+            OnLevelCompletedWithTally?.Invoke(currentLevelSummary);
             SaveCurrentGameSession();
         }
 
@@ -724,6 +887,41 @@ namespace Arcade.Core
             DeactivateLaserPowerup();
             EndClutchMode();
             Time.timeScale = 1f;
+
+            var generator = FindAnyObjectByType<BlockBreaker.LevelGenerator>();
+            if (generator != null)
+            {
+                generator.AdvanceToNextLevel();
+                currentLevel = generator.CurrentConfig != null ? generator.CurrentConfig.LevelNumber : currentLevel + 1;
+            }
+            else
+            {
+                currentLevel++;
+            }
+
+            ResetLevelSessionStats();
+            SetState(GameState.ReadyToLaunch);
+            SaveCurrentGameSession();
+        }
+
+        public void ReplayCurrentLevel()
+        {
+            BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
+            ClearExtraBalls();
+            DeactivateShield();
+            DeactivatePaddleExpander();
+            DeactivateScoreMultiplier();
+            DeactivateLaserPowerup();
+            EndClutchMode();
+            Time.timeScale = 1f;
+
+            var generator = FindAnyObjectByType<BlockBreaker.LevelGenerator>();
+            if (generator != null)
+            {
+                generator.SelectAndLoadLevel(currentLevel);
+            }
+
+            ResetLevelSessionStats();
             SetState(GameState.ReadyToLaunch);
             SaveCurrentGameSession();
         }
@@ -739,7 +937,7 @@ namespace Arcade.Core
             EndClutchMode();
             if (currentScore > 0)
             {
-                HighScoreManager.RecordScore(currentScore);
+                HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime);
             }
             SetState(GameState.GameOver);
             ClearSavedGame();

@@ -35,6 +35,11 @@
                 <ui:Label name="menu-level-name" text="Level 1: Classic Inverted" class="level-name-display" />
                 <ui:Label name="menu-level-desc" text="Classic 3-tier block setup with Red on bottom, Green in middle, and Blue on top. Features random x2 multiplier and paddle expander blocks." class="level-desc-display" />
 
+                <ui:VisualElement class="level-stats-pod">
+                    <ui:Label name="menu-level-stars" text="★★★" class="level-stars-display" />
+                    <ui:Label name="menu-level-best-time" text="BEST TIME: --:--" class="level-time-display" />
+                </ui:VisualElement>
+
                 <ui:Button name="btn-start-selected-level" text="PLAY LEVEL" class="arcade-button primary-btn modal-action-btn" />
                 <ui:Button name="btn-close-level-modal" text="BACK" class="arcade-button default-btn modal-close-btn" />
             </ui:VisualElement>

@@ -13,9 +13,16 @@
                 <ui:VisualElement name="life-pip-5" class="life-pip pip-hidden" />
             </ui:VisualElement>
 
-            <!-- Center Pod: Current Score Only -->
+            <!-- Center Pod: Current Score & Floating Delta Pop -->
             <ui:VisualElement name="score-container" class="score-container hud-pod score-pod">
                 <ui:Label name="score-label" text="SCORE: 0" class="score-main" />
+                <ui:Label name="score-delta-label" text="" class="score-delta delta-hidden" picking-mode="Ignore" />
+            </ui:VisualElement>
+
+            <!-- Timer Pod: Live Level Stopwatch -->
+            <ui:VisualElement name="timer-container" class="timer-container hud-pod timer-pod">
+                <ui:VisualElement name="icon-timer" class="timer-icon" picking-mode="Ignore" />
+                <ui:Label name="timer-label" text="00:00" class="timer-main" />
             </ui:VisualElement>
 
             <!-- Right Pod: Quick Action Buttons (Mute, Settings, Pause) -->
@@ -59,6 +66,9 @@
                 <ui:VisualElement name="clutch-status-icon" class="powerup-status-icon icon-laser" picking-mode="Ignore" />
                 <ui:Label name="clutch-multiplier-label" text="10X" class="powerup-timer-label clutch-val-text" />
                 <ui:Label name="clutch-timer-label" text="12s" class="powerup-timer-label" />
+            </ui:VisualElement>
+            <ui:VisualElement name="combo-status-badge" class="powerup-badge combo-badge powerup-hidden">
+                <ui:Label name="combo-label" text="🔥 x2 COMBO" class="powerup-timer-label combo-val-text" />
             </ui:VisualElement>
         </ui:VisualElement>
 
@@ -299,13 +309,46 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- Level Cleared Modal -->
+        <!-- Level Cleared / Victory Scorecard Modal -->
         <ui:VisualElement name="level-clear-modal" class="modal-backdrop modal-hidden">
-            <ui:VisualElement class="modal-card victory-card">
-                <ui:Label text="LEVEL CLEARED!" class="modal-title victory-title" />
-                <ui:Label name="clear-score-label" text="FINAL SCORE: 600" class="modal-score" />
-                <ui:Button name="btn-next-level" text="NEXT LEVEL" class="arcade-btn btn-secondary" />
-                <ui:Button name="btn-clear-menu" text="MAIN MENU" class="arcade-btn btn-default" />
+            <ui:VisualElement class="modal-card scorecard-card">
+                <ui:Label name="scorecard-title" text="LEVEL CLEARED!" class="modal-title victory-title" />
+                <ui:VisualElement name="scorecard-stars" class="scorecard-stars-row">
+                    <ui:VisualElement name="scorecard-star-1" class="scorecard-star star-empty" />
+                    <ui:VisualElement name="scorecard-star-2" class="scorecard-star star-empty" />
+                    <ui:VisualElement name="scorecard-star-3" class="scorecard-star star-empty" />
+                </ui:VisualElement>
+                <ui:VisualElement class="scorecard-table">
+                    <ui:VisualElement class="scorecard-row">
+                        <ui:Label text="Blocks Cleared" class="scorecard-row-label" />
+                        <ui:Label name="scorecard-blocks-val" text="0" class="scorecard-row-val" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="scorecard-row">
+                        <ui:Label text="Highest Volley Combo" class="scorecard-row-label" />
+                        <ui:Label name="scorecard-combo-val" text="x1" class="scorecard-row-val val-combo" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="scorecard-row">
+                        <ui:Label text="Time / Par" class="scorecard-row-label" />
+                        <ui:Label name="scorecard-time-val" text="00:00 / 00:40" class="scorecard-row-val val-time" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="scorecard-row">
+                        <ui:Label text="Time Bonus" class="scorecard-row-label" />
+                        <ui:Label name="scorecard-timebonus-val" text="+0" class="scorecard-row-val val-bonus" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="scorecard-row">
+                        <ui:Label text="Flawless Life Bonus" class="scorecard-row-label" />
+                        <ui:Label name="scorecard-flawless-val" text="---" class="scorecard-row-val val-flawless" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="scorecard-row scorecard-total-row">
+                        <ui:Label text="TOTAL SCORE" class="scorecard-total-label" />
+                        <ui:Label name="clear-score-label" text="0" class="scorecard-total-val" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="scorecard-btn-row">
+                    <ui:Button name="btn-replay-level" text="REPLAY" class="arcade-btn btn-secondary scorecard-action-btn" />
+                    <ui:Button name="btn-next-level" text="NEXT LEVEL" class="arcade-btn btn-primary scorecard-action-btn" />
+                    <ui:Button name="btn-clear-menu" text="MENU" class="arcade-btn btn-default scorecard-action-btn" />
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
 

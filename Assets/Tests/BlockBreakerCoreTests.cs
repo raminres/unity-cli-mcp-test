@@ -3705,6 +3705,247 @@ namespace Arcade.Tests
         }
 
         #endregion
+
+        #region Hybrid Scoring, Volley Combo, Par Times & Victory Scorecard Tests
+
+        [Test]
+        public void BallController_VolleyStreak_IncrementsAndCalculatesMultiplierCorrectly()
+        {
+            Assert.AreEqual(1, BallController.GetVolleyMultiplier(0));
+            Assert.AreEqual(1, BallController.GetVolleyMultiplier(1));
+            Assert.AreEqual(2, BallController.GetVolleyMultiplier(2));
+            Assert.AreEqual(3, BallController.GetVolleyMultiplier(3));
+            Assert.AreEqual(4, BallController.GetVolleyMultiplier(4));
+            Assert.AreEqual(5, BallController.GetVolleyMultiplier(5));
+            Assert.AreEqual(5, BallController.GetVolleyMultiplier(10));
+        }
+
+        [Test]
+        public void ArcadeGameManager_VolleyCombo_TracksHighestComboAndNotifiesSubscribers()
+        {
+            var mgrGo = new GameObject("TestMgr");
+            var mgr = mgrGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(mgr);
+
+            int lastStreak = -1;
+            int lastMult = -1;
+            mgr.OnVolleyComboChanged += (streak, mult) =>
+            {
+                lastStreak = streak;
+                lastMult = mult;
+            };
+
+            mgr.ResetLevelSessionStats();
+            Assert.AreEqual(0, mgr.CurrentVolleyStreak);
+            Assert.AreEqual(1, mgr.HighestVolleyComboThisLevel);
+
+            mgr.NotifyVolleyHit(null, 3);
+            Assert.AreEqual(3, mgr.CurrentVolleyStreak);
+            Assert.AreEqual(3, mgr.CurrentVolleyMultiplier);
+            Assert.AreEqual(3, mgr.HighestVolleyComboThisLevel);
+            Assert.AreEqual(3, lastStreak);
+            Assert.AreEqual(3, lastMult);
+
+            mgr.NotifyVolleySaved(null, 3);
+            Assert.AreEqual(0, mgr.CurrentVolleyStreak);
+            Assert.AreEqual(1, mgr.CurrentVolleyMultiplier);
+            Assert.AreEqual(3, mgr.HighestVolleyComboThisLevel, "Highest volley combo must persist across saves until level reset.");
+
+            Object.DestroyImmediate(mgrGo);
+            ArcadeGameManager.SetInstanceForTesting(null);
+        }
+
+        [Test]
+        public void LevelConfiguration_ParTimeAndStarThresholds_ClonedAccurately()
+        {
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+            config.SetParTime(35f);
+            config.SetTimeBonusMax(2800);
+            config.SetStarThresholds(new int[] { 500, 1200, 2200 });
+
+            Assert.AreEqual(35f, config.ParTime);
+            Assert.AreEqual(2800, config.TimeBonusMax);
+            Assert.AreEqual(3, config.StarThresholds.Length);
+            Assert.AreEqual(500, config.StarThresholds[0]);
+            Assert.AreEqual(1200, config.StarThresholds[1]);
+            Assert.AreEqual(2200, config.StarThresholds[2]);
+
+            var clone = config.Clone();
+            Assert.AreEqual(35f, clone.ParTime);
+            Assert.AreEqual(2800, clone.TimeBonusMax);
+            Assert.AreEqual(3, clone.StarThresholds.Length);
+            Assert.AreEqual(500, clone.StarThresholds[0]);
+            Assert.AreEqual(1200, clone.StarThresholds[1]);
+            Assert.AreEqual(2200, clone.StarThresholds[2]);
+
+            Object.DestroyImmediate(config);
+            Object.DestroyImmediate(clone);
+        }
+
+        [Test]
+        public void HighScoreManager_StarsAndBestTime_PersistAndClampCorrectly()
+        {
+            int testLvl = 99;
+            PlayerPrefs.DeleteKey(HighScoreManager.PREF_LEVEL_STARS_PREFIX + testLvl);
+            PlayerPrefs.DeleteKey(HighScoreManager.PREF_LEVEL_TIME_PREFIX + testLvl);
+
+            Assert.AreEqual(0, HighScoreManager.GetLevelStars(testLvl));
+            Assert.AreEqual(0f, HighScoreManager.GetLevelBestTime(testLvl));
+
+            // Setting stars
+            bool set1 = HighScoreManager.SetLevelStars(testLvl, 2);
+            Assert.IsTrue(set1);
+            Assert.AreEqual(2, HighScoreManager.GetLevelStars(testLvl));
+
+            // Lower stars should not overwrite
+            bool setLower = HighScoreManager.SetLevelStars(testLvl, 1);
+            Assert.IsFalse(setLower);
+            Assert.AreEqual(2, HighScoreManager.GetLevelStars(testLvl));
+
+            // Higher stars should overwrite
+            bool setHigher = HighScoreManager.SetLevelStars(testLvl, 3);
+            Assert.IsTrue(setHigher);
+            Assert.AreEqual(3, HighScoreManager.GetLevelStars(testLvl));
+
+            // Recording best time
+            bool rec1 = HighScoreManager.RecordLevelTime(testLvl, 45.5f);
+            Assert.IsTrue(rec1);
+            Assert.AreEqual(45.5f, HighScoreManager.GetLevelBestTime(testLvl));
+
+            // Slower time should not overwrite
+            bool recSlower = HighScoreManager.RecordLevelTime(testLvl, 52.0f);
+            Assert.IsFalse(recSlower);
+            Assert.AreEqual(45.5f, HighScoreManager.GetLevelBestTime(testLvl));
+
+            // Faster time should overwrite
+            bool recFaster = HighScoreManager.RecordLevelTime(testLvl, 38.2f);
+            Assert.IsTrue(recFaster);
+            Assert.AreEqual(38.2f, HighScoreManager.GetLevelBestTime(testLvl));
+
+            // Formatting
+            Assert.AreEqual("00:38", HighScoreManager.FormatTime(38.2f));
+            Assert.AreEqual("01:25", HighScoreManager.FormatTime(85f));
+            Assert.AreEqual("--:--", HighScoreManager.FormatTime(0f));
+
+            // Cleanup
+            PlayerPrefs.DeleteKey(HighScoreManager.PREF_LEVEL_STARS_PREFIX + testLvl);
+            PlayerPrefs.DeleteKey(HighScoreManager.PREF_LEVEL_TIME_PREFIX + testLvl);
+        }
+
+        [Test]
+        public void HighScoreManager_RecordScoreWithTime_PersistsRunElapsedTime()
+        {
+            HighScoreManager.ResetScores();
+
+            HighScoreManager.RecordScore(1500, 3, 72.5f);
+            var scores = HighScoreManager.GetTopScores();
+            Assert.AreEqual(1, scores.Count);
+            Assert.AreEqual(1500, scores[0].score);
+            Assert.AreEqual(3, scores[0].level);
+            Assert.AreEqual(72.5f, scores[0].time);
+
+            HighScoreManager.ResetScores();
+        }
+
+        [Test]
+        public void ArcadeGameManager_HybridScoring_CompoundMultipliersCalculateAccurately()
+        {
+            var mgrGo = new GameObject("TestMgr");
+            var mgr = mgrGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(mgr);
+
+            int awardedPts = 0;
+            int awardedMult = 0;
+            mgr.OnBlockPointsAwarded += (pos, pts, mult, tag) =>
+            {
+                awardedPts = pts;
+                awardedMult = mult;
+            };
+
+            // Base 20 pts, Volley x3, Multi-ball 1 (no extra balls) -> 20 * 3 = 60 pts
+            mgr.RecordBlockDestroyed(20, 1, Vector3.zero, volleyMultiplier: 3, chainMultiplier: 1, bonusTag: "");
+            Assert.AreEqual(60, awardedPts);
+            Assert.AreEqual(3, awardedMult);
+            Assert.AreEqual(60, mgr.Score);
+
+            Object.DestroyImmediate(mgrGo);
+            ArcadeGameManager.SetInstanceForTesting(null);
+        }
+
+        [Test]
+        public void ArcadeUIManager_TimerAndComboBadges_BindsAndDisplaysCorrectly()
+        {
+            var uiManagerGo = new GameObject("TestArcadeUIManager");
+            var panelRenderer = uiManagerGo.AddComponent<UnityEngine.UIElements.PanelRenderer>();
+            var uiMgr = uiManagerGo.AddComponent<ArcadeUIManager>();
+
+            var uxml = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+
+            panelRenderer.visualTreeAsset = uxml;
+            var root = uxml.CloneTree();
+
+            var bindMethod = typeof(ArcadeUIManager).GetMethod("BindElements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, root);
+            bindMethod.Invoke(uiMgr, null);
+
+            Assert.IsNotNull(uiMgr.TimerLabel);
+            Assert.IsNotNull(uiMgr.ScoreDeltaLabel);
+            Assert.IsNotNull(uiMgr.ComboStatusBadge);
+            Assert.IsNotNull(uiMgr.ComboLabel);
+            Assert.IsNotNull(uiMgr.ScorecardStar1);
+            Assert.IsNotNull(uiMgr.ScorecardStar2);
+            Assert.IsNotNull(uiMgr.ScorecardStar3);
+            Assert.IsNotNull(uiMgr.ScorecardBlocksVal);
+            Assert.IsNotNull(uiMgr.ScorecardComboVal);
+            Assert.IsNotNull(uiMgr.ScorecardTimeVal);
+            Assert.IsNotNull(uiMgr.ScorecardTimeBonusVal);
+            Assert.IsNotNull(uiMgr.ScorecardFlawlessVal);
+            Assert.IsNotNull(uiMgr.BtnReplayLevel);
+
+            // Test Timer Tick
+            uiMgr.HandleLevelTimerTick(65.4f);
+            Assert.AreEqual("01:05", uiMgr.TimerLabel.text);
+
+            // Test Volley Combo Badge
+            uiMgr.HandleVolleyComboChanged(3, 3);
+            Assert.IsFalse(uiMgr.ComboStatusBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual("🔥 x3 COMBO", uiMgr.ComboLabel.text);
+
+            uiMgr.HandleVolleyComboChanged(0, 1);
+            Assert.IsTrue(uiMgr.ComboStatusBadge.ClassListContains("powerup-hidden"));
+
+            // Test Victory Scorecard Population
+            var summary = new LevelSummaryData
+            {
+                levelNumber = 1,
+                levelName = "Test Level",
+                blocksDestroyed = 15,
+                highestCombo = 4,
+                elapsedTime = 28f,
+                parTime = 30f,
+                timeBonus = 2500,
+                isUnderPar = true,
+                speedBonus = 500,
+                isFlawless = true,
+                flawlessBonus = 1000,
+                totalLevelScore = 4500,
+                cumulativeScore = 4500,
+                starsEarned = 3,
+                isNewBestTime = true
+            };
+
+            uiMgr.HandleLevelCompletedWithTally(summary);
+            Assert.AreEqual("15", uiMgr.ScorecardBlocksVal.text);
+            Assert.AreEqual("x4", uiMgr.ScorecardComboVal.text);
+            Assert.AreEqual("00:28 / 00:30", uiMgr.ScorecardTimeVal.text);
+            Assert.IsTrue(uiMgr.ScorecardTimeBonusVal.text.Contains("PAR"));
+            Assert.AreEqual("+1,000 FLAWLESS!", uiMgr.ScorecardFlawlessVal.text);
+
+            Object.DestroyImmediate(uiManagerGo);
+        }
+
+        #endregion
     }
 }
 

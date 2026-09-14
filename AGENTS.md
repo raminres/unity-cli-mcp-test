@@ -53,9 +53,22 @@ This file provides persistent, high-density project context across agent session
 - **Arena Dimensions**:
   - Top Wall: $Y = 24.25$, Left/Right Walls: $X = \pm 10.5$ (height $32.0$), Kill Zone: $Y = -9.0$ ([KillZone.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/KillZone.cs)).
   - Camera: Perspective $38^\circ$ FOV with [ResponsiveCameraController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/Core/ResponsiveCameraController.cs) dynamically adjusting $Z$-distance to guarantee 100% visible arena boundaries across any aspect ratio (16:9, 9:16, 9:19.5, etc.).
-- **Lives & Scoring**:
+- **Lives & Hybrid Skill-Based Scoring**:
   - Starting lives: 3 (expandable up to max 5 via Extra Heart powerup).
   - Tiers: Red = 10 pts (bottom), Green = 20 pts (middle), Blue = 30 pts (top).
+  - **Volley Combo Multiplier**:
+    - Unreturned ball rallies increment streak: Hits 1–2 = $1\times$, Hits 3–4 = $2\times$, Hits 5–7 = $3\times$, Hits 8–10 = $4\times$, Hits 11+ = $5\times$ (MAX).
+    - Safely banks into score upon paddle impact with audio chime; resets streak if ball falls into kill zone.
+    - Ascending musical pitch scaling on consecutive break SFX ($+1$ semitone per hit up to $1.68\times$).
+  - **Powerup & Chain Synergies**:
+    - Bomb blasts apply compounding chain multipliers ($\text{base} \times 1.5^{\text{chainIndex}}$).
+    - Multi-ball multiplies all points earned by live ball count ($2\times$ or $3\times$).
+  - **Dual-Layer Real-Time Score Feedback**:
+    - **World-Space Floating Popups (`FloatingScoreManager.cs`)**: Spawns at impact point at $Z = -0.8\text{f}$ (`+30`, `+150 x3!`, `+450 BOMB!`) drifting up $+1.2$ units over $0.65\text{s}$.
+    - **HUD Dashboard Indicators**: Glowing score delta ticker (`score-delta-label`) popping `+150` next to score, live combo meter (`🔥 x3 COMBO`), and digital level stopwatch (`timer-pod`).
+  - **End-of-Level Victory Scorecard & 3-Star Rating**:
+    - Scorecard modal (`modal-scorecard`) tallies blocks destroyed, max volley combo, clear time vs par time, time bonus pool, under-par speed bonus (+500), and flawless life bonus (+1,000).
+    - Awards 1–3 stars evaluated against level thresholds and records personal Best Clear Time in `HighScoreManager`. Interactive `Replay`, `Next Level`, and `Main Menu` actions.
 
 ---
 

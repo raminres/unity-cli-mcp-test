@@ -54,6 +54,8 @@ namespace Arcade.UI
         private readonly System.Collections.Generic.List<Button> menuLevelTabButtons = new System.Collections.Generic.List<Button>();
         private Label menuLevelName;
         private Label menuLevelDesc;
+        private Label menuLevelStars;
+        private Label menuLevelBestTime;
         private int selectedLevelNumber = 1;
 
         // Options controls
@@ -226,7 +228,9 @@ namespace Arcade.UI
                 for (int i = 0; i < totalLevels; i++)
                 {
                     int lvlNum = i + 1;
-                    var btn = new Button { text = $"LVL {lvlNum}" };
+                    int stars = HighScoreManager.GetLevelStars(lvlNum);
+                    string starSuffix = stars > 0 ? $" ({stars}★)" : "";
+                    var btn = new Button { text = $"LVL {lvlNum}{starSuffix}" };
                     btn.AddToClassList("level-tab-btn");
                     tabsContainer.Add(btn);
                     menuLevelTabButtons.Add(btn);
@@ -236,6 +240,8 @@ namespace Arcade.UI
 
             menuLevelName = root.Q<Label>("menu-level-name");
             menuLevelDesc = root.Q<Label>("menu-level-desc");
+            menuLevelStars = root.Q<Label>("menu-level-stars");
+            menuLevelBestTime = root.Q<Label>("menu-level-best-time");
 
             sliderVolume = root.Q<Slider>("slider-volume");
             toggleMute = root.Q<Toggle>("toggle-mute");
@@ -330,6 +336,20 @@ namespace Arcade.UI
             {
                 if (menuLevelName != null) menuLevelName.text = $"Level {levelNumber}";
                 if (menuLevelDesc != null) menuLevelDesc.text = "Arcade block breaker challenge.";
+            }
+
+            int levelStars = HighScoreManager.GetLevelStars(levelNumber);
+            float bestTime = HighScoreManager.GetLevelBestTime(levelNumber);
+            if (menuLevelStars != null)
+            {
+                string starStr = "";
+                for (int s = 0; s < 3; s++) starStr += s < levelStars ? "★" : "☆";
+                menuLevelStars.text = starStr;
+                menuLevelStars.style.color = levelStars > 0 ? new StyleColor(new Color(1f, 0.843f, 0f, 1f)) : new StyleColor(new Color(0.6f, 0.65f, 0.75f, 0.4f));
+            }
+            if (menuLevelBestTime != null)
+            {
+                menuLevelBestTime.text = $"BEST: {HighScoreManager.FormatTime(bestTime)}";
             }
         }
 
@@ -455,7 +475,10 @@ namespace Arcade.UI
                 if (dateLabel != null)
                 {
                     if (i < scores.Count && scores[i].score > 0)
-                        dateLabel.text = scores[i].date;
+                    {
+                        string timeStr = scores[i].time > 0f ? $" • {HighScoreManager.FormatTime(scores[i].time)}" : "";
+                        dateLabel.text = $"L{scores[i].level}{timeStr} • {scores[i].date}";
+                    }
                     else
                         dateLabel.text = "---";
                 }

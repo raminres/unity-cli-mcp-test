@@ -1,6 +1,6 @@
 # BlockBreaker: Game Design Document (GDD)
 
-**Version**: 2.2  
+**Version**: 3.0  
 **Status**: Living Design Specification  
 **Project**: BlockBreaker (`com.RaminRasulzade.BlockBreaker`)  
 **Target Engine**: Unity 6 (6000.6.0f1) Universal Render Pipeline (URP)  
@@ -11,268 +11,183 @@
 ## 1. Executive Summary & Vision
 
 ### 1.1 Game Concept
-**BlockBreaker** is a modern 3D physics-driven arcade brick breaker built with cutting-edge Unity 6 architectural patterns. Blending tactile tactile arcade physics, fluid deflection control, explosive chain reactions, and vibrant Universal Render Pipeline visuals, BlockBreaker delivers an escalating, high-energy arcade journey across a progressive 7-level campaign arc.
+**BlockBreaker** is a premium, physics-driven 3D arcade brick breaker built with cutting-edge Unity 6 architectural patterns. Blending tactile paddle deflection, skill-based volley combo multipliers, real-time floating feedback, explosive chain reactions, and vibrant Universal Render Pipeline visuals, BlockBreaker delivers an escalating, high-energy arcade journey across a progressive 15-level campaign arc.
 
 ### 1.2 Core Pillars
-1. **Kinetic Control & Agency**: Deflection is entirely player-directed through continuous paddle contact geometry—no rigid RNG ricochets.
-2. **Layered Chaos & Escalation**: Each level organically introduces new modifiers, armored durability, explosive area-of-effect hazards, and juggling mechanics.
-3. **Pristine Cross-Platform Polish**: Designed from day one for seamless touch (iOS Dynamic Island / notch safe-area compliance) and desktop gameplay, zero-allocation rendering, and hitch-free Apple Metal / WebGPU execution.
-4. **Resilient Arcade Sound**: A hybrid audio engine combining handcrafted sound effects with procedural synthesis fallbacks for 100% offline acoustic reliability.
+1. **Kinetic Control & Agency**: Deflection is entirely player-directed through continuous paddle contact geometry, paddle velocity momentum transfer, and anti-trap physics guards.
+2. **Skill-Driven Hybrid Scoring**: Players earn multiplying rewards through unreturned volley rallies, compound bomb chain reactions, multi-ball juggling, and fast par-time clears.
+3. **Dual-Layer Visceral Readability**: Every point earned is instantly communicated both at the world-space collision point (floating popups) and on the HUD dashboard (score delta ticker + live combo meter).
+4. **Pristine Cross-Platform Polish**: Designed from day one for seamless touch (iOS Dynamic Island / notch safe-area compliance) and desktop gameplay, zero-allocation rendering, and hitch-free Apple Metal / WebGPU execution.
+5. **Resilient Arcade Sound**: A hybrid audio engine combining handcrafted sound effects, ascending musical pitch scales on combo streaks, and procedural synthesis fallbacks for 100% offline acoustic reliability.
 
 ---
 
 ## 2. Core Mechanics & Physics
 
-### 2.1 Paddle Control & Deflection Physics
-- **Dimensions**: Aspect ratio of 5:1 (default $5.0 \times 1.0 \times 1.0$ in 3D world units).
-- **Initial Y-Position**: $Y = -6.5$.
-- **Paddle Motion**:
-  - Horizontal movement clamped dynamically to playfield boundaries:
-    $$X_{\text{min}} = -10.0 + \frac{W}{2}, \quad X_{\text{max}} = 10.0 - \frac{W}{2}$$
-  - Direct 1:1 mouse tracking, responsive touch dragging, or keyboard (`A`/`D`, `LeftArrow`/`RightArrow`) with smooth acceleration.
-- **Dynamic Angle Deflection Formula**:
-  When the ball strikes the paddle, the reflection vector is computed from the normalized contact offset:
-  $$\text{normalizedOffset} = \frac{P_{\text{ball}.x} - P_{\text{paddle}.x}}{\frac{W_{\text{paddle}}}{2}} \quad \in [-1.0, 1.0]$$
-  The resulting deflection angle $\theta$ (measured relative to the horizontal $+X$ axis) is:
-  $$\theta = 90^\circ - (\text{normalizedOffset} \times 60^\circ)$$
-  - Center hit ($\text{offset} = 0.0$): $\theta = 90^\circ$ (straight vertical).
-  - Extreme left edge ($\text{offset} = -1.0$): $\theta = 150^\circ$ ($30^\circ$ upward-left).
-  - Extreme right edge ($\text{offset} = 1.0$): $\theta = 30^\circ$ ($30^\circ$ upward-right).
-  - **Guarantee**: Bounce angles are strictly bounded to $[30^\circ, 150^\circ]$, eliminating flat horizontal infinite traps.
+### 2.1 Inverted Stepped Pyramid Paddle & Dynamic Deflection
+- **3-Tier Geometry**:
+  - Tier 1 (Top Strike Deck): $100\%$ width ($W = 5.0$), ultra-thin profile ($H = 0.24$, $Z = 1.0$) with glowing neon cyan rim (`MI_Paddle_Deck.mat`). Top surface preserved exactly at $Y = -6.0$ for consistent ball docking.
+  - Tier 2 (Mid Chassis): Stepped inward to $72\%$ width ($W = 3.6$), height $H = 0.20$, $Z = 0.88$ in dark brushed titanium (`MI_Paddle.mat`).
+  - Tier 3 (Bottom Keel / Thrusters): Stepped inward to $44\%$ width ($W = 2.2$), height $H = 0.16$, $Z = 0.72$ with engine vent glow (`MI_Paddle_Core.mat`).
+  - Total combined vertical profile: $0.60$ (reduced from legacy $1.0$ cube), with lower sides stepped inward by up to $1.4$ units on each side to eliminate phantom side catches.
+- **Physical Strike Collider & Contact Normal Guard**:
+  - Primary `BoxCollider` is strictly fitted to Tier 1 ($H = 0.24$, center $Y = +0.38$). Below $Y = -6.24$, there is zero collision volume.
+  - Upward Normal Threshold: `BallController.IsValidPaddleBounceNormal(normal)` (`normal.y >= 0.25f`) guarantees that balls brushing the side wall or hitting from below fall cleanly into the killzone.
+- **Optical Ray Deflection & Paddle Steering Formula**:
+  - Deflection computed via `BallController.CalculatePaddleDeflection(inVelocity, hitOffset, steerStrength = 32f, minAngleDeg = 25f, maxAngleDeg = 155f, paddleVelocityX, velocityInfluence = 0.5f, verticalDeadzoneAngleDeg = 5f)`.
+  - Preserves incoming horizontal momentum (`rayAngleDeg = Mathf.Atan2(|inVelocity.y|, inVelocity.x) * Rad2Deg`), naturally reflecting incoming vectors without unnatural direction reversal, applies subtle paddle steering based on contact offset `steer = -hitOffset * 32f`, incorporates paddle momentum transfer `clamp(-paddleVelocityX * 0.5f, -12°, +12°)`, strictly excludes near-vertical deadzone $[85^\circ, 95^\circ]$, and clamps final angle to $[25^\circ, 155^\circ]$.
+- **Anti-Trap Ball Physics**:
+  - **Minimum Vertical Floor ($20^\circ$)**: In `FixedUpdate()`, `SanitizeTrajectory()` mathematically enforces $|v_y| \ge \text{currentSpeed} \cdot \sin(20^\circ)$, preventing shallow horizontal traps between arena walls while preserving exact speed and sign.
+  - **Consecutive Side-Wall Steepener ($35^\circ$)**: Tracks `consecutiveSideWallBounces`. On $\ge 2$ consecutive side-wall hits without hitting paddle or block, steepens vertical trajectory to $\ge 35^\circ$ ($\sin(35^\circ) \approx 0.574$), forcing rapid vertical progression. Resets to 0 on block impact, paddle save, launch, or dock.
+  - **Vertical Exclusion Deadzone ($[85^\circ, 95^\circ]$)**: Deflection angle and initial launch strictly exclude the $\pm 5^\circ$ vertical cone around $90^\circ$. Continuous play enforces $|v_x| \ge \text{currentSpeed} \cdot \sin(5^\circ)$, causing straight vertical trajectories to subtly drift away from center and eliminating endless vertical ping-pong loops.
+  - **Paddle Velocity Momentum Transfer**: `PaddleController.VelocityX` dynamically measures instantaneous horizontal movement velocity, imparting tactile directional steering when sweeping the paddle during impact.
+- **Compounding Expansion with Spring Overshoot**:
+  - $+10\%$ per expander ($W_n = W_{prev} \times 1.10$, clamped to max $12.0$, adaptive bounds $[-10 + \frac{W}{2}, 10 - \frac{W}{2}]$).
+  - Features spring-damper overshoot animation ($\approx +16\%$ overshoot with $Y$-axis squash-and-stretch settling over $0.35\text{s}$) for tactile arcade feedback.
 
-### 2.2 Ball Launch & Movement
-- **States**:
-  - `ReadyToLaunch`: Ball is docked atop the paddle at $Y = P_{\text{paddle}.y} + 0.9$ with zero velocity. Clicking, tapping, or pressing `Space` launches the ball.
-  - `InPlay`: Ball travels at a constant level-calibrated speed with frictionless restitution (`PM_ArcadeBounce.physicMaterial`).
-- **Initial Launch Vector**: Directed upward-right at $+75^\circ$ ($\vec{v} = (\cos 75^\circ, \sin 75^\circ) \cdot \text{speed}$).
-
-### 2.3 Arena Bounds & Frustum Math
-- **Boundary Colliders**:
-  - Top Wall: $Y = 24.25$
-  - Left Wall: $X = -10.5$, Right Wall: $X = +10.5$ (wall height $32.0$)
-  - Kill Zone: Trigger boundary at $Y = -9.0$
+### 2.2 Arena Dimensions & Camera
+- **Arena Boundaries**:
+  - Top Wall: $Y = 24.25$, Left/Right Walls: $X = \pm 10.5$ (height $32.0$), Kill Zone: $Y = -9.0$.
 - **Dynamic Frustum Framing (`ResponsiveCameraController`)**:
   - Perspective camera with vertical field of view $\text{FOV}_v = 38^\circ$.
-  - Dynamically calculates camera $Z$-distance to satisfy:
-    $$Z_{\text{required}} = \max\left(\frac{H_{\text{arena}}}{2 \tan(\text{FOV}_v / 2)}, \frac{W_{\text{arena}}}{2 \tan(\text{FOV}_h / 2)}\right)$$
-  - Guarantees 100% visible arena boundaries on any aspect ratio: 16:9 widescreen, 9:16 portrait mobile, 9:19.5 iPhone tall displays, or ultrawide.
-
-### 2.4 Lives & Scoring Rules
-- **Lives**:
-  - Starting lives: **3**.
-  - Maximum lives: **5** (attainable via `ExtraHeart` powerup).
-  - Visualized on HUD as interactive heart icons (`TX_Heart_Fill.png` / `TX_Heart_Empty.png`).
-- **Brick Tiers**:
-  - **Red Brick**: Bottom tier, 10 base points.
-  - **Green Brick**: Middle tier, 20 base points.
-  - **Blue Brick**: Top tier, 30 base points.
-- **Score Multipliers & Combo System**:
-  - Global timed combo multipliers ($2\times$, $3\times$, $4\times$, $5\times$) with a 10-second active window.
-  - When active, all blocks broken across the playfield multiply their awarded points by the combo multiplier (e.g. Blue brick under $5\times$ awards 150 pts).
-  - Collecting a higher tier immediately upgrades the multiplier and resets the duration to 10 seconds; collecting an equal or lower tier refreshes the duration to 10 seconds.
-  - Level score carries forward cumulatively across levels and infinite cycle advancement.
-
-### 2.5 Ball Trail System & Dynamic VFX (`BallTrail.cs`)
-- **Dual-Layer Stacked Ribbon**:
-  - **Outer Halo (`Trail_Outer`)**: Wide, soft translucent trail ribbon ($0.55$ start width, $0.22\text{s}$ duration, $40\%$ alpha) tinted to the ball's base color.
-  - **Inner Hot Core (`Trail_Inner`)**: Focused, high-luminance core ribbon ($0.25$ start width, $0.16\text{s}$ duration, $85\%$ alpha) blended with $+65\%$ white for radiant arcade energy.
-  - **Taper Dynamics**: Evaluates smooth quadratic decay curves fading to zero width, avoiding abrupt cutoff artifacts.
-- **Multi-Ball Color Harmonization**:
-  - Primary ball: High-visibility Electric Cyan (`#00F2FF`).
-  - Secondary balls (spawned by Multi-Ball powerup): Distinct high-contrast neon tints (Hot Magenta `#FF0099`, Electric Gold `#FFCC00`, Neon Green `#00FF66`).
-  - Ball sphere mesh emissive and base colors are dynamically synchronized to the trail hue via zero-allocation `MaterialPropertyBlock`.
-- **Lifecycle Emission Synchronization**:
-  - Trails immediately clear and cease emitting while docked atop the paddle in `ReadyToLaunch`, paused, or when resetting after a life loss.
-  - Emission smoothly triggers upon ball launch and unpause.
+  - Dynamically calculates camera $Z$-distance to guarantee 100% visible arena boundaries on any aspect ratio: 16:9 widescreen, 9:16 portrait mobile, 9:19.5 iPhone tall displays, or ultrawide.
 
 ---
 
-## 3. Power-ups & Special Brick Archetypes
+## 3. Hybrid Skill-Based Scoring Architecture
+
+Scoring combines high-speed arcade execution, in-flight volley chains, powerup synergies, and speedrun incentives:
+
+```
+Total Awarded Points = Base Points × Active Capsule Multiplier × Volley Combo Multiplier × Multi-Ball Multiplier
+```
+
+### 3.1 Unreturned Volley Combo System
+- **The Core Loop**:
+  - When launched, the ball begins at a $1\times$ volley multiplier.
+  - Every block destroyed *before the ball returns to the paddle* increments the streak counter:
+    - Hits 1–2: $1\times$
+    - Hits 3–4: $2\times$
+    - Hits 5–7: $3\times$
+    - Hits 8–10: $4\times$
+    - Hits 11+: $5\times$ (MAX COMBO)
+  - **Banking**: When the ball successfully strikes the paddle, the combo safely banks into the score with a celebratory audio chime (`PlayComboBank`).
+  - **Audio Pitch Scaling**: Each consecutive hit increases the break SFX pitch by $+1$ semitone ($2^{\frac{\text{streak}}{12}}$, up to $1.68\times$), playing an ascending musical scale that ratchets excitement.
+
+### 3.2 Powerup & Chain Synergies
+- **Compound Bomb Chains**: Bricks destroyed via explosive radius detonate with compound chain rewards: each consecutive exploded neighbor awards $\text{base} \times 1.5^{\text{chainIndex}}$ bonus points with floating `BOMB CHAIN!` tags.
+- **Multi-Ball Juggling Synergy**: When multiple balls are live, all points are multiplied by the active ball count ($2\times$ for 2 balls, $3\times$ for 3 balls).
+- **Glass Shell Shatter**: First hit shatters the crystal glass shell; second hit destroys the core block for $2\times$ base points.
+
+### 3.3 Dual-Layer Real-Time Score Feedback
+- **World-Space Floating Popups (`FloatingScoreManager.cs`)**:
+  - Spawns at the brick impact point at $Z = -0.8\text{f}$ directly in front of the playfield:
+    - Standard hit: `+20` (vibrant gold/white)
+    - Volley Combo: `+120 x3!` (electric cyan/magenta)
+    - Bomb Chain: `+450 BOMB CHAIN!` (fiery orange)
+    - Clutch Overcharge: `+300 CLUTCH 10X!` (radiant amber)
+  - Floats upward $+1.2$ units and fades smoothly over $0.65\text{s}$.
+- **HUD Dashboard Real-Time Feedback**:
+  - **Live Score Delta Ticker (`score-delta-label`)**: Floating green/gold pop next to the score readout showing `+150`, keeping the dashboard alive.
+  - **Live Volley Combo Meter (`combo-pod`)**: Energetic badge displaying `🔥 x3 COMBO` with pulsing glow.
+  - **Live Level Timer (`timer-pod`)**: Digital stopwatch readout (`MM:SS`) tracking active play.
+
+### 3.4 Lone Block Clutch Countdown & Option B Hyper-Beam Railgun
+- **Clutch Countdown**: When exactly 1 block remains in the level (`remainingBlocks == 1`), `ArcadeGameManager` activates Clutch Countdown mode with a 12-second live timer and animated HUD status badge (`clutch-status-badge`).
+- **Decaying Score Multiplier**: Hitting the lone final block while the clutch timer is active rewards a decaying score multiplier from $10\times$ down to $1\times$ based on remaining seconds ($\text{multiplier} = \text{clamp}(\lfloor\text{timeRemaining}\rfloor + 1, 1, 10)$).
+- **Option B Hyper-Beam Railgun**: If the 12-second timer expires without hitting the block, the paddle engages emergency Railgun Overcharge. A wide vertical hyper-beam ($W \approx 2.4$, $H \approx 31$) erupts from the paddle's current $X$-coordinate to the arena ceiling. As the player steers the paddle across the arena, the sustained beam vaporizes the final block on contact, eliminating tedious stale-brick stalemates while maintaining full player agency.
+
+---
+
+## 4. End-of-Level Victory Scorecard & 3-Star Rating
+
+### 4.1 End-of-Level Scorecard Modal (`modal-scorecard`)
+Upon clearing a level, the game transitions into a victory sequence displaying a detailed frosted-glass scorecard:
+1. **Level Title**: `LEVEL {N} COMPLETE!`
+2. **Interactive 3-Star Rating**: 1, 2, or 3 glowing stars animate and pop into place with celebratory audio chimes (`PlayStarEarned`).
+3. **Statistical Breakdown**:
+   - **Blocks Destroyed**: Count and base points earned.
+   - **Highest Volley Combo**: Peak streak achieved and bonus points.
+   - **Clear Time vs. Par Time**: Elapsed time compared to par time.
+   - **Time Bonus**: Remaining bonus pool points awarded ($\max(0, \text{timeBonusMax} - \lfloor\text{elapsed}\rfloor \times 35)$).
+   - **Under-Par Speed Bonus**: $+500\text{ pts}$ if elapsed time $\le$ par time.
+   - **Flawless Clear Bonus**: $+1,000\text{ pts}$ if completed without losing any lives in that level.
+   - **Final Level Score**: Aggregated total.
+4. **Player Action Buttons**:
+   - `[ REPLAY ]`: Restarts current level to improve stars and clear time.
+   - `[ NEXT LEVEL ]`: Advances to next level.
+   - `[ MAIN MENU ]`: Returns to the main menu.
+
+### 4.2 Star Ratings & Best Clear Times (`HighScoreManager.cs`)
+- **1 Star (Bronze)**: Clear the level.
+- **2 Stars (Silver)**: Exceed Level Silver score threshold.
+- **3 Stars (Gold)**: Exceed Level Gold score threshold (requires combo execution, fast clear, or flawless life bonus).
+- **Persistent Speedrun Records**:
+  - Best Clear Time (`MM:SS`) is recorded and saved per level in `PlayerPrefs`.
+  - Visualized on each level selection button in the Main Menu and Settings/Pause menus.
+
+---
+
+## 5. Powerups & Collectibles
 
 | Modifier | Visual Indicator | Archetype | Mechanic Description |
 | :--- | :--- | :--- | :--- |
-| **Paddle Expander** | Cyan particle aura | Power-up | 10-second timed buff widening paddle by $+10\%$ compounding ($W_n = W_{prev} \times 1.10$, clamped to max $12.0$). Shows live top HUD countdown timer with outward arrows icon, and cleanly resets to base width upon expiration. Recalculates boundary clamps instantly. Plays break + powerup audio. |
-| **Score Multiplier 2X** | `2X` badge (`#FFD700` Gold) | Multiplier Combo | Activates 10-second global $2\times$ combo window doubling all block break points across the arena. |
-| **Score Multiplier 3X** | `3X` badge (`#FF8C00` Amber) | Multiplier Combo | Activates 10-second global $3\times$ combo window tripling all block break points across the arena. |
-| **Score Multiplier 4X** | `4X` badge (`#FF1744` Ruby Red) | Multiplier Combo | Activates 10-second global $4\times$ combo window quadrupling all block break points across the arena. Introduced in Level 6. |
-| **Score Multiplier 5X** | `5X` badge (`#D500F9` Magenta) | Multiplier Combo | Activates 10-second global $5\times$ combo window quintupling all block break points across the arena. Climax modifier in Level 7. |
-| **Glass-Enclosed** | Translucent 1.18x outer shell | Armored Brick | Encased in a protective crystal shell (`MI_Block_Glass.mat`). Requires 2 hits: Hit 1 shatters glass shell with crystal debris; Hit 2 destroys base brick for $2\times$ base points. |
-| **Bomb Brick** | `BOMB` badge (`#FF3B30` Crimson) | Area Hazard | Detonates in a $2.5$-unit radius upon impact, triggering cascading destruction of adjacent bricks with outward physical debris impulses. Protected against recursion by `isDestroyed` flag. |
-| **Shield** | `SHIELD` badge (`#00E5FF` Cyan) | Defensive Power-up | Activates a 10-second defensive safety net at the arena bottom. Any ball falling into the kill zone is safely intercepted and redocked onto the paddle in `ReadyToLaunch` without life deduction. Displays live HUD countdown. |
-| **Multi-Ball** | `3-BALL` badge (`#E040FB` Purple) | Kinetic Power-up | Spawns 2 extra balls at $\pm 35^\circ$ diverging angles from the trigger point (3 active balls simultaneously). Extra balls falling do NOT penalize lives; life loss only triggers when the final remaining ball falls. |
-| **Extra Heart** | `+1 HP` badge (`#FF2D55` Pink) | Recovery Power-up | Grants $+1$ life up to the hard cap of 5. Plays flying heart parabolic HUD animation. |
-
-### 3.1 World-Space UI Badges (`BlockBadge.cs`)
-- Rendered via Unity 6 `PanelRenderer` in `WorldSpace` mode (`80px` fixed dimension, 100 PPU, clamped layout margins).
-- Renders badges cleanly without billboard artifacts or depth sorting flickering. Supports custom plates and labels for `x2`, `x3`, `x4`, and `x5`.
+| **Paddle Expander** | Cyan capsule & arrow icon | Power-up | 10-second timed buff widening paddle by $+10\%$ compounding ($W_n = W_{prev} \times 1.10$, clamped to max $12.0$). Spring overshoot animation on collection. Recalculates boundary clamps instantly. |
+| **Score Multiplier 2X–5X** | Tiered capsule (Gold 2X, Amber 3X, Ruby 4X, Magenta 5X) | Multiplier Buff | Activates 10-second global score multiplier buff multiplying all block breaks by $2\times$, $3\times$, $4\times$, or $5\times$. |
+| **Shield** | Electric blue capsule & shield icon | Defensive Power-up | Activates a 10-second defensive safety barrier at the arena bottom. Intercepts balls falling into the kill zone and redocks them onto the paddle without life penalty. |
+| **Multi-Ball** | Neon magenta capsule & 3-ball icon | Kinetic Power-up | Spawns 2 extra balls at $\pm 35^\circ$ diverging angles with distinct trail colors. Points multiplied by active ball count. |
+| **Extra Heart** | Neon pink capsule & heart icon | Recovery Power-up | Grants $+1$ life up to the hard cap of 5. Plays flying heart parabolic HUD animation. |
+| **Laser Blaster** | Ruby red capsule & laser icon | Offensive Power-up | Deploys twin plasma laser cannons on paddle edges firing high-velocity laser bolts ($34\text{ units/s}$, ruby glow, SFX `AU_Powerup_Laser.mp3`) at $0.32\text{s}$ intervals for 10 seconds. Bolts deal standard damage on block impact (`TakeHit(Vector3.down)`). |
+| **Glass-Enclosed** | Translucent 1.18x outer shell | Armored Brick | Encased in crystal glass (`MI_Block_Glass.mat`). Requires 2 hits: Hit 1 shatters glass shell with crystal debris; Hit 2 destroys base brick for $2\times$ points. |
+| **Bomb Brick** | `BOMB` badge (`#FF3B30` Crimson) | Area Hazard | Detonates in a $2.5$-unit radius upon impact, triggering cascading destruction of adjacent bricks with compound chain multipliers. |
 
 ---
 
-## 4. Progressive 7-Level Campaign Arc
+## 6. Progressive 15-Level Campaign Arc
 
-Levels scale smoothly in grid size, ball velocity, modifier density, and structural layout. Upon completing Level 7, the game smoothly cycles back to Level 1 ($7 \to 1$) preserving cumulative high scores and player lives.
-
-```mermaid
-graph LR
-    L1["Level 1: First Flight<br>5x3 (15 blocks) | 0.85x"] --> L2["Level 2: Glass & Gold<br>6x3 (18 blocks) | 0.95x"]
-    L2 --> L3["Level 3: Chain Reaction<br>7x6 (42 blocks) | 1.05x"]
-    L3 --> L4["Level 4: Kinetic Aegis<br>8x6 (48 blocks) | 1.15x"]
-    L4 --> L5["Level 5: Multi-Ball Mayhem<br>8x6 (48 blocks) | 1.20x"]
-    L5 --> L6["Level 6: The High Roller<br>9x6 (54 blocks) | 1.28x"]
-    L6 --> L7["Level 7: Chaos Gauntlet<br>10x9 (90 blocks) | 1.38x"]
-    L7 -.->|Endless Cycling| L1
-```
-
-### Level-by-Level Specification
-
-| Level | Name | Theme & Star Mechanic | Cols $\times$ Rows | Blocks | Speed | Modifiers Breakdown |
-| :---: | :--- | :--- | :---: | :---: | :---: | :--- |
-| **1** | **First Flight** | **Warmup & Deflection Mastery** | $5 \times 3$ | **15** | `0.85x` (Paddle 5.5) | • 1x Paddle Expander<br>• *0x Hazards / Armored Bricks* |
-| **2** | **Glass & Gold** | **Durability & High Scores** | $6 \times 3$ | **18** | `0.95x` (Paddle 5.0) | • 1x 2X Multiplier, 2x Glass-Enclosed, 1x Expander |
-| **3** | **Chain Reaction** | **Explosive Cascades** | $7 \times 6$ | **42** | `1.05x` (Paddle 5.0) | • 2x Bombs, 2x 2X Multipliers, 1x Expander (`Checkerboard`) |
-| **4** | **Kinetic Aegis** | **Speed Surge & Protective Net** | $8 \times 6$ | **48** | `1.15x` (Paddle 5.0) | • 1x Shield, 1x Extra Heart, 1x Bomb, 2x Glass, 1x 2X |
-| **5** | **Multi-Ball Mayhem** | **Ball Juggling Rush** | $8 \times 6$ | **48** | `1.20x` (Paddle 5.0) | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass, 1x 2X (`Checkerboard`) |
-| **6** | **The High Roller** | **High Stakes & 4X Multiplier** | $9 \times 6$ | **54** | `1.28x` (Paddle 5.0) | • 1x 4X, 2x 3X, 1x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass, 1x Expander |
-| **7** | **Chaos Gauntlet** | **The Grand Climax & 5X Multiplier** | $10 \times 9$ | **90** | `1.38x` (Paddle 5.0) | • 1x 5X, 2x 4X, 2x 3X, 2x 2X, 2x Expanders, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls (`Randomized`) |
-
-- **Asset Storage**: Serialized as ScriptableObjects `Assets/Settings/Levels/SO_Level_01.asset` through `SO_Level_07.asset`.
-- **Runtime Generation**: `LevelGenerator.cs` instantiates tiered rows with alternating or randomized palettes and dynamically attaches special modifier components (`PaddleExpander`, `ScoreMultiplier`, `BombBlock`, `GlassEnclosed`, `PowerupShield`, `PowerupMultiBall`, `PowerupExtraHeart`).
+| Level | Name | Silhouette & Archetype | Cols $\times$ Rows | Blocks | Speed | Modifiers Breakdown | Par Time | 3-Star Target |
+| :---: | :--- | :---: | :---: | :---: | :---: | :--- | :---: | :---: |
+| **1** | **First Flight** | `Pyramid` | $7 \times 3$ | **15** | `0.92x` | • 1x Expander | 30s | 800 pts |
+| **2** | **Glass & Gold** | `Diamond` | $7 \times 6$ | **22** | `0.96x` | • 1x 2X, 2x Glass, 1x Expander | 35s | 1,400 pts |
+| **3** | **Twin Pillars** | `Pillars` | $7 \times 6$ | **24** | `1.00x` | • 2x Bombs, 2x 2X, 1x Expander, 1x Laser | 40s | 2,000 pts |
+| **4** | **Kinetic Shield** | `Shield` | $8 \times 6$ | **34** | `1.04x` | • 1x Shield, 1x Heart, 1x Bomb, 2x Glass | 45s | 2,600 pts |
+| **5** | **Multi-Ball Ring** | `HollowBox` | $8 \times 6$ | **24** | `1.08x` | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass | 40s | 3,200 pts |
+| **6** | **Royal Crown** | `Crown` | $9 \times 6$ | **52** | `1.12x` | • 1x 3X, 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass, 1x Laser | 55s | 4,200 pts |
+| **7** | **Neon Heart** | `Heart` | $9 \times 6$ | **32** | `1.16x` | • 2x Hearts, 1x Shield, 1x 3X, 2x 2X, 1x Bomb, 2x Glass, 1x Multi-Ball | 45s | 3,600 pts |
+| **8** | **Space Invader** | `Invader` | $9 \times 6$ | **28** | `1.20x` | • 2x Bombs, 2x 2X, 2x 3X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Glass, 1x Laser | 45s | 4,000 pts |
+| **9** | **Crossfire** | `Cross` | $9 \times 6$ | **30** | `1.24x` | • 1x 4X, 2x 2X, 1x 3X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball | 45s | 4,500 pts |
+| **10** | **The Hourglass** | `Hourglass` | $9 \times 6$ | **42** | `1.28x` | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball | 50s | 5,200 pts |
+| **11** | **Chevron Strike** | `Chevron` | $9 \times 6$ | **18** | `1.32x` | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 2x Multi-Balls, 1x Laser | 35s | 3,800 pts |
+| **12** | **Castle Bastion** | `Castle` | $10 \times 6$ | **45** | `1.36x` | • 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls | 55s | 6,000 pts |
+| **13** | **Quantum Lattice** | `CheckerboardEmpty` | $10 \times 6$ | **30** | `1.40x` | • 1x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls | 45s | 5,500 pts |
+| **14** | **Striped Vault** | `Stripes` | $10 \times 6$ | **30** | `1.44x` | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls, 1x Laser | 50s | 6,200 pts |
+| **15** | **Chaos Labyrinth** | `Custom` | $10 \times 6$ | **48** | `1.48x` | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 4x Bombs, 4x Glass, 2x Hearts, 2x Shields, 2x Multi-Balls, 2x Lasers | 60s | 7,500 pts |
 
 ---
 
-## 5. UI / UX Architecture
+## 7. UI / UX Architecture
 
-### 5.1 Technology: UI Toolkit & PanelRenderer
-- Built natively using Unity 6 UI Toolkit with `PanelRenderer` components on `UI_HUD` and `UI_MainMenu`.
-- Runtime styling via modern CSS-like Flexbox (`MainMenuUI.uss`, `BlockBreakerHUD.uss`).
-- Zero-garbage runtime label updates via direct text assignment and string formatting.
-
-### 5.2 Responsive Layout & Safe Area Controller
-- **`SafeAreaController.cs`**:
-  - Dynamically queries `Screen.safeArea` in screen coordinates.
-  - Converts pixel insets to UI Toolkit percentage or pixel offsets applied to child roots (`hud-root`, `root-container`).
-  - Clears hardware obstructions (iPhone notches, Dynamic Island, rounded corners, Android navigation bars).
-
-### 5.3 HUD & Navigation Elements
-1. **Detached Floating Frosted Glass Pods**:
-   - **Left Pod**: 5-slot Heart Life Gauge (`TX_Heart_Fill.png` / `TX_Heart_Empty.png`).
-   - **Center Pod**: Large cumulative Score readout (`FT_Montserrat`) with pulse scale bump on score increments.
-   - **Right Pod (Quick Actions)**:
-     - **Pause / Resume**: Dynamic icon swapping between pause bars and play triangle.
-     - **Settings Toggle**: Opens tuning modal with a 360° compounding mechanical spin transition.
-     - **Audio Mute / Unmute**: Live volume state toggle with custom speaker icons.
-2. **Top Status Bar & Active Buff Indicators**:
-   - Current Level Title & Star Mechanic indicator.
-   - **Active Power-Up Badges**:
-     - **Shield**: Cyan badge displaying `SHIELD {n}s`.
-     - **Multi-Ball**: Purple badge displaying `3 BALLS`.
-     - **Wide Paddle**: Green/Cyan badge with outward arrows icon displaying `{n}s`.
-     - **Score Multiplier**: Tier-tinted badge (Gold 2X, Amber 3X, Ruby 4X, Magenta 5X) with star icon displaying `{tier} {n}s`.
-3. **High Scores Leaderboard (`HighScoreManager.cs`)**:
-   - Dedicated Top 10 high scores modal accessible from both Main Menu and Pause Menu.
-   - Distinct rank 1 (Gold), rank 2 (Silver), and rank 3 (Bronze) medal icons.
-   - Formatted timestamps (`YYYY-MM-DD`) and level achieved.
-   - Reset High Scores functionality with real-time UI synchronization.
-4. **How to Play Guide Modal**:
-   - Clean card-based visual reference accessible from Main Menu and Pause Menu.
-   - Concise explanations for controls (keyboard, touch drag), angle deflection math, block tier scoring (Red 10, Green 20, Blue 30), glass reinforced durability (2 hits), and all powerups.
-5. **Interactive Credits Modal**:
-   - Dedicated modal citing Unity MCP, Gemini, Antigravity, and creator Ramin Rasulzade.
-   - Clickable URL buttons launching Email (`mailto:`), Website, LinkedIn, and GitHub via `Application.OpenURL`.
-6. **Scaled UI & Ergonomic Touch Targets**:
-   - +10%–15% size scaling across all HUD containers, pods, modal windows, and buttons.
-   - Touch targets $\ge 54\text{px}$–$64\text{px}$ with generous spacing tailored for high-resolution mobile viewports ($2778 \times 1284$).
-7. **Interactive Level Settings Modal**:
-   - Live runtime tuning sliders:
-     - **Ball Speed**: $0.5\times$ to $2.5\times$
-     - **Paddle Speed**: $10.0$ to $40.0$
-     - **Block Rows**: $1$ to $9$
-   - Instant visual reflection in playfield.
-8. **Lifecycle & Execution Order Architecture**:
-   - `PanelRenderer` runtime root binding via `EnsureInitialized()` with fallback reflection (`rootVisualElement` / `containerPanel.visualTree`).
-   - `[DefaultExecutionOrder(-100)]` on `ArcadeGameManager` and `[DefaultExecutionOrder(-90)]` on `ArcadeInputHandler`.
-   - Floating overlays (e.g. `launch-banner`) set to `picking-mode="Ignore"` and `pointer-events: none` to prevent blocking touch inputs.
+### 7.1 HUD Layout & Dashboard Insets
+- **Safe Area Insets**: Handled dynamically by `SafeAreaController.cs` for iPhone notches, Dynamic Island, and curved display boundaries.
+- **Top Bar Pods**:
+  - **Left Pod**: 5-slot Heart Life Gauge.
+  - **Center Pod**: Large cumulative Score readout with real-time `score-delta-label` popups (`+150`).
+  - **Timer Pod**: Sleek frosted glass pod with digital stopwatch time (`00:34`).
+  - **Combo Pod**: Active volley streak meter (`🔥 x3 COMBO`) pulsing with neon cyan/magenta energy.
+  - **Right Pod**: Minimal quick actions (Mute, Settings, Pause).
+- **Level Selection Tabs**:
+  - Dynamic `<ui:ScrollView>` in Main Menu and Settings modal displaying all 15 level cards.
+  - Each card shows: Level Name, Archetype silhouette, 1–3 Star Rating, and Personal Best Clear Time.
 
 ---
 
-## 6. Graphics, VFX & Performance Engineering
-
-### 6.1 Universal Render Pipeline (URP) Setup
-- **Master Materials (`MT_`)**: Base PBR materials (`MT_Master_PBR_URP.mat`) using `Universal Render Pipeline/Lit`.
-- **Material Instances (`MI_`)**: Material variants inheriting from master (`MI_Paddle`, `MI_Ball`, `MI_Block_Red`, `MI_Block_Green`, `MI_Block_Blue`, `MI_Block_Glass`, `MI_Playfield_Border`).
-- **Lighting & Ambiance**:
-  - Skybox removed; camera clears to dark arcade studio tint (`#14141F`).
-  - Warm directional key light (`RGB: 1.0, 0.88, 0.45`, intensity `1.6`) + cool fill light (`RGB: 0.35, 0.65, 1.0`, intensity `0.8`).
-  - Global Volume post-processing: Bloom (scatter `0.7`, intensity `1.2`, threshold `0.85`), Tonemapping, Vignette.
-
-### 6.2 Frame-0 Shader Prewarming (`BlockVFXManager.cs`)
-- **Problem**: First brick collision on GPU drivers (Apple Metal, WebGPU, Vulkan, DX12) often causes micro-stutter due to just-in-time shader compilation.
-- **Solution**:
-  - Dispatches off-camera simulation cycles during `Start()` while the player is in `ReadyToLaunch`.
-  - Warms both raster pipeline state objects (PSOs) and compute shaders upfront.
-  - Zero-allocation `MaterialPropertyBlock` color tinting preserves 100% SRP Batcher compatibility without material cloning.
-  - Struct-based simulation lists (`ActiveDebris`, `ActiveVFX`) eliminate per-brick coroutine allocations.
-
-### 6.3 Apple Metal Custom Debris Shader
-- Custom URP shader `Assets/Shaders/VFX_BlockDebris.shader` (`Arcade/VFX_BlockDebris`) ensures 100% shader compilation compatibility on iOS Metal without fallback to uncompiled magenta.
-
----
-
-## 7. Audio Architecture
-
-### 7.1 Hybrid Sound Engine (`ArcadeAudioManager.cs`)
-- Persistent singleton across scene transitions (`DontDestroyOnLoad`).
+## 8. Audio Architecture
 - **Dedicated Sound Effects (`AU_`)**:
-  - `AU_Pop.mp3`: Ball-paddle deflection and boundary bounce.
-  - `AU_Break.mp3`: Standard brick shatter.
-  - `AU_Powerup.mp3`: Multi-Ball & Paddle Expander pickup.
-  - `AU_Powerup_Shield.mp3`: Shield activation and bottom interception.
-  - `AU_Life_Lost.mp3`: Ball falling past paddle into killzone.
-  - `AU_Level_Success.mp3`: Level completion fanfare.
-  - `AU_Game_Over.mp3`: Zero lives exhaustion jingle.
-  - `AU_Button_Press.mp3`: UI button tactile click.
-  - `AU_Glass_Break.mp3`: Reinforced glass outer shell crack/shatter.
-  - `AU_Bomb_Explosion.mp3`: Explosive brick area-of-effect detonation.
-- **Procedural Synthesizer Fallback**:
-  - Generates real-time math-based audio waveforms (sine, triangle, white noise envelopes) if audio files are missing or unassigned, ensuring acoustic feedback is never silent.
-
----
-
-## 8. Cross-Platform Build Architecture
-
-### 8.1 Targets & Pipelines
-- **iOS & macOS (Apple Silicon)**:
-  - Swift Xcode Project: `PlayerSettings.xcodeProjectType = XcodeProjectType.Swift`.
-  - Modern Swift lifecycle (`MainApp.swift`).
-  - Native safe area resolution.
-  - Footprint & Binary Optimization: High managed code stripping (`ManagedStrippingLevel.High`), IL2CPP `OptimizeSize`, LZ4HC player data compression, manual lightmap/fog shader permutation stripping, and pruned engine packages (`visualscripting`, `terrain`, `physics2d`, `cloth`, etc.).
-- **WebGPU / WebGL**:
-  - Primary web graphics target configured for modern browsers with WebGPU fallback to WebGL 2.0.
-- **Standalone PC / Mac**:
-  - High frame-rate desktop build with full keyboard, mouse, and game controller input mapping.
-
----
-
-## 9. Quality Assurance & Automated Verification
-
-### 9.1 Test Suite Architecture (`Assets/Tests/BlockBreakerCoreTests.cs`)
-- **Engine**: NUnit test framework within `Arcade.Tests` assembly.
-- **Total Tests**: **99 passing tests (100%)**.
-- **Execution Time**: ~150 milliseconds.
-- **Test Coverage**:
-  1. Score calculation, global timed combo multipliers ($2\times$ through $5\times$), and tier values.
-  2. Dynamic paddle deflection angles across full offset spectrum $[-1.0, 1.0]$.
-  3. Boundary clamping with compounding paddle widths up to $12.0$, 10-second buff timer tick, and base width reversion.
-  4. Life tracking, death thresholds, and Extra Heart capping at $5$.
-  5. Responsive camera frustum math across multiple aspect ratios ($16:9$, $9:16$, $9:19.5$).
-  6. Safe area inset propagation to UI Toolkit hierarchy.
-  7. Bomb brick detonation radius and non-recursive explosion flags.
-  8. Glass-enclosed brick 2-hit durability and shell shatter.
-  9. Shield 10-second timer decrement and kill zone safe interception.
-  10. Multi-ball concurrent ball management and tolerant life loss.
-  11. Active power-up HUD status badge timers and dynamic visibility.
-  12. Complete 7-level campaign arc validation, 4X and 5X modifier assignments in levels 6 and 7, parameter monotonicity, and endless loop wrap-around.
-  13. Dual-layer stacked ball trail creation, parameters, and smooth taper curve dynamics (`BallTrail.cs`).
-  14. Multi-ball distinct trail color allocation and high-contrast palette uniqueness.
-  15. HighScoreManager top 10 score recording, sorting, date formatting, and score reset functionality.
-  16. How to Play and Credits modal visibility toggles, safe dismissal, and launch suppression.
+  - Deflection: `AU_Pop.mp3`
+  - Brick Shatter: `AU_Break.mp3` with $+1$ semitone ascending pitch scaling per combo streak.
+  - Combo Bank: `PlayComboBank` chime upon returning ball to paddle after a streak.
+  - Star Tally: `PlayStarEarned` triumphant chimes for 1-star, 2-star, and 3-star scorecard reveals.
+  - Powerups: `AU_Powerup.mp3`, `AU_Powerup_Shield.mp3`, `AU_Powerup_Laser.mp3`.
+  - Explosions: `AU_Bomb_Explosion.mp3`, `AU_Glass_Break.mp3`.
+  - Life & Fanfare: `AU_Life_Lost.mp3`, `AU_Level_Success.mp3`, `AU_Game_Over.mp3`.
+- **Procedural Synthesizer Fallback**: Guaranteed offline acoustic synthesis for all audio events.

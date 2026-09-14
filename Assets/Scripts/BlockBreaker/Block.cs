@@ -95,10 +95,12 @@ namespace Arcade.BlockBreaker
             if (ball == null) return;
 
             Vector3 hitNormal = collision.contacts.Length > 0 ? collision.contacts[0].normal : Vector3.down;
-            TakeHit(hitNormal);
+            int volleyMult = ball.CurrentVolleyMultiplier;
+            int volleyStreak = ball.CurrentVolleyStreak;
+            TakeHit(hitNormal, volleyMult, volleyStreak);
         }
 
-        public void TakeHit(Vector3 hitNormal)
+        public void TakeHit(Vector3 hitNormal, int volleyMultiplier = 1, int volleyStreak = 0, int chainMultiplier = 1, string bonusTag = "")
         {
             if (isDestroyed) return;
 
@@ -109,7 +111,7 @@ namespace Arcade.BlockBreaker
             }
             else
             {
-                DestroyBlock(hitNormal);
+                DestroyBlock(hitNormal, volleyMultiplier, volleyStreak, chainMultiplier, bonusTag);
             }
         }
 
@@ -136,7 +138,7 @@ namespace Arcade.BlockBreaker
             }
         }
 
-        public void DestroyBlock(Vector3 hitNormal)
+        public void DestroyBlock(Vector3 hitNormal, int volleyMultiplier = 1, int volleyStreak = 0, int chainMultiplier = 1, string bonusTag = "")
         {
             if (isDestroyed) return;
             isDestroyed = true;
@@ -150,7 +152,7 @@ namespace Arcade.BlockBreaker
                 }
                 else
                 {
-                    ArcadeAudioManager.Instance.PlayBreak();
+                    ArcadeAudioManager.Instance.PlayBreak(volleyStreak);
                     if (specialType != BlockSpecialType.Normal && specialType != BlockSpecialType.GlassEnclosed)
                     {
                         ArcadeAudioManager.Instance.PlayPowerup();
@@ -258,7 +260,14 @@ namespace Arcade.BlockBreaker
                     ? basePoints
                     : Points;
 
-                ArcadeGameManager.Instance.RecordBlockDestroyed(pointsToRecord, (int)colorTier);
+                ArcadeGameManager.Instance.RecordBlockDestroyed(
+                    pointsToRecord,
+                    (int)colorTier,
+                    transform.position,
+                    volleyMultiplier,
+                    volleyStreak,
+                    chainMultiplier,
+                    bonusTag);
             }
 
             // 5. Destroy block
@@ -277,6 +286,7 @@ namespace Arcade.BlockBreaker
             if (transform.parent == null) return;
 
             var allBlocks = transform.parent.GetComponentsInChildren<Block>();
+            int chainIndex = 1;
             for (int i = 0; i < allBlocks.Length; i++)
             {
                 var neighbor = allBlocks[i];
@@ -287,7 +297,9 @@ namespace Arcade.BlockBreaker
                     {
                         Vector3 outward = (neighbor.transform.position - transform.position).normalized;
                         if (outward == Vector3.zero) outward = Vector3.up;
-                        neighbor.DestroyBlock(outward);
+                        int chainMult = Mathf.Max(1, chainIndex);
+                        neighbor.DestroyBlock(outward, volleyMultiplier: 1, volleyStreak: 0, chainMultiplier: chainMult, bonusTag: "BOMB CHAIN!");
+                        chainIndex++;
                     }
                 }
             }

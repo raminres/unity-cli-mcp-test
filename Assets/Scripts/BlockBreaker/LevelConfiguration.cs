@@ -107,6 +107,16 @@ namespace Arcade.BlockBreaker
         [Tooltip("Duration of laser blaster powerup in seconds.")]
         [Range(5f, 25f)] [SerializeField] private float laserDuration = 10f;
 
+        [Header("Scoring Objectives & Speedrun Par")]
+        [Tooltip("Target par time in seconds for clearing the level efficiently.")]
+        [Range(15f, 180f)] [SerializeField] private float parTime = 40f;
+
+        [Tooltip("Base time bonus pool awarded upon level clear, decaying with elapsed time.")]
+        [Range(500, 10000)] [SerializeField] private int timeBonusMax = 3000;
+
+        [Tooltip("Cumulative score thresholds required to earn 1, 2, and 3 stars.")]
+        [SerializeField] private int[] starThresholds = new int[] { 800, 1500, 2500 };
+
         // Cached custom layout parsed lines
         private string[] cachedCustomLines;
         private string cachedCustomRaw;
@@ -141,6 +151,9 @@ namespace Arcade.BlockBreaker
         public float ShieldDuration => shieldDuration;
         public int LaserCount => laserCount;
         public float LaserDuration => laserDuration;
+        public float ParTime => parTime;
+        public int TimeBonusMax => timeBonusMax;
+        public int[] StarThresholds => starThresholds != null && starThresholds.Length >= 3 ? starThresholds : new int[] { 800, 1500, 2500 };
 
         /// <summary>
         /// Total count of active, filled blocks that will be generated for this level.
@@ -445,6 +458,12 @@ namespace Arcade.BlockBreaker
             clone.shieldDuration = shieldDuration;
             clone.laserCount = laserCount;
             clone.laserDuration = laserDuration;
+            clone.parTime = parTime;
+            clone.timeBonusMax = timeBonusMax;
+            if (starThresholds != null)
+            {
+                clone.starThresholds = (int[])starThresholds.Clone();
+            }
             return clone;
         }
 
@@ -479,5 +498,8 @@ namespace Arcade.BlockBreaker
         public void SetLaserCount(int val) => laserCount = Mathf.Clamp(val, 0, 4);
         public void SetLaserDuration(float val) => laserDuration = Mathf.Clamp(val, 5f, 25f);
         public void SetInitialPaddleWidth(float val) => initialPaddleWidth = Mathf.Clamp(val, 3.0f, 8.0f);
+        public void SetParTime(float val) => parTime = Mathf.Max(5f, val);
+        public void SetTimeBonusMax(int val) => timeBonusMax = Mathf.Max(0, val);
+        public void SetStarThresholds(int[] thresholds) => starThresholds = thresholds;
     }
 }

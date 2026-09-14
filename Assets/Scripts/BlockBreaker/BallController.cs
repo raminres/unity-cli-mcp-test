@@ -40,6 +40,7 @@ namespace Arcade.BlockBreaker
         private float currentSpeed;
         private bool isLaunched = false;
         private bool isPrimaryBall = true;
+        private int currentVolleyStreak = 0;
         private MaterialPropertyBlock propBlock;
         private Renderer ballRenderer;
         private static readonly int EmissionColorProp = Shader.PropertyToID("_EmissionColor");
@@ -57,6 +58,19 @@ namespace Arcade.BlockBreaker
         public float PaddleVelocityInfluence => paddleVelocityInfluence;
         public int ConsecutiveSideWallBounces => consecutiveSideWallBounces;
         public void SetConsecutiveSideWallBouncesForTesting(int count) => consecutiveSideWallBounces = count;
+        public int CurrentVolleyStreak => currentVolleyStreak;
+        public int CurrentVolleyMultiplier => GetVolleyMultiplier(currentVolleyStreak);
+        public void SetVolleyStreakForTesting(int streak) => currentVolleyStreak = streak;
+
+        public static int GetVolleyMultiplier(int streak)
+        {
+            if (streak <= 2) return 1;
+            if (streak <= 4) return 2;
+            if (streak <= 7) return 3;
+            if (streak <= 10) return 4;
+            return 5;
+        }
+
         public BallTrail Trail => ballTrail != null ? ballTrail : (ballTrail = GetComponent<BallTrail>() ?? gameObject.AddComponent<BallTrail>());
         public bool IsPrimaryBall
         {
@@ -288,6 +302,7 @@ namespace Arcade.BlockBreaker
             activeVolleyTime = 0f;
             nextSpeedRampTime = speedRampInterval;
             consecutiveSideWallBounces = 0;
+            currentVolleyStreak = 0;
             currentSpeed = baseSpeed;
             if (rb != null)
             {
@@ -338,6 +353,7 @@ namespace Arcade.BlockBreaker
             activeVolleyTime = 0f;
             nextSpeedRampTime = speedRampInterval;
             consecutiveSideWallBounces = 0;
+            currentVolleyStreak = 0;
             currentSpeed = baseSpeed;
 
             if (Trail != null)
@@ -371,6 +387,7 @@ namespace Arcade.BlockBreaker
             activeVolleyTime = 0f;
             nextSpeedRampTime = speedRampInterval;
             consecutiveSideWallBounces = 0;
+            currentVolleyStreak = 0;
             currentSpeed = speed > 0f ? speed : baseSpeed;
 
             if (Trail != null)
@@ -477,7 +494,13 @@ namespace Arcade.BlockBreaker
             if (block != null)
             {
                 consecutiveSideWallBounces = 0; // Reset consecutive wall bounces on block impact
+                currentVolleyStreak++;
                 currentSpeed = Mathf.Min(currentSpeed + speedIncrementPerHit, maxSpeed);
+
+                if (ArcadeGameManager.Instance != null)
+                {
+                    ArcadeGameManager.Instance.NotifyVolleyHit(this, currentVolleyStreak);
+                }
                 return;
             }
 
@@ -610,6 +633,21 @@ namespace Arcade.BlockBreaker
         private void HandlePaddleCollision(PaddleController hitPaddle)
         {
             consecutiveSideWallBounces = 0; // Reset consecutive wall bounces on paddle save
+
+            if (currentVolleyStreak >= 3)
+            {
+                if (ArcadeAudioManager.Instance != null)
+                {
+                    ArcadeAudioManager.Instance.PlayComboBank();
+                }
+            }
+
+            if (ArcadeGameManager.Instance != null)
+            {
+                ArcadeGameManager.Instance.NotifyVolleySaved(this, currentVolleyStreak);
+            }
+
+            currentVolleyStreak = 0;
 
             float hitOffset = hitPaddle.CalculateHitOffset(transform.position.x);
             float paddleVelX = hitPaddle.VelocityX;

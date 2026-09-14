@@ -304,7 +304,7 @@ namespace Arcade.BlockBreaker
 
             if (ArcadeGameManager.Instance != null)
             {
-                ArcadeGameManager.Instance.RegisterLevelBlocks(totalActiveBlocks);
+                ArcadeGameManager.Instance.RegisterLevelBlocks(totalActiveBlocks, currentLevelConfig != null ? currentLevelConfig.LevelNumber : 1);
             }
 
             // Randomize background gradient texture for each level

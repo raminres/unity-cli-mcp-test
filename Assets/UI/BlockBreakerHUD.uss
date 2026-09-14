@@ -940,3 +940,193 @@
     color: #cbd5e1;
     white-space: normal;
 }
+
+/* Timer Pod */
+.timer-pod {
+    flex-direction: row;
+    align-items: center;
+    padding: 0 16px;
+    height: 48px;
+    background-color: rgba(23, 28, 44, 0.75);
+    border-radius: 24px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.15);
+    margin-left: 10px;
+}
+
+.timer-icon {
+    width: 20px;
+    height: 20px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Speed.png?fileID=21300000&guid=e131922c07022c04fa24072387e3848b&type=3#TX_Powerup_Speed");
+    margin-right: 8px;
+    -unity-background-image-tint-color: #21d4fd;
+}
+
+.timer-main {
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #e2e8f0;
+    letter-spacing: 1px;
+}
+
+/* Score Delta Pop */
+.score-delta {
+    position: absolute;
+    bottom: -22px;
+    align-self: center;
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: #ffd700;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+    transition-property: opacity, translate;
+    transition-duration: 0.35s;
+}
+
+.delta-hidden {
+    opacity: 0;
+    translate: 0 8px;
+}
+
+.delta-visible {
+    opacity: 1;
+    translate: 0 -4px;
+}
+
+/* Combo Badge */
+.combo-badge {
+    background-color: rgba(255, 42, 109, 0.2);
+    border-color: #ff2a6d;
+}
+
+.combo-val-text {
+    color: #ff2a6d;
+    -unity-font-style: bold;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+/* Scorecard Modal */
+.scorecard-card {
+    width: 480px;
+    background-color: #151928;
+    border-radius: 28px;
+    border-width: 1.5px;
+    border-color: rgba(33, 212, 253, 0.4);
+    padding: 28px 24px;
+    align-items: center;
+}
+
+.scorecard-title {
+    font-size: 26px;
+    color: #21d4fd;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+}
+
+.scorecard-stars-row {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.scorecard-star {
+    width: 48px;
+    height: 48px;
+    margin: 0 8px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Medal_Gold.png?fileID=21300000&guid=3a8e99e033fb9404285d85c8f74e64f7&type=3#TX_Medal_Gold");
+    transition-property: scale, opacity;
+    transition-duration: 0.3s;
+}
+
+.star-empty {
+    opacity: 0.2;
+    scale: 0.85;
+    -unity-background-image-tint-color: #64748b;
+}
+
+.star-earned {
+    opacity: 1.0;
+    scale: 1.15;
+    -unity-background-image-tint-color: #ffd700;
+}
+
+.scorecard-table {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    padding: 16px 18px;
+    margin-bottom: 20px;
+}
+
+.scorecard-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.scorecard-row-label {
+    font-size: 14px;
+    color: #94a3b8;
+}
+
+.scorecard-row-val {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: #f1f5f9;
+}
+
+.val-combo {
+    color: #ff2a6d;
+}
+
+.val-time {
+    color: #38bdf8;
+}
+
+.val-bonus {
+    color: #ffd700;
+}
+
+.val-flawless {
+    color: #4ade80;
+}
+
+.scorecard-total-row {
+    border-top-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.15);
+    padding-top: 10px;
+    margin-top: 6px;
+    margin-bottom: 0;
+}
+
+.scorecard-total-label {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #ffffff;
+    letter-spacing: 1px;
+}
+
+.scorecard-total-val {
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: #ffd700;
+}
+
+.scorecard-btn-row {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.scorecard-action-btn {
+    flex-grow: 1;
+    margin: 0 5px;
+    height: 46px;
+    font-size: 14px;
+}

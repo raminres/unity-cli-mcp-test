@@ -38,3 +38,11 @@ MonoBehaviour:
   shieldCount: 0
   multiBallCount: 0
   shieldDuration: 10
+  laserCount: 1
+  laserDuration: 10
+  parTime: 40
+  timeBonusMax: 3000
+  starThresholds:
+  - 900
+  - 2000
+  - 3200
