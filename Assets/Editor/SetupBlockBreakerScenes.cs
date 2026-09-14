@@ -374,50 +374,50 @@ namespace Arcade.Editor
             // 6. Playfield Boundaries
             var boundariesRoot = new GameObject("Boundaries");
 
-            // Left Wall
+            // Left Wall (shortened to 30.2 to join continuous 45° corner chamfer)
             var leftWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
             leftWall.name = "LeftWall";
             leftWall.transform.SetParent(boundariesRoot.transform);
-            leftWall.transform.position = new Vector3(-10.25f, 8.5f, 0f);
-            leftWall.transform.localScale = new Vector3(0.5f, 32f, 2f);
+            leftWall.transform.position = new Vector3(-10.25f, 7.60f, 0f);
+            leftWall.transform.localScale = new Vector3(0.5f, 30.2f, 2f);
             if (borderMat != null) leftWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
             leftWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
-            // Right Wall
+            // Right Wall (shortened to 30.2 to join continuous 45° corner chamfer)
             var rightWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
             rightWall.name = "RightWall";
             rightWall.transform.SetParent(boundariesRoot.transform);
-            rightWall.transform.position = new Vector3(10.25f, 8.5f, 0f);
-            rightWall.transform.localScale = new Vector3(0.5f, 32f, 2f);
+            rightWall.transform.position = new Vector3(10.25f, 7.60f, 0f);
+            rightWall.transform.localScale = new Vector3(0.5f, 30.2f, 2f);
             if (borderMat != null) rightWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
             rightWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
-            // Top Wall
+            // Top Wall (shortened to 17.4 to join continuous 45° corner chamfers)
             var topWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
             topWall.name = "TopWall";
             topWall.transform.SetParent(boundariesRoot.transform);
             topWall.transform.position = new Vector3(0f, 24.25f, 0f);
-            topWall.transform.localScale = new Vector3(21f, 0.5f, 2f);
+            topWall.transform.localScale = new Vector3(17.4f, 0.5f, 2f);
             if (borderMat != null) topWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
             topWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
-            // Top-Left 45° Corner Chamfer (redirects vertical balls diagonally into playfield)
+            // Top-Left 45° Corner Chamfer (redirects vertical balls diagonally into playfield, continuous perimeter)
             var chamferTopLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
             chamferTopLeft.name = "Chamfer_TopLeft";
             chamferTopLeft.transform.SetParent(boundariesRoot.transform);
             chamferTopLeft.transform.position = new Vector3(-9.40f, 23.40f, 0f);
             chamferTopLeft.transform.rotation = Quaternion.Euler(0f, 0f, 45f);
-            chamferTopLeft.transform.localScale = new Vector3(2.2f, 0.5f, 2f);
+            chamferTopLeft.transform.localScale = new Vector3(2.5f, 0.5f, 2f);
             if (borderMat != null) chamferTopLeft.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
             chamferTopLeft.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
-            // Top-Right 45° Corner Chamfer (redirects vertical balls diagonally into playfield)
+            // Top-Right 45° Corner Chamfer (redirects vertical balls diagonally into playfield, continuous perimeter)
             var chamferTopRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
             chamferTopRight.name = "Chamfer_TopRight";
             chamferTopRight.transform.SetParent(boundariesRoot.transform);
             chamferTopRight.transform.position = new Vector3(9.40f, 23.40f, 0f);
             chamferTopRight.transform.rotation = Quaternion.Euler(0f, 0f, -45f);
-            chamferTopRight.transform.localScale = new Vector3(2.2f, 0.5f, 2f);
+            chamferTopRight.transform.localScale = new Vector3(2.5f, 0.5f, 2f);
             if (borderMat != null) chamferTopRight.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
             chamferTopRight.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 

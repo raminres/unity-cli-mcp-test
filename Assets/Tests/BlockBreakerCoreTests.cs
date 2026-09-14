@@ -4116,6 +4116,17 @@ namespace Arcade.Tests
             var topWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
             topWall.name = "TopWall";
             topWall.transform.SetParent(boundariesRoot.transform);
+            topWall.transform.localScale = new Vector3(21f, 0.5f, 2f);
+
+            var leftWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            leftWall.name = "LeftWall";
+            leftWall.transform.SetParent(boundariesRoot.transform);
+            leftWall.transform.localScale = new Vector3(0.5f, 32f, 2f);
+
+            var rightWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rightWall.name = "RightWall";
+            rightWall.transform.SetParent(boundariesRoot.transform);
+            rightWall.transform.localScale = new Vector3(0.5f, 32f, 2f);
 
             var bounceMat = new PhysicsMaterial("TestBounce") { bounciness = 1f };
             topWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
@@ -4125,12 +4136,19 @@ namespace Arcade.Tests
 
             gen.EnsureCornerChamfers();
 
+            // Verify continuous wall shortening
+            Assert.AreEqual(17.4f, topWall.transform.localScale.x, 0.05f, "TopWall must be shortened to 17.4 to continuously join chamfers.");
+            Assert.AreEqual(30.2f, leftWall.transform.localScale.y, 0.05f, "LeftWall must be shortened to 30.2 to continuously join chamfer.");
+            Assert.AreEqual(7.60f, leftWall.transform.position.y, 0.05f);
+            Assert.AreEqual(30.2f, rightWall.transform.localScale.y, 0.05f, "RightWall must be shortened to 30.2 to continuously join chamfer.");
+            Assert.AreEqual(7.60f, rightWall.transform.position.y, 0.05f);
+
             var leftChamfer = boundariesRoot.transform.Find("Chamfer_TopLeft");
             Assert.IsNotNull(leftChamfer, "Chamfer_TopLeft must be created under Boundaries.");
             Assert.AreEqual(-9.40f, leftChamfer.position.x, 0.05f);
             Assert.AreEqual(23.40f, leftChamfer.position.y, 0.05f);
             Assert.AreEqual(45f, leftChamfer.eulerAngles.z, 0.5f);
-            Assert.AreEqual(2.2f, leftChamfer.localScale.x, 0.05f);
+            Assert.AreEqual(2.5f, leftChamfer.localScale.x, 0.05f, "Chamfer length must be 2.5 for continuous corner joint.");
             var leftCol = leftChamfer.GetComponent<BoxCollider>();
             Assert.IsNotNull(leftCol, "Chamfer_TopLeft must have a BoxCollider.");
             Assert.AreEqual(bounceMat, leftCol.sharedMaterial);
@@ -4140,19 +4158,33 @@ namespace Arcade.Tests
             Assert.AreEqual(9.40f, rightChamfer.position.x, 0.05f);
             Assert.AreEqual(23.40f, rightChamfer.position.y, 0.05f);
             Assert.AreEqual(315f, rightChamfer.eulerAngles.z, 0.5f); // -45 deg in euler angles is 315 deg
-            Assert.AreEqual(2.2f, rightChamfer.localScale.x, 0.05f);
+            Assert.AreEqual(2.5f, rightChamfer.localScale.x, 0.05f, "Chamfer length must be 2.5 for continuous corner joint.");
             var rightCol = rightChamfer.GetComponent<BoxCollider>();
             Assert.IsNotNull(rightCol, "Chamfer_TopRight must have a BoxCollider.");
             Assert.AreEqual(bounceMat, rightCol.sharedMaterial);
 
             // Calling it again should be idempotent and maintain calibrated sizing
             Assert.DoesNotThrow(() => gen.EnsureCornerChamfers());
-            Assert.AreEqual(3, boundariesRoot.transform.childCount, "Idempotent call should not create duplicate chamfers.");
-            Assert.AreEqual(2.2f, leftChamfer.localScale.x, 0.05f);
+            Assert.AreEqual(5, boundariesRoot.transform.childCount, "Idempotent call should not create duplicate chamfers.");
+            Assert.AreEqual(2.5f, leftChamfer.localScale.x, 0.05f);
 
             Object.DestroyImmediate(boundariesRoot);
             Object.DestroyImmediate(genGo);
             Object.DestroyImmediate(bounceMat);
+        }
+
+        [Test]
+        public void GameplayScene_ContinuousPerimeter_SerializedInSceneAsset()
+        {
+            string scenePath = "Assets/Scenes/LV_BlockBreaker.unity";
+            Assert.IsTrue(System.IO.File.Exists(scenePath), "Gameplay scene file must exist.");
+
+            string sceneYaml = System.IO.File.ReadAllText(scenePath);
+            Assert.IsTrue(sceneYaml.Contains("m_Name: Chamfer_TopLeft"), "Chamfer_TopLeft must be serialized in scene asset.");
+            Assert.IsTrue(sceneYaml.Contains("m_Name: Chamfer_TopRight"), "Chamfer_TopRight must be serialized in scene asset.");
+            Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 17.4, y: 0.5, z: 2}"), "TopWall must be shortened to 17.4 in scene asset.");
+            Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 0.5, y: 30.2, z: 2}"), "Side walls must be shortened to 30.2 in scene asset.");
+            Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 2.5, y: 0.5, z: 2}"), "Chamfer boxes must be 2.5 length in scene asset.");
         }
 
         #endregion

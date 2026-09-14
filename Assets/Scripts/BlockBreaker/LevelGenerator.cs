@@ -481,6 +481,24 @@ namespace Arcade.BlockBreaker
                 if (rend != null) borderMat = rend.sharedMaterial;
                 var col = topWall.GetComponent<BoxCollider>();
                 if (col != null) bounceMat = col.sharedMaterial;
+
+                // Ensure TopWall is shortened so the perimeter forms a continuous polygonal frame
+                topWall.position = new Vector3(0f, 24.25f, 0f);
+                topWall.localScale = new Vector3(17.4f, 0.5f, 2f);
+            }
+
+            Transform leftWall = boundariesRoot.transform.Find("LeftWall");
+            if (leftWall != null)
+            {
+                leftWall.position = new Vector3(-10.25f, 7.60f, 0f);
+                leftWall.localScale = new Vector3(0.5f, 30.2f, 2f);
+            }
+
+            Transform rightWall = boundariesRoot.transform.Find("RightWall");
+            if (rightWall != null)
+            {
+                rightWall.position = new Vector3(10.25f, 7.60f, 0f);
+                rightWall.localScale = new Vector3(0.5f, 30.2f, 2f);
             }
 
             Transform leftChamfer = boundariesRoot.transform.Find("Chamfer_TopLeft");
@@ -491,7 +509,7 @@ namespace Arcade.BlockBreaker
                 go.transform.SetParent(boundariesRoot.transform);
                 go.transform.position = new Vector3(-9.40f, 23.40f, 0f);
                 go.transform.rotation = Quaternion.Euler(0f, 0f, 45f);
-                go.transform.localScale = new Vector3(2.2f, 0.5f, 2f);
+                go.transform.localScale = new Vector3(2.5f, 0.5f, 2f);
                 if (borderMat != null) go.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
                 if (bounceMat != null) go.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
             }
@@ -499,7 +517,7 @@ namespace Arcade.BlockBreaker
             {
                 leftChamfer.position = new Vector3(-9.40f, 23.40f, 0f);
                 leftChamfer.rotation = Quaternion.Euler(0f, 0f, 45f);
-                leftChamfer.localScale = new Vector3(2.2f, 0.5f, 2f);
+                leftChamfer.localScale = new Vector3(2.5f, 0.5f, 2f);
             }
 
             Transform rightChamfer = boundariesRoot.transform.Find("Chamfer_TopRight");
@@ -510,7 +528,7 @@ namespace Arcade.BlockBreaker
                 go.transform.SetParent(boundariesRoot.transform);
                 go.transform.position = new Vector3(9.40f, 23.40f, 0f);
                 go.transform.rotation = Quaternion.Euler(0f, 0f, -45f);
-                go.transform.localScale = new Vector3(2.2f, 0.5f, 2f);
+                go.transform.localScale = new Vector3(2.5f, 0.5f, 2f);
                 if (borderMat != null) go.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
                 if (bounceMat != null) go.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
             }
@@ -518,7 +536,7 @@ namespace Arcade.BlockBreaker
             {
                 rightChamfer.position = new Vector3(9.40f, 23.40f, 0f);
                 rightChamfer.rotation = Quaternion.Euler(0f, 0f, -45f);
-                rightChamfer.localScale = new Vector3(2.2f, 0.5f, 2f);
+                rightChamfer.localScale = new Vector3(2.5f, 0.5f, 2f);
             }
         }
     }
