@@ -12,7 +12,7 @@ This file provides persistent, high-density project context across agent session
 - **Render Pipeline**: Universal Render Pipeline (URP)
 - **Play Mode Start Scene**: `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (configured via [PlayModeSceneSetup.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/PlayModeSceneSetup.cs))
 - **Remote Repository**: `https://github.com/raminres/unity-cli-mcp-test.git`
-- **Active Branch**: `feature/level-layout-system` (based off `develop`, Git LFS enabled)
+- **Active Branch**: `feature/session-highscores-and-laser-fixes` (based off `develop`, Git LFS enabled)
 
 ### Active Scenes & Build Index
 1. `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0)
@@ -70,6 +70,9 @@ This file provides persistent, high-density project context across agent session
   - **End-of-Level Victory Scorecard & 3-Star Rating**:
     - Scorecard modal (`modal-scorecard`) tallies blocks destroyed, max volley combo, clear time vs par time, time bonus pool, under-par speed bonus (+500), and flawless life bonus (+1,000).
     - Awards 1–3 stars evaluated against level thresholds and records personal Best Clear Time in `HighScoreManager`. Interactive `Replay`, `Next Level`, and `Main Menu` actions.
+  - **Session-Based High Scores**:
+    - Continuous playthroughs across multiple levels (e.g. Level 1 $\to$ Level 2 $\to$ Level 3...) and Main Menu Save/Continue flows share a persistent `sessionId` (GUID).
+    - `HighScoreManager.RecordScore(score, level, time, sessionId)` updates the single entry in-place for that session (`score = max`, `level = max`, total run elapsed time) rather than inserting duplicate distinct per-level rows, preserving a clean Top 10 leaderboard.
 
 ---
 
@@ -122,7 +125,7 @@ This file provides persistent, high-density project context across agent session
     - **Shield (`Shield`)**: Drops electric blue capsule with shield icon; catching activates 10-second defensive barrier with HUD countdown.
     - **Multi-Ball (`MultiBall`)**: Drops neon magenta capsule with multi-ball icon; catching spawns 2 extra balls at $\pm 35^\circ$ diverging angles with distinct trail colors.
     - **Score Multipliers (`ScoreMultiplier2x`, `ScoreMultiplier3x`, `ScoreMultiplier4x`, `ScoreMultiplier5x`)**: Drops glowing gold (2X), fiery orange (3X), crimson (4X), or hyper-magenta (5X) capsule with extra points icon; catching activates a 10-second score multiplier buff on `ArcadeGameManager` with animated HUD status badge.
-    - **Laser Blaster (`Laser`)**: Drops glowing ruby red capsule with laser icon ([TX_Powerup_Laser.png](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/UI/Icons/TX_Powerup_Laser.png)); catching deploys twin plasma laser cannons mounted on paddle edges ([PaddleLaserController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/PaddleLaserController.cs)) firing high-velocity laser bolts ([LaserBolt.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LaserBolt.cs), $34\text{ units/s}$, ruby glow, SFX [AU_Powerup_Laser.mp3](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Audio/AU_Powerup_Laser.mp3)) at $0.32\text{s}$ intervals for 10 seconds. Bolts deal standard damage on block impact (`TakeHit(Vector3.down)`).
+    - **Laser Blaster (`Laser`)**: Drops glowing ruby red capsule with twin gun blaster icon ([TX_Powerup_Gun.png](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/UI/Icons/TX_Powerup_Gun.png)); catching deploys twin plasma laser cannons mounted on paddle edges ([PaddleLaserController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/PaddleLaserController.cs)) firing high-velocity laser bolts ([LaserBolt.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LaserBolt.cs), $34\text{ units/s}$, ruby glow, SFX [AU_Powerup_Laser.mp3](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Audio/AU_Powerup_Laser.mp3)) at $0.32\text{s}$ intervals for 10 seconds. Bolts deal standard damage on block impact (`TakeHit(Vector3.down)`).
     - **In-Flight Lifecycle & Docked Intercept Guard**:
       - `PowerupCapsule.ClearAllFallingCapsules()` automatically clears and destroys all active falling capsules upon life loss, shield deflection save, level clear, game over, and level advancement, preventing stale capsules from lingering into docked state or subsequent levels.
       - `PowerupCapsule.TryIntercept()` guards against collecting powerups while docked on the paddle (`ReadyToLaunch` or `BallLost`), ensuring balls cannot be triggered prematurely before player launch.

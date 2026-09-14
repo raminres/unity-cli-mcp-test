@@ -522,7 +522,8 @@ namespace Arcade.BlockBreaker
                 case BlockSpecialType.ScoreMultiplier5x:
                     return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
                 case BlockSpecialType.Laser:
-                    return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Laser.png");
+                    var gunSp = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Gun.png");
+                    return gunSp != null ? gunSp : UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Laser.png");
             }
 #endif
             return null;

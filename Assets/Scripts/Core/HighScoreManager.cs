@@ -11,15 +11,17 @@ namespace Arcade.Core
         public int level;
         public string date;
         public float time; // run elapsed time in seconds
+        public string sessionId; // unique ID of the play session/run
 
         public HighScoreEntry() { }
 
-        public HighScoreEntry(int score, int level = 1, string date = "", float time = 0f)
+        public HighScoreEntry(int score, int level = 1, string date = "", float time = 0f, string sessionId = "")
         {
             this.score = score;
             this.level = level;
             this.date = string.IsNullOrEmpty(date) ? DateTime.Now.ToString("yyyy-MM-dd") : date;
             this.time = time;
+            this.sessionId = sessionId ?? "";
         }
     }
 
@@ -90,19 +92,39 @@ namespace Arcade.Core
             return new List<HighScoreEntry>(cachedScores);
         }
 
-        public static bool RecordScore(int score, int level = 1, float time = 0f)
+        public static bool RecordScore(int score, int level = 1, float time = 0f, string sessionId = "")
         {
             if (score <= 0) return false;
 
-            var scores = GetTopScores();
+            // Ensure cachedScores is initialized and sorted
+            GetTopScores();
+
+            // If a valid sessionId is provided, check if an entry for this session already exists
+            if (!string.IsNullOrEmpty(sessionId))
+            {
+                var existing = cachedScores.Find(e => e.sessionId == sessionId);
+                if (existing != null)
+                {
+                    existing.score = Mathf.Max(existing.score, score);
+                    existing.level = Mathf.Max(existing.level, level);
+                    existing.time = time;
+                    existing.date = DateTime.Now.ToString("yyyy-MM-dd");
+
+                    SortAndClampScores();
+                    SaveScores();
+
+                    OnHighScoresChanged?.Invoke();
+                    return true;
+                }
+            }
 
             // If we already have 10 scores and this score is <= the 10th score, do not record
-            if (scores.Count >= MAX_SCORES && score <= scores[MAX_SCORES - 1].score)
+            if (cachedScores.Count >= MAX_SCORES && score <= cachedScores[MAX_SCORES - 1].score)
             {
                 return false;
             }
 
-            cachedScores.Add(new HighScoreEntry(score, level, "", time));
+            cachedScores.Add(new HighScoreEntry(score, level, "", time, sessionId));
             SortAndClampScores();
             SaveScores();
 

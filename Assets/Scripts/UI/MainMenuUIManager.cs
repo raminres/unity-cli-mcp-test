@@ -395,6 +395,9 @@ namespace Arcade.UI
         {
             if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
             PlayerPrefs.SetInt("Arcade_LoadSavedGameOnStart", 1);
+            int savedLevel = PlayerPrefs.GetInt("Arcade_SavedLevel", 1);
+            PlayerPrefs.SetInt("Arcade_SelectedLevel", savedLevel);
+            PlayerPrefs.Save();
             SceneManager.LoadScene("LV_BlockBreaker");
         }
 
