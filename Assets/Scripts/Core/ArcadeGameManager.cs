@@ -63,6 +63,14 @@ namespace Arcade.Core
         private int livesLostThisLevel = 0;
         private LevelSummaryData currentLevelSummary;
 
+        [Header("Level Clear Pacing")]
+        [SerializeField] private float levelClearDelaySeconds = 1.4f;
+        private bool isLevelClearPending = false;
+        private Coroutine levelClearCoroutine;
+
+        public bool IsLevelClearPending => isLevelClearPending;
+        public float LevelClearDelaySeconds => levelClearDelaySeconds;
+
         [Header("Power-Up States")]
         [SerializeField] private bool isShieldActive = false;
         [SerializeField] private float shieldTimeRemaining = 0f;
@@ -556,7 +564,7 @@ namespace Arcade.Core
 
         public void HandleBallFell(BallController ball)
         {
-            if (currentState != GameState.Playing) return;
+            if (currentState != GameState.Playing || isLevelClearPending) return;
 
             if (activeBalls.Count > 1)
             {
@@ -617,6 +625,12 @@ namespace Arcade.Core
 
         public void ResetLevelSessionStats()
         {
+            if (levelClearCoroutine != null)
+            {
+                StopCoroutine(levelClearCoroutine);
+                levelClearCoroutine = null;
+            }
+            isLevelClearPending = false;
             levelElapsedTime = 0f;
             currentVolleyStreak = 0;
             highestVolleyComboThisLevel = 1;
@@ -647,6 +661,16 @@ namespace Arcade.Core
         public void SetState(GameState newState)
         {
             if (currentState == newState) return;
+
+            if (newState != GameState.Playing && newState != GameState.LevelClear)
+            {
+                if (levelClearCoroutine != null)
+                {
+                    StopCoroutine(levelClearCoroutine);
+                    levelClearCoroutine = null;
+                }
+                isLevelClearPending = false;
+            }
 
             currentState = newState;
             OnStateChanged?.Invoke(currentState);
@@ -773,7 +797,18 @@ namespace Arcade.Core
             if (allBlocksCleared)
             {
                 HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime);
-                OnLevelCleared();
+                if (Application.isPlaying && gameObject.activeInHierarchy)
+                {
+                    if (!isLevelClearPending)
+                    {
+                        isLevelClearPending = true;
+                        levelClearCoroutine = StartCoroutine(DelayedLevelClearRoutine(levelClearDelaySeconds));
+                    }
+                }
+                else
+                {
+                    OnLevelCleared();
+                }
             }
         }
 
@@ -821,8 +856,34 @@ namespace Arcade.Core
             SaveCurrentGameSession();
         }
 
+        private System.Collections.IEnumerator DelayedLevelClearRoutine(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            isLevelClearPending = false;
+            levelClearCoroutine = null;
+            OnLevelCleared();
+        }
+
+        public void TriggerImmediateLevelClearForTesting()
+        {
+            if (levelClearCoroutine != null)
+            {
+                StopCoroutine(levelClearCoroutine);
+                levelClearCoroutine = null;
+            }
+            isLevelClearPending = false;
+            OnLevelCleared();
+        }
+
         private void OnLevelCleared()
         {
+            if (levelClearCoroutine != null)
+            {
+                StopCoroutine(levelClearCoroutine);
+                levelClearCoroutine = null;
+            }
+            isLevelClearPending = false;
+
             BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
             BlockBreaker.LaserBolt.ClearAllActiveBolts();
             ClearExtraBalls();

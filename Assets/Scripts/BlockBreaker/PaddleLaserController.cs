@@ -19,6 +19,7 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float beamWidth = 3.2f;
         [SerializeField] private float beamHeight = 31f;
         [SerializeField] private float hyperBeamDuration = 5.0f;
+        [SerializeField] private float beamSurgeDuration = 0.35f; // Duration for beam to extend from paddle to arena ceiling
 
         private PaddleController paddle;
         private bool isBlasterActive = false;
@@ -27,6 +28,8 @@ namespace Arcade.BlockBreaker
 
         private bool isHyperBeamActive = false;
         private float hyperBeamTimer = 0f;
+        private float currentBeamHeight = 0f;
+        private float beamSurgeProgress = 0f;
         private GameObject hyperBeamObject;
         private static Material hyperBeamMaterial;
 
@@ -36,6 +39,8 @@ namespace Arcade.BlockBreaker
         public float HyperBeamTimeRemaining => Mathf.Max(0f, hyperBeamTimer);
         public float BeamWidth => beamWidth;
         public float HyperBeamDuration => hyperBeamDuration;
+        public float BeamSurgeDuration => beamSurgeDuration;
+        public float CurrentBeamHeight => currentBeamHeight;
 
         private void Awake()
         {
@@ -93,6 +98,8 @@ namespace Arcade.BlockBreaker
         {
             isHyperBeamActive = false;
             hyperBeamTimer = 0f;
+            beamSurgeProgress = 0f;
+            currentBeamHeight = 0f;
             if (hyperBeamObject != null)
             {
                 hyperBeamObject.SetActive(false);
@@ -109,8 +116,11 @@ namespace Arcade.BlockBreaker
         {
             isHyperBeamActive = true;
             hyperBeamTimer = duration > 0f ? duration : hyperBeamDuration;
+            beamSurgeProgress = 0f;
+            currentBeamHeight = 0.5f;
+
             EnsureHyperBeamObject();
-            UpdateHyperBeamPosition();
+            UpdateHyperBeamPosition(currentBeamHeight);
             if (hyperBeamObject != null)
             {
                 hyperBeamObject.SetActive(true);
@@ -121,8 +131,8 @@ namespace Arcade.BlockBreaker
                 ArcadeAudioManager.Instance.PlayLaserShoot();
             }
 
-            // Immediately vaporize any blocks in current alignment
-            PerformHyperBeamSlice();
+            // Immediately test any blocks in initial muzzle alignment
+            PerformHyperBeamSlice(currentBeamHeight);
         }
 
         private void Update()
@@ -160,16 +170,24 @@ namespace Arcade.BlockBreaker
                 hyperBeamTimer -= dt;
                 if (hyperBeamTimer <= 0f)
                 {
-                    isHyperBeamActive = false;
-                    if (hyperBeamObject != null)
-                    {
-                        hyperBeamObject.SetActive(false);
-                    }
+                    DeactivateHyperBeam();
                 }
                 else
                 {
-                    UpdateHyperBeamPosition();
-                    PerformHyperBeamSlice();
+                    // Progressive surge animation from paddle to ceiling
+                    if (beamSurgeProgress < 1.0f)
+                    {
+                        beamSurgeProgress = Mathf.Min(1.0f, beamSurgeProgress + (dt / beamSurgeDuration));
+                        float smoothT = Mathf.SmoothStep(0f, 1f, beamSurgeProgress);
+                        currentBeamHeight = Mathf.Lerp(0.5f, beamHeight, smoothT);
+                    }
+                    else
+                    {
+                        currentBeamHeight = beamHeight;
+                    }
+
+                    UpdateHyperBeamPosition(currentBeamHeight);
+                    PerformHyperBeamSlice(currentBeamHeight);
                 }
             }
         }
@@ -194,39 +212,51 @@ namespace Arcade.BlockBreaker
 
         private void EnsureHyperBeamObject()
         {
+            if (hyperBeamObject != null)
+            {
+                var filter = hyperBeamObject.GetComponent<MeshFilter>();
+                if (filter != null && filter.sharedMesh != null && filter.sharedMesh.name.Contains("Cube"))
+                {
+                    DestroyImmediate(hyperBeamObject);
+                    hyperBeamObject = null;
+                }
+            }
+
             if (hyperBeamObject == null)
             {
-                hyperBeamObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                hyperBeamObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 hyperBeamObject.name = "VFX_Railgun_HyperBeam";
                 hyperBeamObject.transform.SetParent(transform);
 
                 // Disable default collider so ball doesn't bounce off beam mesh
                 var col = hyperBeamObject.GetComponent<Collider>();
-                if (col != null) col.enabled = false;
+                if (col != null) DestroyImmediate(col);
 
                 var rend = hyperBeamObject.GetComponent<MeshRenderer>();
                 if (rend != null)
                 {
                     rend.sharedMaterial = GetOrCreateHyperBeamMaterial();
+                    rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    rend.receiveShadows = false;
                 }
             }
         }
 
-        private void UpdateHyperBeamPosition()
+        private void UpdateHyperBeamPosition(float height)
         {
             if (hyperBeamObject == null) return;
-            // Center the beam vertically from paddle top deck (Y = -6) up to ceiling (Y = 24.5)
-            float centerY = (beamHeight * 0.5f) + 0.4f;
+            // Center the beam vertically from paddle top strike deck (Y = -6.0) upwards
+            float centerY = (height * 0.5f) + 0.38f;
             float lossyX = transform.lossyScale.x > 0.001f ? transform.lossyScale.x : 1f;
             float lossyY = transform.lossyScale.y > 0.001f ? transform.lossyScale.y : 1f;
-            hyperBeamObject.transform.localPosition = new Vector3(0f, centerY, 0f);
-            hyperBeamObject.transform.localScale = new Vector3(beamWidth / lossyX, beamHeight / lossyY, 1.2f);
+            hyperBeamObject.transform.localPosition = new Vector3(0f, centerY, -0.3f);
+            hyperBeamObject.transform.localScale = new Vector3(beamWidth / lossyX, height / lossyY, 1f);
         }
 
-        private void PerformHyperBeamSlice()
+        private void PerformHyperBeamSlice(float height)
         {
-            Vector3 beamCenter = transform.position + new Vector3(0f, (beamHeight * 0.5f) + 0.4f, 0f);
-            Vector3 halfExtents = new Vector3(beamWidth * 0.5f, beamHeight * 0.5f, 1.5f);
+            Vector3 beamCenter = transform.position + new Vector3(0f, (height * 0.5f) + 0.38f, 0f);
+            Vector3 halfExtents = new Vector3(beamWidth * 0.5f, height * 0.5f, 1.5f);
 
             Collider[] hits = Physics.OverlapBox(beamCenter, halfExtents, Quaternion.identity);
             for (int i = 0; i < hits.Length; i++)
@@ -244,12 +274,13 @@ namespace Arcade.BlockBreaker
             }
         }
 
-        private static Material GetOrCreateHyperBeamMaterial()
+        public static Material GetOrCreateHyperBeamMaterial()
         {
             if (hyperBeamMaterial == null)
             {
-                var shader = Shader.Find("Universal Render Pipeline/Unlit")
-                    ?? Shader.Find("Arcade/VFX_ParticleBurst")
+                var shader = Shader.Find("Arcade/VFX_LaserHyperBeam")
+                    ?? Shader.Find("Universal Render Pipeline/Unlit")
+                    ?? Shader.Find("Arcade/VFX_BallTrail")
                     ?? Shader.Find("Sprites/Default");
 
                 hyperBeamMaterial = new Material(shader)
@@ -257,7 +288,7 @@ namespace Arcade.BlockBreaker
                     name = "M_Railgun_HyperBeam_URP"
                 };
 
-                Color beamCol = new Color(1f, 0.15f, 0.3f, 0.75f); // High-luminance neon ruby
+                Color beamCol = new Color(1f, 0.15f, 0.35f, 0.85f);
                 hyperBeamMaterial.SetColor("_BaseColor", beamCol);
                 hyperBeamMaterial.SetColor("_Color", beamCol);
                 if (hyperBeamMaterial.HasProperty("_EmissionColor"))
@@ -303,11 +334,23 @@ namespace Arcade.BlockBreaker
                 hyperBeamTimer -= dt;
                 if (hyperBeamTimer <= 0f)
                 {
-                    isHyperBeamActive = false;
-                    if (hyperBeamObject != null)
+                    DeactivateHyperBeam();
+                }
+                else
+                {
+                    if (beamSurgeProgress < 1.0f)
                     {
-                        hyperBeamObject.SetActive(false);
+                        beamSurgeProgress = Mathf.Min(1.0f, beamSurgeProgress + (dt / beamSurgeDuration));
+                        float smoothT = Mathf.SmoothStep(0f, 1f, beamSurgeProgress);
+                        currentBeamHeight = Mathf.Lerp(0.5f, beamHeight, smoothT);
                     }
+                    else
+                    {
+                        currentBeamHeight = beamHeight;
+                    }
+
+                    UpdateHyperBeamPosition(currentBeamHeight);
+                    PerformHyperBeamSlice(currentBeamHeight);
                 }
             }
         }

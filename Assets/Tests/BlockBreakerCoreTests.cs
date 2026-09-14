@@ -4156,6 +4156,61 @@ namespace Arcade.Tests
         }
 
         #endregion
+
+        #region 19. Progressive Hyper-Beam Surge & Level Clear Pacing Tests
+
+        [Test]
+        public void PaddleLaserController_FireRailgunHyperBeam_ProgressivelySurgesFromPaddle()
+        {
+            var paddleGo = new GameObject("TestPaddle");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+            var laserCtrl = paddle.LaserController;
+
+            laserCtrl.FireRailgunHyperBeam(5.0f);
+
+            Assert.IsTrue(laserCtrl.IsHyperBeamActive, "Hyper-beam must be active on fire.");
+            Assert.LessOrEqual(laserCtrl.CurrentBeamHeight, 1.0f, "Beam must start at paddle deck and not immediately cover full arena.");
+
+            // Simulate partial surge (0.15s of 0.35s surge duration)
+            laserCtrl.SimulateStepForTesting(0.15f);
+            Assert.Greater(laserCtrl.CurrentBeamHeight, 1.0f, "Beam must progressively extend upwards.");
+            Assert.Less(laserCtrl.CurrentBeamHeight, 31.0f, "Beam should not yet be at full height halfway through surge.");
+
+            // Complete surge (further 0.25s, total 0.40s >= 0.35s)
+            laserCtrl.SimulateStepForTesting(0.25f);
+            Assert.AreEqual(31.0f, laserCtrl.CurrentBeamHeight, 0.1f, "Beam must reach full height of 31 units after surge duration completes.");
+
+            Object.DestroyImmediate(paddleGo);
+        }
+
+        [Test]
+        public void PaddleLaserController_GetOrCreateHyperBeamMaterial_ResolvesNonNullMaterialWithGradientShader()
+        {
+            var mat = PaddleLaserController.GetOrCreateHyperBeamMaterial();
+            Assert.IsNotNull(mat, "Hyper-beam material must resolve non-null.");
+            Assert.IsNotNull(mat.shader, "Shader must be valid.");
+            Assert.IsTrue(mat.shader.name.Contains("LaserHyperBeam") || mat.shader.name.Contains("Unlit") || mat.shader.name.Contains("BallTrail"));
+        }
+
+        [Test]
+        public void ArcadeGameManager_LevelClearDelay_TracksPendingStateAndDelaySeconds()
+        {
+            var mgrGo = new GameObject("TestMgr");
+            var mgr = mgrGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(mgr);
+
+            Assert.AreEqual(1.4f, mgr.LevelClearDelaySeconds, 0.01f, "Default level clear delay must be 1.4s for cinematic readability.");
+            Assert.IsFalse(mgr.IsLevelClearPending, "Pending flag must be false initially.");
+
+            mgr.TriggerImmediateLevelClearForTesting();
+            Assert.AreEqual(GameState.LevelClear, mgr.State, "Direct level clear must immediately transition to LevelClear.");
+            Assert.IsFalse(mgr.IsLevelClearPending, "Pending flag must be reset upon completion.");
+
+            Object.DestroyImmediate(mgrGo);
+            ArcadeGameManager.SetInstanceForTesting(null);
+        }
+
+        #endregion
     }
 }
 
