@@ -77,6 +77,12 @@
             <ui:Label text="PRESS UP ARROW OR TAP TO LAUNCH" class="launch-text" picking-mode="Ignore" />
         </ui:VisualElement>
 
+        <!-- Center Level Cleared Celebratory Banner (Visible during level clear transition) -->
+        <ui:VisualElement name="level-clear-banner" class="level-clear-banner level-clear-banner-hidden" picking-mode="Ignore">
+            <ui:Label name="level-clear-banner-text" text="LEVEL CLEARED!" class="level-clear-banner-text" picking-mode="Ignore" />
+            <ui:Label name="level-clear-banner-subtext" text="STAGE COMPLETE!" class="level-clear-banner-subtext" picking-mode="Ignore" />
+        </ui:VisualElement>
+
         <!-- Pause Modal -->
         <ui:VisualElement name="pause-modal" class="modal-backdrop modal-hidden">
             <ui:VisualElement class="modal-card pause-card">

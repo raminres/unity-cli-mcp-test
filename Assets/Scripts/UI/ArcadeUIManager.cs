@@ -36,6 +36,9 @@ namespace Arcade.UI
 
         // Banner
         private VisualElement launchBanner;
+        private VisualElement levelClearBanner;
+        private Label levelClearBannerText;
+        private Label levelClearBannerSubtext;
 
         // Modals
         private VisualElement pauseModal;
@@ -206,6 +209,9 @@ namespace Arcade.UI
         public Sprite MultiBallSprite => multiBallSprite;
         public Sprite LaserSprite => laserSprite;
         public Sprite HeartSprite => heartFillSprite;
+        public VisualElement LevelClearBanner => levelClearBanner;
+        public Label LevelClearBannerText => levelClearBannerText;
+        public Label LevelClearBannerSubtext => levelClearBannerSubtext;
 
         private bool wasPausedByOptions = false;
         private bool wasPausedByLevelSettings = false;
@@ -378,6 +384,10 @@ namespace Arcade.UI
 
             if (btnApplyLevel != null) btnApplyLevel.clicked -= ApplyLevelSettingsAndRestart;
             if (btnCloseLevelSettings != null) btnCloseLevelSettings.clicked -= HideLevelSettings;
+
+            levelClearBanner = null;
+            levelClearBannerText = null;
+            levelClearBannerSubtext = null;
         }
 
         private void BindElements()
@@ -509,6 +519,9 @@ namespace Arcade.UI
                 iconQuickOptions.style.rotate = new StyleRotate(new Rotate(Angle.Degrees(0f)));
 
             launchBanner = root.Q<VisualElement>("launch-banner");
+            levelClearBanner = root.Q<VisualElement>("level-clear-banner");
+            levelClearBannerText = root.Q<Label>("level-clear-banner-text");
+            levelClearBannerSubtext = root.Q<Label>("level-clear-banner-subtext");
 
             pauseModal = root.Q<VisualElement>("pause-modal");
             optionsModal = root.Q<VisualElement>("options-modal");
@@ -779,6 +792,7 @@ namespace Arcade.UI
                 ArcadeGameManager.Instance.OnVolleyComboChanged += HandleVolleyComboChanged;
                 ArcadeGameManager.Instance.OnBlockPointsAwarded += HandleBlockPointsAwarded;
                 ArcadeGameManager.Instance.OnLevelCompletedWithTally += HandleLevelCompletedWithTally;
+                ArcadeGameManager.Instance.OnLevelClearPending += HandleLevelClearPending;
             }
         }
 
@@ -804,6 +818,7 @@ namespace Arcade.UI
                 ArcadeGameManager.Instance.OnVolleyComboChanged -= HandleVolleyComboChanged;
                 ArcadeGameManager.Instance.OnBlockPointsAwarded -= HandleBlockPointsAwarded;
                 ArcadeGameManager.Instance.OnLevelCompletedWithTally -= HandleLevelCompletedWithTally;
+                ArcadeGameManager.Instance.OnLevelClearPending -= HandleLevelClearPending;
             }
         }
 
@@ -836,6 +851,11 @@ namespace Arcade.UI
             targetFps = PlayerPrefs.GetInt("Arcade_TargetFPS", 60);
             Application.targetFrameRate = targetFps;
             if (btnFps != null) btnFps.text = $"{targetFps} FPS";
+
+            if (levelClearBanner != null)
+            {
+                levelClearBanner.AddToClassList("level-clear-banner-hidden");
+            }
         }
 
         public void UpdateScoreDisplay(int currentScore, int delta)
@@ -993,6 +1013,11 @@ namespace Arcade.UI
                     launchBanner.RemoveFromClassList("launch-banner-hidden");
                 else
                     launchBanner.AddToClassList("launch-banner-hidden");
+            }
+
+            if (levelClearBanner != null && state != GameState.Playing)
+            {
+                levelClearBanner.AddToClassList("level-clear-banner-hidden");
             }
 
             // Pause Modal
@@ -1380,8 +1405,42 @@ namespace Arcade.UI
             scoreDeltaCoroutine = null;
         }
 
+        public void HandleLevelClearPending(float delay, bool wasClearedWithLaser)
+        {
+            if (levelClearBanner != null)
+            {
+                if (levelClearBannerText != null)
+                {
+                    levelClearBannerText.text = "LEVEL CLEARED!";
+                }
+
+                if (levelClearBannerSubtext != null)
+                {
+                    if (wasClearedWithLaser)
+                    {
+                        levelClearBannerSubtext.text = "CLUTCH OVERCHARGE!";
+                    }
+                    else if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.LivesLostThisLevel == 0)
+                    {
+                        levelClearBannerSubtext.text = "FLAWLESS VICTORY!";
+                    }
+                    else
+                    {
+                        levelClearBannerSubtext.text = "STAGE COMPLETE!";
+                    }
+                }
+
+                levelClearBanner.RemoveFromClassList("level-clear-banner-hidden");
+            }
+        }
+
         public void HandleLevelCompletedWithTally(LevelSummaryData tally)
         {
+            if (levelClearBanner != null)
+            {
+                levelClearBanner.AddToClassList("level-clear-banner-hidden");
+            }
+
             if (scorecardBlocksVal != null) scorecardBlocksVal.text = tally.blocksDestroyed.ToString();
             if (scorecardComboVal != null) scorecardComboVal.text = $"x{tally.highestCombo}";
             if (scorecardTimeVal != null) scorecardTimeVal.text = $"{HighScoreManager.FormatTime(tally.elapsedTime)} / {HighScoreManager.FormatTime(tally.parTime)}";

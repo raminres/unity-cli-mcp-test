@@ -4199,8 +4199,29 @@ namespace Arcade.Tests
             var mgr = mgrGo.AddComponent<ArcadeGameManager>();
             ArcadeGameManager.SetInstanceForTesting(mgr);
 
-            Assert.AreEqual(1.4f, mgr.LevelClearDelaySeconds, 0.01f, "Default level clear delay must be 1.4s for cinematic readability.");
+            Assert.AreEqual(1.4f, mgr.LevelClearDelaySeconds, 0.01f, "Default laser level clear delay must be 1.4s for cinematic readability.");
+            Assert.AreEqual(0.8f, mgr.StandardClearDelaySeconds, 0.01f, "Default non-laser level clear delay must be 0.8s for snappy pacing.");
             Assert.IsFalse(mgr.IsLevelClearPending, "Pending flag must be false initially.");
+
+            float firedDelay = 0f;
+            bool firedWasLaser = false;
+            mgr.OnLevelClearPending += (d, l) =>
+            {
+                firedDelay = d;
+                firedWasLaser = l;
+            };
+
+            // Test non-laser clear cadence
+            mgr.TriggerLevelClearWithDelayForTesting(false);
+            Assert.IsTrue(mgr.IsLevelClearPending);
+            Assert.AreEqual(0.8f, firedDelay, 0.01f);
+            Assert.IsFalse(firedWasLaser);
+
+            // Test laser clear cadence
+            mgr.TriggerLevelClearWithDelayForTesting(true);
+            Assert.IsTrue(mgr.IsLevelClearPending);
+            Assert.AreEqual(1.4f, firedDelay, 0.01f);
+            Assert.IsTrue(firedWasLaser);
 
             mgr.TriggerImmediateLevelClearForTesting();
             Assert.AreEqual(GameState.LevelClear, mgr.State, "Direct level clear must immediately transition to LevelClear.");
@@ -4208,6 +4229,48 @@ namespace Arcade.Tests
 
             Object.DestroyImmediate(mgrGo);
             ArcadeGameManager.SetInstanceForTesting(null);
+        }
+
+        [Test]
+        public void ArcadeUIManager_LevelClearBanner_BindsAndDisplaysProperly()
+        {
+            var uiManagerGo = new GameObject("TestArcadeUIManager");
+            var panelRenderer = uiManagerGo.AddComponent<UnityEngine.UIElements.PanelRenderer>();
+            var uiMgr = uiManagerGo.AddComponent<ArcadeUIManager>();
+
+            var uxml = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+
+            panelRenderer.visualTreeAsset = uxml;
+            var root = uxml.CloneTree();
+
+            var bindMethod = typeof(ArcadeUIManager).GetMethod("BindElements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, root);
+            bindMethod.Invoke(uiMgr, null);
+
+            Assert.IsNotNull(uiMgr.LevelClearBanner, "LevelClearBanner must be bound from UXML.");
+            Assert.IsNotNull(uiMgr.LevelClearBannerText, "LevelClearBannerText must be bound from UXML.");
+            Assert.IsNotNull(uiMgr.LevelClearBannerSubtext, "LevelClearBannerSubtext must be bound from UXML.");
+
+            // Banner is hidden by default
+            Assert.IsTrue(uiMgr.LevelClearBanner.ClassListContains("level-clear-banner-hidden"));
+
+            // Test non-laser clear pending
+            uiMgr.HandleLevelClearPending(0.8f, wasClearedWithLaser: false);
+            Assert.IsFalse(uiMgr.LevelClearBanner.ClassListContains("level-clear-banner-hidden"), "Banner must be shown when clear is pending.");
+            Assert.AreEqual("LEVEL CLEARED!", uiMgr.LevelClearBannerText.text);
+            Assert.IsTrue(uiMgr.LevelClearBannerSubtext.text == "STAGE COMPLETE!" || uiMgr.LevelClearBannerSubtext.text == "FLAWLESS VICTORY!");
+
+            // Test laser clear pending
+            uiMgr.HandleLevelClearPending(1.4f, wasClearedWithLaser: true);
+            Assert.IsFalse(uiMgr.LevelClearBanner.ClassListContains("level-clear-banner-hidden"));
+            Assert.AreEqual("CLUTCH OVERCHARGE!", uiMgr.LevelClearBannerSubtext.text);
+
+            // Test banner hidden upon victory scorecard tally
+            uiMgr.HandleLevelCompletedWithTally(default);
+            Assert.IsTrue(uiMgr.LevelClearBanner.ClassListContains("level-clear-banner-hidden"), "Banner must be hidden when scorecard modal is shown.");
+
+            Object.DestroyImmediate(uiManagerGo);
         }
 
         #endregion

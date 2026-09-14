@@ -433,6 +433,55 @@
     text-shadow: 0 0 10px rgba(33, 212, 253, 0.8);
 }
 
+/* Level Clear Center Banner */
+.level-clear-banner {
+    position: absolute;
+    top: 36%;
+    align-self: center;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(10, 14, 26, 0.92);
+    border-width: 2px;
+    border-color: rgba(255, 215, 0, 0.85);
+    border-radius: 22px;
+    padding: 18px 44px;
+    pointer-events: none;
+    transition-property: scale, opacity;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out-back;
+    scale: 1 1;
+    opacity: 1;
+}
+
+.level-clear-banner-hidden {
+    display: none;
+    scale: 0.7 0.7;
+    opacity: 0;
+}
+
+.level-clear-banner-text {
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: #ffd700;
+    letter-spacing: 3px;
+    -unity-text-align: middle-center;
+    text-shadow: 0 0 16px rgba(255, 215, 0, 0.9);
+    margin-bottom: 4px;
+}
+
+.level-clear-banner-subtext {
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: #00f2fe;
+    letter-spacing: 2.5px;
+    -unity-text-align: middle-center;
+    text-shadow: 0 0 10px rgba(0, 242, 254, 0.8);
+}
+
 /* Modals */
 .modal-backdrop {
     position: absolute;

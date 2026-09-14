@@ -65,11 +65,14 @@ namespace Arcade.Core
 
         [Header("Level Clear Pacing")]
         [SerializeField] private float levelClearDelaySeconds = 1.4f;
+        [SerializeField] private float standardClearDelaySeconds = 0.8f;
         private bool isLevelClearPending = false;
         private Coroutine levelClearCoroutine;
 
         public bool IsLevelClearPending => isLevelClearPending;
         public float LevelClearDelaySeconds => levelClearDelaySeconds;
+        public float StandardClearDelaySeconds => standardClearDelaySeconds;
+        public int LivesLostThisLevel => livesLostThisLevel;
 
         [Header("Power-Up States")]
         [SerializeField] private bool isShieldActive = false;
@@ -112,6 +115,7 @@ namespace Arcade.Core
         public event Action<int, int> OnVolleyComboChanged; // (currentStreak, multiplier)
         public event Action<Vector3, int, int, string> OnBlockPointsAwarded; // (worldPos, awardedPoints, totalMultiplier, tag)
         public event Action<LevelSummaryData> OnLevelCompletedWithTally;
+        public event Action<float, bool> OnLevelClearPending; // (delaySeconds, wasClearedWithLaser)
 
         public GameState State => currentState;
         public int CurrentLevel => currentLevel;
@@ -797,16 +801,27 @@ namespace Arcade.Core
             if (allBlocksCleared)
             {
                 HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime);
+                bool wasClearedWithLaser = false;
+                var paddle = FindAnyObjectByType<PaddleController>();
+                if (paddle != null && paddle.LaserController != null && paddle.LaserController.IsHyperBeamActive)
+                {
+                    wasClearedWithLaser = true;
+                }
+
+                float delay = wasClearedWithLaser ? levelClearDelaySeconds : standardClearDelaySeconds;
+
                 if (Application.isPlaying && gameObject.activeInHierarchy)
                 {
                     if (!isLevelClearPending)
                     {
                         isLevelClearPending = true;
-                        levelClearCoroutine = StartCoroutine(DelayedLevelClearRoutine(levelClearDelaySeconds));
+                        OnLevelClearPending?.Invoke(delay, wasClearedWithLaser);
+                        levelClearCoroutine = StartCoroutine(DelayedLevelClearRoutine(delay));
                     }
                 }
                 else
                 {
+                    OnLevelClearPending?.Invoke(delay, wasClearedWithLaser);
                     OnLevelCleared();
                 }
             }
@@ -873,6 +888,15 @@ namespace Arcade.Core
             }
             isLevelClearPending = false;
             OnLevelCleared();
+        }
+
+        public void SetLevelClearDelaySecondsForTesting(float delay) => levelClearDelaySeconds = delay;
+        public void SetStandardClearDelaySecondsForTesting(float delay) => standardClearDelaySeconds = delay;
+        public void TriggerLevelClearWithDelayForTesting(bool wasClearedWithLaser)
+        {
+            float delay = wasClearedWithLaser ? levelClearDelaySeconds : standardClearDelaySeconds;
+            isLevelClearPending = true;
+            OnLevelClearPending?.Invoke(delay, wasClearedWithLaser);
         }
 
         private void OnLevelCleared()
