@@ -1527,16 +1527,17 @@ namespace Arcade.UI
                 StopCoroutine(scorecardStarsCoroutine);
                 scorecardStarsCoroutine = null;
             }
-            if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
-
-            if (levelGenerator != null)
-            {
-                levelGenerator.AdvanceToNextLevel();
-            }
-
             if (ArcadeGameManager.Instance != null)
             {
                 ArcadeGameManager.Instance.AdvanceToNextLevel();
+            }
+            else
+            {
+                if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
+                if (levelGenerator != null)
+                {
+                    levelGenerator.AdvanceToNextLevel();
+                }
             }
 
             if (levelClearModal != null) levelClearModal.AddToClassList("modal-hidden");

@@ -90,9 +90,9 @@ namespace Arcade.BlockBreaker
 
         private void OnCollisionEnter(Collision collision)
         {
-            // Only balls destroy blocks
+            // Only launched balls destroy blocks
             BallController ball = collision.gameObject.GetComponent<BallController>();
-            if (ball == null) return;
+            if (ball == null || !ball.IsLaunched) return;
 
             Vector3 hitNormal = collision.contacts.Length > 0 ? collision.contacts[0].normal : Vector3.down;
             int volleyMult = ball.CurrentVolleyMultiplier;
@@ -174,7 +174,8 @@ namespace Arcade.BlockBreaker
                                       specialType == BlockSpecialType.ScoreMultiplier2x ||
                                       specialType == BlockSpecialType.ScoreMultiplier3x ||
                                       specialType == BlockSpecialType.ScoreMultiplier4x ||
-                                      specialType == BlockSpecialType.ScoreMultiplier5x);
+                                      specialType == BlockSpecialType.ScoreMultiplier5x ||
+                                      specialType == BlockSpecialType.Laser);
 
             if (isCollectibleBuff && Application.isPlaying)
             {

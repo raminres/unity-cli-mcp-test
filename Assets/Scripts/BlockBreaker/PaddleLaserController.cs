@@ -37,6 +37,40 @@ namespace Arcade.BlockBreaker
         private void Awake()
         {
             if (paddle == null) paddle = GetComponent<PaddleController>();
+            DeactivateAllWeapons();
+        }
+
+        private void OnEnable()
+        {
+            if (ArcadeGameManager.Instance != null)
+            {
+                ArcadeGameManager.Instance.OnStateChanged -= HandleGameStateChanged;
+                ArcadeGameManager.Instance.OnStateChanged += HandleGameStateChanged;
+            }
+        }
+
+        private void Start()
+        {
+            if (paddle == null) paddle = GetComponent<PaddleController>();
+            if (ArcadeGameManager.Instance != null)
+            {
+                ArcadeGameManager.Instance.OnStateChanged -= HandleGameStateChanged;
+                ArcadeGameManager.Instance.OnStateChanged += HandleGameStateChanged;
+            }
+            DeactivateAllWeapons();
+        }
+
+        public void HandleGameStateChangedDirect(GameState state)
+        {
+            HandleGameStateChanged(state);
+        }
+
+        private void HandleGameStateChanged(GameState state)
+        {
+            if (state != GameState.Playing && state != GameState.Paused)
+            {
+                DeactivateAllWeapons();
+            }
         }
 
         public void ActivateLaserBlaster(float duration = 10f)
@@ -50,6 +84,22 @@ namespace Arcade.BlockBreaker
         {
             isBlasterActive = false;
             blasterTimer = 0f;
+        }
+
+        public void DeactivateHyperBeam()
+        {
+            isHyperBeamActive = false;
+            hyperBeamTimer = 0f;
+            if (hyperBeamObject != null)
+            {
+                hyperBeamObject.SetActive(false);
+            }
+        }
+
+        public void DeactivateAllWeapons()
+        {
+            DeactivateLaserBlaster();
+            DeactivateHyperBeam();
         }
 
         public void FireRailgunHyperBeam(float duration = 1.2f)
@@ -75,10 +125,7 @@ namespace Arcade.BlockBreaker
         {
             if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State != GameState.Playing)
             {
-                if (hyperBeamObject != null && hyperBeamObject.activeSelf)
-                {
-                    hyperBeamObject.SetActive(false);
-                }
+                DeactivateAllWeapons();
                 return;
             }
 
@@ -218,12 +265,11 @@ namespace Arcade.BlockBreaker
 
         private void OnDisable()
         {
-            isBlasterActive = false;
-            isHyperBeamActive = false;
-            if (hyperBeamObject != null)
+            if (ArcadeGameManager.Instance != null)
             {
-                hyperBeamObject.SetActive(false);
+                ArcadeGameManager.Instance.OnStateChanged -= HandleGameStateChanged;
             }
+            DeactivateAllWeapons();
         }
 
         public void SimulateStepForTesting(float dt)

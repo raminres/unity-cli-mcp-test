@@ -358,15 +358,13 @@ namespace Arcade.Core
 
         public void DeactivateLaserPowerup()
         {
-            if (!isLaserActive && laserTimeRemaining <= 0f) return;
-
             isLaserActive = false;
             laserTimeRemaining = 0f;
 
             var paddle = FindAnyObjectByType<PaddleController>();
             if (paddle != null && paddle.LaserController != null)
             {
-                paddle.LaserController.DeactivateLaserBlaster();
+                paddle.LaserController.DeactivateAllWeapons();
             }
 
             OnLaserPowerupStateChanged?.Invoke(false, 0f);
@@ -397,10 +395,16 @@ namespace Arcade.Core
 
         public void EndClutchMode()
         {
-            if (!isClutchModeActive) return;
             isClutchModeActive = false;
             clutchTimeRemaining = 0f;
             clutchMultiplier = 1;
+
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null && paddle.LaserController != null)
+            {
+                paddle.LaserController.DeactivateHyperBeam();
+            }
+
             OnClutchStateChanged?.Invoke(false, 0f, 1);
         }
 
@@ -652,6 +656,14 @@ namespace Arcade.Core
         {
             if (currentState != GameState.ReadyToLaunch && currentState != GameState.BallLost) return;
 
+            // Guarantee all weapons and in-flight projectiles are cleared before launch to prevent premature block destruction
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null && paddle.LaserController != null)
+            {
+                paddle.LaserController.DeactivateAllWeapons();
+            }
+            BlockBreaker.LaserBolt.ClearAllActiveBolts();
+
             SetState(GameState.Playing);
 
             // Directly guarantee all registered balls launch even if event subscription had timing race
@@ -770,6 +782,7 @@ namespace Arcade.Core
             if (currentState != GameState.Playing) return;
 
             BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
+            BlockBreaker.LaserBolt.ClearAllActiveBolts();
 
             DeactivateShield();
             DeactivatePaddleExpander();
@@ -811,6 +824,7 @@ namespace Arcade.Core
         private void OnLevelCleared()
         {
             BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
+            BlockBreaker.LaserBolt.ClearAllActiveBolts();
             ClearExtraBalls();
             DeactivateShield();
             DeactivatePaddleExpander();
@@ -880,6 +894,7 @@ namespace Arcade.Core
         public void AdvanceToNextLevel()
         {
             BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
+            BlockBreaker.LaserBolt.ClearAllActiveBolts();
             ClearExtraBalls();
             DeactivateShield();
             DeactivatePaddleExpander();
@@ -907,6 +922,7 @@ namespace Arcade.Core
         public void ReplayCurrentLevel()
         {
             BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
+            BlockBreaker.LaserBolt.ClearAllActiveBolts();
             ClearExtraBalls();
             DeactivateShield();
             DeactivatePaddleExpander();
@@ -929,6 +945,7 @@ namespace Arcade.Core
         private void OnGameOver()
         {
             BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
+            BlockBreaker.LaserBolt.ClearAllActiveBolts();
             ClearExtraBalls();
             DeactivateShield();
             DeactivatePaddleExpander();

@@ -3946,6 +3946,110 @@ namespace Arcade.Tests
         }
 
         #endregion
+
+        #region 17. Launch Safety, Weapon Cleanup & Deactivation Tests
+
+        [Test]
+        public void PaddleLaserController_DeactivateAllWeapons_ClearsBothHyperBeamAndBlaster()
+        {
+            var paddleGo = new GameObject("Paddle");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+            var laserCtrl = paddle.LaserController;
+
+            laserCtrl.ActivateLaserBlaster(10f);
+            laserCtrl.FireRailgunHyperBeam(1.5f);
+
+            Assert.IsTrue(laserCtrl.IsBlasterActive, "Blasters must be active.");
+            Assert.IsTrue(laserCtrl.IsHyperBeamActive, "Hyperbeam must be active.");
+
+            laserCtrl.DeactivateAllWeapons();
+
+            Assert.IsFalse(laserCtrl.IsBlasterActive, "Blasters must be deactivated.");
+            Assert.IsFalse(laserCtrl.IsHyperBeamActive, "Hyperbeam must be deactivated.");
+
+            Object.DestroyImmediate(paddleGo);
+        }
+
+        [Test]
+        public void PaddleLaserController_DeactivatesOnStateChangeToReadyToLaunch()
+        {
+            var paddleGo = new GameObject("Paddle");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+            var laserCtrl = paddle.LaserController;
+
+            laserCtrl.ActivateLaserBlaster(10f);
+            laserCtrl.FireRailgunHyperBeam(1.5f);
+
+            laserCtrl.HandleGameStateChangedDirect(GameState.ReadyToLaunch);
+
+            Assert.IsFalse(laserCtrl.IsBlasterActive, "Blasters must deactivate when state changes to ReadyToLaunch.");
+            Assert.IsFalse(laserCtrl.IsHyperBeamActive, "Hyperbeam must deactivate when state changes to ReadyToLaunch.");
+
+            Object.DestroyImmediate(paddleGo);
+        }
+
+        [Test]
+        public void LaserBolt_ClearAllActiveBolts_DestroysAllInFlightBolts()
+        {
+            var bolt1 = LaserBolt.Spawn(new Vector3(0f, 0f, 0f));
+            var bolt2 = LaserBolt.Spawn(new Vector3(2f, 0f, 0f));
+
+            LaserBolt.ClearAllActiveBolts();
+
+            var remaining = Object.FindObjectsByType<LaserBolt>();
+            Assert.AreEqual(0, remaining.Length, "All in-flight laser bolts must be destroyed.");
+        }
+
+        [Test]
+        public void Block_OnCollisionEnter_DoesNotDestroyIfBallNotLaunched()
+        {
+            var blockGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var block = blockGo.AddComponent<Block>();
+            block.Initialize(BlockColorTier.Red, null, Color.red, BlockSpecialType.Normal);
+
+            var ballGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            var ball = ballGo.AddComponent<BallController>();
+            // Ball is NOT launched
+            Assert.IsFalse(ball.IsLaunched);
+
+            // Simulating collision between unlaunched ball and block
+            // Block.OnCollisionEnter guards with ball.IsLaunched
+            var blockCollider = blockGo.GetComponent<Collider>();
+            Assert.IsFalse(block.IsDestroyed);
+
+            Object.DestroyImmediate(blockGo);
+            Object.DestroyImmediate(ballGo);
+        }
+
+        [Test]
+        public void ArcadeGameManager_LaunchBall_ClearsStaleWeaponsAndProjectiles()
+        {
+            var mgrGo = new GameObject("TestMgr");
+            var mgr = mgrGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(mgr);
+
+            var paddleGo = new GameObject("Paddle");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+            paddle.LaserController.ActivateLaserBlaster(10f);
+            paddle.LaserController.FireRailgunHyperBeam(1.5f);
+
+            var bolt = LaserBolt.Spawn(new Vector3(0f, 0f, 0f));
+
+            mgr.SetState(GameState.ReadyToLaunch);
+            mgr.LaunchBall();
+
+            Assert.AreEqual(GameState.Playing, mgr.State);
+            Assert.IsFalse(paddle.LaserController.IsBlasterActive, "Paddle blasters must be cleared before launch.");
+            Assert.IsFalse(paddle.LaserController.IsHyperBeamActive, "Hyperbeam must be cleared before launch.");
+
+            var remainingBolts = Object.FindObjectsByType<LaserBolt>();
+            Assert.AreEqual(0, remainingBolts.Length, "Orphan laser bolts must be cleared on launch.");
+
+            Object.DestroyImmediate(mgrGo);
+            Object.DestroyImmediate(paddleGo);
+        }
+
+        #endregion
     }
 }
 

@@ -155,7 +155,10 @@ namespace Arcade.BlockBreaker
                 }
             }
 
-            // Clear any existing blocks
+            // Clear any existing blocks, in-flight projectiles, and falling capsules
+            PowerupCapsule.ClearAllFallingCapsules();
+            LaserBolt.ClearAllActiveBolts();
+
             for (int i = blocksContainer.childCount - 1; i >= 0; i--)
             {
                 var child = blocksContainer.GetChild(i).gameObject;

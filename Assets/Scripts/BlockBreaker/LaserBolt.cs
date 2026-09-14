@@ -164,5 +164,24 @@ namespace Arcade.BlockBreaker
 
             transform.position = nextPos;
         }
+
+        /// <summary>
+        /// Cleans up and destroys all active in-flight laser bolt projectiles in the scene.
+        /// Called on ball loss, level cleared, or level restart to prevent orphan bolts from hitting newly spawned blocks.
+        /// </summary>
+        public static void ClearAllActiveBolts()
+        {
+            var bolts = FindObjectsByType<LaserBolt>();
+            for (int i = 0; i < bolts.Length; i++)
+            {
+                if (bolts[i] != null)
+                {
+                    if (Application.isPlaying)
+                        Destroy(bolts[i].gameObject);
+                    else
+                        DestroyImmediate(bolts[i].gameObject);
+                }
+            }
+        }
     }
 }
