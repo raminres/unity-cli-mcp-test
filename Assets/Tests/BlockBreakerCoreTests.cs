@@ -2831,6 +2831,124 @@ namespace Arcade.Tests
         }
 
         [Test]
+        public void BallController_CalculatePaddleDeflection_ExcludesVerticalDeadzone()
+        {
+            // Pure vertical incoming velocity directly hitting paddle center (hitOffset = 0)
+            Vector3 inVelVertical = new Vector3(0f, -14f, 0f);
+
+            // Stationary paddle: deflection must NOT produce pure 90-degree vertical vector
+            Vector3 bounceStationary = BallController.CalculatePaddleDeflection(
+                inVelVertical, 0f, steerStrength: 32f, minAngleDeg: 25f, maxAngleDeg: 155f,
+                paddleVelocityX: 0f, velocityInfluence: 0.5f, verticalDeadzoneAngleDeg: 5f);
+
+            Assert.Greater(bounceStationary.y, 0f, "Ball must bounce upward.");
+            Assert.AreNotEqual(0f, bounceStationary.x, "Pure vertical bounce must be pushed out of 90-degree deadzone.");
+            float angleDeg = Mathf.Atan2(bounceStationary.y, bounceStationary.x) * Mathf.Rad2Deg;
+            Assert.IsTrue(angleDeg <= 85.01f || angleDeg >= 94.99f,
+                $"Bounce angle ({angleDeg:F1}°) must fall outside the [85°, 95°] vertical deadzone.");
+        }
+
+        [Test]
+        public void BallController_CalculatePaddleDeflection_AppliesPaddleVelocityInfluence()
+        {
+            Vector3 inVel = new Vector3(0f, -14f, 0f);
+
+            // Moving paddle rightwards (+X velocity)
+            Vector3 bounceMovingRight = BallController.CalculatePaddleDeflection(
+                inVel, 0f, steerStrength: 32f, minAngleDeg: 25f, maxAngleDeg: 155f,
+                paddleVelocityX: 8.0f, velocityInfluence: 0.5f, verticalDeadzoneAngleDeg: 5f);
+
+            // Moving paddle leftwards (-X velocity)
+            Vector3 bounceMovingLeft = BallController.CalculatePaddleDeflection(
+                inVel, 0f, steerStrength: 32f, minAngleDeg: 25f, maxAngleDeg: 155f,
+                paddleVelocityX: -8.0f, velocityInfluence: 0.5f, verticalDeadzoneAngleDeg: 5f);
+
+            Assert.Greater(bounceMovingRight.x, 0f, "Rightward paddle sweep must bias deflection rightward.");
+            Assert.Less(bounceMovingLeft.x, 0f, "Leftward paddle sweep must bias deflection leftward.");
+            Assert.Greater(bounceMovingRight.x, bounceMovingLeft.x, "Rightward sweep must produce larger X velocity than leftward sweep.");
+        }
+
+        [Test]
+        public void BallController_SanitizeTrajectory_EnforcesMinimumVerticalAngleFloor()
+        {
+            float speed = 20f;
+            // Extremely shallow rightward trajectory (angle = ~2.86° off horizontal)
+            Vector3 shallowVel = new Vector3(19.975f, 1.0f, 0f);
+            Vector3 sanitized = BallController.SanitizeTrajectory(shallowVel, speed, minVertAngleDeg: 20f, minHorizAngleDeg: 5f);
+
+            float expectedMinVy = speed * Mathf.Sin(20f * Mathf.Deg2Rad);
+            Assert.GreaterOrEqual(sanitized.y, expectedMinVy - 0.001f,
+                $"Sanitized Vy ({sanitized.y:F2}) must meet minimum 20° vertical threshold ({expectedMinVy:F2}).");
+            Assert.AreEqual(speed, sanitized.magnitude, 0.01f, "Speed must be preserved exactly.");
+            Assert.Greater(sanitized.x, 0f, "Horizontal sign must be preserved.");
+
+            // Downward shallow trajectory
+            Vector3 shallowDown = new Vector3(19.975f, -0.5f, 0f);
+            Vector3 sanitizedDown = BallController.SanitizeTrajectory(shallowDown, speed, minVertAngleDeg: 20f, minHorizAngleDeg: 5f);
+            Assert.LessOrEqual(sanitizedDown.y, -expectedMinVy + 0.001f, "Negative Vy sign must be preserved with 20° clamp.");
+            Assert.AreEqual(speed, sanitizedDown.magnitude, 0.01f, "Speed must be preserved exactly.");
+        }
+
+        [Test]
+        public void BallController_SanitizeTrajectory_EnforcesMinimumHorizontalAngleFloor()
+        {
+            float speed = 20f;
+            // Near-vertical trajectory (angle = ~89.7° off horizontal, Vx = 0.1)
+            Vector3 nearVertical = new Vector3(0.1f, 19.999f, 0f);
+            Vector3 sanitized = BallController.SanitizeTrajectory(nearVertical, speed, minVertAngleDeg: 20f, minHorizAngleDeg: 5f);
+
+            float expectedMinVx = speed * Mathf.Sin(5f * Mathf.Deg2Rad);
+            Assert.GreaterOrEqual(Mathf.Abs(sanitized.x), expectedMinVx - 0.001f,
+                $"Sanitized Vx ({sanitized.x:F2}) must meet minimum 5° horizontal threshold ({expectedMinVx:F2}).");
+            Assert.AreEqual(speed, sanitized.magnitude, 0.01f, "Speed must be preserved exactly.");
+            Assert.Greater(sanitized.y, 0f, "Vertical sign must be preserved.");
+        }
+
+        [Test]
+        public void BallController_ConsecutiveSideWallBounces_SteepensAngle()
+        {
+            var ballObj = new GameObject("TestBall_WallTest");
+            var rb = ballObj.AddComponent<Rigidbody>();
+            rb.useGravity = false;
+            var ball = ballObj.AddComponent<BallController>();
+
+            float speed = 14f;
+            // Start with shallow downward velocity (Vy = -2f)
+            rb.linearVelocity = new Vector3(13.85f, -2.0f, 0f);
+
+            // Trigger consecutive steepener
+            ball.ApplyConsecutiveWallSteepening();
+
+            float expectedSteepVy = speed * Mathf.Sin(35f * Mathf.Deg2Rad); // ~8.03
+            Assert.LessOrEqual(rb.linearVelocity.y, -expectedSteepVy + 0.01f,
+                $"Consecutive wall bounce must steepen vertical velocity to >= 35° ({expectedSteepVy:F2}).");
+            Assert.AreEqual(speed, rb.linearVelocity.magnitude, 0.01f, "Speed must be preserved after steepening.");
+
+            // Docking ball resets counter
+            ball.SetConsecutiveSideWallBouncesForTesting(3);
+            Assert.AreEqual(3, ball.ConsecutiveSideWallBounces);
+            ball.StopAndDockBall();
+            Assert.AreEqual(0, ball.ConsecutiveSideWallBounces, "Docking ball must reset consecutive wall bounces.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void PaddleController_TracksVelocityX_ForMomentumTransfer()
+        {
+            var paddleObj = new GameObject("TestPaddle_VelTest");
+            var p = paddleObj.AddComponent<PaddleController>();
+
+            p.SetVelocityXForTesting(12.5f);
+            Assert.AreEqual(12.5f, p.VelocityX, 0.001f, "PaddleController must accurately expose VelocityX.");
+
+            p.SetVelocityXForTesting(-8.2f);
+            Assert.AreEqual(-8.2f, p.VelocityX, 0.001f, "PaddleController must accurately expose negative VelocityX.");
+
+            Object.DestroyImmediate(paddleObj);
+        }
+
+        [Test]
         public void PowerupCapsule_SpawnsInForeground_AtForegroundZ()
         {
             Vector3 spawnPos = new Vector3(3f, 8f, 0f);

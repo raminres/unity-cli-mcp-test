@@ -29,6 +29,14 @@ namespace Arcade.BlockBreaker
         private float activeVolleyTime = 0f;
         private float nextSpeedRampTime = 10f;
 
+        [Header("Anti-Trap & Deflection Guard Settings")]
+        [SerializeField] private float minVerticalAngleDeg = 20f; // Floor to prevent horizontal wall-to-wall traps
+        [SerializeField] private float minHorizontalAngleDeg = 5f; // Floor to prevent vertical 90-degree ping-pong loops
+        [SerializeField] private float consecutiveWallSteepAngleDeg = 35f; // Boost angle on repeated side-wall bounces
+        [SerializeField] private float verticalDeadzoneAngleDeg = 5f; // Exclusion half-angle around 90-degree vertical
+        [SerializeField] private float paddleVelocityInfluence = 0.5f; // Momentum transfer from paddle movement
+        private int consecutiveSideWallBounces = 0;
+
         private float currentSpeed;
         private bool isLaunched = false;
         private bool isPrimaryBall = true;
@@ -42,6 +50,13 @@ namespace Arcade.BlockBreaker
         public float ActiveVolleyTime => activeVolleyTime;
         public float NextSpeedRampTime => nextSpeedRampTime;
         public float SpeedRampInterval => speedRampInterval;
+        public float MinVerticalAngleDeg => minVerticalAngleDeg;
+        public float MinHorizontalAngleDeg => minHorizontalAngleDeg;
+        public float ConsecutiveWallSteepAngleDeg => consecutiveWallSteepAngleDeg;
+        public float VerticalDeadzoneAngleDeg => verticalDeadzoneAngleDeg;
+        public float PaddleVelocityInfluence => paddleVelocityInfluence;
+        public int ConsecutiveSideWallBounces => consecutiveSideWallBounces;
+        public void SetConsecutiveSideWallBouncesForTesting(int count) => consecutiveSideWallBounces = count;
         public BallTrail Trail => ballTrail != null ? ballTrail : (ballTrail = GetComponent<BallTrail>() ?? gameObject.AddComponent<BallTrail>());
         public bool IsPrimaryBall
         {
@@ -161,20 +176,58 @@ namespace Arcade.BlockBreaker
                 ApplyTimeBasedSpeedRamp(Time.fixedDeltaTime);
             }
 
-            // Maintain target speed and prevent stagnation
+            // Maintain target speed and prevent stagnation (Options A3 & B3)
             Vector3 vel = rb.linearVelocity;
             vel.z = 0f;
 
-            // Guard against near-horizontal or dead locks
-            if (Mathf.Abs(vel.y) < 1.5f && vel.sqrMagnitude > 1f)
-            {
-                vel.y = vel.y >= 0 ? 2.5f : -2.5f;
-            }
-
             if (vel.sqrMagnitude > 0.001f)
             {
-                rb.linearVelocity = vel.normalized * currentSpeed;
+                rb.linearVelocity = SanitizeTrajectory(vel, currentSpeed, minVerticalAngleDeg, minHorizontalAngleDeg, transform.position.x);
             }
+        }
+
+        /// <summary>
+        /// Clamps and sanitizes a 2D velocity vector to prevent shallow horizontal traps (< minVertAngleDeg)
+        /// and pure vertical ping-pong loops (< minHorizAngleDeg), preserving target speed and vector signs.
+        /// </summary>
+        public static Vector3 SanitizeTrajectory(Vector3 velocity, float targetSpeed, float minVertAngleDeg = 20f, float minHorizAngleDeg = 5f, float positionX = 0f)
+        {
+            if (velocity.sqrMagnitude < 0.0001f || targetSpeed <= 0f)
+                return velocity;
+
+            velocity.z = 0f;
+            float vx = velocity.x;
+            float vy = velocity.y;
+
+            // 1. Option A3: Guard against near-horizontal trap (|vy| >= speed * sin(minVertAngleDeg))
+            if (minVertAngleDeg > 0f)
+            {
+                float sinMinVert = Mathf.Sin(minVertAngleDeg * Mathf.Deg2Rad);
+                float minVy = targetSpeed * sinMinVert;
+                if (Mathf.Abs(vy) < minVy)
+                {
+                    vy = (vy >= 0f ? 1f : -1f) * minVy;
+                    float remainingSpeedSqr = Mathf.Max(0.01f, (targetSpeed * targetSpeed) - (vy * vy));
+                    vx = (vx >= 0f ? 1f : -1f) * Mathf.Sqrt(remainingSpeedSqr);
+                }
+            }
+
+            // 2. Option B3: Guard against near-vertical loop (|vx| >= speed * sin(minHorizAngleDeg))
+            if (minHorizAngleDeg > 0f)
+            {
+                float sinMinHoriz = Mathf.Sin(minHorizAngleDeg * Mathf.Deg2Rad);
+                float minVx = targetSpeed * sinMinHoriz;
+                if (Mathf.Abs(vx) < minVx)
+                {
+                    // If horizontal component is near zero, drift subtly away from center or rightward
+                    float dirX = Mathf.Abs(vx) > 0.0001f ? Mathf.Sign(vx) : (positionX >= 0f ? 1f : -1f);
+                    vx = dirX * minVx;
+                    float remainingSpeedSqr = Mathf.Max(0.01f, (targetSpeed * targetSpeed) - (vx * vx));
+                    vy = (vy >= 0f ? 1f : -1f) * Mathf.Sqrt(remainingSpeedSqr);
+                }
+            }
+
+            return new Vector3(vx, vy, 0f).normalized * targetSpeed;
         }
 
         /// <summary>
@@ -234,6 +287,7 @@ namespace Arcade.BlockBreaker
             isLaunched = false;
             activeVolleyTime = 0f;
             nextSpeedRampTime = speedRampInterval;
+            consecutiveSideWallBounces = 0;
             currentSpeed = baseSpeed;
             if (rb != null)
             {
@@ -283,6 +337,7 @@ namespace Arcade.BlockBreaker
             isLaunched = true;
             activeVolleyTime = 0f;
             nextSpeedRampTime = speedRampInterval;
+            consecutiveSideWallBounces = 0;
             currentSpeed = baseSpeed;
 
             if (Trail != null)
@@ -293,6 +348,12 @@ namespace Arcade.BlockBreaker
 
             // Launch upwards with slight random angular bias (+- 15 degrees off vertical)
             float randomAngleOffset = UnityEngine.Random.Range(-15f, 15f);
+            // Ensure launch trajectory never falls within vertical deadzone (-5° to +5°)
+            if (Mathf.Abs(randomAngleOffset) < 5f)
+            {
+                randomAngleOffset = randomAngleOffset >= 0f ? 5f : -5f;
+            }
+
             float launchRad = (90f + randomAngleOffset) * Mathf.Deg2Rad;
             Vector3 launchDirection = new Vector3(Mathf.Cos(launchRad), Mathf.Sin(launchRad), 0f).normalized;
 
@@ -309,6 +370,7 @@ namespace Arcade.BlockBreaker
             isLaunched = true;
             activeVolleyTime = 0f;
             nextSpeedRampTime = speedRampInterval;
+            consecutiveSideWallBounces = 0;
             currentSpeed = speed > 0f ? speed : baseSpeed;
 
             if (Trail != null)
@@ -414,11 +476,32 @@ namespace Arcade.BlockBreaker
             Block block = collision.gameObject.GetComponent<Block>();
             if (block != null)
             {
+                consecutiveSideWallBounces = 0; // Reset consecutive wall bounces on block impact
                 currentSpeed = Mathf.Min(currentSpeed + speedIncrementPerHit, maxSpeed);
                 return;
             }
 
             // Hit wall/ceiling
+            if (collision.contacts.Length > 0)
+            {
+                Vector3 normal = collision.contacts[0].normal;
+                // Side wall contact: normal points predominantly in +/- X direction
+                if (Mathf.Abs(normal.x) > 0.7f && Mathf.Abs(normal.y) < 0.5f)
+                {
+                    consecutiveSideWallBounces++;
+                    if (consecutiveSideWallBounces >= 2)
+                    {
+                        // Option A3: Boost vertical angle to >= consecutiveWallSteepAngleDeg (e.g. 35°)
+                        ApplyConsecutiveWallSteepening();
+                    }
+                }
+                else
+                {
+                    // Top ceiling or other horizontal surface
+                    consecutiveSideWallBounces = 0;
+                }
+            }
+
             if (ArcadeAudioManager.Instance != null)
             {
                 ArcadeAudioManager.Instance.PlayWallBounce();
@@ -426,12 +509,46 @@ namespace Arcade.BlockBreaker
         }
 
         /// <summary>
+        /// Steepens the ball's vertical velocity component after repeated side-wall bounces,
+        /// breaking horizontal traps and forcing rapid downward/upward progression.
+        /// </summary>
+        public void ApplyConsecutiveWallSteepening()
+        {
+            if (rb == null) rb = GetComponent<Rigidbody>();
+            if (rb == null) return;
+
+            Vector3 vel = rb.linearVelocity;
+            vel.z = 0f;
+            float effectiveSpeed = currentSpeed > 0.01f ? currentSpeed : (vel.magnitude > 0.01f ? vel.magnitude : baseSpeed);
+            float steepSin = Mathf.Sin(consecutiveWallSteepAngleDeg * Mathf.Deg2Rad);
+            float minSteepVy = effectiveSpeed * steepSin;
+
+            if (Mathf.Abs(vel.y) < minSteepVy)
+            {
+                float vy = (vel.y >= 0f ? 1f : -1f) * minSteepVy;
+                float remainingSpeedSqr = Mathf.Max(0.01f, (effectiveSpeed * effectiveSpeed) - (vy * vy));
+                float vx = (vel.x >= 0f ? 1f : -1f) * Mathf.Sqrt(remainingSpeedSqr);
+                rb.linearVelocity = new Vector3(vx, vy, 0f);
+            }
+        }
+
+        /// <summary>
         /// Computes a physics-informed paddle deflection vector:
         /// 1. Takes natural optical ray reflection off the horizontal paddle (preserving forward horizontal momentum).
         /// 2. Applies paddle steering based on normalized contact hitOffset (-1 to +1).
-        /// 3. Clamps final bounce angle to playable arcade bounds (25° to 155°) to prevent horizontal locks.
+        /// 3. Incorporates paddle movement velocity momentum transfer.
+        /// 4. Disallows trajectories in the near-vertical deadzone [90° - deadzone, 90° + deadzone].
+        /// 5. Clamps final bounce angle to playable arcade bounds (minAngleDeg to maxAngleDeg) to prevent horizontal locks.
         /// </summary>
-        public static Vector3 CalculatePaddleDeflection(Vector3 inVelocity, float hitOffset, float steerStrength = 32f, float minAngleDeg = 25f, float maxAngleDeg = 155f)
+        public static Vector3 CalculatePaddleDeflection(
+            Vector3 inVelocity,
+            float hitOffset,
+            float steerStrength = 32f,
+            float minAngleDeg = 25f,
+            float maxAngleDeg = 155f,
+            float paddleVelocityX = 0f,
+            float velocityInfluence = 0.5f,
+            float verticalDeadzoneAngleDeg = 5f)
         {
             float inX = inVelocity.x;
             float inY = Mathf.Abs(inVelocity.y); // Upward reflection normal
@@ -445,13 +562,46 @@ namespace Arcade.BlockBreaker
             // Natural optical ray reflection angle in degrees (0 to 180)
             float rayAngleDeg = Mathf.Atan2(inY, inX) * Mathf.Rad2Deg;
 
-            // Paddle steering influence:
+            // Paddle steering influence from contact offset:
             // Positive offset (right of center) biases angle toward shallow right (-deg).
             // Negative offset (left of center) biases angle toward shallow left (+deg).
             float steerAngleDeg = -hitOffset * steerStrength;
 
+            // Paddle velocity momentum transfer:
+            // Sliding paddle right (+X) biases angle right (-deg in polar coordinates).
+            // Sliding paddle left (-X) biases angle left (+deg in polar coordinates).
+            float velocitySteerDeg = Mathf.Clamp(-paddleVelocityX * velocityInfluence, -12f, 12f);
+
+            float computedAngleDeg = rayAngleDeg + steerAngleDeg + velocitySteerDeg;
+
+            // Option B3: Exclude near-vertical deadzone [90° - deadzone, 90° + deadzone]
+            if (verticalDeadzoneAngleDeg > 0f)
+            {
+                float minDeadzone = 90f - verticalDeadzoneAngleDeg;
+                float maxDeadzone = 90f + verticalDeadzoneAngleDeg;
+
+                if (computedAngleDeg >= minDeadzone && computedAngleDeg <= maxDeadzone)
+                {
+                    // If paddle velocity or hit offset has a rightward bias, push to right (minDeadzone)
+                    if (paddleVelocityX > 0.1f || hitOffset > 0.02f)
+                    {
+                        computedAngleDeg = minDeadzone;
+                    }
+                    // If paddle velocity or hit offset has a leftward bias, push to left (maxDeadzone)
+                    else if (paddleVelocityX < -0.1f || hitOffset < -0.02f)
+                    {
+                        computedAngleDeg = maxDeadzone;
+                    }
+                    else
+                    {
+                        // Default tie-break: push based on incoming velocity or slight rightward bias
+                        computedAngleDeg = inX >= 0f ? minDeadzone : maxDeadzone;
+                    }
+                }
+            }
+
             // Clamped final angle preserving natural momentum while allowing sharp cuts
-            float finalAngleDeg = Mathf.Clamp(rayAngleDeg + steerAngleDeg, minAngleDeg, maxAngleDeg);
+            float finalAngleDeg = Mathf.Clamp(computedAngleDeg, minAngleDeg, maxAngleDeg);
             float finalRad = finalAngleDeg * Mathf.Deg2Rad;
 
             return new Vector3(Mathf.Cos(finalRad), Mathf.Sin(finalRad), 0f).normalized;
@@ -459,10 +609,21 @@ namespace Arcade.BlockBreaker
 
         private void HandlePaddleCollision(PaddleController hitPaddle)
         {
+            consecutiveSideWallBounces = 0; // Reset consecutive wall bounces on paddle save
+
             float hitOffset = hitPaddle.CalculateHitOffset(transform.position.x);
+            float paddleVelX = hitPaddle.VelocityX;
 
             Vector3 inVelocity = rb != null ? rb.linearVelocity : Vector3.down * currentSpeed;
-            Vector3 newDir = CalculatePaddleDeflection(inVelocity, hitOffset, 32f, 25f, 155f);
+            Vector3 newDir = CalculatePaddleDeflection(
+                inVelocity,
+                hitOffset,
+                32f,
+                25f,
+                155f,
+                paddleVelX,
+                paddleVelocityInfluence,
+                verticalDeadzoneAngleDeg);
 
             if (rb != null)
             {
