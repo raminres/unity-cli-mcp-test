@@ -489,11 +489,17 @@ namespace Arcade.BlockBreaker
                 var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 go.name = "Chamfer_TopLeft";
                 go.transform.SetParent(boundariesRoot.transform);
-                go.transform.position = new Vector3(-8.85f, 22.85f, 0f);
+                go.transform.position = new Vector3(-9.40f, 23.40f, 0f);
                 go.transform.rotation = Quaternion.Euler(0f, 0f, 45f);
-                go.transform.localScale = new Vector3(3.8f, 0.5f, 2f);
+                go.transform.localScale = new Vector3(2.2f, 0.5f, 2f);
                 if (borderMat != null) go.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
                 if (bounceMat != null) go.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+            }
+            else
+            {
+                leftChamfer.position = new Vector3(-9.40f, 23.40f, 0f);
+                leftChamfer.rotation = Quaternion.Euler(0f, 0f, 45f);
+                leftChamfer.localScale = new Vector3(2.2f, 0.5f, 2f);
             }
 
             Transform rightChamfer = boundariesRoot.transform.Find("Chamfer_TopRight");
@@ -502,11 +508,17 @@ namespace Arcade.BlockBreaker
                 var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 go.name = "Chamfer_TopRight";
                 go.transform.SetParent(boundariesRoot.transform);
-                go.transform.position = new Vector3(8.85f, 22.85f, 0f);
+                go.transform.position = new Vector3(9.40f, 23.40f, 0f);
                 go.transform.rotation = Quaternion.Euler(0f, 0f, -45f);
-                go.transform.localScale = new Vector3(3.8f, 0.5f, 2f);
+                go.transform.localScale = new Vector3(2.2f, 0.5f, 2f);
                 if (borderMat != null) go.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
                 if (bounceMat != null) go.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+            }
+            else
+            {
+                rightChamfer.position = new Vector3(9.40f, 23.40f, 0f);
+                rightChamfer.rotation = Quaternion.Euler(0f, 0f, -45f);
+                rightChamfer.localScale = new Vector3(2.2f, 0.5f, 2f);
             }
         }
     }

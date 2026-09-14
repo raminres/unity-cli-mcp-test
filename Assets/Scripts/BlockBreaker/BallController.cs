@@ -35,7 +35,6 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float consecutiveWallSteepAngleDeg = 35f; // Boost angle on repeated side-wall bounces
         [SerializeField] private float verticalDeadzoneAngleDeg = 5f; // Exclusion half-angle around 90-degree vertical
         [SerializeField] private float paddleVelocityInfluence = 0.5f; // Momentum transfer from paddle movement
-        [SerializeField] private float minCeilingDeflectionAngleDeg = 15f; // Anti-vertical lateral deflection floor off flat ceiling
         private int consecutiveSideWallBounces = 0;
 
         private float currentSpeed;
@@ -58,7 +57,6 @@ namespace Arcade.BlockBreaker
         public float ConsecutiveWallSteepAngleDeg => consecutiveWallSteepAngleDeg;
         public float VerticalDeadzoneAngleDeg => verticalDeadzoneAngleDeg;
         public float PaddleVelocityInfluence => paddleVelocityInfluence;
-        public float MinCeilingDeflectionAngleDeg => minCeilingDeflectionAngleDeg;
         public int ConsecutiveSideWallBounces => consecutiveSideWallBounces;
         public void SetConsecutiveSideWallBouncesForTesting(int count) => consecutiveSideWallBounces = count;
         public int CurrentVolleyStreak => currentVolleyStreak;
@@ -521,15 +519,9 @@ namespace Arcade.BlockBreaker
                         ApplyConsecutiveWallSteepening();
                     }
                 }
-                else if (Mathf.Abs(normal.x) < 0.5f && normal.y < -0.6f)
-                {
-                    // Top horizontal ceiling contact: apply anti-vertical lateral deflection
-                    consecutiveSideWallBounces = 0;
-                    ApplyCeilingAntiVerticalDeflection(collision.contacts[0].point);
-                }
                 else
                 {
-                    // Angled corner chamfer or other horizontal/diagonal surface
+                    // Top ceiling, angled corner chamfer or other horizontal/diagonal surface
                     consecutiveSideWallBounces = 0;
                 }
             }
@@ -537,48 +529,6 @@ namespace Arcade.BlockBreaker
             if (ArcadeAudioManager.Instance != null)
             {
                 ArcadeAudioManager.Instance.PlayWallBounce();
-            }
-        }
-
-        /// <summary>
-        /// Guarantees that bounces off the flat horizontal ceiling never descend on a near-vertical path,
-        /// imparting a progressive lateral deflection away from the arena center line.
-        /// </summary>
-        public void ApplyCeilingAntiVerticalDeflection(Vector3 contactPoint)
-        {
-            if (rb == null) rb = GetComponent<Rigidbody>();
-            if (rb == null) return;
-
-            Vector3 vel = rb.linearVelocity;
-            vel.z = 0f;
-            float effectiveSpeed = currentSpeed > 0.01f ? currentSpeed : (vel.magnitude > 0.01f ? vel.magnitude : baseSpeed);
-
-            float sinMin = Mathf.Sin(minCeilingDeflectionAngleDeg * Mathf.Deg2Rad);
-            float minVx = effectiveSpeed * sinMin;
-
-            // Determine lateral deflection direction: bias away from arena center (X = 0)
-            float dirX;
-            if (Mathf.Abs(contactPoint.x) > 0.25f)
-            {
-                dirX = Mathf.Sign(contactPoint.x);
-            }
-            else if (Mathf.Abs(vel.x) > 0.01f)
-            {
-                dirX = Mathf.Sign(vel.x);
-            }
-            else
-            {
-                dirX = UnityEngine.Random.value > 0.5f ? 1f : -1f;
-            }
-
-            // If horizontal velocity magnitude is below minimum deflection threshold, boost it
-            if (Mathf.Abs(vel.x) < minVx || (Mathf.Sign(vel.x) != dirX && Mathf.Abs(contactPoint.x) > 0.75f))
-            {
-                float vx = dirX * minVx;
-                // Ensure velocity is pointing downward off ceiling (vy < 0)
-                float remainingSpeedSqr = Mathf.Max(0.01f, (effectiveSpeed * effectiveSpeed) - (vx * vx));
-                float vy = -Mathf.Sqrt(remainingSpeedSqr);
-                rb.linearVelocity = new Vector3(vx, vy, 0f);
             }
         }
 

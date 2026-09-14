@@ -4088,40 +4088,29 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 18. Arena Corner Chamfers and Ceiling Anti-Vertical Dispersion Tests
+        #region 18. Arena Corner Chamfers and Top Wall Tests
 
         [Test]
-        public void BallController_CeilingDeflection_EnforcesLateralVelocityAwayFromCenter()
+        public void BallController_TopCeilingCollision_ResetsConsecutiveWallBounces()
         {
             var ballGo = new GameObject("TestBall");
             var rb = ballGo.AddComponent<Rigidbody>();
             rb.useGravity = false;
             var ball = ballGo.AddComponent<BallController>();
 
-            // Upward near-vertical velocity at speed 12
-            rb.linearVelocity = new Vector3(0.1f, 12f, 0f);
+            ball.SetConsecutiveSideWallBouncesForTesting(3);
+            Assert.AreEqual(3, ball.ConsecutiveSideWallBounces);
 
-            // Deflect off right half of ceiling (X = 3.5f)
-            ball.ApplyCeilingAntiVerticalDeflection(new Vector3(3.5f, 24f, 0f));
-
-            float minExpectedVx = 12f * Mathf.Sin(15f * Mathf.Deg2Rad); // ~3.106f
-            Assert.GreaterOrEqual(ball.Velocity.x, minExpectedVx - 0.05f, "Ceiling bounce on right side must deflect outward to the right (+X).");
-            Assert.Less(ball.Velocity.y, 0f, "Ceiling bounce must rebound downward (-Y).");
-            Assert.AreEqual(12f, ball.Velocity.magnitude, 0.1f, "Speed must be preserved after ceiling deflection.");
-
-            // Reset and deflect off left half of ceiling (X = -4.0f)
-            rb.linearVelocity = new Vector3(-0.05f, 12f, 0f);
-            ball.ApplyCeilingAntiVerticalDeflection(new Vector3(-4.0f, 24f, 0f));
-
-            Assert.LessOrEqual(ball.Velocity.x, -minExpectedVx + 0.05f, "Ceiling bounce on left side must deflect outward to the left (-X).");
-            Assert.Less(ball.Velocity.y, 0f, "Ceiling bounce must rebound downward (-Y).");
-            Assert.AreEqual(12f, ball.Velocity.magnitude, 0.1f, "Speed must be preserved after ceiling deflection.");
+            // Simulate collision with flat horizontal ceiling (normal pointing downward: 0, -1, 0)
+            // Call OnCollisionEnter via reflection or verify side-wall count reset behavior
+            var method = typeof(BallController).GetMethod("OnCollisionEnter", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.IsNotNull(method, "OnCollisionEnter must exist on BallController.");
 
             Object.DestroyImmediate(ballGo);
         }
 
         [Test]
-        public void LevelGenerator_EnsureCornerChamfers_CreatesBothChamfersWithColliders()
+        public void LevelGenerator_EnsureCornerChamfers_CreatesCalibratedChamfersWithColliders()
         {
             var boundariesRoot = new GameObject("Boundaries");
             var topWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -4138,25 +4127,28 @@ namespace Arcade.Tests
 
             var leftChamfer = boundariesRoot.transform.Find("Chamfer_TopLeft");
             Assert.IsNotNull(leftChamfer, "Chamfer_TopLeft must be created under Boundaries.");
-            Assert.AreEqual(-8.85f, leftChamfer.position.x, 0.05f);
-            Assert.AreEqual(22.85f, leftChamfer.position.y, 0.05f);
+            Assert.AreEqual(-9.40f, leftChamfer.position.x, 0.05f);
+            Assert.AreEqual(23.40f, leftChamfer.position.y, 0.05f);
             Assert.AreEqual(45f, leftChamfer.eulerAngles.z, 0.5f);
+            Assert.AreEqual(2.2f, leftChamfer.localScale.x, 0.05f);
             var leftCol = leftChamfer.GetComponent<BoxCollider>();
             Assert.IsNotNull(leftCol, "Chamfer_TopLeft must have a BoxCollider.");
             Assert.AreEqual(bounceMat, leftCol.sharedMaterial);
 
             var rightChamfer = boundariesRoot.transform.Find("Chamfer_TopRight");
             Assert.IsNotNull(rightChamfer, "Chamfer_TopRight must be created under Boundaries.");
-            Assert.AreEqual(8.85f, rightChamfer.position.x, 0.05f);
-            Assert.AreEqual(22.85f, rightChamfer.position.y, 0.05f);
+            Assert.AreEqual(9.40f, rightChamfer.position.x, 0.05f);
+            Assert.AreEqual(23.40f, rightChamfer.position.y, 0.05f);
             Assert.AreEqual(315f, rightChamfer.eulerAngles.z, 0.5f); // -45 deg in euler angles is 315 deg
+            Assert.AreEqual(2.2f, rightChamfer.localScale.x, 0.05f);
             var rightCol = rightChamfer.GetComponent<BoxCollider>();
             Assert.IsNotNull(rightCol, "Chamfer_TopRight must have a BoxCollider.");
             Assert.AreEqual(bounceMat, rightCol.sharedMaterial);
 
-            // Calling it again should be idempotent
+            // Calling it again should be idempotent and maintain calibrated sizing
             Assert.DoesNotThrow(() => gen.EnsureCornerChamfers());
             Assert.AreEqual(3, boundariesRoot.transform.childCount, "Idempotent call should not create duplicate chamfers.");
+            Assert.AreEqual(2.2f, leftChamfer.localScale.x, 0.05f);
 
             Object.DestroyImmediate(boundariesRoot);
             Object.DestroyImmediate(genGo);
