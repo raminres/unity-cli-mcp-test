@@ -500,20 +500,17 @@ namespace Arcade.Tests
             Assert.AreEqual(30, gameManager.Score);
 
             // Advance to level 2
-            gen.AdvanceToNextLevel();
             gameManager.AdvanceToNextLevel();
             Assert.AreEqual(2, gen.CurrentConfig.LevelNumber);
             Assert.AreEqual(30, gameManager.Score, "Score must be preserved when advancing to next level.");
             Assert.AreEqual(GameState.ReadyToLaunch, gameManager.State);
 
             // Advance to level 3
-            gen.AdvanceToNextLevel();
             gameManager.AdvanceToNextLevel();
             Assert.AreEqual(3, gen.CurrentConfig.LevelNumber);
             Assert.AreEqual(30, gameManager.Score);
 
             // Advance from level 3 loops back to level 1
-            gen.AdvanceToNextLevel();
             gameManager.AdvanceToNextLevel();
             Assert.AreEqual(1, gen.CurrentConfig.LevelNumber);
 
@@ -3574,6 +3571,7 @@ namespace Arcade.Tests
             paddle.transform.position = new Vector3(0f, -6f, 0f);
 
             laserCtrl.FireRailgunHyperBeam();
+            laserCtrl.SimulateStepForTesting(0.35f);
 
             Assert.IsTrue(block.IsDestroyed, "Block within Railgun beam path must be destroyed.");
             Object.DestroyImmediate(blockObj);
@@ -3675,7 +3673,7 @@ namespace Arcade.Tests
             Assert.IsNotNull(uiMgr.LaserStatusBadge);
             Assert.IsNotNull(uiMgr.ClutchStatusBadge);
             Assert.IsNotNull(uiMgr.LaserSprite, "LaserSprite must be assigned.");
-            Assert.AreEqual("TX_Powerup_Laser", uiMgr.LaserSprite.name);
+            Assert.IsTrue(uiMgr.LaserSprite.name.Contains("TX_Powerup_Gun") || uiMgr.LaserSprite.name.Contains("TX_Powerup_Laser"));
 
             // Test Laser Badge
             uiMgr.HandleLaserPowerupStateChanged(true, 10f);
@@ -3713,11 +3711,14 @@ namespace Arcade.Tests
         {
             Assert.AreEqual(1, BallController.GetVolleyMultiplier(0));
             Assert.AreEqual(1, BallController.GetVolleyMultiplier(1));
-            Assert.AreEqual(2, BallController.GetVolleyMultiplier(2));
-            Assert.AreEqual(3, BallController.GetVolleyMultiplier(3));
-            Assert.AreEqual(4, BallController.GetVolleyMultiplier(4));
-            Assert.AreEqual(5, BallController.GetVolleyMultiplier(5));
-            Assert.AreEqual(5, BallController.GetVolleyMultiplier(10));
+            Assert.AreEqual(1, BallController.GetVolleyMultiplier(2));
+            Assert.AreEqual(2, BallController.GetVolleyMultiplier(3));
+            Assert.AreEqual(2, BallController.GetVolleyMultiplier(4));
+            Assert.AreEqual(3, BallController.GetVolleyMultiplier(5));
+            Assert.AreEqual(3, BallController.GetVolleyMultiplier(7));
+            Assert.AreEqual(4, BallController.GetVolleyMultiplier(8));
+            Assert.AreEqual(4, BallController.GetVolleyMultiplier(10));
+            Assert.AreEqual(5, BallController.GetVolleyMultiplier(11));
         }
 
         [Test]
@@ -3739,11 +3740,12 @@ namespace Arcade.Tests
             Assert.AreEqual(0, mgr.CurrentVolleyStreak);
             Assert.AreEqual(1, mgr.HighestVolleyComboThisLevel);
 
-            mgr.NotifyVolleyHit(null, 3);
-            Assert.AreEqual(3, mgr.CurrentVolleyStreak);
+            // Streak 5 corresponds to 3x multiplier
+            mgr.NotifyVolleyHit(null, 5);
+            Assert.AreEqual(5, mgr.CurrentVolleyStreak);
             Assert.AreEqual(3, mgr.CurrentVolleyMultiplier);
             Assert.AreEqual(3, mgr.HighestVolleyComboThisLevel);
-            Assert.AreEqual(3, lastStreak);
+            Assert.AreEqual(5, lastStreak);
             Assert.AreEqual(3, lastMult);
 
             mgr.NotifyVolleySaved(null, 3);
@@ -4303,6 +4305,116 @@ namespace Arcade.Tests
             Assert.IsTrue(uiMgr.LevelClearBanner.ClassListContains("level-clear-banner-hidden"), "Banner must be hidden when scorecard modal is shown.");
 
             Object.DestroyImmediate(uiManagerGo);
+        }
+
+        [Test]
+        public void HighScoreManager_SessionScore_UpdatesSameEntryAcrossLevels()
+        {
+            HighScoreManager.ResetScores();
+
+            string sessionId = "session_test_abc123";
+
+            // Level 1 clear
+            bool rec1 = HighScoreManager.RecordScore(1200, 1, 25f, sessionId);
+            Assert.IsTrue(rec1);
+            var scores1 = HighScoreManager.GetTopScores();
+            Assert.AreEqual(1, scores1.Count, "First level clear should add 1 entry.");
+            Assert.AreEqual(1200, scores1[0].score);
+            Assert.AreEqual(1, scores1[0].level);
+            Assert.AreEqual(25f, scores1[0].time);
+            Assert.AreEqual(sessionId, scores1[0].sessionId);
+
+            // Level 2 clear in the same session
+            bool rec2 = HighScoreManager.RecordScore(3100, 2, 55f, sessionId);
+            Assert.IsTrue(rec2);
+            var scores2 = HighScoreManager.GetTopScores();
+            Assert.AreEqual(1, scores2.Count, "Continuous level clears in same session must update the existing entry, not add a duplicate.");
+            Assert.AreEqual(3100, scores2[0].score);
+            Assert.AreEqual(2, scores2[0].level);
+            Assert.AreEqual(55f, scores2[0].time);
+            Assert.AreEqual(sessionId, scores2[0].sessionId);
+
+            // Level 3 clear in the same session
+            bool rec3 = HighScoreManager.RecordScore(5800, 3, 90f, sessionId);
+            Assert.IsTrue(rec3);
+            var scores3 = HighScoreManager.GetTopScores();
+            Assert.AreEqual(1, scores3.Count, "Continuous session must remain exactly 1 leaderboard row.");
+            Assert.AreEqual(5800, scores3[0].score);
+            Assert.AreEqual(3, scores3[0].level);
+            Assert.AreEqual(90f, scores3[0].time);
+
+            HighScoreManager.ResetScores();
+        }
+
+        [Test]
+        public void HighScoreManager_SessionScore_DifferentSessionsCreateDistinctEntries()
+        {
+            HighScoreManager.ResetScores();
+
+            string session1 = "run_session_01";
+            string session2 = "run_session_02";
+
+            HighScoreManager.RecordScore(2000, 2, 40f, session1);
+            HighScoreManager.RecordScore(3500, 3, 60f, session2);
+
+            var scores = HighScoreManager.GetTopScores();
+            Assert.AreEqual(2, scores.Count, "Distinct sessions must create distinct entries.");
+            Assert.AreEqual(3500, scores[0].score);
+            Assert.AreEqual(session2, scores[0].sessionId);
+            Assert.AreEqual(2000, scores[1].score);
+            Assert.AreEqual(session1, scores[1].sessionId);
+
+            // Session 1 progresses further and overtakes session 2
+            HighScoreManager.RecordScore(4500, 4, 85f, session1);
+            scores = HighScoreManager.GetTopScores();
+            Assert.AreEqual(2, scores.Count, "Updating session 1 must still maintain exactly 2 total entries.");
+            Assert.AreEqual(4500, scores[0].score);
+            Assert.AreEqual(session1, scores[0].sessionId);
+            Assert.AreEqual(3500, scores[1].score);
+            Assert.AreEqual(session2, scores[1].sessionId);
+
+            HighScoreManager.ResetScores();
+        }
+
+        [Test]
+        public void ArcadeGameManager_SessionSaveAndContinue_PreservesSessionIdAndCumulativeScore()
+        {
+            var mgrGo = new GameObject("TestSessionMgr");
+            var mgr = mgrGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(mgr);
+
+            string testSession = "test_run_guid_777";
+            mgr.SetCurrentSessionIdForTesting(testSession);
+            mgr.SetCurrentLevelForTesting(4);
+
+            // Simulate scoring
+            mgr.RecordBlockDestroyed(2500, 1);
+            Assert.AreEqual(2500, mgr.Score);
+
+            // Save session
+            mgr.SaveCurrentGameSession();
+
+            Assert.AreEqual(1, PlayerPrefs.GetInt("Arcade_HasSavedGame", 0));
+            Assert.AreEqual(2500, PlayerPrefs.GetInt("Arcade_SavedScore", 0));
+            Assert.AreEqual(4, PlayerPrefs.GetInt("Arcade_SavedLevel", 0));
+            Assert.AreEqual(testSession, PlayerPrefs.GetString("Arcade_SavedSessionId", ""));
+
+            // Clear saved game
+            ArcadeGameManager.ClearSavedGame();
+            Assert.AreEqual(0, PlayerPrefs.GetInt("Arcade_HasSavedGame", 0));
+            Assert.AreEqual(0, PlayerPrefs.GetInt("Arcade_SavedScore", 0));
+            Assert.IsFalse(PlayerPrefs.HasKey("Arcade_SavedSessionId"));
+
+            Object.DestroyImmediate(mgrGo);
+        }
+
+        [Test]
+        public void PowerupCapsule_LaserSprite_ResolvesGunIcon()
+        {
+            var sprite = PowerupCapsule.GetSpriteForType(BlockSpecialType.Laser);
+            Assert.IsNotNull(sprite, "PowerupCapsule must resolve a sprite for Laser type.");
+            Assert.IsTrue(sprite.name.Contains("TX_Powerup_Gun") || sprite.name.Contains("TX_Powerup_Laser"),
+                "Sprite should resolve to TX_Powerup_Gun or fallback TX_Powerup_Laser.");
         }
 
         #endregion

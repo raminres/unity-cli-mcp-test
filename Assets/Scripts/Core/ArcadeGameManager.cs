@@ -38,6 +38,9 @@ namespace Arcade.Core
         private const string PREF_HIGH_SCORE = "Arcade_HighScore";
         private const string PREF_SAVED_SCORE = "Arcade_SavedScore";
         private const string PREF_SAVED_LIVES = "Arcade_SavedLives";
+        private const string PREF_SAVED_LEVEL = "Arcade_SavedLevel";
+        private const string PREF_SAVED_RUN_TIME = "Arcade_SavedRunTime";
+        private const string PREF_SAVED_SESSION_ID = "Arcade_SavedSessionId";
         private const string PREF_HAS_SAVED_GAME = "Arcade_HasSavedGame";
 
         [Header("Game Configuration")]
@@ -73,6 +76,19 @@ namespace Arcade.Core
         public float LevelClearDelaySeconds => levelClearDelaySeconds;
         public float StandardClearDelaySeconds => standardClearDelaySeconds;
         public int LivesLostThisLevel => livesLostThisLevel;
+
+        private string currentSessionId;
+        public string CurrentSessionId => currentSessionId;
+
+        public void SetCurrentSessionIdForTesting(string id)
+        {
+            currentSessionId = id;
+        }
+
+        public void SetCurrentLevelForTesting(int lvl)
+        {
+            currentLevel = lvl;
+        }
 
         [Header("Power-Up States")]
         [SerializeField] private bool isShieldActive = false;
@@ -191,11 +207,18 @@ namespace Arcade.Core
                 PlayerPrefs.Save();
                 currentScore = PlayerPrefs.GetInt(PREF_SAVED_SCORE, 0);
                 remainingLives = PlayerPrefs.GetInt(PREF_SAVED_LIVES, startingLives);
+                currentLevel = PlayerPrefs.GetInt(PREF_SAVED_LEVEL, 1);
+                totalRunElapsedTime = PlayerPrefs.GetFloat(PREF_SAVED_RUN_TIME, 0f);
+                currentSessionId = PlayerPrefs.GetString(PREF_SAVED_SESSION_ID, System.Guid.NewGuid().ToString("N"));
             }
             else
             {
                 currentScore = 0;
                 remainingLives = startingLives;
+                totalRunElapsedTime = 0f;
+                currentSessionId = System.Guid.NewGuid().ToString("N");
+                int selLevel = PlayerPrefs.GetInt(BlockBreaker.LevelGenerator.PREF_SELECTED_LEVEL, 1);
+                currentLevel = selLevel;
             }
 
             SetState(GameState.ReadyToLaunch);
@@ -685,10 +708,13 @@ namespace Arcade.Core
             if (currentState != GameState.ReadyToLaunch && currentState != GameState.BallLost) return;
 
             // Guarantee all weapons and in-flight projectiles are cleared before launch to prevent premature block destruction
-            var paddle = FindAnyObjectByType<PaddleController>();
-            if (paddle != null && paddle.LaserController != null)
+            var paddles = FindObjectsByType<PaddleController>(FindObjectsSortMode.None);
+            for (int i = 0; i < paddles.Length; i++)
             {
-                paddle.LaserController.DeactivateAllWeapons();
+                if (paddles[i] != null && paddles[i].LaserController != null)
+                {
+                    paddles[i].LaserController.DeactivateAllWeapons();
+                }
             }
             BlockBreaker.LaserBolt.ClearAllActiveBolts();
 
@@ -743,7 +769,7 @@ namespace Arcade.Core
             if (currentScore > highScore)
             {
                 highScore = currentScore;
-                HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime);
+                HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime, currentSessionId);
             }
 
             string displayTag = bonusTag;
@@ -800,7 +826,9 @@ namespace Arcade.Core
 
             if (allBlocksCleared)
             {
-                HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime);
+                SetState(GameState.LevelClear);
+                EndClutchMode();
+                HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime, currentSessionId);
                 bool wasClearedWithLaser = false;
                 var paddle = FindAnyObjectByType<PaddleController>();
                 if (paddle != null && paddle.LaserController != null && paddle.LaserController.IsHyperBeamActive)
@@ -810,19 +838,14 @@ namespace Arcade.Core
 
                 float delay = wasClearedWithLaser ? levelClearDelaySeconds : standardClearDelaySeconds;
 
-                if (Application.isPlaying && gameObject.activeInHierarchy)
+                if (!isLevelClearPending)
                 {
-                    if (!isLevelClearPending)
+                    isLevelClearPending = true;
+                    OnLevelClearPending?.Invoke(delay, wasClearedWithLaser);
+                    if (Application.isPlaying && gameObject.activeInHierarchy)
                     {
-                        isLevelClearPending = true;
-                        OnLevelClearPending?.Invoke(delay, wasClearedWithLaser);
                         levelClearCoroutine = StartCoroutine(DelayedLevelClearRoutine(delay));
                     }
-                }
-                else
-                {
-                    OnLevelClearPending?.Invoke(delay, wasClearedWithLaser);
-                    OnLevelCleared();
                 }
             }
         }
@@ -945,7 +968,7 @@ namespace Arcade.Core
 
             bool isNewBestTime = HighScoreManager.RecordLevelTime(currentLevel, levelElapsedTime);
             HighScoreManager.SetLevelStars(currentLevel, stars);
-            HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime);
+            HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime, currentSessionId);
 
             currentLevelSummary = new LevelSummaryData
             {
@@ -1039,7 +1062,7 @@ namespace Arcade.Core
             EndClutchMode();
             if (currentScore > 0)
             {
-                HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime);
+                HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime, currentSessionId);
             }
             SetState(GameState.GameOver);
             ClearSavedGame();
@@ -1106,6 +1129,12 @@ namespace Arcade.Core
 
             PlayerPrefs.SetInt(PREF_SAVED_SCORE, currentScore);
             PlayerPrefs.SetInt(PREF_SAVED_LIVES, remainingLives);
+            PlayerPrefs.SetInt(PREF_SAVED_LEVEL, currentLevel);
+            PlayerPrefs.SetFloat(PREF_SAVED_RUN_TIME, totalRunElapsedTime);
+            if (!string.IsNullOrEmpty(currentSessionId))
+            {
+                PlayerPrefs.SetString(PREF_SAVED_SESSION_ID, currentSessionId);
+            }
             PlayerPrefs.SetInt(PREF_HAS_SAVED_GAME, 1);
             PlayerPrefs.Save();
         }
@@ -1114,6 +1143,9 @@ namespace Arcade.Core
         {
             PlayerPrefs.DeleteKey(PREF_SAVED_SCORE);
             PlayerPrefs.DeleteKey(PREF_SAVED_LIVES);
+            PlayerPrefs.DeleteKey(PREF_SAVED_LEVEL);
+            PlayerPrefs.DeleteKey(PREF_SAVED_RUN_TIME);
+            PlayerPrefs.DeleteKey(PREF_SAVED_SESSION_ID);
             PlayerPrefs.SetInt(PREF_HAS_SAVED_GAME, 0);
             PlayerPrefs.Save();
         }

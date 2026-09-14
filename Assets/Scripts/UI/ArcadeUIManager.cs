@@ -457,7 +457,10 @@ namespace Arcade.UI
             if (multiplierSprite == null)
                 multiplierSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
             if (laserSprite == null)
-                laserSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Laser.png");
+            {
+                var gunSp = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Gun.png");
+                laserSprite = gunSp != null ? gunSp : UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Laser.png");
+            }
 #endif
 
             shieldStatusBadge = root.Q<VisualElement>("shield-status-badge");
