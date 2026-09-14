@@ -28,6 +28,7 @@ namespace Arcade.BlockBreaker
         [Header("References")]
         [SerializeField] private Rigidbody rb;
         [SerializeField] private BoxCollider rootCollider;
+        [SerializeField] private PaddleLaserController laserController;
 
         private Coroutine expandCoroutine;
         private Coroutine recoilCoroutine;
@@ -40,6 +41,7 @@ namespace Arcade.BlockBreaker
         public float MaxX => maxX;
         public int ExpansionCount => expansionCount;
         public float VelocityX => currentVelocityX;
+        public PaddleLaserController LaserController => laserController != null ? laserController : (laserController = GetComponent<PaddleLaserController>() ?? gameObject.AddComponent<PaddleLaserController>());
 
         public Transform StepTop => stepTop;
         public Transform StepMid => stepMid;
@@ -57,6 +59,7 @@ namespace Arcade.BlockBreaker
             }
 
             if (rootCollider == null) rootCollider = GetComponent<BoxCollider>();
+            if (laserController == null) laserController = GetComponent<PaddleLaserController>() ?? gameObject.AddComponent<PaddleLaserController>();
 
             EnsureSteppedMeshHierarchy();
             RecalculateBounds();

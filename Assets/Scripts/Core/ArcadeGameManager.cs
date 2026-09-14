@@ -38,6 +38,14 @@ namespace Arcade.Core
         [SerializeField] private float paddleExpandTimeRemaining = 0f;
         [SerializeField] private int activeScoreMultiplier = 1;
         [SerializeField] private float multiplierTimeRemaining = 0f;
+        [SerializeField] private bool isLaserActive = false;
+        [SerializeField] private float laserTimeRemaining = 0f;
+
+        [Header("Clutch Railgun Overcharge")]
+        [SerializeField] private float clutchDuration = 12f;
+        [SerializeField] private bool isClutchModeActive = false;
+        [SerializeField] private float clutchTimeRemaining = 0f;
+        [SerializeField] private int clutchMultiplier = 10;
 
         [Header("Asset References")]
         [SerializeField] private Material powerupCapsuleMaterial;
@@ -57,6 +65,10 @@ namespace Arcade.Core
         public event Action<float> OnPaddleExpandTick;
         public event Action<bool, int, float> OnScoreMultiplierStateChanged;
         public event Action<float> OnScoreMultiplierTick;
+        public event Action<bool, float> OnLaserPowerupStateChanged;
+        public event Action<float> OnLaserPowerupTick;
+        public event Action<bool, float, int> OnClutchStateChanged;
+        public event Action<float, int> OnClutchTick;
 
         public GameState State => currentState;
         public int Score => currentScore;
@@ -70,6 +82,11 @@ namespace Arcade.Core
         public float PaddleExpandTimeRemaining => paddleExpandTimeRemaining;
         public int ActiveScoreMultiplier => activeScoreMultiplier;
         public float MultiplierTimeRemaining => multiplierTimeRemaining;
+        public bool IsLaserActive => isLaserActive;
+        public float LaserTimeRemaining => laserTimeRemaining;
+        public bool IsClutchModeActive => isClutchModeActive;
+        public float ClutchTimeRemaining => clutchTimeRemaining;
+        public int ClutchMultiplier => clutchMultiplier;
         public System.Collections.Generic.IReadOnlyList<BallController> ActiveBalls => activeBalls;
         public int ActiveBallCount => activeBalls.Count;
 
@@ -146,6 +163,14 @@ namespace Arcade.Core
                 if (activeScoreMultiplier > 1)
                 {
                     TickScoreMultiplier(Time.deltaTime);
+                }
+                if (isLaserActive)
+                {
+                    TickLaserPowerup(Time.deltaTime);
+                }
+                if (isClutchModeActive)
+                {
+                    TickClutchMode(Time.deltaTime);
                 }
             }
         }
@@ -266,6 +291,105 @@ namespace Arcade.Core
             if (multiplierTimeRemaining <= 0f)
             {
                 DeactivateScoreMultiplier();
+            }
+        }
+
+        public void ActivateLaserPowerup(float duration = 10f)
+        {
+            isLaserActive = true;
+            laserTimeRemaining = Mathf.Max(laserTimeRemaining, duration);
+
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null && paddle.LaserController != null)
+            {
+                paddle.LaserController.ActivateLaserBlaster(duration);
+            }
+
+            OnLaserPowerupStateChanged?.Invoke(true, laserTimeRemaining);
+            OnLaserPowerupTick?.Invoke(laserTimeRemaining);
+        }
+
+        public void DeactivateLaserPowerup()
+        {
+            if (!isLaserActive && laserTimeRemaining <= 0f) return;
+
+            isLaserActive = false;
+            laserTimeRemaining = 0f;
+
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null && paddle.LaserController != null)
+            {
+                paddle.LaserController.DeactivateLaserBlaster();
+            }
+
+            OnLaserPowerupStateChanged?.Invoke(false, 0f);
+        }
+
+        public void TickLaserPowerup(float delta)
+        {
+            if (!isLaserActive) return;
+
+            laserTimeRemaining -= delta;
+            OnLaserPowerupTick?.Invoke(Mathf.Max(0f, laserTimeRemaining));
+
+            if (laserTimeRemaining <= 0f)
+            {
+                DeactivateLaserPowerup();
+            }
+        }
+
+        public void StartClutchMode(float duration = 12f)
+        {
+            if (isClutchModeActive) return;
+            isClutchModeActive = true;
+            clutchTimeRemaining = duration > 0f ? duration : clutchDuration;
+            clutchMultiplier = CalculateClutchMultiplier(clutchTimeRemaining);
+            OnClutchStateChanged?.Invoke(true, clutchTimeRemaining, clutchMultiplier);
+            OnClutchTick?.Invoke(clutchTimeRemaining, clutchMultiplier);
+        }
+
+        public void EndClutchMode()
+        {
+            if (!isClutchModeActive) return;
+            isClutchModeActive = false;
+            clutchTimeRemaining = 0f;
+            clutchMultiplier = 1;
+            OnClutchStateChanged?.Invoke(false, 0f, 1);
+        }
+
+        public static int CalculateClutchMultiplier(float timeRemaining)
+        {
+            if (timeRemaining <= 0f) return 1;
+            int mult = Mathf.CeilToInt(timeRemaining);
+            return Mathf.Clamp(mult, 1, 10);
+        }
+
+        public void TickClutchMode(float delta)
+        {
+            if (!isClutchModeActive) return;
+
+            clutchTimeRemaining -= delta;
+            int newMult = CalculateClutchMultiplier(clutchTimeRemaining);
+            if (newMult != clutchMultiplier)
+            {
+                clutchMultiplier = newMult;
+            }
+
+            OnClutchTick?.Invoke(Mathf.Max(0f, clutchTimeRemaining), clutchMultiplier);
+
+            if (clutchTimeRemaining <= 0f)
+            {
+                TriggerRailgunDischarge();
+            }
+        }
+
+        private void TriggerRailgunDischarge()
+        {
+            EndClutchMode();
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null && paddle.LaserController != null)
+            {
+                paddle.LaserController.FireRailgunHyperBeam(1.5f);
             }
         }
 
@@ -466,7 +590,13 @@ namespace Arcade.Core
         {
             if (currentState == GameState.GameOver || currentState == GameState.LevelClear) return;
 
-            int awardedPoints = points * activeScoreMultiplier;
+            int effectiveMultiplier = activeScoreMultiplier;
+            if (isClutchModeActive)
+            {
+                effectiveMultiplier = Mathf.Max(effectiveMultiplier, clutchMultiplier);
+            }
+
+            int awardedPoints = points * effectiveMultiplier;
             currentScore += awardedPoints;
             remainingBlocks = Mathf.Max(0, remainingBlocks - 1);
 
@@ -478,6 +608,12 @@ namespace Arcade.Core
 
             OnScoreChanged?.Invoke(currentScore, awardedPoints);
             SaveCurrentGameSession();
+
+            // Trigger 12-second Clutch Railgun Overcharge if exactly 1 block remains
+            if (remainingBlocks == 1 && !isClutchModeActive && currentState == GameState.Playing)
+            {
+                StartClutchMode();
+            }
 
             CheckLevelCompletion();
         }
@@ -528,6 +664,8 @@ namespace Arcade.Core
             DeactivateShield();
             DeactivatePaddleExpander();
             DeactivateScoreMultiplier();
+            DeactivateLaserPowerup();
+            EndClutchMode();
 
             remainingLives--;
             OnLivesChanged?.Invoke(remainingLives);
@@ -564,6 +702,8 @@ namespace Arcade.Core
             DeactivateShield();
             DeactivatePaddleExpander();
             DeactivateScoreMultiplier();
+            DeactivateLaserPowerup();
+            EndClutchMode();
             SetState(GameState.LevelClear);
 
             if (ArcadeAudioManager.Instance != null)
@@ -581,6 +721,8 @@ namespace Arcade.Core
             DeactivateShield();
             DeactivatePaddleExpander();
             DeactivateScoreMultiplier();
+            DeactivateLaserPowerup();
+            EndClutchMode();
             Time.timeScale = 1f;
             SetState(GameState.ReadyToLaunch);
             SaveCurrentGameSession();
@@ -593,6 +735,8 @@ namespace Arcade.Core
             DeactivateShield();
             DeactivatePaddleExpander();
             DeactivateScoreMultiplier();
+            DeactivateLaserPowerup();
+            EndClutchMode();
             if (currentScore > 0)
             {
                 HighScoreManager.RecordScore(currentScore);

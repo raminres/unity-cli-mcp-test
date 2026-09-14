@@ -51,6 +51,15 @@
                 <ui:Label name="multiplier-value-label" text="2X" class="powerup-timer-label multiplier-val-text" />
                 <ui:Label name="multiplier-timer-label" text="10s" class="powerup-timer-label" />
             </ui:VisualElement>
+            <ui:VisualElement name="laser-status-badge" class="powerup-badge laser-badge powerup-hidden">
+                <ui:VisualElement name="laser-status-icon" class="powerup-status-icon icon-laser" picking-mode="Ignore" />
+                <ui:Label name="laser-timer-label" text="10s" class="powerup-timer-label" />
+            </ui:VisualElement>
+            <ui:VisualElement name="clutch-status-badge" class="powerup-badge clutch-badge powerup-hidden">
+                <ui:VisualElement name="clutch-status-icon" class="powerup-status-icon icon-laser" picking-mode="Ignore" />
+                <ui:Label name="clutch-multiplier-label" text="10X" class="powerup-timer-label clutch-val-text" />
+                <ui:Label name="clutch-timer-label" text="12s" class="powerup-timer-label" />
+            </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- Center Prompt Banner (Visible before ball launch) -->
@@ -168,7 +177,7 @@
                     </ui:VisualElement>
                     <ui:VisualElement class="guide-card">
                         <ui:Label text="4. POWERUPS &amp; HAZARDS" class="guide-heading" />
-                        <ui:Label text="• Expander: Widens paddle by +10%.&#10;• Multipliers: 2X and 3X bonus points per block.&#10;• Shield: Kinetic barrier protects for 10s.&#10;• Multi-Ball: 3 balls! Extra balls don't lose lives.&#10;• Bombs: Radial detonation explodes neighbors!&#10;• Extra Heart: Grants +1 life (up to 5 max)." class="guide-text" />
+                        <ui:Label text="• Expander: Widens paddle by +10%.&#10;• Multipliers: 2X, 3X, 4X, 5X bonus points per block.&#10;• Shield: Kinetic barrier protects for 10s.&#10;• Multi-Ball: 3 balls! Extra balls don't lose lives.&#10;• Laser Blaster: Twin cannons pierce brick rows!&#10;• Bombs: Radial detonation explodes neighbors!&#10;• Extra Heart: Grants +1 life (up to 5 max).&#10;• Clutch Countdown: When 1 brick remains, 12s timer yields up to 10X score or Railgun vaporizes it!" class="guide-text" />
                     </ui:VisualElement>
                 </ui:ScrollView>
                 <ui:Button name="btn-close-how-to-play" text="BACK" class="arcade-btn btn-primary modal-close-btn" />
@@ -253,6 +262,12 @@
                     <ui:Label text="Multi-Ball Bricks" class="setting-label" />
                     <ui:SliderInt name="slider-multiball" low-value="0" high-value="4" value="0" class="setting-slider" />
                     <ui:Label name="val-multiball" text="0" class="setting-val-badge" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Laser Blasters" class="setting-label" />
+                    <ui:SliderInt name="slider-laser" low-value="0" high-value="4" value="0" class="setting-slider" />
+                    <ui:Label name="val-laser" text="0" class="setting-val-badge" />
                 </ui:VisualElement>
 
                 <ui:Button name="btn-apply-level" text="APPLY &amp; RESTART" class="arcade-btn btn-secondary modal-action-btn" />

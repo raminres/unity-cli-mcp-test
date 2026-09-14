@@ -415,6 +415,17 @@ namespace Arcade.BlockBreaker
                         ArcadeGameManager.Instance.ActivateScoreMultiplier(BlockModifierExtensions.SCORE_MULTIPLIER_5X, BlockModifierExtensions.DEFAULT_MULTIPLIER_DURATION);
                     }
                     break;
+
+                case BlockSpecialType.Laser:
+                    if (ArcadeGameManager.Instance != null)
+                    {
+                        ArcadeGameManager.Instance.ActivateLaserPowerup(BlockModifierExtensions.DEFAULT_LASER_DURATION);
+                    }
+                    else if (paddle != null && paddle.LaserController != null)
+                    {
+                        paddle.LaserController.ActivateLaserBlaster(BlockModifierExtensions.DEFAULT_LASER_DURATION);
+                    }
+                    break;
             }
 
             // 3. VFX Burst using dedicated URP shaded particles
@@ -486,6 +497,10 @@ namespace Arcade.BlockBreaker
                         if (UI.ArcadeUIManager.Instance.MultiplierSprite != null)
                             return UI.ArcadeUIManager.Instance.MultiplierSprite;
                         break;
+                    case BlockSpecialType.Laser:
+                        if (UI.ArcadeUIManager.Instance.LaserSprite != null)
+                            return UI.ArcadeUIManager.Instance.LaserSprite;
+                        break;
                 }
             }
 
@@ -506,6 +521,8 @@ namespace Arcade.BlockBreaker
                 case BlockSpecialType.ScoreMultiplier4x:
                 case BlockSpecialType.ScoreMultiplier5x:
                     return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
+                case BlockSpecialType.Laser:
+                    return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Laser.png");
             }
 #endif
             return null;

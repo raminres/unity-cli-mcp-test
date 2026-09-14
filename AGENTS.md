@@ -71,19 +71,19 @@ This file provides persistent, high-density project context across agent session
 | :---: | :--- | :---: | :---: | :---: | :---: | :--- |
 | **1** | **First Flight** | `Pyramid` | $7 \times 3$ | **15** | `0.92x` (Paddle 5.5) | • 1x Paddle Expander |
 | **2** | **Glass & Gold** | `Diamond` | $7 \times 6$ | **22** | `0.96x` (Paddle 5.2) | • 1x 2X, 2x Glass, 1x Expander |
-| **3** | **Twin Pillars** | `Pillars` | $7 \times 6$ | **24** | `1.00x` (Paddle 5.0) | • 2x Bombs, 2x 2X, 1x Expander (`Checkerboard`) |
+| **3** | **Twin Pillars** | `Pillars` | $7 \times 6$ | **24** | `1.00x` (Paddle 5.0) | • 2x Bombs, 2x 2X, 1x Expander, 1x Laser (`Checkerboard`) |
 | **4** | **Kinetic Shield** | `Shield` | $8 \times 6$ | **34** | `1.04x` (Paddle 5.0) | • 1x Shield, 1x Heart, 1x Bomb, 2x Glass |
 | **5** | **Multi-Ball Ring** | `HollowBox` | $8 \times 6$ | **24** | `1.08x` (Paddle 5.0) | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass (`Checkerboard`) |
-| **6** | **Royal Crown** | `Crown` | $9 \times 6$ | **52** | `1.12x` (Paddle 5.0) | • 1x 3X, 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass |
+| **6** | **Royal Crown** | `Crown` | $9 \times 6$ | **52** | `1.12x` (Paddle 5.0) | • 1x 3X, 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass, 1x Laser |
 | **7** | **Neon Heart** | `Heart` | $9 \times 6$ | **32** | `1.16x` (Paddle 5.0) | • 2x Hearts, 1x Shield, 1x 3X, 2x 2X, 1x Bomb, 2x Glass, 1x Multi-Ball |
-| **8** | **Space Invader** | `Invader` | $9 \times 6$ | **28** | `1.20x` (Paddle 5.0) | • 2x Bombs, 2x 2X, 2x 3X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Glass (`Randomized`) |
+| **8** | **Space Invader** | `Invader` | $9 \times 6$ | **28** | `1.20x` (Paddle 5.0) | • 2x Bombs, 2x 2X, 2x 3X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Glass, 1x Laser (`Randomized`) |
 | **9** | **Crossfire** | `Cross` | $9 \times 6$ | **30** | `1.24x` (Paddle 5.0) | • 1x 4X, 2x 2X, 1x 3X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball (`Checkerboard`) |
 | **10** | **The Hourglass** | `Hourglass` | $9 \times 6$ | **42** | `1.28x` (Paddle 5.0) | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball |
-| **11** | **Chevron Strike** | `Chevron` | $9 \times 6$ | **18** | `1.32x` (Paddle 5.0) | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 2x Multi-Balls (`Checkerboard`) |
+| **11** | **Chevron Strike** | `Chevron` | $9 \times 6$ | **18** | `1.32x` (Paddle 5.0) | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 2x Multi-Balls, 1x Laser (`Checkerboard`) |
 | **12** | **Castle Bastion** | `Castle` | $10 \times 6$ | **45** | `1.36x` (Paddle 5.0) | • 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls |
 | **13** | **Quantum Lattice** | `CheckerboardEmpty` | $10 \times 6$ | **30** | `1.40x` (Paddle 5.0) | • 1x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls (`Randomized`) |
-| **14** | **Striped Vault** | `Stripes` | $10 \times 6$ | **30** | `1.44x` (Paddle 5.0) | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls |
-| **15** | **Chaos Labyrinth** | `Custom` | $10 \times 6$ | **48** | `1.48x` (Paddle 5.0) | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 4x Bombs, 4x Glass, 2x Hearts, 2x Shields, 2x Multi-Balls (`Randomized`) |
+| **14** | **Striped Vault** | `Stripes` | $10 \times 6$ | **30** | `1.44x` (Paddle 5.0) | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls, 1x Laser |
+| **15** | **Chaos Labyrinth** | `Custom` | $10 \times 6$ | **48** | `1.48x` (Paddle 5.0) | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 4x Bombs, 4x Glass, 2x Hearts, 2x Shields, 2x Multi-Balls, 2x Lasers (`Randomized`) |
 
 - **Dynamic Volley Pacing**: `BallController` measures continuous active volley time. Every 10 seconds of active play, speed escalates progressively ($+8\%$ step multiplier) up to `maxSpeed`, eliminating stale stalemates and ramping up intensity. Resets back to level base speed on dock or life lost.
 - **Asset Storage**: `Assets/Settings/Levels/SO_Level_01.asset` through `SO_Level_15.asset`.
@@ -108,13 +108,18 @@ This file provides persistent, high-density project context across agent session
     - **Shield (`Shield`)**: Drops electric blue capsule with shield icon; catching activates 10-second defensive barrier with HUD countdown.
     - **Multi-Ball (`MultiBall`)**: Drops neon magenta capsule with multi-ball icon; catching spawns 2 extra balls at $\pm 35^\circ$ diverging angles with distinct trail colors.
     - **Score Multipliers (`ScoreMultiplier2x`, `ScoreMultiplier3x`, `ScoreMultiplier4x`, `ScoreMultiplier5x`)**: Drops glowing gold (2X), fiery orange (3X), crimson (4X), or hyper-magenta (5X) capsule with extra points icon; catching activates a 10-second score multiplier buff on `ArcadeGameManager` with animated HUD status badge.
+    - **Laser Blaster (`Laser`)**: Drops glowing ruby red capsule with laser icon ([TX_Powerup_Laser.png](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/UI/Icons/TX_Powerup_Laser.png)); catching deploys twin plasma laser cannons mounted on paddle edges ([PaddleLaserController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/PaddleLaserController.cs)) firing high-velocity laser bolts ([LaserBolt.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LaserBolt.cs), $34\text{ units/s}$, ruby glow, SFX [AU_Powerup_Laser.mp3](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Audio/AU_Powerup_Laser.mp3)) at $0.32\text{s}$ intervals for 10 seconds. Bolts deal standard damage on block impact (`TakeHit(Vector3.down)`).
     - **In-Flight Lifecycle & Docked Intercept Guard**:
       - `PowerupCapsule.ClearAllFallingCapsules()` automatically clears and destroys all active falling capsules upon life loss, shield deflection save, level clear, game over, and level advancement, preventing stale capsules from lingering into docked state or subsequent levels.
       - `PowerupCapsule.TryIntercept()` guards against collecting powerups while docked on the paddle (`ReadyToLaunch` or `BallLost`), ensuring balls cannot be triggered prematurely before player launch.
+- **Lone Block Clutch Countdown & Option B Hyper-Beam Railgun**:
+  - **Clutch Countdown**: When exactly 1 block remains in the level (`remainingBlocks == 1`), `ArcadeGameManager` activates Clutch Countdown mode with a 12-second live timer, accompanied by an animated HUD status badge (`clutch-status-badge`) displaying remaining seconds and current multiplier.
+  - **Decaying Score Multiplier**: Hitting the lone final block while the clutch timer is active rewards a decaying score multiplier from $10\times$ down to $1\times$ based on remaining seconds ($\text{multiplier} = \text{clamp}(\lfloor\text{timeRemaining}\rfloor + 1, 1, 10)$).
+  - **Option B Hyper-Beam Railgun**: If the 12-second timer expires without hitting the block, the paddle engages emergency Railgun Overcharge. A wide vertical hyper-beam ($W \approx 2.4$, $H \approx 31$) erupts from the paddle's current $X$-coordinate to the arena ceiling. As the player steers the paddle across the arena, the sustained beam vaporizes the final block on contact, eliminating tedious stale-brick stalemates while maintaining full player agency and avoiding patronizing artificial ball homing.
 - **Immediate Environmental Modifiers**:
   - **Bomb Bricks (`Bomb`)**: Explosive radius detonation ($2.5$ units) immediately detonating surrounding bricks with outward impulses. Protected by `isDestroyed` flag against recursive loops.
   - **Glass-Enclosed Bricks (`GlassEnclosed`)**: Encased in a $1.18\times$ glass shell ([MI_Block_Glass.mat](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Materials/BlockBreaker/MI_Block_Glass.mat)). Requires 2 hits (Hit 1: shatters glass shell with crystal debris; Hit 2: breaks brick for $2\times$ points).
-- **World Space Badges ([BlockBadge.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockBadge.cs))**: Rendered via Unity 6 `PanelRenderer` in `WorldSpace` mode (`80px` fixed dimension, 100 PPU, clamped margins).
+- **World Space Badges ([BlockBadge.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockBadge.cs))**: Rendered via Unity 6 `PanelRenderer` in `WorldSpace` mode (`80px` fixed dimension, 100 PPU, clamped margins). Supports Laser badge icon (`badge-icon-laser`) and plate (`badge-plate-laser`).
 
 ---
 

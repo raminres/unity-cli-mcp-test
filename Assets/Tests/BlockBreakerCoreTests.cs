@@ -83,9 +83,9 @@ namespace Arcade.Tests
             Assert.AreEqual(30, gameManager.Score);
             Assert.AreEqual(1, gameManager.RemainingBlocks);
 
-            // Break Blue block (30 pts)
+            // Break Blue block (30 pts) during Clutch Mode (10x multiplier) -> 300 pts added (30 + 300 = 330)
             gameManager.RecordBlockDestroyed(30, 3);
-            Assert.AreEqual(60, gameManager.Score);
+            Assert.AreEqual(330, gameManager.Score);
             Assert.AreEqual(0, gameManager.RemainingBlocks);
 
             // All blocks destroyed -> State must transition to LevelClear
@@ -3492,6 +3492,217 @@ namespace Arcade.Tests
             }
         }
 #endif
+
+        #endregion
+
+        #region 15. Clutch Countdown & Laser Blaster Tests
+
+        [Test]
+        public void ClutchCountdown_Triggers_WhenOneBlockRemains()
+        {
+            gameManager.RegisterLevelBlocks(2);
+            gameManager.LaunchBall();
+
+            Assert.IsFalse(gameManager.IsClutchModeActive);
+
+            // Destroy 1 block -> exactly 1 block remains
+            gameManager.RecordBlockDestroyed(10, 1);
+
+            Assert.AreEqual(1, gameManager.RemainingBlocks);
+            Assert.IsTrue(gameManager.IsClutchModeActive, "Clutch mode must activate when remaining blocks == 1.");
+            Assert.AreEqual(12f, gameManager.ClutchTimeRemaining, 0.01f);
+            Assert.AreEqual(10, gameManager.ClutchMultiplier);
+        }
+
+        [Test]
+        public void ClutchCountdown_Multiplier_DecaysCorrectly()
+        {
+            Assert.AreEqual(10, ArcadeGameManager.CalculateClutchMultiplier(12.0f));
+            Assert.AreEqual(10, ArcadeGameManager.CalculateClutchMultiplier(10.0f));
+            Assert.AreEqual(8, ArcadeGameManager.CalculateClutchMultiplier(7.2f));
+            Assert.AreEqual(5, ArcadeGameManager.CalculateClutchMultiplier(4.9f));
+            Assert.AreEqual(2, ArcadeGameManager.CalculateClutchMultiplier(1.5f));
+            Assert.AreEqual(1, ArcadeGameManager.CalculateClutchMultiplier(0.3f));
+            Assert.AreEqual(1, ArcadeGameManager.CalculateClutchMultiplier(0f));
+        }
+
+        [Test]
+        public void ClutchCountdown_Multiplier_AppliesToFinalBlockScore()
+        {
+            gameManager.RegisterLevelBlocks(2);
+            gameManager.LaunchBall();
+
+            // Destroy first block: 10 * 1 = 10 pts
+            gameManager.RecordBlockDestroyed(10, 1);
+            Assert.AreEqual(10, gameManager.Score);
+            Assert.IsTrue(gameManager.IsClutchModeActive);
+
+            // Final block destroyed during clutch with multiplier 10 -> 30 * 10 = 300 pts
+            gameManager.RecordBlockDestroyed(30, 1);
+            Assert.AreEqual(310, gameManager.Score);
+            Assert.IsFalse(gameManager.IsClutchModeActive);
+            Assert.AreEqual(GameState.LevelClear, gameManager.State);
+        }
+
+        [Test]
+        public void ClutchCountdown_Timeout_TriggersRailgunDischarge()
+        {
+            gameManager.RegisterLevelBlocks(2);
+            gameManager.LaunchBall();
+            gameManager.RecordBlockDestroyed(10, 1);
+
+            Assert.IsTrue(gameManager.IsClutchModeActive);
+
+            // Simulate tick past 12s timeout
+            gameManager.TickClutchMode(12.5f);
+
+            Assert.IsFalse(gameManager.IsClutchModeActive, "Clutch mode must conclude upon timeout.");
+        }
+
+        [Test]
+        public void PaddleLaserController_RailgunHyperBeam_DestroysBlocksAbovePaddle()
+        {
+            var laserCtrl = paddle.LaserController;
+            Assert.IsNotNull(laserCtrl, "Paddle must have PaddleLaserController.");
+
+            // Create a block above paddle at X=0, Y=5
+            var blockObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            blockObj.transform.position = new Vector3(0f, 5f, 0f);
+            var block = blockObj.AddComponent<Block>();
+            block.Initialize(BlockColorTier.Red, null, Color.red);
+
+            paddle.transform.position = new Vector3(0f, -6f, 0f);
+
+            laserCtrl.FireRailgunHyperBeam();
+
+            Assert.IsTrue(block.IsDestroyed, "Block within Railgun beam path must be destroyed.");
+            Object.DestroyImmediate(blockObj);
+        }
+
+        [Test]
+        public void LaserBolt_ContinuousSweep_HitsAndDestroysBlock()
+        {
+            var blockObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            blockObj.transform.position = new Vector3(0f, 2f, 0f);
+            var block = blockObj.AddComponent<Block>();
+            block.Initialize(BlockColorTier.Green, null, Color.green);
+
+            var boltObj = new GameObject("LaserBolt");
+            boltObj.transform.position = new Vector3(0f, 0f, 0f);
+            var bolt = boltObj.AddComponent<LaserBolt>();
+
+            Physics.SyncTransforms();
+
+            // Simulate tick where bolt travels past block (0 -> 4 units upward)
+            bolt.SimulateStepForTesting(0.12f);
+
+            Assert.IsTrue(block.IsDestroyed, "Laser bolt continuous raycast must hit and destroy the block.");
+
+            if (boltObj != null) Object.DestroyImmediate(boltObj);
+            if (blockObj != null) Object.DestroyImmediate(blockObj);
+        }
+
+        [Test]
+        public void PaddleLaserController_LaserPowerup_TwinBlastersFireOnInterval()
+        {
+            var laserCtrl = paddle.LaserController;
+            paddle.transform.position = new Vector3(0f, -6f, 0f);
+
+            laserCtrl.ActivateLaserBlaster(10f);
+            Assert.IsTrue(laserCtrl.IsBlasterActive);
+
+            laserCtrl.SimulateStepForTesting(0.35f);
+
+            var bolts = Object.FindObjectsByType<LaserBolt>(FindObjectsSortMode.None);
+            Assert.GreaterOrEqual(bolts.Length, 2, "Twin blaster cannons must spawn at least 2 bolts on firing interval.");
+
+            foreach (var b in bolts) Object.DestroyImmediate(b.gameObject);
+        }
+
+        [Test]
+        public void PowerupCapsule_LaserType_ActivatesBlasterOnCollection()
+        {
+            var cap = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.Laser);
+
+            gameManager.SetState(GameState.Playing);
+            Assert.IsFalse(gameManager.IsLaserActive);
+
+            bool collected = cap.TryIntercept(paddle);
+            Assert.IsTrue(collected, "Paddle must collect laser capsule.");
+            Assert.IsTrue(gameManager.IsLaserActive, "Laser powerup must become active on collection.");
+            Assert.IsTrue(paddle.LaserController.IsBlasterActive, "Paddle blasters must be activated.");
+
+            if (cap != null) Object.DestroyImmediate(cap.gameObject);
+        }
+
+        [Test]
+        public void LevelGenerator_DistributeSpecialBlocks_AllocatesLaserBlocks()
+        {
+            var genObj = new GameObject("LevelGen");
+            var gen = genObj.AddComponent<LevelGenerator>();
+
+            var map = gen.DistributeSpecialBlocks(totalBlocks: 20, mult2xCount: 1, mult3xCount: 0, mult4xCount: 0, mult5xCount: 0,
+                expanderCount: 1, bombCount: 0, glassCount: 0, heartCount: 0, shieldCount: 0, multiBallCount: 0, laserCount: 2);
+
+            int laserCount = 0;
+            foreach (var kvp in map)
+            {
+                if (kvp.Value == BlockSpecialType.Laser) laserCount++;
+            }
+
+            Assert.AreEqual(2, laserCount, "LevelGenerator must allocate exact requested number of Laser blocks.");
+            Object.DestroyImmediate(genObj);
+        }
+
+        [Test]
+        public void ArcadeUIManager_LaserAndClutchBadges_UpdatesTimerAndVisibility()
+        {
+            var uiManagerGo = new GameObject("TestArcadeUIManager");
+            var panelRenderer = uiManagerGo.AddComponent<UnityEngine.UIElements.PanelRenderer>();
+            var uiMgr = uiManagerGo.AddComponent<ArcadeUIManager>();
+
+            var uxml = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+
+            panelRenderer.visualTreeAsset = uxml;
+            var root = uxml.CloneTree();
+
+            // Reflection-based bind for unit testing
+            var bindMethod = typeof(ArcadeUIManager).GetMethod("BindElements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, root);
+            bindMethod.Invoke(uiMgr, null);
+
+            Assert.IsNotNull(uiMgr.LaserStatusBadge);
+            Assert.IsNotNull(uiMgr.ClutchStatusBadge);
+            Assert.IsNotNull(uiMgr.LaserSprite, "LaserSprite must be assigned.");
+            Assert.AreEqual("TX_Powerup_Laser", uiMgr.LaserSprite.name);
+
+            // Test Laser Badge
+            uiMgr.HandleLaserPowerupStateChanged(true, 10f);
+            Assert.IsFalse(uiMgr.LaserStatusBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual("10s", uiMgr.LaserTimerLabel.text);
+
+            uiMgr.HandleLaserPowerupTick(6.2f);
+            Assert.AreEqual("7s", uiMgr.LaserTimerLabel.text);
+
+            uiMgr.HandleLaserPowerupStateChanged(false, 0f);
+            Assert.IsTrue(uiMgr.LaserStatusBadge.ClassListContains("powerup-hidden"));
+
+            // Test Clutch Badge
+            uiMgr.HandleClutchStateChanged(true, 12f, 10);
+            Assert.IsFalse(uiMgr.ClutchStatusBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual("10X", uiMgr.ClutchMultiplierLabel.text);
+            Assert.AreEqual("12s", uiMgr.ClutchTimerLabel.text);
+
+            uiMgr.HandleClutchTick(7.3f, 8);
+            Assert.AreEqual("8X", uiMgr.ClutchMultiplierLabel.text);
+            Assert.AreEqual("8s", uiMgr.ClutchTimerLabel.text);
+
+            uiMgr.HandleClutchStateChanged(false, 0f, 1);
+            Assert.IsTrue(uiMgr.ClutchStatusBadge.ClassListContains("powerup-hidden"));
+
+            Object.DestroyImmediate(uiManagerGo);
+        }
 
         #endregion
     }

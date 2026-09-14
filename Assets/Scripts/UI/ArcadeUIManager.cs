@@ -97,6 +97,8 @@ namespace Arcade.UI
         private Label valShield;
         private SliderInt sliderMultiBall;
         private Label valMultiBall;
+        private SliderInt sliderLaser;
+        private Label valLaser;
 
         // Active Powerup Badges
         private VisualElement shieldStatusBadge;
@@ -108,6 +110,11 @@ namespace Arcade.UI
         private VisualElement multiplierStatusBadge;
         private Label multiplierValueLabel;
         private Label multiplierTimerLabel;
+        private VisualElement laserStatusBadge;
+        private Label laserTimerLabel;
+        private VisualElement clutchStatusBadge;
+        private Label clutchMultiplierLabel;
+        private Label clutchTimerLabel;
 
         private Button btnApplyLevel;
         private Button btnCloseLevelSettings;
@@ -121,6 +128,7 @@ namespace Arcade.UI
         [SerializeField] private Sprite multiBallSprite;
         [SerializeField] private Sprite paddleExpandSprite;
         [SerializeField] private Sprite multiplierSprite;
+        [SerializeField] private Sprite laserSprite;
 
         [Header("Quick Control Icons")]
         [SerializeField] private Sprite levelSettingsSprite;
@@ -152,10 +160,16 @@ namespace Arcade.UI
         public VisualElement MultiplierStatusBadge => multiplierStatusBadge;
         public Label MultiplierValueLabel => multiplierValueLabel;
         public Label MultiplierTimerLabel => multiplierTimerLabel;
+        public VisualElement LaserStatusBadge => laserStatusBadge;
+        public Label LaserTimerLabel => laserTimerLabel;
+        public VisualElement ClutchStatusBadge => clutchStatusBadge;
+        public Label ClutchMultiplierLabel => clutchMultiplierLabel;
+        public Label ClutchTimerLabel => clutchTimerLabel;
         public Sprite PaddleExpandSprite => paddleExpandSprite;
         public Sprite MultiplierSprite => multiplierSprite;
         public Sprite ShieldSprite => shieldSprite;
         public Sprite MultiBallSprite => multiBallSprite;
+        public Sprite LaserSprite => laserSprite;
         public Sprite HeartSprite => heartFillSprite;
 
         private bool wasPausedByOptions = false;
@@ -363,6 +377,8 @@ namespace Arcade.UI
                 paddleExpandSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
             if (multiplierSprite == null)
                 multiplierSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
+            if (laserSprite == null)
+                laserSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Laser.png");
 #endif
 
             shieldStatusBadge = root.Q<VisualElement>("shield-status-badge");
@@ -374,6 +390,11 @@ namespace Arcade.UI
             multiplierStatusBadge = root.Q<VisualElement>("multiplier-status-badge");
             multiplierValueLabel = root.Q<Label>("multiplier-value-label");
             multiplierTimerLabel = root.Q<Label>("multiplier-timer-label");
+            laserStatusBadge = root.Q<VisualElement>("laser-status-badge");
+            laserTimerLabel = root.Q<Label>("laser-timer-label");
+            clutchStatusBadge = root.Q<VisualElement>("clutch-status-badge");
+            clutchMultiplierLabel = root.Q<Label>("clutch-multiplier-label");
+            clutchTimerLabel = root.Q<Label>("clutch-timer-label");
 
             var iconShield = root.Q<VisualElement>("shield-status-icon");
             if (iconShield != null && shieldSprite != null)
@@ -390,6 +411,14 @@ namespace Arcade.UI
             var iconMultiplier = root.Q<VisualElement>("multiplier-status-icon");
             if (iconMultiplier != null && multiplierSprite != null)
                 iconMultiplier.style.backgroundImage = new StyleBackground(multiplierSprite);
+
+            var iconLaser = root.Q<VisualElement>("laser-status-icon");
+            if (iconLaser != null && laserSprite != null)
+                iconLaser.style.backgroundImage = new StyleBackground(laserSprite);
+
+            var iconClutch = root.Q<VisualElement>("clutch-status-icon");
+            if (iconClutch != null && laserSprite != null)
+                iconClutch.style.backgroundImage = new StyleBackground(laserSprite);
 
             btnQuickLevels = root.Q<Button>("btn-quick-levels");
             btnQuickMute = root.Q<Button>("btn-quick-mute");
@@ -469,6 +498,8 @@ namespace Arcade.UI
             valShield = root.Q<Label>("val-shield");
             sliderMultiBall = root.Q<SliderInt>("slider-multiball");
             valMultiBall = root.Q<Label>("val-multiball");
+            sliderLaser = root.Q<SliderInt>("slider-laser");
+            valLaser = root.Q<Label>("val-laser");
 
             btnApplyLevel = root.Q<Button>("btn-apply-level");
             btnCloseLevelSettings = root.Q<Button>("btn-close-level-settings");
@@ -639,6 +670,15 @@ namespace Arcade.UI
                 });
             }
 
+            if (sliderLaser != null)
+            {
+                sliderLaser.RegisterValueChangedCallback(evt =>
+                {
+                    if (activeEditableConfig != null) activeEditableConfig.SetLaserCount(evt.newValue);
+                    if (valLaser != null) valLaser.text = evt.newValue.ToString();
+                });
+            }
+
             if (btnApplyLevel != null) btnApplyLevel.clicked += ApplyLevelSettingsAndRestart;
             if (btnCloseLevelSettings != null) btnCloseLevelSettings.clicked += HideLevelSettings;
         }
@@ -659,6 +699,10 @@ namespace Arcade.UI
                 ArcadeGameManager.Instance.OnPaddleExpandTick += HandlePaddleExpandTick;
                 ArcadeGameManager.Instance.OnScoreMultiplierStateChanged += HandleScoreMultiplierStateChanged;
                 ArcadeGameManager.Instance.OnScoreMultiplierTick += HandleScoreMultiplierTick;
+                ArcadeGameManager.Instance.OnLaserPowerupStateChanged += HandleLaserPowerupStateChanged;
+                ArcadeGameManager.Instance.OnLaserPowerupTick += HandleLaserPowerupTick;
+                ArcadeGameManager.Instance.OnClutchStateChanged += HandleClutchStateChanged;
+                ArcadeGameManager.Instance.OnClutchTick += HandleClutchTick;
             }
         }
 
@@ -676,6 +720,10 @@ namespace Arcade.UI
                 ArcadeGameManager.Instance.OnPaddleExpandTick -= HandlePaddleExpandTick;
                 ArcadeGameManager.Instance.OnScoreMultiplierStateChanged -= HandleScoreMultiplierStateChanged;
                 ArcadeGameManager.Instance.OnScoreMultiplierTick -= HandleScoreMultiplierTick;
+                ArcadeGameManager.Instance.OnLaserPowerupStateChanged -= HandleLaserPowerupStateChanged;
+                ArcadeGameManager.Instance.OnLaserPowerupTick -= HandleLaserPowerupTick;
+                ArcadeGameManager.Instance.OnClutchStateChanged -= HandleClutchStateChanged;
+                ArcadeGameManager.Instance.OnClutchTick -= HandleClutchTick;
             }
         }
 
@@ -690,6 +738,8 @@ namespace Arcade.UI
                 HandleActiveBallCountChanged(ArcadeGameManager.Instance.ActiveBallCount);
                 HandlePaddleExpandStateChanged(ArcadeGameManager.Instance.IsPaddleExpanded, ArcadeGameManager.Instance.PaddleExpandTimeRemaining);
                 HandleScoreMultiplierStateChanged(ArcadeGameManager.Instance.ActiveScoreMultiplier > 1, ArcadeGameManager.Instance.ActiveScoreMultiplier, ArcadeGameManager.Instance.MultiplierTimeRemaining);
+                HandleLaserPowerupStateChanged(ArcadeGameManager.Instance.IsLaserActive, ArcadeGameManager.Instance.LaserTimeRemaining);
+                HandleClutchStateChanged(ArcadeGameManager.Instance.IsClutchModeActive, ArcadeGameManager.Instance.ClutchTimeRemaining, ArcadeGameManager.Instance.ClutchMultiplier);
             }
 
             if (ArcadeAudioManager.Instance != null)
@@ -1001,6 +1051,53 @@ namespace Arcade.UI
         {
             if (multiplierTimerLabel != null)
                 multiplierTimerLabel.text = $"{Mathf.CeilToInt(timeRemaining)}s";
+        }
+
+        public void HandleLaserPowerupStateChanged(bool active, float remaining)
+        {
+            if (laserStatusBadge == null) return;
+            if (active)
+            {
+                laserStatusBadge.RemoveFromClassList("powerup-hidden");
+                laserStatusBadge.style.display = DisplayStyle.Flex;
+                if (laserTimerLabel != null) laserTimerLabel.text = $"{Mathf.CeilToInt(remaining)}s";
+            }
+            else
+            {
+                laserStatusBadge.AddToClassList("powerup-hidden");
+                laserStatusBadge.style.display = DisplayStyle.None;
+            }
+        }
+
+        public void HandleLaserPowerupTick(float timeRemaining)
+        {
+            if (laserTimerLabel != null)
+                laserTimerLabel.text = $"{Mathf.CeilToInt(timeRemaining)}s";
+        }
+
+        public void HandleClutchStateChanged(bool active, float remaining, int multiplier)
+        {
+            if (clutchStatusBadge == null) return;
+            if (active)
+            {
+                clutchStatusBadge.RemoveFromClassList("powerup-hidden");
+                clutchStatusBadge.style.display = DisplayStyle.Flex;
+                if (clutchMultiplierLabel != null) clutchMultiplierLabel.text = $"{multiplier}X";
+                if (clutchTimerLabel != null) clutchTimerLabel.text = $"{Mathf.CeilToInt(remaining)}s";
+            }
+            else
+            {
+                clutchStatusBadge.AddToClassList("powerup-hidden");
+                clutchStatusBadge.style.display = DisplayStyle.None;
+            }
+        }
+
+        public void HandleClutchTick(float timeRemaining, int multiplier)
+        {
+            if (clutchMultiplierLabel != null)
+                clutchMultiplierLabel.text = $"{multiplier}X";
+            if (clutchTimerLabel != null)
+                clutchTimerLabel.text = $"{Mathf.CeilToInt(timeRemaining)}s";
         }
 
         private void HandleQuickMuteClicked()
@@ -1370,6 +1467,9 @@ namespace Arcade.UI
 
             if (sliderMultiBall != null) sliderMultiBall.value = activeEditableConfig.MultiBallCount;
             if (valMultiBall != null) valMultiBall.text = activeEditableConfig.MultiBallCount.ToString();
+
+            if (sliderLaser != null) sliderLaser.value = activeEditableConfig.LaserCount;
+            if (valLaser != null) valLaser.text = activeEditableConfig.LaserCount.ToString();
         }
 
         private void ApplyLevelSettingsAndRestart()

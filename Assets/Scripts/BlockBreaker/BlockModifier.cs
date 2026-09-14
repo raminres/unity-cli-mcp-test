@@ -14,11 +14,12 @@ namespace Arcade.BlockBreaker
         Shield = 7,
         MultiBall = 8,
         ScoreMultiplier4x = 9,
-        ScoreMultiplier5x = 10
+        ScoreMultiplier5x = 10,
+        Laser = 11
     }
 
     /// <summary>
-    /// Metadata helper for special modifier blocks (Multipliers, Expanders, Bombs, Glass, Extra Hearts, Shield, and MultiBall).
+    /// Metadata helper for special modifier blocks (Multipliers, Expanders, Bombs, Glass, Extra Hearts, Shield, MultiBall, and Laser).
     /// </summary>
     public static class BlockModifierExtensions
     {
@@ -30,6 +31,7 @@ namespace Arcade.BlockBreaker
         public const float DEFAULT_SHIELD_DURATION = 10f;
         public const float DEFAULT_MULTIPLIER_DURATION = 10f;
         public const float DEFAULT_PADDLE_EXPAND_DURATION = 10f;
+        public const float DEFAULT_LASER_DURATION = 10f;
 
         public static string GetBadgeText(this BlockSpecialType type) => type switch
         {
@@ -53,6 +55,7 @@ namespace Arcade.BlockBreaker
             BlockSpecialType.ExtraHeart => new Color(1.0f, 0.23f, 0.34f),        // Radiant Neon Pink/Red (#ff3b56)
             BlockSpecialType.Shield => new Color(0.0f, 0.95f, 1.0f),             // Electric Cyan / Shield Glow (#00f2fe)
             BlockSpecialType.MultiBall => new Color(0.88f, 0.34f, 0.99f),        // Radiant Neon Purple/Magenta (#e056fd)
+            BlockSpecialType.Laser => new Color(1.0f, 0.16f, 0.28f),             // High-Luminance Neon Ruby (#ff2a47)
             _ => Color.white
         };
     }

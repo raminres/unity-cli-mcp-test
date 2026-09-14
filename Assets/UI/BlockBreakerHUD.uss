@@ -187,6 +187,16 @@
     box-shadow: 0 0 14px rgba(213, 0, 249, 0.9);
 }
 
+.laser-badge {
+    border-color: #ff2a47;
+    box-shadow: 0 0 14px rgba(255, 42, 71, 0.85);
+}
+
+.clutch-badge {
+    border-color: #ff007f;
+    box-shadow: 0 0 16px rgba(255, 0, 127, 0.9);
+}
+
 .powerup-status-icon {
     width: 30px;
     height: 30px;
@@ -214,6 +224,11 @@
     -unity-background-image-tint-color: #ffd700;
 }
 
+.icon-laser {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Laser.png?fileID=6929069846237195201&guid=0cc75b28432e5eb4eb69983ca4601ab8&type=3#TX_Powerup_Laser_0");
+    -unity-background-image-tint-color: #ff2a47;
+}
+
 .powerup-timer-label {
     font-size: 18px;
     -unity-font-style: bold;
@@ -225,6 +240,14 @@
     font-size: 18px;
     -unity-font-style: bold;
     margin-right: 5px;
+}
+
+.clutch-val-text {
+    font-size: 18px;
+    -unity-font-style: bold;
+    margin-right: 5px;
+    color: #ff007f;
+    text-shadow: 0 0 10px rgba(255, 0, 127, 0.9);
 }
 
 .shield-badge .powerup-timer-label {
@@ -240,6 +263,16 @@
 .paddle-badge .powerup-timer-label {
     color: #00e5ff;
     text-shadow: 0 0 8px rgba(0, 229, 255, 0.8);
+}
+
+.laser-badge .powerup-timer-label {
+    color: #ff2a47;
+    text-shadow: 0 0 8px rgba(255, 42, 71, 0.85);
+}
+
+.clutch-badge .powerup-timer-label {
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(255, 0, 127, 0.85);
 }
 
 .mult-tier-2x .multiplier-val-text {

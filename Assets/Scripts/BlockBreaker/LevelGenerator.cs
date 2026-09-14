@@ -202,8 +202,9 @@ namespace Arcade.BlockBreaker
             int heartCount = currentLevelConfig != null ? currentLevelConfig.ExtraHeartCount : 0;
             int shieldCount = currentLevelConfig != null ? currentLevelConfig.ShieldCount : 0;
             int multiBallCount = currentLevelConfig != null ? currentLevelConfig.MultiBallCount : 0;
+            int laserCount = currentLevelConfig != null ? currentLevelConfig.LaserCount : 0;
 
-            var specialMap = DistributeSpecialBlocks(totalActiveBlocks, mult2x, mult3x, mult4x, mult5x, expCount, bombCount, glassCount, heartCount, shieldCount, multiBallCount);
+            var specialMap = DistributeSpecialBlocks(totalActiveBlocks, mult2x, mult3x, mult4x, mult5x, expCount, bombCount, glassCount, heartCount, shieldCount, multiBallCount, laserCount);
 
             int blockIndex = 0;
             for (int r = 0; r < totalRows; r++)
@@ -338,7 +339,7 @@ namespace Arcade.BlockBreaker
             return DistributeSpecialBlocks(totalBlocks, mult2xCount, mult3xCount, 0, 0, expanderCount, bombCount, glassCount, heartCount, shieldCount, multiBallCount);
         }
 
-        public Dictionary<int, BlockSpecialType> DistributeSpecialBlocks(int totalBlocks, int mult2xCount, int mult3xCount, int mult4xCount, int mult5xCount, int expanderCount, int bombCount, int glassCount, int heartCount, int shieldCount, int multiBallCount)
+        public Dictionary<int, BlockSpecialType> DistributeSpecialBlocks(int totalBlocks, int mult2xCount, int mult3xCount, int mult4xCount, int mult5xCount, int expanderCount, int bombCount, int glassCount, int heartCount, int shieldCount, int multiBallCount, int laserCount = 0)
         {
             var map = new Dictionary<int, BlockSpecialType>();
             if (totalBlocks <= 0) return map;
@@ -402,6 +403,11 @@ namespace Arcade.BlockBreaker
             for (int i = 0; i < multiBallCount && cursor < availableIndices.Count; i++, cursor++)
             {
                 map[availableIndices[cursor]] = BlockSpecialType.MultiBall;
+            }
+
+            for (int i = 0; i < laserCount && cursor < availableIndices.Count; i++, cursor++)
+            {
+                map[availableIndices[cursor]] = BlockSpecialType.Laser;
             }
 
             return map;

@@ -49,7 +49,7 @@ namespace Arcade.Editor
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_03.asset", 3, "Level 3: Twin Pillars",
                 "Vertical block columns with open alleyways. Sneak the ball up the corridors for high-velocity top-row cascades, and trigger explosive Bomb bricks.",
                 BlockColorPattern.Checkerboard, LevelLayoutType.Pillars, 7, 2, 1.00f, 5.0f,
-                mult2x: 2, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 0, heart: 0, shield: 0, multiBall: 0);
+                mult2x: 2, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 0, heart: 0, shield: 0, multiBall: 0, laser: 1);
 
             // Level 4: Kinetic Shield (Shield)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_04.asset", 4, "Level 4: Kinetic Shield",
@@ -67,7 +67,7 @@ namespace Arcade.Editor
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_06.asset", 6, "Level 6: Royal Crown",
                 "A triple-peaked royal crown with blazing 3X score multipliers and reinforced glass towers. Precision rebounds at high angles are rewarded.",
                 BlockColorPattern.InvertedTiered, LevelLayoutType.Crown, 9, 2, 1.12f, 5.0f,
-                mult2x: 1, mult3x: 2, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 1);
+                mult2x: 1, mult3x: 2, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 1, laser: 1);
 
             // Level 7: Neon Heart (Heart)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_07.asset", 7, "Level 7: Neon Heart",
@@ -79,7 +79,7 @@ namespace Arcade.Editor
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_08.asset", 8, "Level 8: Space Invader",
                 "Retro 8-bit space invader alien silhouette! Battle past explosive perimeter bombs and collect 3X multipliers while juggling multi-balls.",
                 BlockColorPattern.Randomized, LevelLayoutType.Invader, 9, 2, 1.20f, 5.0f,
-                mult2x: 2, mult3x: 2, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 2, heart: 1, shield: 1, multiBall: 1);
+                mult2x: 2, mult3x: 2, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 2, heart: 1, shield: 1, multiBall: 1, laser: 1);
 
             // Level 9: Crossfire (Cross)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_09.asset", 9, "Level 9: Crossfire",
@@ -97,7 +97,7 @@ namespace Arcade.Editor
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_11.asset", 11, "Level 11: Chevron Strike",
                 "Aggressive forward arrowhead formation. Deflect angled strikes cleanly and ride high-velocity multi-ball surges.",
                 BlockColorPattern.Checkerboard, LevelLayoutType.Chevron, 9, 2, 1.32f, 5.0f,
-                mult2x: 2, mult3x: 2, mult4x: 1, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 2);
+                mult2x: 2, mult3x: 2, mult4x: 1, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 2, laser: 1);
 
             // Level 12: Castle Bastion (Castle)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_12.asset", 12, "Level 12: Castle Bastion",
@@ -115,7 +115,7 @@ namespace Arcade.Editor
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_14.asset", 14, "Level 14: Striped Vault",
                 "Horizontal clearance tiers separating fortified block bands. Precision bank shots between layers rack up massive scores with 5X multipliers.",
                 BlockColorPattern.InvertedTiered, LevelLayoutType.Stripes, 10, 2, 1.44f, 5.0f,
-                mult2x: 2, mult3x: 2, mult4x: 2, mult5x: 2, expanders: 2, bombs: 3, glass: 4, heart: 1, shield: 2, multiBall: 2);
+                mult2x: 2, mult3x: 2, mult4x: 2, mult5x: 2, expanders: 2, bombs: 3, glass: 4, heart: 1, shield: 2, multiBall: 2, laser: 1);
 
             // Level 15: Chaos Labyrinth (Custom)
             string lvl15Custom =
@@ -129,7 +129,7 @@ namespace Arcade.Editor
                 "The ultimate 15-level grand climax! A master custom-authored ASCII labyrinth with tactical pockets, top velocity, and the entire powerup arsenal.",
                 BlockColorPattern.Randomized, LevelLayoutType.Custom, 10, 2, 1.48f, 5.0f,
                 mult2x: 2, mult3x: 2, mult4x: 2, mult5x: 2, expanders: 2, bombs: 4, glass: 4, heart: 2, shield: 2, multiBall: 2,
-                customLayout: lvl15Custom);
+                laser: 2, customLayout: lvl15Custom);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -138,7 +138,7 @@ namespace Arcade.Editor
         private static void CreateOrConfigureLevel(string path, int levelNumber, string name, string desc,
             BlockColorPattern pattern, LevelLayoutType layoutType, int cols, int rowsPerTier, float speed, float paddleWidth,
             int mult2x, int mult3x, int mult4x, int mult5x, int expanders, int bombs, int glass, int heart, int shield, int multiBall,
-            string customLayout = null, float shieldDuration = 10f)
+            int laser = 0, string customLayout = null, float shieldDuration = 10f)
         {
             var config = AssetDatabase.LoadAssetAtPath<LevelConfiguration>(path);
             if (config == null)
@@ -172,6 +172,8 @@ namespace Arcade.Editor
             so.FindProperty("extraHeartCount").intValue = heart;
             so.FindProperty("shieldCount").intValue = shield;
             so.FindProperty("multiBallCount").intValue = multiBall;
+            var laserProp = so.FindProperty("laserCount");
+            if (laserProp != null) laserProp.intValue = laser;
             so.FindProperty("shieldDuration").floatValue = shieldDuration;
             so.ApplyModifiedProperties();
             EditorUtility.SetDirty(config);

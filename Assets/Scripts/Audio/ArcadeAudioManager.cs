@@ -27,6 +27,7 @@ namespace Arcade.Audio
         [SerializeField] private AudioClip clipBombExplosion;   // AU_Bomb_Explosioon.mp3 / AU_Bomb_Explosion.mp3 (bomb detonation)
         [SerializeField] private AudioClip clipShieldDeflect;   // Shield protection intercept sound
         [SerializeField] private AudioClip clipMultiBall;       // Multi-ball spawn sound
+        [SerializeField] private AudioClip clipLaserShoot;      // AU_Powerup_Laser.mp3 (paddle laser blast / railgun discharge)
 
         [Header("Legacy / Fallback Clip Overrides")]
         [SerializeField] private AudioClip clipPaddleBounce;
@@ -51,6 +52,8 @@ namespace Arcade.Audio
         public AudioClip ClipLifeLost => clipLifeLost;
         public AudioClip ClipShieldDeflect => clipShieldDeflect;
         public AudioClip ClipMultiBall => clipMultiBall;
+        public AudioClip ClipLaserShoot => clipLaserShoot;
+        public void SetClipLaserShootForTesting(AudioClip clip) => clipLaserShoot = clip;
 
         public float Volume
         {
@@ -131,6 +134,11 @@ namespace Arcade.Audio
                 clipShieldDeflect = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Powerup_Shield.mp3");
                 if (clipShieldDeflect == null) clipShieldDeflect = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Powerup_Shield.wav");
                 if (clipShieldDeflect == null) clipShieldDeflect = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Shield_Deflect.mp3");
+            }
+            if (clipLaserShoot == null)
+            {
+                clipLaserShoot = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Powerup_Laser.mp3");
+                if (clipLaserShoot == null) clipLaserShoot = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/AU_Powerup_Laser.wav");
             }
 #endif
 
@@ -226,6 +234,58 @@ namespace Arcade.Audio
             {
                 PlaySound(clipBreak != null ? clipBreak : clipBlockHitRed, 0.65f);
             }
+        }
+
+        private AudioClip synthLaserClip;
+
+        /// <summary>
+        /// Plays laser blast sound (AU_Powerup_Laser.mp3) when firing paddle laser or railgun beam.
+        /// </summary>
+        public void PlayLaserShoot()
+        {
+            if (clipLaserShoot != null)
+            {
+                PlaySound(clipLaserShoot, 1.0f);
+            }
+            else
+            {
+                if (synthLaserClip == null)
+                {
+                    synthLaserClip = SynthesizeLaserChirp();
+                }
+                if (synthLaserClip != null)
+                {
+                    PlaySound(synthLaserClip, 0.9f);
+                }
+                else
+                {
+                    PlayPop();
+                }
+            }
+        }
+
+        private AudioClip SynthesizeLaserChirp()
+        {
+            int sampleRate = 44100;
+            float duration = 0.12f;
+            int sampleCount = Mathf.RoundToInt(sampleRate * duration);
+            float[] samples = new float[sampleCount];
+            float startFreq = 1600f;
+            float endFreq = 280f;
+            float phase = 0f;
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float t = (float)i / sampleCount;
+                float currentFreq = Mathf.Lerp(startFreq, endFreq, t * t);
+                phase += 2f * Mathf.PI * currentFreq / sampleRate;
+                float envelope = 1f - t;
+                samples[i] = Mathf.Sin(phase) * envelope * 0.45f;
+            }
+
+            var clip = AudioClip.Create("SynthLaser", sampleCount, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
         }
 
         /// <summary>

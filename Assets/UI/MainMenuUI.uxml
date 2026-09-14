@@ -137,7 +137,7 @@
                     </ui:VisualElement>
                     <ui:VisualElement class="guide-card">
                         <ui:Label text="4. POWERUPS &amp; HAZARDS" class="guide-heading" />
-                        <ui:Label text="• Expander: Widens paddle by +10%.&#10;• Multipliers: 2X and 3X bonus points per block.&#10;• Shield: Kinetic barrier protects for 10s.&#10;• Multi-Ball: 3 balls! Extra balls don't lose lives.&#10;• Bombs: Radial detonation explodes neighbors!&#10;• Extra Heart: Grants +1 life (up to 5 max)." class="guide-text" />
+                        <ui:Label text="• Expander: Widens paddle by +10%.&#10;• Multipliers: 2X, 3X, 4X, 5X bonus points per block.&#10;• Shield: Kinetic barrier protects for 10s.&#10;• Multi-Ball: 3 balls! Extra balls don't lose lives.&#10;• Laser Blaster: Twin cannons pierce brick rows!&#10;• Bombs: Radial detonation explodes neighbors!&#10;• Extra Heart: Grants +1 life (up to 5 max).&#10;• Clutch Countdown: When 1 brick remains, 12s timer yields up to 10X score or Railgun vaporizes it!" class="guide-text" />
                     </ui:VisualElement>
                 </ui:ScrollView>
                 <ui:Button name="btn-close-how-to-play" text="BACK" class="arcade-button primary-btn modal-close-btn" />

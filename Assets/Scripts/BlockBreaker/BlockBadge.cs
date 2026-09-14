@@ -79,11 +79,17 @@ namespace Arcade.BlockBreaker
                 icon.RemoveFromClassList("badge-icon-heart-plus");
                 icon.RemoveFromClassList("badge-icon-shield");
                 icon.RemoveFromClassList("badge-icon-multiball");
+                icon.RemoveFromClassList("badge-icon-laser");
 
                 if (specialType == BlockSpecialType.PaddleExpander)
                 {
                     icon.style.display = DisplayStyle.Flex;
                     icon.AddToClassList("badge-icon-expander");
+                }
+                else if (specialType == BlockSpecialType.Laser)
+                {
+                    icon.style.display = DisplayStyle.Flex;
+                    icon.AddToClassList("badge-icon-laser");
                 }
                 else if (specialType == BlockSpecialType.Bomb)
                 {
@@ -187,6 +193,7 @@ namespace Arcade.BlockBreaker
                 plate.RemoveFromClassList("badge-plate-heart-plus");
                 plate.RemoveFromClassList("badge-plate-shield");
                 plate.RemoveFromClassList("badge-plate-multiball");
+                plate.RemoveFromClassList("badge-plate-laser");
 
                 if (specialType == BlockSpecialType.ScoreMultiplier2x)
                     plate.AddToClassList("badge-plate-x2");
@@ -206,6 +213,8 @@ namespace Arcade.BlockBreaker
                     plate.AddToClassList("badge-plate-shield");
                 else if (specialType == BlockSpecialType.MultiBall)
                     plate.AddToClassList("badge-plate-multiball");
+                else if (specialType == BlockSpecialType.Laser)
+                    plate.AddToClassList("badge-plate-laser");
             }
         }
     }

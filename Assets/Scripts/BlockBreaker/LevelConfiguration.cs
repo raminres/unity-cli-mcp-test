@@ -101,6 +101,12 @@ namespace Arcade.BlockBreaker
         [Tooltip("Duration of shield protection in seconds.")]
         [Range(5f, 30f)] [SerializeField] private float shieldDuration = 10f;
 
+        [Tooltip("Number of random laser blaster powerup blocks (fires twin penetrating bolts from paddle).")]
+        [Range(0, 4)] [SerializeField] private int laserCount = 0;
+
+        [Tooltip("Duration of laser blaster powerup in seconds.")]
+        [Range(5f, 25f)] [SerializeField] private float laserDuration = 10f;
+
         // Cached custom layout parsed lines
         private string[] cachedCustomLines;
         private string cachedCustomRaw;
@@ -133,6 +139,8 @@ namespace Arcade.BlockBreaker
         public int ShieldCount => shieldCount;
         public int MultiBallCount => multiBallCount;
         public float ShieldDuration => shieldDuration;
+        public int LaserCount => laserCount;
+        public float LaserDuration => laserDuration;
 
         /// <summary>
         /// Total count of active, filled blocks that will be generated for this level.
@@ -435,6 +443,8 @@ namespace Arcade.BlockBreaker
             clone.shieldCount = shieldCount;
             clone.multiBallCount = multiBallCount;
             clone.shieldDuration = shieldDuration;
+            clone.laserCount = laserCount;
+            clone.laserDuration = laserDuration;
             return clone;
         }
 
@@ -466,6 +476,8 @@ namespace Arcade.BlockBreaker
         public void SetShieldCount(int val) => shieldCount = Mathf.Clamp(val, 0, 4);
         public void SetMultiBallCount(int val) => multiBallCount = Mathf.Clamp(val, 0, 4);
         public void SetShieldDuration(float val) => shieldDuration = Mathf.Clamp(val, 5f, 30f);
+        public void SetLaserCount(int val) => laserCount = Mathf.Clamp(val, 0, 4);
+        public void SetLaserDuration(float val) => laserDuration = Mathf.Clamp(val, 5f, 25f);
         public void SetInitialPaddleWidth(float val) => initialPaddleWidth = Mathf.Clamp(val, 3.0f, 8.0f);
     }
 }
