@@ -50,6 +50,13 @@
     align-items: center;
     border-color: rgba(33, 212, 253, 0.3);
     box-shadow: 0 0 12px rgba(33, 212, 253, 0.18);
+    transition-property: scale;
+    transition-duration: 0.10s;
+    transition-timing-function: ease-out-back;
+}
+
+.score-pop {
+    scale: 1.15 1.15;
 }
 
 .score-main {
@@ -992,6 +999,49 @@
 .delta-visible {
     opacity: 1;
     translate: 0 -4px;
+}
+
+/* Flying Score Label Animation */
+.flying-score {
+    position: absolute;
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.9);
+    padding: 3px 10px;
+    border-radius: 12px;
+    background-color: rgba(14, 18, 30, 0.85);
+    border-width: 1px;
+    border-color: rgba(255, 215, 0, 0.6);
+    -unity-text-align: middle-center;
+    pointer-events: none;
+    letter-spacing: 0.5px;
+}
+
+.flying-score-normal {
+    color: #ffd700;
+    border-color: rgba(255, 215, 0, 0.65);
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.9);
+}
+
+.flying-score-combo {
+    color: #00f2fe;
+    border-color: rgba(0, 242, 254, 0.75);
+    text-shadow: 0 0 12px rgba(0, 242, 254, 0.95);
+}
+
+.flying-score-bomb {
+    color: #ff8400;
+    border-color: rgba(255, 132, 0, 0.85);
+    text-shadow: 0 0 14px rgba(255, 132, 0, 1);
+}
+
+.flying-score-clutch {
+    color: #ff2a6d;
+    border-color: rgba(255, 42, 109, 0.9);
+    text-shadow: 0 0 14px rgba(255, 42, 109, 1);
 }
 
 /* Combo Badge */

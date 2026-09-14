@@ -4049,6 +4049,43 @@ namespace Arcade.Tests
             Object.DestroyImmediate(paddleGo);
         }
 
+        [Test]
+        public void PaddleLaserController_FireRailgunHyperBeam_HasExtended5SecondDuration()
+        {
+            var paddleGo = new GameObject("Paddle_Test_Extended");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+            var laserCtrl = paddle.LaserController;
+
+            laserCtrl.FireRailgunHyperBeam();
+
+            Assert.IsTrue(laserCtrl.IsHyperBeamActive, "Hyperbeam must be active on fire.");
+            Assert.AreEqual(5.0f, laserCtrl.HyperBeamDuration, 0.01f, "Hyperbeam default duration must be 5.0s.");
+            Assert.AreEqual(3.2f, laserCtrl.BeamWidth, 0.01f, "Hyperbeam aperture width must be 3.2f.");
+
+            // Simulate 2.5 seconds (previously timed out at 1.2s-1.5s)
+            laserCtrl.SimulateStepForTesting(2.5f);
+            Assert.IsTrue(laserCtrl.IsHyperBeamActive, "Hyperbeam must still be active after 2.5s.");
+            Assert.Greater(laserCtrl.HyperBeamTimeRemaining, 0.5f, "Must have remaining duration.");
+
+            // Simulate remaining 2.6 seconds (total 5.1s)
+            laserCtrl.SimulateStepForTesting(2.6f);
+            Assert.IsFalse(laserCtrl.IsHyperBeamActive, "Hyperbeam should deactivate after 5.0s expires.");
+
+            Object.DestroyImmediate(paddleGo);
+        }
+
+        [Test]
+        public void ArcadeUIManager_PulseScorePod_ExecutesGracefully()
+        {
+            var uiGo = new GameObject("UI_Test");
+            var uiMgr = uiGo.AddComponent<ArcadeUIManager>();
+            ArcadeUIManager.SetInstanceForTesting(uiMgr);
+
+            Assert.DoesNotThrow(() => uiMgr.PulseScorePod(), "PulseScorePod should gracefully execute without errors.");
+
+            Object.DestroyImmediate(uiGo);
+        }
+
         #endregion
     }
 }

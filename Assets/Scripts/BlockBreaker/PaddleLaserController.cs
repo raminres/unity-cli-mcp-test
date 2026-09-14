@@ -16,9 +16,9 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float mountSpacingRatio = 0.38f; // Offset fraction of paddle width
 
         [Header("Railgun Hyper-Beam Settings")]
-        [SerializeField] private float beamWidth = 2.4f;
+        [SerializeField] private float beamWidth = 3.2f;
         [SerializeField] private float beamHeight = 31f;
-        [SerializeField] private float hyperBeamDuration = 1.2f;
+        [SerializeField] private float hyperBeamDuration = 5.0f;
 
         private PaddleController paddle;
         private bool isBlasterActive = false;
@@ -33,6 +33,9 @@ namespace Arcade.BlockBreaker
         public bool IsBlasterActive => isBlasterActive;
         public float BlasterTimeRemaining => Mathf.Max(0f, blasterTimer);
         public bool IsHyperBeamActive => isHyperBeamActive;
+        public float HyperBeamTimeRemaining => Mathf.Max(0f, hyperBeamTimer);
+        public float BeamWidth => beamWidth;
+        public float HyperBeamDuration => hyperBeamDuration;
 
         private void Awake()
         {
@@ -102,11 +105,12 @@ namespace Arcade.BlockBreaker
             DeactivateHyperBeam();
         }
 
-        public void FireRailgunHyperBeam(float duration = 1.2f)
+        public void FireRailgunHyperBeam(float duration = 5.0f)
         {
             isHyperBeamActive = true;
             hyperBeamTimer = duration > 0f ? duration : hyperBeamDuration;
             EnsureHyperBeamObject();
+            UpdateHyperBeamPosition();
             if (hyperBeamObject != null)
             {
                 hyperBeamObject.SetActive(true);
@@ -213,8 +217,10 @@ namespace Arcade.BlockBreaker
             if (hyperBeamObject == null) return;
             // Center the beam vertically from paddle top deck (Y = -6) up to ceiling (Y = 24.5)
             float centerY = (beamHeight * 0.5f) + 0.4f;
+            float lossyX = transform.lossyScale.x > 0.001f ? transform.lossyScale.x : 1f;
+            float lossyY = transform.lossyScale.y > 0.001f ? transform.lossyScale.y : 1f;
             hyperBeamObject.transform.localPosition = new Vector3(0f, centerY, 0f);
-            hyperBeamObject.transform.localScale = new Vector3(beamWidth, beamHeight, 1.2f);
+            hyperBeamObject.transform.localScale = new Vector3(beamWidth / lossyX, beamHeight / lossyY, 1.2f);
         }
 
         private void PerformHyperBeamSlice()
@@ -288,6 +294,19 @@ namespace Arcade.BlockBreaker
                     {
                         FireTwinBlasters();
                         nextFireTime = fireRateInterval;
+                    }
+                }
+            }
+
+            if (isHyperBeamActive)
+            {
+                hyperBeamTimer -= dt;
+                if (hyperBeamTimer <= 0f)
+                {
+                    isHyperBeamActive = false;
+                    if (hyperBeamObject != null)
+                    {
+                        hyperBeamObject.SetActive(false);
                     }
                 }
             }

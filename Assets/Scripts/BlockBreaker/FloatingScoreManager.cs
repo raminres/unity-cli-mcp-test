@@ -125,8 +125,7 @@ namespace Arcade.BlockBreaker
 
         public void HandleBlockPointsAwarded(Vector3 worldPos, int points, int comboMult, string tag)
         {
-            if (points <= 0) return;
-            SpawnScorePopup(worldPos, points, comboMult, tag);
+            // Primary flying score label animation is handled directly in UI Toolkit by ArcadeUIManager.AnimateFlyingScore.
         }
 
         public void SpawnScorePopup(Vector3 worldPos, int points, int comboMult, string tag)

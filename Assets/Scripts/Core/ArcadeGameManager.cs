@@ -440,7 +440,7 @@ namespace Arcade.Core
             var paddle = FindAnyObjectByType<PaddleController>();
             if (paddle != null && paddle.LaserController != null)
             {
-                paddle.LaserController.FireRailgunHyperBeam(1.5f);
+                paddle.LaserController.FireRailgunHyperBeam(5.0f);
             }
         }
 

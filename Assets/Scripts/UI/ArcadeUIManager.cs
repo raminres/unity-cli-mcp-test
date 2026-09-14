@@ -19,6 +19,7 @@ namespace Arcade.UI
 
         // Top bar elements
         private Label scoreLabel;
+        private VisualElement scoreContainer;
         private Label highscoreLabel;
         private VisualElement[] lifePips;
         private Button btnQuickLevels;
@@ -56,6 +57,7 @@ namespace Arcade.UI
         private VisualElement comboStatusBadge;
         private Label comboLabel;
         private Coroutine scoreDeltaCoroutine;
+        private Coroutine scorePulseCoroutine;
         private Coroutine scorecardStarsCoroutine;
 
         // Scorecard Modal Elements
@@ -351,11 +353,17 @@ namespace Arcade.UI
                 StopCoroutine(scoreDeltaCoroutine);
                 scoreDeltaCoroutine = null;
             }
+            if (scorePulseCoroutine != null)
+            {
+                StopCoroutine(scorePulseCoroutine);
+                scorePulseCoroutine = null;
+            }
             if (scorecardStarsCoroutine != null)
             {
                 StopCoroutine(scorecardStarsCoroutine);
                 scorecardStarsCoroutine = null;
             }
+            scoreContainer = null;
 
             if (btnRetry != null) btnRetry.clicked -= HandleRestartClicked;
             if (btnOverMenu != null) btnOverMenu.clicked -= HandleMenuClicked;
@@ -377,6 +385,7 @@ namespace Arcade.UI
             if (root == null) return;
 
             scoreLabel = root.Q<Label>("score-label");
+            scoreContainer = root.Q<VisualElement>("score-container");
             highscoreLabel = root.Q<Label>("highscore-label");
             timerLabel = root.Q<Label>("timer-label");
             scoreDeltaLabel = root.Q<Label>("score-delta-label");
@@ -1208,28 +1217,152 @@ namespace Arcade.UI
 
         public void HandleBlockPointsAwarded(Vector3 worldPos, int awardedPoints, int totalMultiplier, string bonusTag)
         {
-            // Spawn world-space floating score popup
-            if (FloatingScoreManager.Instance != null)
+            if (worldPos != Vector3.zero)
             {
-                FloatingScoreManager.Instance.SpawnScorePopup(worldPos, awardedPoints, totalMultiplier, bonusTag);
+                AnimateFlyingScore(worldPos, awardedPoints, totalMultiplier, bonusTag);
+            }
+            else if (scoreDeltaLabel != null)
+            {
+                if (scoreDeltaCoroutine != null) StopCoroutine(scoreDeltaCoroutine);
+                if (gameObject.activeInHierarchy) scoreDeltaCoroutine = StartCoroutine(DoScoreDeltaAnimation(awardedPoints, totalMultiplier));
+            }
+        }
+
+        public void AnimateFlyingScore(Vector3 worldPosition, int awardedPoints, int totalMultiplier, string bonusTag)
+        {
+            if (gameObject.activeInHierarchy)
+            {
+                StartCoroutine(DoFlyingScoreAnimation(worldPosition, awardedPoints, totalMultiplier, bonusTag));
+            }
+        }
+
+        private System.Collections.IEnumerator DoFlyingScoreAnimation(Vector3 worldPos, int points, int multiplier, string bonusTag)
+        {
+            if (root == null) yield break;
+
+            Camera cam = Camera.main;
+            Vector2 startPanelPos;
+            if (cam != null)
+            {
+                Vector3 screenPt = cam.WorldToScreenPoint(worldPos);
+                startPanelPos = new Vector2(screenPt.x, Screen.height - screenPt.y);
+                if (root.panel != null)
+                {
+                    startPanelPos = RuntimePanelUtils.ScreenToPanel(root.panel, startPanelPos);
+                }
+            }
+            else
+            {
+                startPanelPos = new Vector2(root.resolvedStyle.width * 0.5f, root.resolvedStyle.height * 0.5f);
             }
 
-            // Animate HUD score delta pop
-            if (scoreDeltaLabel != null)
+            Vector2 targetPanelPos;
+            if (scoreContainer != null && scoreContainer.worldBound.width > 0)
             {
-                if (scoreDeltaCoroutine != null)
-                {
-                    StopCoroutine(scoreDeltaCoroutine);
-                }
-                if (gameObject.activeInHierarchy)
-                {
-                    scoreDeltaCoroutine = StartCoroutine(DoScoreDeltaAnimation(awardedPoints, totalMultiplier));
-                }
-                else
-                {
-                    scoreDeltaLabel.text = totalMultiplier > 1 ? $"+{awardedPoints} (x{totalMultiplier})" : $"+{awardedPoints}";
-                }
+                targetPanelPos = scoreContainer.worldBound.center;
             }
+            else if (scoreLabel != null && scoreLabel.worldBound.width > 0)
+            {
+                targetPanelPos = scoreLabel.worldBound.center;
+            }
+            else
+            {
+                targetPanelPos = new Vector2(root.resolvedStyle.width * 0.5f, 35f);
+            }
+
+            Label flyingLabel = new Label();
+            flyingLabel.AddToClassList("flying-score");
+
+            // Format label text and apply visual hierarchy classes
+            if (!string.IsNullOrEmpty(bonusTag) && (bonusTag.Contains("BOMB") || bonusTag.Contains("CLUTCH")))
+            {
+                flyingLabel.text = $"+{points} {bonusTag}";
+                if (bonusTag.Contains("CLUTCH"))
+                    flyingLabel.AddToClassList("flying-score-clutch");
+                else
+                    flyingLabel.AddToClassList("flying-score-bomb");
+            }
+            else if (multiplier > 1)
+            {
+                flyingLabel.text = $"+{points} x{multiplier}";
+                flyingLabel.AddToClassList("flying-score-combo");
+            }
+            else
+            {
+                flyingLabel.text = $"+{points}";
+                flyingLabel.AddToClassList("flying-score-normal");
+            }
+
+            flyingLabel.pickingMode = PickingMode.Ignore;
+            flyingLabel.style.left = startPanelPos.x - 30f;
+            flyingLabel.style.top = startPanelPos.y - 12f;
+            root.Add(flyingLabel);
+
+            // Give a slight arc variance so multiple exploding blocks (e.g. bomb chains) fan out distinctly
+            float arcX = (startPanelPos.x - targetPanelPos.x) * 0.25f + UnityEngine.Random.Range(-20f, 20f);
+            float arcY = -40f - UnityEngine.Random.Range(10f, 30f);
+
+            float duration = 0.65f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float curvedT = Mathf.SmoothStep(0f, 1f, t);
+
+                Vector2 currentPos = Vector2.Lerp(startPanelPos, targetPanelPos, curvedT);
+                float sinT = Mathf.Sin(t * Mathf.PI);
+                currentPos.x += sinT * arcX;
+                currentPos.y += sinT * arcY;
+
+                flyingLabel.style.left = currentPos.x - 30f;
+                flyingLabel.style.top = currentPos.y - 12f;
+
+                // Scale: Pop up quickly to 1.35x, then settle and scale down to 0.85x on arrival
+                float scale = t < 0.2f
+                    ? Mathf.Lerp(0.8f, 1.35f, t / 0.2f)
+                    : Mathf.Lerp(1.35f, 0.85f, (t - 0.2f) / 0.8f);
+
+                flyingLabel.style.scale = new StyleScale(new Scale(new Vector2(scale, scale)));
+
+                // Fade out slightly near the very end
+                if (t > 0.85f)
+                {
+                    flyingLabel.style.opacity = Mathf.Lerp(1f, 0.2f, (t - 0.85f) / 0.15f);
+                }
+
+                yield return null;
+            }
+
+            if (root.Contains(flyingLabel))
+            {
+                root.Remove(flyingLabel);
+            }
+
+            // Punch score container on arrival
+            PulseScorePod();
+        }
+
+        public void PulseScorePod()
+        {
+            if (scoreContainer == null && scoreLabel == null) return;
+            if (gameObject.activeInHierarchy)
+            {
+                if (scorePulseCoroutine != null) StopCoroutine(scorePulseCoroutine);
+                scorePulseCoroutine = StartCoroutine(DoScorePulse());
+            }
+        }
+
+        private System.Collections.IEnumerator DoScorePulse()
+        {
+            var target = scoreContainer ?? (VisualElement)scoreLabel;
+            if (target == null) yield break;
+
+            target.AddToClassList("score-pop");
+            yield return new WaitForSecondsRealtime(0.10f);
+            target.RemoveFromClassList("score-pop");
+            scorePulseCoroutine = null;
         }
 
         private System.Collections.IEnumerator DoScoreDeltaAnimation(int points, int multiplier)
