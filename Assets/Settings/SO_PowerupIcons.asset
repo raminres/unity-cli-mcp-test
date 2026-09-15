@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f90d46c83e8acd47b7756758accd3ab, type: 3}
+  m_Name: SO_PowerupIcons
+  m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.PowerupIconSet
+  expanderSprite: {fileID: 21300000, guid: a78437860f4b9b54184a24a248743a7d, type: 3}
+  bombSprite: {fileID: 21300000, guid: d4796fe8b40cb6c45985a6cda1c74774, type: 3}
+  extraHeartSprite: {fileID: 21300000, guid: f74a7249ed4d1154cb7323e34df14e78, type: 3}
+  shieldSprite: {fileID: 3950488328852594513, guid: 16428cb230612564080e96abe31d3eea, type: 3}
+  multiBallSprite: {fileID: -5547497205224055285, guid: 3098a697d024c2547bdafd3878c03c4b, type: 3}
+  multiplierSprite: {fileID: 21300000, guid: 1d8d97a548b3e734687c47462e523395, type: 3}
+  laserSprite: {fileID: 21300000, guid: 820d572091b85c34bb7540e3cf8929a1, type: 3}

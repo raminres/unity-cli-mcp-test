@@ -488,8 +488,20 @@ namespace Arcade.BlockBreaker
         /// </summary>
         public static Sprite GetSpriteForType(BlockSpecialType type)
         {
+            if (LevelGenerator.Instance != null && LevelGenerator.Instance.IconSet != null)
+            {
+                var sp = LevelGenerator.Instance.IconSet.GetSprite(type);
+                if (sp != null) return sp;
+            }
+
             if (UI.ArcadeUIManager.Instance != null)
             {
+                if (UI.ArcadeUIManager.Instance.IconSet != null)
+                {
+                    var sp = UI.ArcadeUIManager.Instance.IconSet.GetSprite(type);
+                    if (sp != null) return sp;
+                }
+
                 switch (type)
                 {
                     case BlockSpecialType.PaddleExpander:

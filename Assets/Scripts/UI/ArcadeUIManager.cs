@@ -149,6 +149,7 @@ namespace Arcade.UI
         [SerializeField] private Sprite heartEmptySprite;
 
         [Header("Power-Up Sprites")]
+        [SerializeField] private PowerupIconSet iconSet;
         [SerializeField] private Sprite shieldSprite;
         [SerializeField] private Sprite multiBallSprite;
         [SerializeField] private Sprite paddleExpandSprite;
@@ -203,6 +204,8 @@ namespace Arcade.UI
         public Label ScorecardTimeBonusVal => scorecardTimeBonusVal;
         public Label ScorecardFlawlessVal => scorecardFlawlessVal;
         public Button BtnReplayLevel => btnReplayLevel;
+        public PowerupIconSet IconSet => iconSet;
+        public void SetIconSet(PowerupIconSet set) => iconSet = set;
         public Sprite PaddleExpandSprite => paddleExpandSprite;
         public Sprite MultiplierSprite => multiplierSprite;
         public Sprite ShieldSprite => shieldSprite;
@@ -433,6 +436,15 @@ namespace Arcade.UI
 #if UNITY_EDITOR
                 heartEmptySprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Heart_Empty.png");
 #endif
+            }
+
+            if (iconSet != null)
+            {
+                if (shieldSprite == null) shieldSprite = iconSet.ShieldSprite;
+                if (multiBallSprite == null) multiBallSprite = iconSet.MultiBallSprite;
+                if (paddleExpandSprite == null) paddleExpandSprite = iconSet.ExpanderSprite;
+                if (multiplierSprite == null) multiplierSprite = iconSet.MultiplierSprite;
+                if (laserSprite == null) laserSprite = iconSet.LaserSprite;
             }
 
 #if UNITY_EDITOR

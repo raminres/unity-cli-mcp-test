@@ -19,6 +19,7 @@ namespace Arcade.Editor
         [MenuItem("Tools/Arcade/Setup All Block Breaker Scenes")]
         public static void SetupAllScenes()
         {
+            GetOrCreatePowerupIconSet();
             CreateOrUpdateLevelPresets();
             BuildMainMenuScene();
             BuildGameplayScene();
@@ -553,6 +554,8 @@ namespace Arcade.Editor
             var badgeUxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/BlockBadgeUI.uxml");
             levelSo.FindProperty("badgePanelSettings").objectReferenceValue = badgeSettings;
             levelSo.FindProperty("badgeVisualTreeAsset").objectReferenceValue = badgeUxml;
+            var iconSet = GetOrCreatePowerupIconSet();
+            if (iconSet != null) levelSo.FindProperty("iconSet").objectReferenceValue = iconSet;
             levelSo.ApplyModifiedProperties();
 
             // 11. In-Game UI Panel Renderer & Manager
@@ -564,6 +567,7 @@ namespace Arcade.Editor
             if (hudPanelSettings != null) panelRenderer.panelSettings = hudPanelSettings;
             var uiMgr = uiGo.AddComponent<ArcadeUIManager>();
             var uiMgrSo = new SerializedObject(uiMgr);
+            if (iconSet != null) uiMgrSo.FindProperty("iconSet").objectReferenceValue = iconSet;
             var heartFill = LoadSpriteFromPath("Assets/UI/Icons/TX_Heart_Fill.png");
             var heartEmpty = LoadSpriteFromPath("Assets/UI/Icons/TX_Heart_Empty.png");
             if (heartFill != null) uiMgrSo.FindProperty("heartFillSprite").objectReferenceValue = heartFill;
@@ -678,6 +682,43 @@ namespace Arcade.Editor
             texturesProp.GetArrayElementAtIndex(2).objectReferenceValue = texC;
             texturesProp.GetArrayElementAtIndex(3).objectReferenceValue = texD;
             bgSo.ApplyModifiedProperties();
+        }
+
+        public static PowerupIconSet GetOrCreatePowerupIconSet()
+        {
+            string path = "Assets/Settings/SO_PowerupIcons.asset";
+            var iconSet = AssetDatabase.LoadAssetAtPath<PowerupIconSet>(path);
+            if (iconSet == null)
+            {
+                if (!Directory.Exists("Assets/Settings"))
+                {
+                    Directory.CreateDirectory("Assets/Settings");
+                }
+                iconSet = ScriptableObject.CreateInstance<PowerupIconSet>();
+                AssetDatabase.CreateAsset(iconSet, path);
+            }
+
+            var expander = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
+            var bomb = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Bomb.png");
+            var extraHeart = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Heart_Plus.png");
+            var shield = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Shield.png");
+            var multiBall = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Multi_Ball.png");
+            var multiplier = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
+            var laser = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Gun.png");
+
+            var so = new SerializedObject(iconSet);
+            if (expander != null) so.FindProperty("expanderSprite").objectReferenceValue = expander;
+            if (bomb != null) so.FindProperty("bombSprite").objectReferenceValue = bomb;
+            if (extraHeart != null) so.FindProperty("extraHeartSprite").objectReferenceValue = extraHeart;
+            if (shield != null) so.FindProperty("shieldSprite").objectReferenceValue = shield;
+            if (multiBall != null) so.FindProperty("multiBallSprite").objectReferenceValue = multiBall;
+            if (multiplier != null) so.FindProperty("multiplierSprite").objectReferenceValue = multiplier;
+            if (laser != null) so.FindProperty("laserSprite").objectReferenceValue = laser;
+            so.ApplyModifiedProperties();
+
+            EditorUtility.SetDirty(iconSet);
+            AssetDatabase.SaveAssets();
+            return iconSet;
         }
 
         private static Sprite LoadSpriteFromPath(string path)

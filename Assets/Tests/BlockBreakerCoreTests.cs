@@ -4487,6 +4487,92 @@ namespace Arcade.Tests
             Assert.IsTrue(mat.HasProperty("_MainTex") || mat.HasProperty("_BaseMap"), "Shader must support gradient texture property.");
         }
 
+        [Test]
+        public void PowerupIconSet_ResolvesAllSpecialTypes()
+        {
+            var iconSet = ScriptableObject.CreateInstance<PowerupIconSet>();
+            var spExpander = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var spBomb = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var spHeart = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var spShield = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var spMulti = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var spPoints = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var spLaser = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+
+            iconSet.SetSprites(spExpander, spBomb, spHeart, spShield, spMulti, spPoints, spLaser);
+
+            Assert.AreEqual(spExpander, iconSet.GetSprite(BlockSpecialType.PaddleExpander));
+            Assert.AreEqual(spBomb, iconSet.GetSprite(BlockSpecialType.Bomb));
+            Assert.AreEqual(spHeart, iconSet.GetSprite(BlockSpecialType.ExtraHeart));
+            Assert.AreEqual(spShield, iconSet.GetSprite(BlockSpecialType.Shield));
+            Assert.AreEqual(spMulti, iconSet.GetSprite(BlockSpecialType.MultiBall));
+            Assert.AreEqual(spPoints, iconSet.GetSprite(BlockSpecialType.ScoreMultiplier2x));
+            Assert.AreEqual(spPoints, iconSet.GetSprite(BlockSpecialType.ScoreMultiplier3x));
+            Assert.AreEqual(spPoints, iconSet.GetSprite(BlockSpecialType.ScoreMultiplier4x));
+            Assert.AreEqual(spPoints, iconSet.GetSprite(BlockSpecialType.ScoreMultiplier5x));
+            Assert.AreEqual(spLaser, iconSet.GetSprite(BlockSpecialType.Laser));
+
+            Object.DestroyImmediate(iconSet);
+            Object.DestroyImmediate(spExpander);
+            Object.DestroyImmediate(spBomb);
+            Object.DestroyImmediate(spHeart);
+            Object.DestroyImmediate(spShield);
+            Object.DestroyImmediate(spMulti);
+            Object.DestroyImmediate(spPoints);
+            Object.DestroyImmediate(spLaser);
+        }
+
+        [Test]
+        public void BlockBadge_AppliesDirectSpriteToBackgroundImage()
+        {
+            var badgeObj = new GameObject("TestBadge_SpriteDirect");
+            var badge = badgeObj.AddComponent<BlockBadge>();
+
+            var root = new UnityEngine.UIElements.VisualElement();
+            var plate = new UnityEngine.UIElements.VisualElement { name = "badge-plate" };
+            var icon = new UnityEngine.UIElements.VisualElement { name = "badge-icon" };
+            var label = new UnityEngine.UIElements.Label { name = "badge-text" };
+            plate.Add(icon);
+            plate.Add(label);
+            root.Add(plate);
+
+            var testSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            testSprite.name = "Test_Bomb_Sprite";
+
+            badge.Setup(BlockSpecialType.Bomb, null, null, testSprite);
+            badge.UpdateUI(root);
+
+            Assert.IsTrue(icon.ClassListContains("badge-icon-bomb"), "Bomb badge must have badge-icon-bomb class.");
+            Assert.IsNotNull(icon.style.backgroundImage.value.sprite, "Bomb icon must have backgroundImage sprite assigned.");
+            Assert.AreEqual(testSprite, icon.style.backgroundImage.value.sprite, "Assigned sprite must match the provided sprite.");
+
+            Object.DestroyImmediate(badgeObj);
+            Object.DestroyImmediate(testSprite);
+        }
+
+        [Test]
+        public void PowerupCapsule_ResolvesSpriteFromLevelGeneratorIconSet()
+        {
+            var lgGo = new GameObject("TestLevelGen");
+            var lg = lgGo.AddComponent<LevelGenerator>();
+            LevelGenerator.SetInstance(lg);
+
+            var iconSet = ScriptableObject.CreateInstance<PowerupIconSet>();
+            var testBomb = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            testBomb.name = "LevelGen_Bomb_Sprite";
+            iconSet.SetSprites(null, testBomb, null, null, null, null, null);
+            lg.SetIconSet(iconSet);
+
+            var resolved = PowerupCapsule.GetSpriteForType(BlockSpecialType.Bomb);
+            Assert.IsNotNull(resolved, "PowerupCapsule must resolve sprite from LevelGenerator.Instance.IconSet.");
+            Assert.AreEqual(testBomb, resolved, "Resolved sprite must match the one from LevelGenerator.IconSet.");
+
+            LevelGenerator.SetInstance(null);
+            Object.DestroyImmediate(lgGo);
+            Object.DestroyImmediate(iconSet);
+            Object.DestroyImmediate(testBomb);
+        }
+
         #endregion
     }
 }

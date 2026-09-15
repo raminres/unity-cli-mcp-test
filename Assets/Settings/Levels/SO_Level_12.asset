@@ -42,7 +42,4 @@ MonoBehaviour:
   laserDuration: 10
   parTime: 60
   timeBonusMax: 5500
-  starThresholds:
-  - 7000
-  - 14000
-  - 20000
+  starThresholds: 581b0000b0360000204e0000i

@@ -80,49 +80,42 @@
 .badge-icon-expander {
     width: 52px;
     height: 52px;
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Arrows_Outward.png?fileID=1887180088086137092&guid=a78437860f4b9b54184a24a248743a7d&type=3#TX_Powerup_Arrows_Outward_0");
     -unity-background-image-tint-color: #00f2fe;
 }
 
 .badge-icon-bomb {
     width: 52px;
     height: 52px;
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Bomb.png?fileID=3851619897988411814&guid=d4796fe8b40cb6c45985a6cda1c74774&type=3#TX_Powerup_Bomb_0");
     -unity-background-image-tint-color: #ff6b35;
 }
 
 .badge-icon-heart-plus {
     width: 52px;
     height: 52px;
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Heart_Plus.png?fileID=6457283022131091388&guid=f74a7249ed4d1154cb7323e34df14e78&type=3#TX_Powerup_Heart_Plus_0");
     -unity-background-image-tint-color: #ff3b56;
 }
 
 .badge-icon-shield {
     width: 52px;
     height: 52px;
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Shield.png?fileID=3950488328852594513&guid=16428cb230612564080e96abe31d3eea&type=3#TX_Powerup_Shield_0");
     -unity-background-image-tint-color: #00f2fe;
 }
 
 .badge-icon-multiball {
     width: 52px;
     height: 52px;
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Multi_Ball.png?fileID=-5547497205224055285&guid=3098a697d024c2547bdafd3878c03c4b&type=3#TX_Powerup_Multi_Ball_0");
     -unity-background-image-tint-color: #e056fd;
 }
 
 .badge-icon-laser {
     width: 52px;
     height: 52px;
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Gun.png?fileID=7392651483920194821&guid=820d572091b85c34bb7540e3cf8929a1&type=3#TX_Powerup_Gun_0");
     -unity-background-image-tint-color: #ff2a47;
 }
 
 .badge-icon-points {
     width: 34px;
     height: 34px;
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Extra_Points.png?fileID=4154364225601366484&guid=1d8d97a548b3e734687c47462e523395&type=3#TX_Powerup_Extra_Points_0");
 }
 
 .badge-icon-points-x2 {

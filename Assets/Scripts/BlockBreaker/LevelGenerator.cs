@@ -40,9 +40,16 @@ namespace Arcade.BlockBreaker
         [SerializeField] private PanelSettings badgePanelSettings;
         [SerializeField] private VisualTreeAsset badgeVisualTreeAsset;
 
+        [Header("Badge & Powerup Icons (Assigned in Unity UI)")]
+        [SerializeField] private PowerupIconSet iconSet;
+
         [Header("Parent Container")]
         [SerializeField] private Transform blocksContainer;
 
+        public static LevelGenerator Instance { get; private set; }
+        public static void SetInstance(LevelGenerator inst) => Instance = inst;
+        public PowerupIconSet IconSet => iconSet;
+        public void SetIconSet(PowerupIconSet set) => iconSet = set;
         public LevelConfiguration CurrentConfig => currentLevelConfig;
         public LevelConfiguration[] LevelPresets => levelPresets;
         public int TotalLevels => levelPresets != null && levelPresets.Length > 0 ? levelPresets.Length : 1;
@@ -50,7 +57,16 @@ namespace Arcade.BlockBreaker
 
         private void Awake()
         {
+            Instance = this;
             InitializeLevelConfig();
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         private void Start()
@@ -464,7 +480,8 @@ namespace Arcade.BlockBreaker
             badgeGo.transform.localScale = Vector3.one;
 
             var badge = badgeGo.AddComponent<BlockBadge>();
-            badge.Setup(special, badgePanelSettings, badgeVisualTreeAsset);
+            Sprite badgeSprite = iconSet != null ? iconSet.GetSprite(special) : null;
+            badge.Setup(special, badgePanelSettings, badgeVisualTreeAsset, badgeSprite);
         }
 
         public void EnsureCornerChamfers()
