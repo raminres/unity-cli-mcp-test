@@ -19,7 +19,8 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float beamWidth = 3.2f;
         [SerializeField] private float beamHeight = 31f;
         [SerializeField] private float hyperBeamDuration = 5.0f;
-        [SerializeField] private float beamSurgeDuration = 0.35f; // Duration for beam to extend from paddle to arena ceiling
+        [SerializeField] private float beamSurgeDuration = 0.65f; // Duration for beam to extend from paddle to arena ceiling
+        [SerializeField] private Material hyperBeamMaterialAsset;
 
         private PaddleController paddle;
         private bool isBlasterActive = false;
@@ -32,6 +33,8 @@ namespace Arcade.BlockBreaker
         private float beamSurgeProgress = 0f;
         private GameObject hyperBeamObject;
         private static Material hyperBeamMaterial;
+
+        public Material HyperBeamMaterialAsset => hyperBeamMaterialAsset;
 
         public bool IsBlasterActive => isBlasterActive;
         public float BlasterTimeRemaining => Mathf.Max(0f, blasterTimer);
@@ -235,7 +238,7 @@ namespace Arcade.BlockBreaker
                 var rend = hyperBeamObject.GetComponent<MeshRenderer>();
                 if (rend != null)
                 {
-                    rend.sharedMaterial = GetOrCreateHyperBeamMaterial();
+                    rend.sharedMaterial = GetOrCreateHyperBeamMaterial(hyperBeamMaterialAsset);
                     rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                     rend.receiveShadows = false;
                 }
@@ -274,28 +277,52 @@ namespace Arcade.BlockBreaker
             }
         }
 
-        public static Material GetOrCreateHyperBeamMaterial()
+        public static Material GetOrCreateHyperBeamMaterial(Material assignedAsset = null)
         {
-            if (hyperBeamMaterial == null)
+            if (assignedAsset != null)
             {
-                var shader = Shader.Find("Arcade/VFX_LaserHyperBeam")
-                    ?? Shader.Find("Universal Render Pipeline/Unlit")
-                    ?? Shader.Find("Arcade/VFX_BallTrail")
-                    ?? Shader.Find("Sprites/Default");
+                hyperBeamMaterial = assignedAsset;
+                return hyperBeamMaterial;
+            }
 
-                hyperBeamMaterial = new Material(shader)
-                {
-                    name = "M_Railgun_HyperBeam_URP"
-                };
+            if (hyperBeamMaterial != null) return hyperBeamMaterial;
 
-                Color beamCol = new Color(1f, 0.15f, 0.35f, 0.85f);
-                hyperBeamMaterial.SetColor("_BaseColor", beamCol);
-                hyperBeamMaterial.SetColor("_Color", beamCol);
-                if (hyperBeamMaterial.HasProperty("_EmissionColor"))
-                {
-                    hyperBeamMaterial.EnableKeyword("_EMISSION");
-                    hyperBeamMaterial.SetColor("_EmissionColor", beamCol * 3.0f);
-                }
+#if UNITY_EDITOR
+            var editorMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_LaserHyperBeam.mat");
+            if (editorMat != null)
+            {
+                hyperBeamMaterial = editorMat;
+                return hyperBeamMaterial;
+            }
+#endif
+
+            var shader = Shader.Find("Arcade/VFX_LaserHyperBeam")
+                ?? Shader.Find("Universal Render Pipeline/Unlit")
+                ?? Shader.Find("Arcade/VFX_BallTrail")
+                ?? Shader.Find("Sprites/Default");
+
+            hyperBeamMaterial = new Material(shader)
+            {
+                name = "M_Railgun_HyperBeam_URP"
+            };
+
+            Color beamCol = new Color(1f, 0.15f, 0.35f, 0.85f);
+            hyperBeamMaterial.SetColor("_BaseColor", beamCol);
+            hyperBeamMaterial.SetColor("_Color", beamCol);
+
+#if UNITY_EDITOR
+            var gradientTex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Textures/TX_LaserHyperBeam_Gradient.png");
+            if (gradientTex != null)
+            {
+                hyperBeamMaterial.SetTexture("_MainTex", gradientTex);
+                hyperBeamMaterial.SetTexture("_BaseMap", gradientTex);
+            }
+#endif
+
+            if (hyperBeamMaterial.HasProperty("_EmissionColor"))
+            {
+                hyperBeamMaterial.EnableKeyword("_EMISSION");
+                hyperBeamMaterial.SetColor("_EmissionColor", beamCol * 3.0f);
             }
             return hyperBeamMaterial;
         }

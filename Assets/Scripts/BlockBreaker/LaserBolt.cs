@@ -72,6 +72,7 @@ namespace Arcade.BlockBreaker
         private void Update()
         {
             if (hasHit) return;
+            if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.IsLevelClearPending) return;
 
             Vector3 prevPos = transform.position;
             float stepDistance = speed * Time.deltaTime;

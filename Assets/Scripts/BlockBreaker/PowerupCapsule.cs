@@ -107,7 +107,7 @@ namespace Arcade.BlockBreaker
             if (ArcadeGameManager.Instance != null)
             {
                 var state = ArcadeGameManager.Instance.State;
-                if (state == GameState.Paused) return;
+                if (state == GameState.Paused || ArcadeGameManager.Instance.IsLevelClearPending) return;
 
                 if (state == GameState.GameOver || state == GameState.LevelClear)
                 {
@@ -326,7 +326,7 @@ namespace Arcade.BlockBreaker
         {
             if (isCollected) return false;
 
-            if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State != GameState.Playing)
+            if (ArcadeGameManager.Instance != null && (ArcadeGameManager.Instance.State != GameState.Playing || ArcadeGameManager.Instance.IsLevelClearPending))
             {
                 return false;
             }
@@ -443,7 +443,7 @@ namespace Arcade.BlockBreaker
         /// </summary>
         public static void ClearAllFallingCapsules()
         {
-            var capsules = FindObjectsByType<PowerupCapsule>(FindObjectsSortMode.None);
+            var capsules = FindObjectsByType<PowerupCapsule>();
             for (int i = 0; i < capsules.Length; i++)
             {
                 if (capsules[i] != null)
@@ -465,13 +465,43 @@ namespace Arcade.BlockBreaker
             }
         }
 
+#if UNITY_EDITOR
+        private static Sprite LoadSpriteSafe(string path)
+        {
+            var sp = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (sp != null) return sp;
+
+            var all = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path);
+            if (all != null)
+            {
+                for (int i = 0; i < all.Length; i++)
+                {
+                    if (all[i] is Sprite s) return s;
+                }
+            }
+            return null;
+        }
+#endif
+
         /// <summary>
         /// Resolves the billboard sprite icon matching the powerup archetype.
         /// </summary>
         public static Sprite GetSpriteForType(BlockSpecialType type)
         {
+            if (LevelGenerator.Instance != null && LevelGenerator.Instance.IconSet != null)
+            {
+                var sp = LevelGenerator.Instance.IconSet.GetSprite(type);
+                if (sp != null) return sp;
+            }
+
             if (UI.ArcadeUIManager.Instance != null)
             {
+                if (UI.ArcadeUIManager.Instance.IconSet != null)
+                {
+                    var sp = UI.ArcadeUIManager.Instance.IconSet.GetSprite(type);
+                    if (sp != null) return sp;
+                }
+
                 switch (type)
                 {
                     case BlockSpecialType.PaddleExpander:
@@ -508,22 +538,21 @@ namespace Arcade.BlockBreaker
             switch (type)
             {
                 case BlockSpecialType.PaddleExpander:
-                    return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
                 case BlockSpecialType.ExtraHeart:
-                    var heartPlus = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Heart_Plus.png");
-                    return heartPlus != null ? heartPlus : UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/TX_Heart_Fill.png");
+                    var heartPlus = LoadSpriteSafe("Assets/UI/Icons/TX_Powerup_Heart_Plus.png");
+                    return heartPlus != null ? heartPlus : LoadSpriteSafe("Assets/UI/TX_Heart_Fill.png");
                 case BlockSpecialType.Shield:
-                    return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Shield.png");
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerup_Shield.png");
                 case BlockSpecialType.MultiBall:
-                    return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Multi_Ball.png");
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerup_Multi_Ball.png");
                 case BlockSpecialType.ScoreMultiplier2x:
                 case BlockSpecialType.ScoreMultiplier3x:
                 case BlockSpecialType.ScoreMultiplier4x:
                 case BlockSpecialType.ScoreMultiplier5x:
-                    return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
                 case BlockSpecialType.Laser:
-                    var gunSp = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Gun.png");
-                    return gunSp != null ? gunSp : UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Laser.png");
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerup_Gun.png");
             }
 #endif
             return null;

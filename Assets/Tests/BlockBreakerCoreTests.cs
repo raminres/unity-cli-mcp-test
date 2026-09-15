@@ -88,7 +88,9 @@ namespace Arcade.Tests
             Assert.AreEqual(330, gameManager.Score);
             Assert.AreEqual(0, gameManager.RemainingBlocks);
 
-            // All blocks destroyed -> State must transition to LevelClear
+            // All blocks destroyed -> Clear must be pending during clear delay, then finalize to LevelClear
+            Assert.IsTrue(gameManager.IsLevelClearPending, "Level clear must be pending during clear delay.");
+            gameManager.TriggerImmediateLevelClearForTesting();
             Assert.AreEqual(GameState.LevelClear, gameManager.State);
         }
 
@@ -96,38 +98,16 @@ namespace Arcade.Tests
 
         #region 2. Paddle Deflection & Boundary Math Tests
 
-        [Test]
-        public void Paddle_CalculateHitOffset_CenterReturnsZero()
+        [TestCase(0f, 0f, Description = "Center returns 0")]
+        [TestCase(2.5f, 1.0f, Description = "Right edge returns +1.0")]
+        [TestCase(-2.5f, -1.0f, Description = "Left edge returns -1.0")]
+        [TestCase(10.0f, 1.0f, Description = "Beyond right edge clamped to +1.0")]
+        [TestCase(-10.0f, -1.0f, Description = "Beyond left edge clamped to -1.0")]
+        public void Paddle_CalculateHitOffset_EvaluatesAndClampsCorrectly(float hitX, float expectedOffset)
         {
             paddle.transform.position = Vector3.zero;
-            float offset = paddle.CalculateHitOffset(0f);
-
-            Assert.AreEqual(0f, offset, 0.001f, "Hitting paddle center must produce deflection offset 0.");
-        }
-
-        [Test]
-        public void Paddle_CalculateHitOffset_EdgesReturnPositiveAndNegativeOne()
-        {
-            // Paddle width is 5.0, so half-width is 2.5
-            paddle.transform.position = Vector3.zero;
-
-            float rightEdgeOffset = paddle.CalculateHitOffset(2.5f);
-            float leftEdgeOffset = paddle.CalculateHitOffset(-2.5f);
-
-            Assert.AreEqual(1.0f, rightEdgeOffset, 0.001f, "Hitting extreme right edge must produce offset +1.0.");
-            Assert.AreEqual(-1.0f, leftEdgeOffset, 0.001f, "Hitting extreme left edge must produce offset -1.0.");
-        }
-
-        [Test]
-        public void Paddle_CalculateHitOffset_BeyondEdgesIsClamped()
-        {
-            paddle.transform.position = Vector3.zero;
-
-            float farRightOffset = paddle.CalculateHitOffset(10.0f);
-            float farLeftOffset = paddle.CalculateHitOffset(-10.0f);
-
-            Assert.AreEqual(1.0f, farRightOffset, "Offset beyond right edge must be clamped to 1.0.");
-            Assert.AreEqual(-1.0f, farLeftOffset, "Offset beyond left edge must be clamped to -1.0.");
+            float offset = paddle.CalculateHitOffset(hitX);
+            Assert.AreEqual(expectedOffset, offset, 0.001f, $"Hit at X={hitX} must produce offset {expectedOffset}.");
         }
 
         [Test]
@@ -790,7 +770,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 7. Audio System (AU_*) Tests
+        #region 6. Audio System (AU_*) Tests
 
         [Test]
         public void AudioManager_Clips_AreBoundAndFallbackLoadFromAssets()
@@ -865,7 +845,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 12. Powerup Icons, Badge Margins, and VFX Shader Tests
+        #region 7. Powerup Icons, Badge Margins, and VFX Shader Tests
 
         [Test]
         public void BlockBadge_Configures_PaddleExpander_ShowsIcon_And_HidesText()
@@ -1036,7 +1016,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 12. iOS Controls, Modal Pause & Level Clear Ball Handling Tests
+        #region 8. iOS Controls, Modal Pause & Level Clear Ball Handling Tests
 
         [Test]
         public void GameManager_PauseGame_And_ResumeGame_ManageStateAndTimeScaleCorrectly()
@@ -1273,7 +1253,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 12. New Powerup Mechanics (Glass, Bomb, Extra Heart) Tests
+        #region 9. Powerup Mechanics (Glass, Bomb, Extra Heart) Tests
 
         [Test]
         public void Block_GlassEnclosed_RequiresTwoHits_AndAwardsDoublePoints()
@@ -1475,7 +1455,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 12. Shield & Multi-Ball Power-Up Tests
+        #region 10. Shield & Multi-Ball Power-Up Tests
 
         [Test]
         public void GameManager_ActivateShield_EnablesShieldAndCountsDown()
@@ -1888,7 +1868,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 13. Progressive 7-Level Campaign Tests
+        #region 11. Progressive 15-Level Campaign Tests
 
         [Test]
         public void Campaign_AllFifteenLevelsExist_AndEnforceProgressiveSpeedAndLayoutVariety()
@@ -2179,7 +2159,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region Region 14: Timed Buffs & Combo Multipliers Tests
+        #region 12. Timed Buffs & Combo Multipliers Tests
 
         [Test]
         public void ArcadeGameManager_ActivatePaddleExpander_TicksDownAndResetsPaddle()
@@ -2661,7 +2641,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 12. Stepped Pyramid Paddle & Powerup Capsule Tests
+        #region 13. Stepped Pyramid Paddle & Powerup Capsule Tests
 
         [Test]
         public void Paddle_SteppedPyramid_DimensionsAndTapering()
@@ -3030,7 +3010,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region Background Gradient Tests
+        #region 14. Background Gradient Tests
 
         [Test]
         public void LevelBackgroundController_InitializesAndAppliesGradientTexture()
@@ -3163,7 +3143,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region Bug Fixes: Shaders, Powerup Cleanup & Level Completion Tests
+        #region 15. Shaders, Powerup Cleanup & Level Completion Fallback Tests
 
         [Test]
         public void BlockVFXManager_ParticleMaterial_UsesValidURPShader_AndFallbackIsSafe()
@@ -3278,8 +3258,10 @@ namespace Arcade.Tests
             // BlocksContainer has 0 blocks
             gameManager.CheckLevelCompletion();
 
-            Assert.AreEqual(GameState.LevelClear, gameManager.State, "CheckLevelCompletion must trigger LevelClear when BlocksContainer has 0 live blocks.");
+            Assert.IsTrue(gameManager.IsLevelClearPending, "CheckLevelCompletion must trigger level clear pending when BlocksContainer has 0 live blocks.");
             Assert.AreEqual(0, gameManager.RemainingBlocks, "Remaining blocks must be clamped to 0.");
+            gameManager.TriggerImmediateLevelClearForTesting();
+            Assert.AreEqual(GameState.LevelClear, gameManager.State, "CheckLevelCompletion must finalize to LevelClear on routine completion.");
         }
 
         [Test]
@@ -3492,7 +3474,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 15. Clutch Countdown & Laser Blaster Tests
+        #region 16. Clutch Countdown & Laser Blaster Tests
 
         [Test]
         public void ClutchCountdown_Triggers_WhenOneBlockRemains()
@@ -3538,6 +3520,8 @@ namespace Arcade.Tests
             gameManager.RecordBlockDestroyed(30, 1);
             Assert.AreEqual(310, gameManager.Score);
             Assert.IsFalse(gameManager.IsClutchModeActive);
+            Assert.IsTrue(gameManager.IsLevelClearPending, "Level clear must be pending during clear delay.");
+            gameManager.TriggerImmediateLevelClearForTesting();
             Assert.AreEqual(GameState.LevelClear, gameManager.State);
         }
 
@@ -3672,8 +3656,8 @@ namespace Arcade.Tests
 
             Assert.IsNotNull(uiMgr.LaserStatusBadge);
             Assert.IsNotNull(uiMgr.ClutchStatusBadge);
-            Assert.IsNotNull(uiMgr.LaserSprite, "LaserSprite must be assigned.");
-            Assert.IsTrue(uiMgr.LaserSprite.name.Contains("TX_Powerup_Gun") || uiMgr.LaserSprite.name.Contains("TX_Powerup_Laser"));
+            Assert.IsTrue(uiMgr.LaserSprite.name.Contains("TX_Powerup_Gun"),
+                $"LaserSprite should strictly resolve to TX_Powerup_Gun, but was '{uiMgr.LaserSprite.name}'.");
 
             // Test Laser Badge
             uiMgr.HandleLaserPowerupStateChanged(true, 10f);
@@ -3704,7 +3688,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region Hybrid Scoring, Volley Combo, Par Times & Victory Scorecard Tests
+        #region 17. Hybrid Scoring, Volley Combo, Par Times & Scorecard Tests
 
         [Test]
         public void BallController_VolleyStreak_IncrementsAndCalculatesMultiplierCorrectly()
@@ -3912,10 +3896,10 @@ namespace Arcade.Tests
             // Test Volley Combo Badge
             uiMgr.HandleVolleyComboChanged(3, 3);
             Assert.IsFalse(uiMgr.ComboStatusBadge.ClassListContains("powerup-hidden"));
-            Assert.AreEqual("🔥 x3 COMBO", uiMgr.ComboLabel.text);
+            Assert.IsTrue(uiMgr.ComboLabel.text.Contains("x3 COMBO"));
 
             uiMgr.HandleVolleyComboChanged(0, 1);
-            Assert.IsTrue(uiMgr.ComboStatusBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual("COMBO ENDED", uiMgr.ComboLabel.text, "Combo ended should display COMBO ENDED notification text.");
 
             // Test Victory Scorecard Population
             var summary = new LevelSummaryData
@@ -3949,7 +3933,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 17. Launch Safety, Weapon Cleanup & Deactivation Tests
+        #region 18. Launch Safety, Weapon Cleanup & Deactivation Tests
 
         [Test]
         public void PaddleLaserController_DeactivateAllWeapons_ClearsBothHyperBeamAndBlaster()
@@ -4090,7 +4074,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 18. Arena Corner Chamfers and Top Wall Tests
+        #region 19. Arena Corner Chamfers and Top Wall Tests
 
         [Test]
         public void BallController_TopCeilingCollision_ResetsConsecutiveWallBounces()
@@ -4191,7 +4175,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 19. Progressive Hyper-Beam Surge & Level Clear Pacing Tests
+        #region 20. Progressive Hyper-Beam Surge & Level Clear Pacing Tests
 
         [Test]
         public void PaddleLaserController_FireRailgunHyperBeam_ProgressivelySurgesFromPaddle()
@@ -4200,18 +4184,20 @@ namespace Arcade.Tests
             var paddle = paddleGo.AddComponent<PaddleController>();
             var laserCtrl = paddle.LaserController;
 
+            Assert.AreEqual(0.65f, laserCtrl.BeamSurgeDuration, 0.01f, "Beam surge duration must be 0.65s for clear visual progression.");
+
             laserCtrl.FireRailgunHyperBeam(5.0f);
 
             Assert.IsTrue(laserCtrl.IsHyperBeamActive, "Hyper-beam must be active on fire.");
             Assert.LessOrEqual(laserCtrl.CurrentBeamHeight, 1.0f, "Beam must start at paddle deck and not immediately cover full arena.");
 
-            // Simulate partial surge (0.15s of 0.35s surge duration)
-            laserCtrl.SimulateStepForTesting(0.15f);
+            // Simulate partial surge (0.30s of 0.65s surge duration)
+            laserCtrl.SimulateStepForTesting(0.30f);
             Assert.Greater(laserCtrl.CurrentBeamHeight, 1.0f, "Beam must progressively extend upwards.");
             Assert.Less(laserCtrl.CurrentBeamHeight, 31.0f, "Beam should not yet be at full height halfway through surge.");
 
-            // Complete surge (further 0.25s, total 0.40s >= 0.35s)
-            laserCtrl.SimulateStepForTesting(0.25f);
+            // Complete surge (further 0.40s, total 0.70s >= 0.65s)
+            laserCtrl.SimulateStepForTesting(0.40f);
             Assert.AreEqual(31.0f, laserCtrl.CurrentBeamHeight, 0.1f, "Beam must reach full height of 31 units after surge duration completes.");
 
             Object.DestroyImmediate(paddleGo);
@@ -4233,8 +4219,8 @@ namespace Arcade.Tests
             var mgr = mgrGo.AddComponent<ArcadeGameManager>();
             ArcadeGameManager.SetInstanceForTesting(mgr);
 
-            Assert.AreEqual(1.4f, mgr.LevelClearDelaySeconds, 0.01f, "Default laser level clear delay must be 1.4s for cinematic readability.");
-            Assert.AreEqual(0.8f, mgr.StandardClearDelaySeconds, 0.01f, "Default non-laser level clear delay must be 0.8s for snappy pacing.");
+            Assert.AreEqual(1.5f, mgr.LevelClearDelaySeconds, 0.01f, "Default laser level clear delay must be 1.5s for cinematic readability.");
+            Assert.AreEqual(1.0f, mgr.StandardClearDelaySeconds, 0.01f, "Default non-laser level clear delay must be 1.0s for snappy pacing.");
             Assert.IsFalse(mgr.IsLevelClearPending, "Pending flag must be false initially.");
 
             float firedDelay = 0f;
@@ -4248,18 +4234,45 @@ namespace Arcade.Tests
             // Test non-laser clear cadence
             mgr.TriggerLevelClearWithDelayForTesting(false);
             Assert.IsTrue(mgr.IsLevelClearPending);
-            Assert.AreEqual(0.8f, firedDelay, 0.01f);
+            Assert.AreEqual(1.0f, firedDelay, 0.01f);
             Assert.IsFalse(firedWasLaser);
 
             // Test laser clear cadence
             mgr.TriggerLevelClearWithDelayForTesting(true);
             Assert.IsTrue(mgr.IsLevelClearPending);
-            Assert.AreEqual(1.4f, firedDelay, 0.01f);
+            Assert.AreEqual(1.5f, firedDelay, 0.01f);
             Assert.IsTrue(firedWasLaser);
 
             mgr.TriggerImmediateLevelClearForTesting();
             Assert.AreEqual(GameState.LevelClear, mgr.State, "Direct level clear must immediately transition to LevelClear.");
             Assert.IsFalse(mgr.IsLevelClearPending, "Pending flag must be reset upon completion.");
+
+            Object.DestroyImmediate(mgrGo);
+            ArcadeGameManager.SetInstanceForTesting(null);
+        }
+
+        [Test]
+        public void ArcadeGameManager_PlayingStatePreserved_WhileLevelClearPending()
+        {
+            var mgrGo = new GameObject("TestMgr_PendingState");
+            var mgr = mgrGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(mgr);
+
+            mgr.SetState(GameState.Playing);
+            int startingLives = mgr.Lives;
+
+            mgr.TriggerLevelClearWithDelayForTesting(false);
+            Assert.IsTrue(mgr.IsLevelClearPending, "Clear pending must be true.");
+            Assert.AreEqual(GameState.Playing, mgr.State, "Game state must remain Playing during level clear pending delay.");
+
+            // Late ball lost during pending delay should not decrement lives
+            mgr.RecordBallLost();
+            Assert.AreEqual(startingLives, mgr.Lives, "Lives must not be lost while level clear is pending.");
+
+            // Final completion transitions state
+            mgr.TriggerImmediateLevelClearForTesting();
+            Assert.AreEqual(GameState.LevelClear, mgr.State, "State must transition to LevelClear after completion.");
+            Assert.IsFalse(mgr.IsLevelClearPending);
 
             Object.DestroyImmediate(mgrGo);
             ArcadeGameManager.SetInstanceForTesting(null);
@@ -4305,6 +4318,97 @@ namespace Arcade.Tests
             Assert.IsTrue(uiMgr.LevelClearBanner.ClassListContains("level-clear-banner-hidden"), "Banner must be hidden when scorecard modal is shown.");
 
             Object.DestroyImmediate(uiManagerGo);
+        }
+
+        [Test]
+        public void ArcadeUIManager_ComboStatusBadge_BindsIconAndDisplaysComboAndEndedText()
+        {
+            var uiManagerGo = new GameObject("TestArcadeUIManager");
+            var panelRenderer = uiManagerGo.AddComponent<UnityEngine.UIElements.PanelRenderer>();
+            var uiMgr = uiManagerGo.AddComponent<ArcadeUIManager>();
+
+            var uxml = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+
+            panelRenderer.visualTreeAsset = uxml;
+            var root = uxml.CloneTree();
+
+            var bindMethod = typeof(ArcadeUIManager).GetMethod("BindElements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, root);
+            bindMethod.Invoke(uiMgr, null);
+
+            Assert.IsNotNull(uiMgr.ComboStatusBadge, "ComboStatusBadge must be bound from UXML.");
+            Assert.IsNotNull(uiMgr.ComboStatusIcon, "ComboStatusIcon must be bound from UXML.");
+            Assert.IsNotNull(uiMgr.ComboLabel, "ComboLabel must be bound from UXML.");
+
+            // Combo is hidden by default
+            Assert.IsTrue(uiMgr.ComboStatusBadge.ClassListContains("powerup-hidden"));
+
+            // When combo of 2x starts:
+            uiMgr.HandleVolleyComboChanged(3, 2);
+            Assert.IsFalse(uiMgr.ComboStatusBadge.ClassListContains("powerup-hidden"), "Badge must be visible during active combo.");
+            Assert.IsTrue(uiMgr.ComboLabel.text.Contains("x2 COMBO"));
+            Assert.AreEqual(UnityEngine.UIElements.DisplayStyle.Flex, uiMgr.ComboStatusIcon.style.display.value);
+            Assert.IsTrue(uiMgr.ComboStatusBadge.ClassListContains("mult-tier-2x"));
+
+            // When combo drops back to 1 (combo saved on paddle or lost):
+            uiMgr.HandleVolleyComboChanged(0, 1);
+            Assert.AreEqual("COMBO ENDED", uiMgr.ComboLabel.text, "Must show COMBO ENDED notification text.");
+            Assert.AreEqual(UnityEngine.UIElements.DisplayStyle.None, uiMgr.ComboStatusIcon.style.display.value, "Icon should be hidden during COMBO ENDED notification.");
+
+            Object.DestroyImmediate(uiManagerGo);
+        }
+
+        [Test]
+        public void EntityFreeze_BallAndPaddleAndCapsule_FreezeOnLevelClearPending()
+        {
+            var mgrGo = new GameObject("TestMgr_Freeze");
+            var mgr = mgrGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(mgr);
+            mgr.SetState(GameState.Playing);
+
+            // Paddle setup
+            var paddleGo = new GameObject("Paddle_FreezeTest");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+
+            // Ball setup
+            var ballGo = new GameObject("Ball_FreezeTest");
+            var rb = ballGo.AddComponent<Rigidbody>();
+            rb.useGravity = false;
+            var ball = ballGo.AddComponent<BallController>();
+            ball.LaunchWithDirection(Vector3.up, 10f);
+            Assert.Greater(ball.Velocity.sqrMagnitude, 1f, "Ball must be moving initially.");
+
+            // Powerup capsule setup
+            var cap = PowerupCapsule.Spawn(new Vector3(0f, 10f, 0f), BlockSpecialType.ExtraHeart);
+
+            // Trigger level clear pending
+            mgr.TriggerLevelClearWithDelayForTesting(false);
+            Assert.IsTrue(mgr.IsLevelClearPending);
+
+            // Ball freezing check
+            ball.FreezeBall();
+            Assert.AreEqual(0f, ball.Velocity.sqrMagnitude, 0.001f, "Ball must have zero velocity when frozen.");
+
+            // Paddle movement check during pending clear
+            float startX = paddle.transform.position.x;
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.SetDirectTargetWorldXForTesting(startX + 5f);
+            }
+            var updateMethod = typeof(PaddleController).GetMethod("Update", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            updateMethod.Invoke(paddle, null);
+            Assert.AreEqual(startX, paddle.transform.position.x, 0.001f, "Paddle must not move while level clear is pending.");
+
+            // Powerup intercept check
+            bool intercepted = cap.TryIntercept(paddle);
+            Assert.IsFalse(intercepted, "Powerup capsule cannot be collected while level clear is pending.");
+
+            Object.DestroyImmediate(mgrGo);
+            Object.DestroyImmediate(paddleGo);
+            Object.DestroyImmediate(ballGo);
+            if (cap != null) Object.DestroyImmediate(cap.gameObject);
+            ArcadeGameManager.SetInstanceForTesting(null);
         }
 
         [Test]
@@ -4413,8 +4517,164 @@ namespace Arcade.Tests
         {
             var sprite = PowerupCapsule.GetSpriteForType(BlockSpecialType.Laser);
             Assert.IsNotNull(sprite, "PowerupCapsule must resolve a sprite for Laser type.");
-            Assert.IsTrue(sprite.name.Contains("TX_Powerup_Gun") || sprite.name.Contains("TX_Powerup_Laser"),
-                "Sprite should resolve to TX_Powerup_Gun or fallback TX_Powerup_Laser.");
+            Assert.IsTrue(sprite.name.Contains("TX_Powerup_Gun"),
+                $"Sprite should strictly resolve to TX_Powerup_Gun, but was '{sprite.name}'.");
+        }
+
+        [Test]
+        public void BlockBadge_Laser_SetsCorrectIconAndClasses()
+        {
+            var badgeObj = new GameObject("TestBadge_Laser");
+            var badge = badgeObj.AddComponent<BlockBadge>();
+
+            var root = new UnityEngine.UIElements.VisualElement();
+            var plate = new UnityEngine.UIElements.VisualElement { name = "badge-plate" };
+            var icon = new UnityEngine.UIElements.VisualElement { name = "badge-icon" };
+            var label = new UnityEngine.UIElements.Label { name = "badge-text" };
+            plate.Add(icon);
+            plate.Add(label);
+            root.Add(plate);
+
+            var typeField = typeof(BlockBadge).GetField("specialType", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeField.SetValue(badge, BlockSpecialType.Laser);
+
+            badge.UpdateUI(root);
+
+            Assert.IsTrue(icon.ClassListContains("badge-icon-laser"), "Laser badge must have badge-icon-laser class.");
+            Assert.IsTrue(plate.ClassListContains("badge-plate-laser"), "Laser badge must have badge-plate-laser class.");
+            Assert.AreEqual(UnityEngine.UIElements.DisplayStyle.Flex, icon.style.display.value);
+            Assert.AreEqual(UnityEngine.UIElements.DisplayStyle.None, label.style.display.value, "Laser badge text must be hidden.");
+
+            Object.DestroyImmediate(badgeObj);
+        }
+
+        [Test]
+        public void ArcadeUIManager_MultiplierBadge_SetsIconBackgroundImageWhenActive()
+        {
+            var uiGo = new GameObject("TestUI");
+            var uiMgr = uiGo.AddComponent<ArcadeUIManager>();
+
+            var root = new UnityEngine.UIElements.VisualElement();
+            var badge = new UnityEngine.UIElements.VisualElement { name = "multiplier-status-badge" };
+            var icon = new UnityEngine.UIElements.VisualElement { name = "multiplier-status-icon" };
+            var valLabel = new UnityEngine.UIElements.Label { name = "multiplier-value-label" };
+            var timerLabel = new UnityEngine.UIElements.Label { name = "multiplier-timer-label" };
+            badge.Add(icon);
+            badge.Add(valLabel);
+            badge.Add(timerLabel);
+            root.Add(badge);
+
+            var sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            typeof(ArcadeUIManager).GetField("multiplierSprite", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, sprite);
+
+            var bindMethod = typeof(ArcadeUIManager).GetMethod("BindElements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, root);
+            bindMethod.Invoke(uiMgr, null);
+
+            uiMgr.HandleScoreMultiplierStateChanged(true, 2, 10f);
+
+            Assert.IsFalse(badge.ClassListContains("powerup-hidden"));
+            Assert.IsTrue(badge.ClassListContains("mult-tier-2x"));
+            Assert.IsNotNull(icon.style.backgroundImage.value.sprite, "Multiplier icon must have valid backgroundImage sprite assigned when active.");
+
+            Object.DestroyImmediate(uiGo);
+            Object.DestroyImmediate(sprite);
+        }
+
+        [Test]
+        public void PaddleLaserController_HyperBeamMaterial_ConfiguredWithGradientShaderAndTexture()
+        {
+            var mat = PaddleLaserController.GetOrCreateHyperBeamMaterial();
+            Assert.IsNotNull(mat, "HyperBeam material must not be null.");
+            Assert.IsNotNull(mat.shader, "Shader must not be null.");
+            Assert.IsTrue(mat.shader.name.Contains("LaserHyperBeam") || mat.shader.name.Contains("Unlit"));
+            Assert.IsTrue(mat.HasProperty("_MainTex") || mat.HasProperty("_BaseMap"), "Shader must support gradient texture property.");
+        }
+
+        [Test]
+        public void PowerupIconSet_ResolvesAllSpecialTypes()
+        {
+            var iconSet = ScriptableObject.CreateInstance<PowerupIconSet>();
+            var spExpander = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var spBomb = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var spHeart = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var spShield = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var spMulti = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var spPoints = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var spLaser = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+
+            iconSet.SetSprites(spExpander, spBomb, spHeart, spShield, spMulti, spPoints, spLaser);
+
+            Assert.AreEqual(spExpander, iconSet.GetSprite(BlockSpecialType.PaddleExpander));
+            Assert.AreEqual(spBomb, iconSet.GetSprite(BlockSpecialType.Bomb));
+            Assert.AreEqual(spHeart, iconSet.GetSprite(BlockSpecialType.ExtraHeart));
+            Assert.AreEqual(spShield, iconSet.GetSprite(BlockSpecialType.Shield));
+            Assert.AreEqual(spMulti, iconSet.GetSprite(BlockSpecialType.MultiBall));
+            Assert.AreEqual(spPoints, iconSet.GetSprite(BlockSpecialType.ScoreMultiplier2x));
+            Assert.AreEqual(spPoints, iconSet.GetSprite(BlockSpecialType.ScoreMultiplier3x));
+            Assert.AreEqual(spPoints, iconSet.GetSprite(BlockSpecialType.ScoreMultiplier4x));
+            Assert.AreEqual(spPoints, iconSet.GetSprite(BlockSpecialType.ScoreMultiplier5x));
+            Assert.AreEqual(spLaser, iconSet.GetSprite(BlockSpecialType.Laser));
+
+            Object.DestroyImmediate(iconSet);
+            Object.DestroyImmediate(spExpander);
+            Object.DestroyImmediate(spBomb);
+            Object.DestroyImmediate(spHeart);
+            Object.DestroyImmediate(spShield);
+            Object.DestroyImmediate(spMulti);
+            Object.DestroyImmediate(spPoints);
+            Object.DestroyImmediate(spLaser);
+        }
+
+        [Test]
+        public void BlockBadge_AppliesDirectSpriteToBackgroundImage()
+        {
+            var badgeObj = new GameObject("TestBadge_SpriteDirect");
+            var badge = badgeObj.AddComponent<BlockBadge>();
+
+            var root = new UnityEngine.UIElements.VisualElement();
+            var plate = new UnityEngine.UIElements.VisualElement { name = "badge-plate" };
+            var icon = new UnityEngine.UIElements.VisualElement { name = "badge-icon" };
+            var label = new UnityEngine.UIElements.Label { name = "badge-text" };
+            plate.Add(icon);
+            plate.Add(label);
+            root.Add(plate);
+
+            var testSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            testSprite.name = "Test_Bomb_Sprite";
+
+            badge.Setup(BlockSpecialType.Bomb, null, null, testSprite);
+            badge.UpdateUI(root);
+
+            Assert.IsTrue(icon.ClassListContains("badge-icon-bomb"), "Bomb badge must have badge-icon-bomb class.");
+            Assert.IsNotNull(icon.style.backgroundImage.value.sprite, "Bomb icon must have backgroundImage sprite assigned.");
+            Assert.AreEqual(testSprite, icon.style.backgroundImage.value.sprite, "Assigned sprite must match the provided sprite.");
+
+            Object.DestroyImmediate(badgeObj);
+            Object.DestroyImmediate(testSprite);
+        }
+
+        [Test]
+        public void PowerupCapsule_ResolvesSpriteFromLevelGeneratorIconSet()
+        {
+            var lgGo = new GameObject("TestLevelGen");
+            var lg = lgGo.AddComponent<LevelGenerator>();
+            LevelGenerator.SetInstance(lg);
+
+            var iconSet = ScriptableObject.CreateInstance<PowerupIconSet>();
+            var testBomb = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            testBomb.name = "LevelGen_Bomb_Sprite";
+            iconSet.SetSprites(null, testBomb, null, null, null, null, null);
+            lg.SetIconSet(iconSet);
+
+            var resolved = PowerupCapsule.GetSpriteForType(BlockSpecialType.Bomb);
+            Assert.IsNotNull(resolved, "PowerupCapsule must resolve sprite from LevelGenerator.Instance.IconSet.");
+            Assert.AreEqual(testBomb, resolved, "Resolved sprite must match the one from LevelGenerator.IconSet.");
+
+            LevelGenerator.SetInstance(null);
+            Object.DestroyImmediate(lgGo);
+            Object.DestroyImmediate(iconSet);
+            Object.DestroyImmediate(testBomb);
         }
 
         #endregion

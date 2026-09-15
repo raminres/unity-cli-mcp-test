@@ -102,7 +102,8 @@ namespace Arcade.BlockBreaker
 
             if (ArcadeGameManager.Instance != null && (ArcadeGameManager.Instance.State == GameState.Paused ||
                                                       ArcadeGameManager.Instance.State == GameState.LevelClear ||
-                                                      ArcadeGameManager.Instance.State == GameState.GameOver))
+                                                      ArcadeGameManager.Instance.State == GameState.GameOver ||
+                                                      ArcadeGameManager.Instance.IsLevelClearPending))
             {
                 currentVelocityX = 0f;
                 previousPositionX = prevX;

@@ -206,6 +206,7 @@ namespace Arcade.Audio
         /// <summary>
         /// Plays triumphant banking chime when an active unreturned volley streak returns to the paddle.
         /// </summary>
+        [System.Obsolete("Combo banking is now visually communicated via COMBO ENDED text in the HUD badge.")]
         public void PlayComboBank()
         {
             if (synthComboBankClip == null)

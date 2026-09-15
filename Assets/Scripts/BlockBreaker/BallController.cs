@@ -177,6 +177,13 @@ namespace Arcade.BlockBreaker
         {
             if (!isLaunched) return;
 
+            // Freeze ball physics when level clear celebration is active
+            if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.IsLevelClearPending)
+            {
+                FreezeBall();
+                return;
+            }
+
             // Maintain constant Z = 0
             Vector3 pos = transform.position;
             if (Mathf.Abs(pos.z) > 0.01f)
@@ -336,6 +343,19 @@ namespace Arcade.BlockBreaker
             {
                 Trail.SetEmitting(false);
                 Trail.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Instantly stops the ball's movement and angular velocity.
+        /// Used when level clear transition begins to freeze playfield entities cleanly.
+        /// </summary>
+        public void FreezeBall()
+        {
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
             }
         }
 
@@ -634,14 +654,6 @@ namespace Arcade.BlockBreaker
         private void HandlePaddleCollision(PaddleController hitPaddle)
         {
             consecutiveSideWallBounces = 0; // Reset consecutive wall bounces on paddle save
-
-            if (currentVolleyStreak >= 3)
-            {
-                if (ArcadeAudioManager.Instance != null)
-                {
-                    ArcadeAudioManager.Instance.PlayComboBank();
-                }
-            }
 
             if (ArcadeGameManager.Instance != null)
             {

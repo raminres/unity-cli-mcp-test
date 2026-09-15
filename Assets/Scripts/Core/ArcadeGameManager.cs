@@ -67,8 +67,8 @@ namespace Arcade.Core
         private LevelSummaryData currentLevelSummary;
 
         [Header("Level Clear Pacing")]
-        [SerializeField] private float levelClearDelaySeconds = 1.4f;
-        [SerializeField] private float standardClearDelaySeconds = 0.8f;
+        [SerializeField] private float levelClearDelaySeconds = 1.5f;
+        [SerializeField] private float standardClearDelaySeconds = 1.0f;
         private bool isLevelClearPending = false;
         private Coroutine levelClearCoroutine;
 
@@ -642,6 +642,19 @@ namespace Arcade.Core
             RecordBallLost();
         }
 
+        public void FreezeAllBalls()
+        {
+            for (int i = 0; i < activeBalls.Count; i++)
+            {
+                if (activeBalls[i] != null) activeBalls[i].FreezeBall();
+            }
+            var allBalls = FindObjectsByType<BallController>(FindObjectsSortMode.None);
+            for (int i = 0; i < allBalls.Length; i++)
+            {
+                if (allBalls[i] != null) allBalls[i].FreezeBall();
+            }
+        }
+
         public void RegisterLevelBlocks(int blockCount, int levelNumber = 1)
         {
             totalBlocksInLevel = blockCount;
@@ -796,7 +809,7 @@ namespace Arcade.Core
 
         public void CheckLevelCompletion()
         {
-            if (currentState == GameState.GameOver || currentState == GameState.LevelClear) return;
+            if (currentState == GameState.GameOver || currentState == GameState.LevelClear || isLevelClearPending) return;
             if (totalBlocksInLevel <= 0) return;
 
             bool allBlocksCleared = remainingBlocks <= 0;
@@ -826,9 +839,13 @@ namespace Arcade.Core
 
             if (allBlocksCleared)
             {
-                SetState(GameState.LevelClear);
-                EndClutchMode();
-                HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime, currentSessionId);
+                FreezeAllBalls();
+
+                if (isClutchModeActive)
+                {
+                    EndClutchMode();
+                }
+
                 bool wasClearedWithLaser = false;
                 var paddle = FindAnyObjectByType<PaddleController>();
                 if (paddle != null && paddle.LaserController != null && paddle.LaserController.IsHyperBeamActive)
@@ -852,7 +869,7 @@ namespace Arcade.Core
 
         public void RecordBallLost()
         {
-            if (currentState != GameState.Playing) return;
+            if (currentState != GameState.Playing || isLevelClearPending) return;
 
             BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
             BlockBreaker.LaserBolt.ClearAllActiveBolts();

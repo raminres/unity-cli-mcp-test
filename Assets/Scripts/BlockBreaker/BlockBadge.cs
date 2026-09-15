@@ -12,9 +12,13 @@ namespace Arcade.BlockBreaker
     {
         [SerializeField] private PanelRenderer panelRenderer;
         [SerializeField] private BlockSpecialType specialType = BlockSpecialType.ScoreMultiplier2x;
+        [SerializeField] private Sprite iconSprite;
 
         public BlockSpecialType SpecialType => specialType;
+        public Sprite IconSprite => iconSprite;
         public Vector2 WorldSpaceSize => panelRenderer != null ? panelRenderer.worldSpaceSize : Vector2.zero;
+
+        public void SetSprite(Sprite sprite) => iconSprite = sprite;
 
         private void Awake()
         {
@@ -33,9 +37,10 @@ namespace Arcade.BlockBreaker
             }
         }
 
-        public void Setup(BlockSpecialType type, PanelSettings settings, VisualTreeAsset asset)
+        public void Setup(BlockSpecialType type, PanelSettings settings, VisualTreeAsset asset, Sprite sprite = null)
         {
             specialType = type;
+            if (sprite != null) iconSprite = sprite;
             if (panelRenderer == null) panelRenderer = GetComponent<PanelRenderer>();
             if (panelRenderer != null)
             {
@@ -69,6 +74,20 @@ namespace Arcade.BlockBreaker
 
             if (icon != null)
             {
+                Sprite spriteToUse = iconSprite;
+                if (spriteToUse == null && LevelGenerator.Instance != null && LevelGenerator.Instance.IconSet != null)
+                {
+                    spriteToUse = LevelGenerator.Instance.IconSet.GetSprite(specialType);
+                }
+                if (spriteToUse == null)
+                {
+                    spriteToUse = PowerupCapsule.GetSpriteForType(specialType);
+                }
+                if (spriteToUse != null)
+                {
+                    icon.style.backgroundImage = new StyleBackground(spriteToUse);
+                }
+
                 icon.RemoveFromClassList("badge-icon-expander");
                 icon.RemoveFromClassList("badge-icon-points");
                 icon.RemoveFromClassList("badge-icon-points-x2");

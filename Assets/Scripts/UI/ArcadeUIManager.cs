@@ -1,3 +1,4 @@
+using System.Collections;
 using Arcade.Audio;
 using Arcade.BlockBreaker;
 using Arcade.Core;
@@ -58,7 +59,10 @@ namespace Arcade.UI
         private Label timerLabel;
         private Label scoreDeltaLabel;
         private VisualElement comboStatusBadge;
+        private VisualElement comboStatusIcon;
         private Label comboLabel;
+        private Coroutine comboEndedCoroutine;
+        private int previousVolleyMultiplier = 1;
         private Coroutine scoreDeltaCoroutine;
         private Coroutine scorePulseCoroutine;
         private Coroutine scorecardStarsCoroutine;
@@ -149,6 +153,7 @@ namespace Arcade.UI
         [SerializeField] private Sprite heartEmptySprite;
 
         [Header("Power-Up Sprites")]
+        [SerializeField] private PowerupIconSet iconSet;
         [SerializeField] private Sprite shieldSprite;
         [SerializeField] private Sprite multiBallSprite;
         [SerializeField] private Sprite paddleExpandSprite;
@@ -193,6 +198,7 @@ namespace Arcade.UI
         public Label TimerLabel => timerLabel;
         public Label ScoreDeltaLabel => scoreDeltaLabel;
         public VisualElement ComboStatusBadge => comboStatusBadge;
+        public VisualElement ComboStatusIcon => comboStatusIcon;
         public Label ComboLabel => comboLabel;
         public VisualElement ScorecardStar1 => scorecardStar1;
         public VisualElement ScorecardStar2 => scorecardStar2;
@@ -203,6 +209,8 @@ namespace Arcade.UI
         public Label ScorecardTimeBonusVal => scorecardTimeBonusVal;
         public Label ScorecardFlawlessVal => scorecardFlawlessVal;
         public Button BtnReplayLevel => btnReplayLevel;
+        public PowerupIconSet IconSet => iconSet;
+        public void SetIconSet(PowerupIconSet set) => iconSet = set;
         public Sprite PaddleExpandSprite => paddleExpandSprite;
         public Sprite MultiplierSprite => multiplierSprite;
         public Sprite ShieldSprite => shieldSprite;
@@ -400,6 +408,7 @@ namespace Arcade.UI
             timerLabel = root.Q<Label>("timer-label");
             scoreDeltaLabel = root.Q<Label>("score-delta-label");
             comboStatusBadge = root.Q<VisualElement>("combo-status-badge");
+            comboStatusIcon = root.Q<VisualElement>("combo-status-icon");
             comboLabel = root.Q<Label>("combo-label");
 
             scorecardTitle = root.Q<Label>("scorecard-title");
@@ -435,6 +444,15 @@ namespace Arcade.UI
 #endif
             }
 
+            if (iconSet != null)
+            {
+                if (shieldSprite == null) shieldSprite = iconSet.ShieldSprite;
+                if (multiBallSprite == null) multiBallSprite = iconSet.MultiBallSprite;
+                if (paddleExpandSprite == null) paddleExpandSprite = iconSet.ExpanderSprite;
+                if (multiplierSprite == null) multiplierSprite = iconSet.MultiplierSprite;
+                if (laserSprite == null) laserSprite = iconSet.LaserSprite;
+            }
+
 #if UNITY_EDITOR
             if (levelSettingsSprite == null)
                 levelSettingsSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Level_Settings.png");
@@ -453,13 +471,52 @@ namespace Arcade.UI
             if (multiBallSprite == null)
                 multiBallSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Multi_Ball.png");
             if (paddleExpandSprite == null)
-                paddleExpandSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
+            {
+                var sp = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
+                if (sp == null)
+                {
+                    var all = UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
+                    if (all != null)
+                    {
+                        for (int i = 0; i < all.Length; i++)
+                        {
+                            if (all[i] is Sprite s) { sp = s; break; }
+                        }
+                    }
+                }
+                paddleExpandSprite = sp;
+            }
             if (multiplierSprite == null)
-                multiplierSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
+            {
+                var sp = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
+                if (sp == null)
+                {
+                    var all = UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
+                    if (all != null)
+                    {
+                        for (int i = 0; i < all.Length; i++)
+                        {
+                            if (all[i] is Sprite s) { sp = s; break; }
+                        }
+                    }
+                }
+                multiplierSprite = sp;
+            }
             if (laserSprite == null)
             {
                 var gunSp = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Gun.png");
-                laserSprite = gunSp != null ? gunSp : UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Laser.png");
+                if (gunSp == null)
+                {
+                    var all = UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/UI/Icons/TX_Powerup_Gun.png");
+                    if (all != null)
+                    {
+                        for (int i = 0; i < all.Length; i++)
+                        {
+                            if (all[i] is Sprite s) { gunSp = s; break; }
+                        }
+                    }
+                }
+                laserSprite = gunSp;
             }
 #endif
 
@@ -501,6 +558,9 @@ namespace Arcade.UI
             var iconClutch = root.Q<VisualElement>("clutch-status-icon");
             if (iconClutch != null && laserSprite != null)
                 iconClutch.style.backgroundImage = new StyleBackground(laserSprite);
+
+            if (comboStatusIcon != null && multiplierSprite != null)
+                comboStatusIcon.style.backgroundImage = new StyleBackground(multiplierSprite);
 
             btnQuickLevels = root.Q<Button>("btn-quick-levels");
             btnQuickMute = root.Q<Button>("btn-quick-mute");
@@ -1146,6 +1206,12 @@ namespace Arcade.UI
                 multiplierStatusBadge.RemoveFromClassList("powerup-hidden");
                 multiplierStatusBadge.style.display = DisplayStyle.Flex;
 
+                var iconMultiplier = multiplierStatusBadge.Q<VisualElement>("multiplier-status-icon");
+                if (iconMultiplier != null && multiplierSprite != null)
+                {
+                    iconMultiplier.style.backgroundImage = new StyleBackground(multiplierSprite);
+                }
+
                 multiplierStatusBadge.RemoveFromClassList("mult-tier-2x");
                 multiplierStatusBadge.RemoveFromClassList("mult-tier-3x");
                 multiplierStatusBadge.RemoveFromClassList("mult-tier-4x");
@@ -1229,18 +1295,83 @@ namespace Arcade.UI
 
             if (multiplier > 1)
             {
+                if (comboEndedCoroutine != null)
+                {
+                    StopCoroutine(comboEndedCoroutine);
+                    comboEndedCoroutine = null;
+                }
+
+                previousVolleyMultiplier = multiplier;
+
                 comboStatusBadge.RemoveFromClassList("powerup-hidden");
                 comboStatusBadge.style.display = DisplayStyle.Flex;
+
+                if (comboStatusIcon != null)
+                {
+                    comboStatusIcon.style.display = DisplayStyle.Flex;
+                    if (multiplierSprite != null)
+                    {
+                        comboStatusIcon.style.backgroundImage = new StyleBackground(multiplierSprite);
+                    }
+                }
+
+                comboStatusBadge.RemoveFromClassList("mult-tier-2x");
+                comboStatusBadge.RemoveFromClassList("mult-tier-3x");
+                comboStatusBadge.RemoveFromClassList("mult-tier-4x");
+                comboStatusBadge.RemoveFromClassList("mult-tier-5x");
+                comboStatusBadge.AddToClassList($"mult-tier-{Mathf.Clamp(multiplier, 2, 5)}x");
+
                 if (comboLabel != null)
                 {
-                    comboLabel.text = $"🔥 x{multiplier} COMBO";
+                    comboLabel.text = $" x{multiplier} COMBO";
                 }
             }
             else
             {
+                if (previousVolleyMultiplier > 1)
+                {
+                    previousVolleyMultiplier = 1;
+                    if (comboEndedCoroutine != null) StopCoroutine(comboEndedCoroutine);
+                    if (comboLabel != null) comboLabel.text = "COMBO ENDED";
+                    if (comboStatusIcon != null) comboStatusIcon.style.display = DisplayStyle.None;
+
+                    if (gameObject.activeInHierarchy)
+                    {
+                        comboEndedCoroutine = StartCoroutine(ShowComboEndedRoutine());
+                    }
+                    else
+                    {
+                        comboStatusBadge.AddToClassList("powerup-hidden");
+                        comboStatusBadge.style.display = DisplayStyle.None;
+                    }
+                }
+                else
+                {
+                    comboStatusBadge.AddToClassList("powerup-hidden");
+                    comboStatusBadge.style.display = DisplayStyle.None;
+                }
+            }
+        }
+
+        private IEnumerator ShowComboEndedRoutine()
+        {
+            if (comboStatusBadge != null)
+            {
+                comboStatusBadge.RemoveFromClassList("powerup-hidden");
+                comboStatusBadge.style.display = DisplayStyle.Flex;
+                if (comboStatusIcon != null) comboStatusIcon.style.display = DisplayStyle.None;
+                if (comboLabel != null) comboLabel.text = "COMBO ENDED";
+            }
+
+            yield return new WaitForSecondsRealtime(1.2f);
+
+            if (comboStatusBadge != null)
+            {
                 comboStatusBadge.AddToClassList("powerup-hidden");
                 comboStatusBadge.style.display = DisplayStyle.None;
+                if (comboStatusIcon != null) comboStatusIcon.style.display = DisplayStyle.Flex;
             }
+            comboEndedCoroutine = null;
         }
 
         public void HandleBlockPointsAwarded(Vector3 worldPos, int awardedPoints, int totalMultiplier, string bonusTag)

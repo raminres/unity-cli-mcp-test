@@ -212,27 +212,38 @@
 }
 
 .icon-shield {
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Shield.png?fileID=3950488328852594513&guid=16428cb230612564080e96abe31d3eea&type=3#TX_Powerup_Shield_0");
     -unity-background-image-tint-color: #00f2fe;
 }
 
 .icon-multiball {
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Multi_Ball.png?fileID=-5547497205224055285&guid=3098a697d024c2547bdafd3878c03c4b&type=3#TX_Powerup_Multi_Ball_0");
     -unity-background-image-tint-color: #e056fd;
 }
 
 .icon-paddle-expand {
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Arrows_Outward.png?fileID=21300000&guid=a78437860f4b9b54184a24a248743a7d&type=3#TX_Powerup_Arrows_Outward");
     -unity-background-image-tint-color: #00e5ff;
 }
 
 .icon-multiplier {
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Extra_Points.png?fileID=21300000&guid=1d8d97a548b3e734687c47462e523395&type=3#TX_Powerup_Extra_Points");
     -unity-background-image-tint-color: #ffd700;
 }
 
+.mult-tier-2x .icon-multiplier {
+    -unity-background-image-tint-color: #ffd700;
+}
+
+.mult-tier-3x .icon-multiplier {
+    -unity-background-image-tint-color: #ff8c00;
+}
+
+.mult-tier-4x .icon-multiplier {
+    -unity-background-image-tint-color: #ff1744;
+}
+
+.mult-tier-5x .icon-multiplier {
+    -unity-background-image-tint-color: #d500f9;
+}
+
 .icon-laser {
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Gun.png?fileID=7392651483920194821&guid=820d572091b85c34bb7540e3cf8929a1&type=3#TX_Powerup_Gun_0");
     -unity-background-image-tint-color: #ff2a47;
 }
 
@@ -1097,6 +1108,26 @@
 .combo-badge {
     background-color: rgba(255, 42, 109, 0.2);
     border-color: #ff2a6d;
+}
+
+.combo-badge .icon-multiplier {
+    -unity-background-image-tint-color: #ff2a6d;
+}
+
+.combo-badge.mult-tier-2x .icon-multiplier {
+    -unity-background-image-tint-color: #ffd700;
+}
+
+.combo-badge.mult-tier-3x .icon-multiplier {
+    -unity-background-image-tint-color: #ff8c00;
+}
+
+.combo-badge.mult-tier-4x .icon-multiplier {
+    -unity-background-image-tint-color: #ff1744;
+}
+
+.combo-badge.mult-tier-5x .icon-multiplier {
+    -unity-background-image-tint-color: #d500f9;
 }
 
 .combo-val-text {
