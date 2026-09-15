@@ -1323,7 +1323,7 @@ namespace Arcade.UI
 
                 if (comboLabel != null)
                 {
-                    comboLabel.text = $"🔥 x{multiplier} COMBO";
+                    comboLabel.text = $" x{multiplier} COMBO";
                 }
             }
             else

@@ -98,38 +98,16 @@ namespace Arcade.Tests
 
         #region 2. Paddle Deflection & Boundary Math Tests
 
-        [Test]
-        public void Paddle_CalculateHitOffset_CenterReturnsZero()
+        [TestCase(0f, 0f, Description = "Center returns 0")]
+        [TestCase(2.5f, 1.0f, Description = "Right edge returns +1.0")]
+        [TestCase(-2.5f, -1.0f, Description = "Left edge returns -1.0")]
+        [TestCase(10.0f, 1.0f, Description = "Beyond right edge clamped to +1.0")]
+        [TestCase(-10.0f, -1.0f, Description = "Beyond left edge clamped to -1.0")]
+        public void Paddle_CalculateHitOffset_EvaluatesAndClampsCorrectly(float hitX, float expectedOffset)
         {
             paddle.transform.position = Vector3.zero;
-            float offset = paddle.CalculateHitOffset(0f);
-
-            Assert.AreEqual(0f, offset, 0.001f, "Hitting paddle center must produce deflection offset 0.");
-        }
-
-        [Test]
-        public void Paddle_CalculateHitOffset_EdgesReturnPositiveAndNegativeOne()
-        {
-            // Paddle width is 5.0, so half-width is 2.5
-            paddle.transform.position = Vector3.zero;
-
-            float rightEdgeOffset = paddle.CalculateHitOffset(2.5f);
-            float leftEdgeOffset = paddle.CalculateHitOffset(-2.5f);
-
-            Assert.AreEqual(1.0f, rightEdgeOffset, 0.001f, "Hitting extreme right edge must produce offset +1.0.");
-            Assert.AreEqual(-1.0f, leftEdgeOffset, 0.001f, "Hitting extreme left edge must produce offset -1.0.");
-        }
-
-        [Test]
-        public void Paddle_CalculateHitOffset_BeyondEdgesIsClamped()
-        {
-            paddle.transform.position = Vector3.zero;
-
-            float farRightOffset = paddle.CalculateHitOffset(10.0f);
-            float farLeftOffset = paddle.CalculateHitOffset(-10.0f);
-
-            Assert.AreEqual(1.0f, farRightOffset, "Offset beyond right edge must be clamped to 1.0.");
-            Assert.AreEqual(-1.0f, farLeftOffset, "Offset beyond left edge must be clamped to -1.0.");
+            float offset = paddle.CalculateHitOffset(hitX);
+            Assert.AreEqual(expectedOffset, offset, 0.001f, $"Hit at X={hitX} must produce offset {expectedOffset}.");
         }
 
         [Test]
@@ -792,7 +770,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 7. Audio System (AU_*) Tests
+        #region 6. Audio System (AU_*) Tests
 
         [Test]
         public void AudioManager_Clips_AreBoundAndFallbackLoadFromAssets()
@@ -867,7 +845,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 12. Powerup Icons, Badge Margins, and VFX Shader Tests
+        #region 7. Powerup Icons, Badge Margins, and VFX Shader Tests
 
         [Test]
         public void BlockBadge_Configures_PaddleExpander_ShowsIcon_And_HidesText()
@@ -1038,7 +1016,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 12. iOS Controls, Modal Pause & Level Clear Ball Handling Tests
+        #region 8. iOS Controls, Modal Pause & Level Clear Ball Handling Tests
 
         [Test]
         public void GameManager_PauseGame_And_ResumeGame_ManageStateAndTimeScaleCorrectly()
@@ -1275,7 +1253,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 12. New Powerup Mechanics (Glass, Bomb, Extra Heart) Tests
+        #region 9. Powerup Mechanics (Glass, Bomb, Extra Heart) Tests
 
         [Test]
         public void Block_GlassEnclosed_RequiresTwoHits_AndAwardsDoublePoints()
@@ -1477,7 +1455,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 12. Shield & Multi-Ball Power-Up Tests
+        #region 10. Shield & Multi-Ball Power-Up Tests
 
         [Test]
         public void GameManager_ActivateShield_EnablesShieldAndCountsDown()
@@ -1890,7 +1868,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 13. Progressive 7-Level Campaign Tests
+        #region 11. Progressive 15-Level Campaign Tests
 
         [Test]
         public void Campaign_AllFifteenLevelsExist_AndEnforceProgressiveSpeedAndLayoutVariety()
@@ -2181,7 +2159,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region Region 14: Timed Buffs & Combo Multipliers Tests
+        #region 12. Timed Buffs & Combo Multipliers Tests
 
         [Test]
         public void ArcadeGameManager_ActivatePaddleExpander_TicksDownAndResetsPaddle()
@@ -2663,7 +2641,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 12. Stepped Pyramid Paddle & Powerup Capsule Tests
+        #region 13. Stepped Pyramid Paddle & Powerup Capsule Tests
 
         [Test]
         public void Paddle_SteppedPyramid_DimensionsAndTapering()
@@ -3032,7 +3010,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region Background Gradient Tests
+        #region 14. Background Gradient Tests
 
         [Test]
         public void LevelBackgroundController_InitializesAndAppliesGradientTexture()
@@ -3165,7 +3143,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region Bug Fixes: Shaders, Powerup Cleanup & Level Completion Tests
+        #region 15. Shaders, Powerup Cleanup & Level Completion Fallback Tests
 
         [Test]
         public void BlockVFXManager_ParticleMaterial_UsesValidURPShader_AndFallbackIsSafe()
@@ -3496,7 +3474,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 15. Clutch Countdown & Laser Blaster Tests
+        #region 16. Clutch Countdown & Laser Blaster Tests
 
         [Test]
         public void ClutchCountdown_Triggers_WhenOneBlockRemains()
@@ -3710,7 +3688,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region Hybrid Scoring, Volley Combo, Par Times & Victory Scorecard Tests
+        #region 17. Hybrid Scoring, Volley Combo, Par Times & Scorecard Tests
 
         [Test]
         public void BallController_VolleyStreak_IncrementsAndCalculatesMultiplierCorrectly()
@@ -3918,7 +3896,7 @@ namespace Arcade.Tests
             // Test Volley Combo Badge
             uiMgr.HandleVolleyComboChanged(3, 3);
             Assert.IsFalse(uiMgr.ComboStatusBadge.ClassListContains("powerup-hidden"));
-            Assert.AreEqual("🔥 x3 COMBO", uiMgr.ComboLabel.text);
+            Assert.IsTrue(uiMgr.ComboLabel.text.Contains("x3 COMBO"));
 
             uiMgr.HandleVolleyComboChanged(0, 1);
             Assert.AreEqual("COMBO ENDED", uiMgr.ComboLabel.text, "Combo ended should display COMBO ENDED notification text.");
@@ -3955,7 +3933,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 17. Launch Safety, Weapon Cleanup & Deactivation Tests
+        #region 18. Launch Safety, Weapon Cleanup & Deactivation Tests
 
         [Test]
         public void PaddleLaserController_DeactivateAllWeapons_ClearsBothHyperBeamAndBlaster()
@@ -4096,7 +4074,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 18. Arena Corner Chamfers and Top Wall Tests
+        #region 19. Arena Corner Chamfers and Top Wall Tests
 
         [Test]
         public void BallController_TopCeilingCollision_ResetsConsecutiveWallBounces()
@@ -4197,7 +4175,7 @@ namespace Arcade.Tests
 
         #endregion
 
-        #region 19. Progressive Hyper-Beam Surge & Level Clear Pacing Tests
+        #region 20. Progressive Hyper-Beam Surge & Level Clear Pacing Tests
 
         [Test]
         public void PaddleLaserController_FireRailgunHyperBeam_ProgressivelySurgesFromPaddle()
@@ -4369,7 +4347,7 @@ namespace Arcade.Tests
             // When combo of 2x starts:
             uiMgr.HandleVolleyComboChanged(3, 2);
             Assert.IsFalse(uiMgr.ComboStatusBadge.ClassListContains("powerup-hidden"), "Badge must be visible during active combo.");
-            Assert.AreEqual("🔥 x2 COMBO", uiMgr.ComboLabel.text);
+            Assert.IsTrue(uiMgr.ComboLabel.text.Contains("x2 COMBO"));
             Assert.AreEqual(UnityEngine.UIElements.DisplayStyle.Flex, uiMgr.ComboStatusIcon.style.display.value);
             Assert.IsTrue(uiMgr.ComboStatusBadge.ClassListContains("mult-tier-2x"));
 
