@@ -88,7 +88,9 @@ namespace Arcade.Tests
             Assert.AreEqual(330, gameManager.Score);
             Assert.AreEqual(0, gameManager.RemainingBlocks);
 
-            // All blocks destroyed -> State must transition to LevelClear
+            // All blocks destroyed -> Clear must be pending during clear delay, then finalize to LevelClear
+            Assert.IsTrue(gameManager.IsLevelClearPending, "Level clear must be pending during clear delay.");
+            gameManager.TriggerImmediateLevelClearForTesting();
             Assert.AreEqual(GameState.LevelClear, gameManager.State);
         }
 
@@ -3278,8 +3280,10 @@ namespace Arcade.Tests
             // BlocksContainer has 0 blocks
             gameManager.CheckLevelCompletion();
 
-            Assert.AreEqual(GameState.LevelClear, gameManager.State, "CheckLevelCompletion must trigger LevelClear when BlocksContainer has 0 live blocks.");
+            Assert.IsTrue(gameManager.IsLevelClearPending, "CheckLevelCompletion must trigger level clear pending when BlocksContainer has 0 live blocks.");
             Assert.AreEqual(0, gameManager.RemainingBlocks, "Remaining blocks must be clamped to 0.");
+            gameManager.TriggerImmediateLevelClearForTesting();
+            Assert.AreEqual(GameState.LevelClear, gameManager.State, "CheckLevelCompletion must finalize to LevelClear on routine completion.");
         }
 
         [Test]
@@ -3538,6 +3542,8 @@ namespace Arcade.Tests
             gameManager.RecordBlockDestroyed(30, 1);
             Assert.AreEqual(310, gameManager.Score);
             Assert.IsFalse(gameManager.IsClutchModeActive);
+            Assert.IsTrue(gameManager.IsLevelClearPending, "Level clear must be pending during clear delay.");
+            gameManager.TriggerImmediateLevelClearForTesting();
             Assert.AreEqual(GameState.LevelClear, gameManager.State);
         }
 
@@ -4200,18 +4206,20 @@ namespace Arcade.Tests
             var paddle = paddleGo.AddComponent<PaddleController>();
             var laserCtrl = paddle.LaserController;
 
+            Assert.AreEqual(0.65f, laserCtrl.BeamSurgeDuration, 0.01f, "Beam surge duration must be 0.65s for clear visual progression.");
+
             laserCtrl.FireRailgunHyperBeam(5.0f);
 
             Assert.IsTrue(laserCtrl.IsHyperBeamActive, "Hyper-beam must be active on fire.");
             Assert.LessOrEqual(laserCtrl.CurrentBeamHeight, 1.0f, "Beam must start at paddle deck and not immediately cover full arena.");
 
-            // Simulate partial surge (0.15s of 0.35s surge duration)
-            laserCtrl.SimulateStepForTesting(0.15f);
+            // Simulate partial surge (0.30s of 0.65s surge duration)
+            laserCtrl.SimulateStepForTesting(0.30f);
             Assert.Greater(laserCtrl.CurrentBeamHeight, 1.0f, "Beam must progressively extend upwards.");
             Assert.Less(laserCtrl.CurrentBeamHeight, 31.0f, "Beam should not yet be at full height halfway through surge.");
 
-            // Complete surge (further 0.25s, total 0.40s >= 0.35s)
-            laserCtrl.SimulateStepForTesting(0.25f);
+            // Complete surge (further 0.40s, total 0.70s >= 0.65s)
+            laserCtrl.SimulateStepForTesting(0.40f);
             Assert.AreEqual(31.0f, laserCtrl.CurrentBeamHeight, 0.1f, "Beam must reach full height of 31 units after surge duration completes.");
 
             Object.DestroyImmediate(paddleGo);
@@ -4233,8 +4241,8 @@ namespace Arcade.Tests
             var mgr = mgrGo.AddComponent<ArcadeGameManager>();
             ArcadeGameManager.SetInstanceForTesting(mgr);
 
-            Assert.AreEqual(1.4f, mgr.LevelClearDelaySeconds, 0.01f, "Default laser level clear delay must be 1.4s for cinematic readability.");
-            Assert.AreEqual(0.8f, mgr.StandardClearDelaySeconds, 0.01f, "Default non-laser level clear delay must be 0.8s for snappy pacing.");
+            Assert.AreEqual(1.5f, mgr.LevelClearDelaySeconds, 0.01f, "Default laser level clear delay must be 1.5s for cinematic readability.");
+            Assert.AreEqual(1.0f, mgr.StandardClearDelaySeconds, 0.01f, "Default non-laser level clear delay must be 1.0s for snappy pacing.");
             Assert.IsFalse(mgr.IsLevelClearPending, "Pending flag must be false initially.");
 
             float firedDelay = 0f;
@@ -4248,18 +4256,45 @@ namespace Arcade.Tests
             // Test non-laser clear cadence
             mgr.TriggerLevelClearWithDelayForTesting(false);
             Assert.IsTrue(mgr.IsLevelClearPending);
-            Assert.AreEqual(0.8f, firedDelay, 0.01f);
+            Assert.AreEqual(1.0f, firedDelay, 0.01f);
             Assert.IsFalse(firedWasLaser);
 
             // Test laser clear cadence
             mgr.TriggerLevelClearWithDelayForTesting(true);
             Assert.IsTrue(mgr.IsLevelClearPending);
-            Assert.AreEqual(1.4f, firedDelay, 0.01f);
+            Assert.AreEqual(1.5f, firedDelay, 0.01f);
             Assert.IsTrue(firedWasLaser);
 
             mgr.TriggerImmediateLevelClearForTesting();
             Assert.AreEqual(GameState.LevelClear, mgr.State, "Direct level clear must immediately transition to LevelClear.");
             Assert.IsFalse(mgr.IsLevelClearPending, "Pending flag must be reset upon completion.");
+
+            Object.DestroyImmediate(mgrGo);
+            ArcadeGameManager.SetInstanceForTesting(null);
+        }
+
+        [Test]
+        public void ArcadeGameManager_PlayingStatePreserved_WhileLevelClearPending()
+        {
+            var mgrGo = new GameObject("TestMgr_PendingState");
+            var mgr = mgrGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(mgr);
+
+            mgr.SetState(GameState.Playing);
+            int startingLives = mgr.Lives;
+
+            mgr.TriggerLevelClearWithDelayForTesting(false);
+            Assert.IsTrue(mgr.IsLevelClearPending, "Clear pending must be true.");
+            Assert.AreEqual(GameState.Playing, mgr.State, "Game state must remain Playing during level clear pending delay.");
+
+            // Late ball lost during pending delay should not decrement lives
+            mgr.RecordBallLost();
+            Assert.AreEqual(startingLives, mgr.Lives, "Lives must not be lost while level clear is pending.");
+
+            // Final completion transitions state
+            mgr.TriggerImmediateLevelClearForTesting();
+            Assert.AreEqual(GameState.LevelClear, mgr.State, "State must transition to LevelClear after completion.");
+            Assert.IsFalse(mgr.IsLevelClearPending);
 
             Object.DestroyImmediate(mgrGo);
             ArcadeGameManager.SetInstanceForTesting(null);

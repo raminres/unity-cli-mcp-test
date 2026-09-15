@@ -1187,7 +1187,7 @@ MonoBehaviour:
   beamWidth: 3.2
   beamHeight: 31
   hyperBeamDuration: 5
-  beamSurgeDuration: 0.35
+  beamSurgeDuration: 0.65
   hyperBeamMaterialAsset: {fileID: 2100000, guid: a49c3725b8214311bb633857a621cf92, type: 2}
 --- !u!54 &1018824986
 Rigidbody:
@@ -2040,8 +2040,8 @@ MonoBehaviour:
   remainingLives: 3
   remainingBlocks: 0
   totalBlocksInLevel: 0
-  levelClearDelaySeconds: 1.4
-  standardClearDelaySeconds: 0.8
+  levelClearDelaySeconds: 1.5
+  standardClearDelaySeconds: 1
   isShieldActive: 0
   shieldTimeRemaining: 0
   isPaddleExpanded: 0

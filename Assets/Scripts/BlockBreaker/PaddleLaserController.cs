@@ -19,7 +19,7 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float beamWidth = 3.2f;
         [SerializeField] private float beamHeight = 31f;
         [SerializeField] private float hyperBeamDuration = 5.0f;
-        [SerializeField] private float beamSurgeDuration = 0.35f; // Duration for beam to extend from paddle to arena ceiling
+        [SerializeField] private float beamSurgeDuration = 0.65f; // Duration for beam to extend from paddle to arena ceiling
         [SerializeField] private Material hyperBeamMaterialAsset;
 
         private PaddleController paddle;
