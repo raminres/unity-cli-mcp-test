@@ -59,7 +59,9 @@ This file provides persistent, high-density project context across agent session
   - Tiers: Red = 10 pts (bottom), Green = 20 pts (middle), Blue = 30 pts (top).
   - **Volley Combo Multiplier**:
     - Unreturned ball rallies increment streak: Hits 1–2 = $1\times$, Hits 3–4 = $2\times$, Hits 5–7 = $3\times$, Hits 8–10 = $4\times$, Hits 11+ = $5\times$ (MAX).
-    - Safely banks into score upon paddle impact with audio chime; resets streak if ball falls into kill zone.
+    - Safely banks into score upon paddle impact; resets streak if ball falls into kill zone.
+    - Combo badge at top HUD dynamically binds and renders the multiplier icon (`TX_Powerup_Extra_Points.png` / `PowerupIconSet.MultiplierSprite`) alongside the streak label (`🔥 x{N} COMBO`).
+    - When combo ends or banks on paddle hit, audio chime (`PlayComboBank`) is bypassed in favor of a clean, dedicated `"COMBO ENDED"` text notification in the combo badge for $1.2\text{s}$ before hiding.
     - Ascending musical pitch scaling on consecutive break SFX ($+1$ semitone per hit up to $1.68\times$).
   - **Powerup & Chain Synergies**:
     - Bomb blasts apply compounding chain multipliers ($\text{base} \times 1.5^{\text{chainIndex}}$).
@@ -140,6 +142,11 @@ This file provides persistent, high-density project context across agent session
       - Standard Non-Beam Clear (ball/bomb hits): $1.0\text{s}$ delay (`standardClearDelaySeconds = 1.0f`) allowing floating points, particle bursts, and debris to settle before the victory scorecard modal opens.
       - Clutch Hyper-Beam Railgun Clear: $1.5\text{s}$ delay (`levelClearDelaySeconds = 1.5f`) allowing the full $0.65\text{s}$ progressive beam surge and celebratory impact feedback to be clearly observed before the victory scorecard modal opens.
       - State transition to `GameState.LevelClear` occurs strictly upon completion of the delay routine (`OnLevelCleared()`), guaranteeing that the end-of-level scorecard modal never overlaps or appears simultaneously with the celebratory banner.
+    - **Level Clear Entity Freeze & Input Lock**:
+      - While `isLevelClearPending` is active (during the $1.0\text{s}$–$1.5\text{s}$ celebration delay before scorecard modal), all scene entities freeze in place:
+        - Active balls: `linearVelocity` and `angularVelocity` immediately zeroed (`BallController.FreezeBall()`, `ArcadeGameManager.FreezeAllBalls()`), halting movement.
+        - Paddle: User movement input (mouse, keyboard, direct touch) is strictly blocked and velocity zeroed (`PaddleController.Update()`).
+        - In-flight projectiles & drops: Falling `PowerupCapsule` drops and active `LaserBolt` projectiles freeze movement and intercept checks.
     - Safeguarded against life loss or ball resets while clear is pending (`isLevelClearPending = true`). Banner is cleanly dismissed once the victory scorecard modal opens.
 - **Immediate Environmental Modifiers**:
   - **Bomb Bricks (`Bomb`)**: Explosive radius detonation ($2.5$ units) immediately detonating surrounding bricks with outward impulses. Protected by `isDestroyed` flag against recursive loops.

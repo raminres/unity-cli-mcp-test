@@ -68,7 +68,8 @@
                 <ui:Label name="clutch-timer-label" text="12s" class="powerup-timer-label" />
             </ui:VisualElement>
             <ui:VisualElement name="combo-status-badge" class="powerup-badge combo-badge powerup-hidden">
-                <ui:Label name="combo-label" text="🔥 x2 COMBO" class="powerup-timer-label combo-val-text" />
+                <ui:VisualElement name="combo-status-icon" class="powerup-status-icon icon-multiplier" picking-mode="Ignore" />
+                <ui:Label name="combo-label" text="x2 COMBO" class="powerup-timer-label combo-val-text" />
             </ui:VisualElement>
         </ui:VisualElement>
 

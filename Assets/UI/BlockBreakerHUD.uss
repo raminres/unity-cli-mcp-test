@@ -1110,6 +1110,26 @@
     border-color: #ff2a6d;
 }
 
+.combo-badge .icon-multiplier {
+    -unity-background-image-tint-color: #ff2a6d;
+}
+
+.combo-badge.mult-tier-2x .icon-multiplier {
+    -unity-background-image-tint-color: #ffd700;
+}
+
+.combo-badge.mult-tier-3x .icon-multiplier {
+    -unity-background-image-tint-color: #ff8c00;
+}
+
+.combo-badge.mult-tier-4x .icon-multiplier {
+    -unity-background-image-tint-color: #ff1744;
+}
+
+.combo-badge.mult-tier-5x .icon-multiplier {
+    -unity-background-image-tint-color: #d500f9;
+}
+
 .combo-val-text {
     color: #ff2a6d;
     -unity-font-style: bold;

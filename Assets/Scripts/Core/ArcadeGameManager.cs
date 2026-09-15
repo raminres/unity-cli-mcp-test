@@ -642,6 +642,19 @@ namespace Arcade.Core
             RecordBallLost();
         }
 
+        public void FreezeAllBalls()
+        {
+            for (int i = 0; i < activeBalls.Count; i++)
+            {
+                if (activeBalls[i] != null) activeBalls[i].FreezeBall();
+            }
+            var allBalls = FindObjectsByType<BallController>(FindObjectsSortMode.None);
+            for (int i = 0; i < allBalls.Length; i++)
+            {
+                if (allBalls[i] != null) allBalls[i].FreezeBall();
+            }
+        }
+
         public void RegisterLevelBlocks(int blockCount, int levelNumber = 1)
         {
             totalBlocksInLevel = blockCount;
@@ -826,6 +839,8 @@ namespace Arcade.Core
 
             if (allBlocksCleared)
             {
+                FreezeAllBalls();
+
                 if (isClutchModeActive)
                 {
                     EndClutchMode();

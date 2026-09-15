@@ -107,7 +107,7 @@ namespace Arcade.BlockBreaker
             if (ArcadeGameManager.Instance != null)
             {
                 var state = ArcadeGameManager.Instance.State;
-                if (state == GameState.Paused) return;
+                if (state == GameState.Paused || ArcadeGameManager.Instance.IsLevelClearPending) return;
 
                 if (state == GameState.GameOver || state == GameState.LevelClear)
                 {
@@ -326,7 +326,7 @@ namespace Arcade.BlockBreaker
         {
             if (isCollected) return false;
 
-            if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State != GameState.Playing)
+            if (ArcadeGameManager.Instance != null && (ArcadeGameManager.Instance.State != GameState.Playing || ArcadeGameManager.Instance.IsLevelClearPending))
             {
                 return false;
             }

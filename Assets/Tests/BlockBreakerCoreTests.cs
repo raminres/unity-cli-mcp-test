@@ -3921,7 +3921,7 @@ namespace Arcade.Tests
             Assert.AreEqual("🔥 x3 COMBO", uiMgr.ComboLabel.text);
 
             uiMgr.HandleVolleyComboChanged(0, 1);
-            Assert.IsTrue(uiMgr.ComboStatusBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual("COMBO ENDED", uiMgr.ComboLabel.text, "Combo ended should display COMBO ENDED notification text.");
 
             // Test Victory Scorecard Population
             var summary = new LevelSummaryData
@@ -4340,6 +4340,97 @@ namespace Arcade.Tests
             Assert.IsTrue(uiMgr.LevelClearBanner.ClassListContains("level-clear-banner-hidden"), "Banner must be hidden when scorecard modal is shown.");
 
             Object.DestroyImmediate(uiManagerGo);
+        }
+
+        [Test]
+        public void ArcadeUIManager_ComboStatusBadge_BindsIconAndDisplaysComboAndEndedText()
+        {
+            var uiManagerGo = new GameObject("TestArcadeUIManager");
+            var panelRenderer = uiManagerGo.AddComponent<UnityEngine.UIElements.PanelRenderer>();
+            var uiMgr = uiManagerGo.AddComponent<ArcadeUIManager>();
+
+            var uxml = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+
+            panelRenderer.visualTreeAsset = uxml;
+            var root = uxml.CloneTree();
+
+            var bindMethod = typeof(ArcadeUIManager).GetMethod("BindElements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, root);
+            bindMethod.Invoke(uiMgr, null);
+
+            Assert.IsNotNull(uiMgr.ComboStatusBadge, "ComboStatusBadge must be bound from UXML.");
+            Assert.IsNotNull(uiMgr.ComboStatusIcon, "ComboStatusIcon must be bound from UXML.");
+            Assert.IsNotNull(uiMgr.ComboLabel, "ComboLabel must be bound from UXML.");
+
+            // Combo is hidden by default
+            Assert.IsTrue(uiMgr.ComboStatusBadge.ClassListContains("powerup-hidden"));
+
+            // When combo of 2x starts:
+            uiMgr.HandleVolleyComboChanged(3, 2);
+            Assert.IsFalse(uiMgr.ComboStatusBadge.ClassListContains("powerup-hidden"), "Badge must be visible during active combo.");
+            Assert.AreEqual("🔥 x2 COMBO", uiMgr.ComboLabel.text);
+            Assert.AreEqual(UnityEngine.UIElements.DisplayStyle.Flex, uiMgr.ComboStatusIcon.style.display.value);
+            Assert.IsTrue(uiMgr.ComboStatusBadge.ClassListContains("mult-tier-2x"));
+
+            // When combo drops back to 1 (combo saved on paddle or lost):
+            uiMgr.HandleVolleyComboChanged(0, 1);
+            Assert.AreEqual("COMBO ENDED", uiMgr.ComboLabel.text, "Must show COMBO ENDED notification text.");
+            Assert.AreEqual(UnityEngine.UIElements.DisplayStyle.None, uiMgr.ComboStatusIcon.style.display.value, "Icon should be hidden during COMBO ENDED notification.");
+
+            Object.DestroyImmediate(uiManagerGo);
+        }
+
+        [Test]
+        public void EntityFreeze_BallAndPaddleAndCapsule_FreezeOnLevelClearPending()
+        {
+            var mgrGo = new GameObject("TestMgr_Freeze");
+            var mgr = mgrGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(mgr);
+            mgr.SetState(GameState.Playing);
+
+            // Paddle setup
+            var paddleGo = new GameObject("Paddle_FreezeTest");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+
+            // Ball setup
+            var ballGo = new GameObject("Ball_FreezeTest");
+            var rb = ballGo.AddComponent<Rigidbody>();
+            rb.useGravity = false;
+            var ball = ballGo.AddComponent<BallController>();
+            ball.LaunchWithDirection(Vector3.up, 10f);
+            Assert.Greater(ball.Velocity.sqrMagnitude, 1f, "Ball must be moving initially.");
+
+            // Powerup capsule setup
+            var cap = PowerupCapsule.Spawn(new Vector3(0f, 10f, 0f), BlockSpecialType.ExtraHeart);
+
+            // Trigger level clear pending
+            mgr.TriggerLevelClearWithDelayForTesting(false);
+            Assert.IsTrue(mgr.IsLevelClearPending);
+
+            // Ball freezing check
+            ball.FreezeBall();
+            Assert.AreEqual(0f, ball.Velocity.sqrMagnitude, 0.001f, "Ball must have zero velocity when frozen.");
+
+            // Paddle movement check during pending clear
+            float startX = paddle.transform.position.x;
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.SetDirectTargetWorldXForTesting(startX + 5f);
+            }
+            var updateMethod = typeof(PaddleController).GetMethod("Update", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            updateMethod.Invoke(paddle, null);
+            Assert.AreEqual(startX, paddle.transform.position.x, 0.001f, "Paddle must not move while level clear is pending.");
+
+            // Powerup intercept check
+            bool intercepted = cap.TryIntercept(paddle);
+            Assert.IsFalse(intercepted, "Powerup capsule cannot be collected while level clear is pending.");
+
+            Object.DestroyImmediate(mgrGo);
+            Object.DestroyImmediate(paddleGo);
+            Object.DestroyImmediate(ballGo);
+            if (cap != null) Object.DestroyImmediate(cap.gameObject);
+            ArcadeGameManager.SetInstanceForTesting(null);
         }
 
         [Test]

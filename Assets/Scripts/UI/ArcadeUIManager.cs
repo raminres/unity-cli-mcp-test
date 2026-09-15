@@ -1,3 +1,4 @@
+using System.Collections;
 using Arcade.Audio;
 using Arcade.BlockBreaker;
 using Arcade.Core;
@@ -58,7 +59,10 @@ namespace Arcade.UI
         private Label timerLabel;
         private Label scoreDeltaLabel;
         private VisualElement comboStatusBadge;
+        private VisualElement comboStatusIcon;
         private Label comboLabel;
+        private Coroutine comboEndedCoroutine;
+        private int previousVolleyMultiplier = 1;
         private Coroutine scoreDeltaCoroutine;
         private Coroutine scorePulseCoroutine;
         private Coroutine scorecardStarsCoroutine;
@@ -194,6 +198,7 @@ namespace Arcade.UI
         public Label TimerLabel => timerLabel;
         public Label ScoreDeltaLabel => scoreDeltaLabel;
         public VisualElement ComboStatusBadge => comboStatusBadge;
+        public VisualElement ComboStatusIcon => comboStatusIcon;
         public Label ComboLabel => comboLabel;
         public VisualElement ScorecardStar1 => scorecardStar1;
         public VisualElement ScorecardStar2 => scorecardStar2;
@@ -403,6 +408,7 @@ namespace Arcade.UI
             timerLabel = root.Q<Label>("timer-label");
             scoreDeltaLabel = root.Q<Label>("score-delta-label");
             comboStatusBadge = root.Q<VisualElement>("combo-status-badge");
+            comboStatusIcon = root.Q<VisualElement>("combo-status-icon");
             comboLabel = root.Q<Label>("combo-label");
 
             scorecardTitle = root.Q<Label>("scorecard-title");
@@ -552,6 +558,9 @@ namespace Arcade.UI
             var iconClutch = root.Q<VisualElement>("clutch-status-icon");
             if (iconClutch != null && laserSprite != null)
                 iconClutch.style.backgroundImage = new StyleBackground(laserSprite);
+
+            if (comboStatusIcon != null && multiplierSprite != null)
+                comboStatusIcon.style.backgroundImage = new StyleBackground(multiplierSprite);
 
             btnQuickLevels = root.Q<Button>("btn-quick-levels");
             btnQuickMute = root.Q<Button>("btn-quick-mute");
@@ -1286,8 +1295,32 @@ namespace Arcade.UI
 
             if (multiplier > 1)
             {
+                if (comboEndedCoroutine != null)
+                {
+                    StopCoroutine(comboEndedCoroutine);
+                    comboEndedCoroutine = null;
+                }
+
+                previousVolleyMultiplier = multiplier;
+
                 comboStatusBadge.RemoveFromClassList("powerup-hidden");
                 comboStatusBadge.style.display = DisplayStyle.Flex;
+
+                if (comboStatusIcon != null)
+                {
+                    comboStatusIcon.style.display = DisplayStyle.Flex;
+                    if (multiplierSprite != null)
+                    {
+                        comboStatusIcon.style.backgroundImage = new StyleBackground(multiplierSprite);
+                    }
+                }
+
+                comboStatusBadge.RemoveFromClassList("mult-tier-2x");
+                comboStatusBadge.RemoveFromClassList("mult-tier-3x");
+                comboStatusBadge.RemoveFromClassList("mult-tier-4x");
+                comboStatusBadge.RemoveFromClassList("mult-tier-5x");
+                comboStatusBadge.AddToClassList($"mult-tier-{Mathf.Clamp(multiplier, 2, 5)}x");
+
                 if (comboLabel != null)
                 {
                     comboLabel.text = $"🔥 x{multiplier} COMBO";
@@ -1295,9 +1328,50 @@ namespace Arcade.UI
             }
             else
             {
+                if (previousVolleyMultiplier > 1)
+                {
+                    previousVolleyMultiplier = 1;
+                    if (comboEndedCoroutine != null) StopCoroutine(comboEndedCoroutine);
+                    if (comboLabel != null) comboLabel.text = "COMBO ENDED";
+                    if (comboStatusIcon != null) comboStatusIcon.style.display = DisplayStyle.None;
+
+                    if (gameObject.activeInHierarchy)
+                    {
+                        comboEndedCoroutine = StartCoroutine(ShowComboEndedRoutine());
+                    }
+                    else
+                    {
+                        comboStatusBadge.AddToClassList("powerup-hidden");
+                        comboStatusBadge.style.display = DisplayStyle.None;
+                    }
+                }
+                else
+                {
+                    comboStatusBadge.AddToClassList("powerup-hidden");
+                    comboStatusBadge.style.display = DisplayStyle.None;
+                }
+            }
+        }
+
+        private IEnumerator ShowComboEndedRoutine()
+        {
+            if (comboStatusBadge != null)
+            {
+                comboStatusBadge.RemoveFromClassList("powerup-hidden");
+                comboStatusBadge.style.display = DisplayStyle.Flex;
+                if (comboStatusIcon != null) comboStatusIcon.style.display = DisplayStyle.None;
+                if (comboLabel != null) comboLabel.text = "COMBO ENDED";
+            }
+
+            yield return new WaitForSecondsRealtime(1.2f);
+
+            if (comboStatusBadge != null)
+            {
                 comboStatusBadge.AddToClassList("powerup-hidden");
                 comboStatusBadge.style.display = DisplayStyle.None;
+                if (comboStatusIcon != null) comboStatusIcon.style.display = DisplayStyle.Flex;
             }
+            comboEndedCoroutine = null;
         }
 
         public void HandleBlockPointsAwarded(Vector3 worldPos, int awardedPoints, int totalMultiplier, string bonusTag)
