@@ -3672,8 +3672,8 @@ namespace Arcade.Tests
 
             Assert.IsNotNull(uiMgr.LaserStatusBadge);
             Assert.IsNotNull(uiMgr.ClutchStatusBadge);
-            Assert.IsNotNull(uiMgr.LaserSprite, "LaserSprite must be assigned.");
-            Assert.IsTrue(uiMgr.LaserSprite.name.Contains("TX_Powerup_Gun") || uiMgr.LaserSprite.name.Contains("TX_Powerup_Laser"));
+            Assert.IsTrue(uiMgr.LaserSprite.name.Contains("TX_Powerup_Gun"),
+                $"LaserSprite should strictly resolve to TX_Powerup_Gun, but was '{uiMgr.LaserSprite.name}'.");
 
             // Test Laser Badge
             uiMgr.HandleLaserPowerupStateChanged(true, 10f);
@@ -4413,8 +4413,35 @@ namespace Arcade.Tests
         {
             var sprite = PowerupCapsule.GetSpriteForType(BlockSpecialType.Laser);
             Assert.IsNotNull(sprite, "PowerupCapsule must resolve a sprite for Laser type.");
-            Assert.IsTrue(sprite.name.Contains("TX_Powerup_Gun") || sprite.name.Contains("TX_Powerup_Laser"),
-                "Sprite should resolve to TX_Powerup_Gun or fallback TX_Powerup_Laser.");
+            Assert.IsTrue(sprite.name.Contains("TX_Powerup_Gun"),
+                $"Sprite should strictly resolve to TX_Powerup_Gun, but was '{sprite.name}'.");
+        }
+
+        [Test]
+        public void BlockBadge_Laser_SetsCorrectIconAndClasses()
+        {
+            var badgeObj = new GameObject("TestBadge_Laser");
+            var badge = badgeObj.AddComponent<BlockBadge>();
+
+            var root = new UnityEngine.UIElements.VisualElement();
+            var plate = new UnityEngine.UIElements.VisualElement { name = "badge-plate" };
+            var icon = new UnityEngine.UIElements.VisualElement { name = "badge-icon" };
+            var label = new UnityEngine.UIElements.Label { name = "badge-text" };
+            plate.Add(icon);
+            plate.Add(label);
+            root.Add(plate);
+
+            var typeField = typeof(BlockBadge).GetField("specialType", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeField.SetValue(badge, BlockSpecialType.Laser);
+
+            badge.UpdateUI(root);
+
+            Assert.IsTrue(icon.ClassListContains("badge-icon-laser"), "Laser badge must have badge-icon-laser class.");
+            Assert.IsTrue(plate.ClassListContains("badge-plate-laser"), "Laser badge must have badge-plate-laser class.");
+            Assert.AreEqual(UnityEngine.UIElements.DisplayStyle.Flex, icon.style.display.value);
+            Assert.AreEqual(UnityEngine.UIElements.DisplayStyle.None, label.style.display.value, "Laser badge text must be hidden.");
+
+            Object.DestroyImmediate(badgeObj);
         }
 
         #endregion

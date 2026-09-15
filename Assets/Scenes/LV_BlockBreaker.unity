@@ -2031,6 +2031,7 @@ MonoBehaviour:
   settingsSprite: {fileID: 21300000, guid: d24cd8b25486cfe45a7731b9a5d3afce, type: 3}
   pauseSprite: {fileID: 21300000, guid: de14abab37824164b93573467f215b5c, type: 3}
   playSprite: {fileID: 21300000, guid: dd600ea38ce338d4394fa625707eaee8, type: 3}
+  laserSprite: {fileID: 21300000, guid: 820d572091b85c34bb7540e3cf8929a1, type: 3}
 --- !u!1931382934 &1588724071
 PanelRenderer:
   m_ObjectHideFlags: 0

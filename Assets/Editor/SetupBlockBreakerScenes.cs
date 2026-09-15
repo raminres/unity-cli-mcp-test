@@ -579,10 +579,23 @@ namespace Arcade.Editor
             var multiBallIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Multi_Ball.png");
             var paddleExpandIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
             var multiplierIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
+            var laserIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Gun.png");
+            if (laserIcon == null)
+            {
+                var all = AssetDatabase.LoadAllAssetsAtPath("Assets/UI/Icons/TX_Powerup_Gun.png");
+                if (all != null)
+                {
+                    for (int i = 0; i < all.Length; i++)
+                    {
+                        if (all[i] is Sprite s) { laserIcon = s; break; }
+                    }
+                }
+            }
             if (shieldIcon != null) uiMgrSo.FindProperty("shieldSprite").objectReferenceValue = shieldIcon;
             if (multiBallIcon != null) uiMgrSo.FindProperty("multiBallSprite").objectReferenceValue = multiBallIcon;
             if (paddleExpandIcon != null) uiMgrSo.FindProperty("paddleExpandSprite").objectReferenceValue = paddleExpandIcon;
             if (multiplierIcon != null) uiMgrSo.FindProperty("multiplierSprite").objectReferenceValue = multiplierIcon;
+            if (laserIcon != null) uiMgrSo.FindProperty("laserSprite").objectReferenceValue = laserIcon;
 
             uiMgrSo.ApplyModifiedProperties();
             uiGo.AddComponent<SafeAreaController>();

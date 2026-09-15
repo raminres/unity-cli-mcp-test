@@ -115,7 +115,7 @@
 .badge-icon-laser {
     width: 52px;
     height: 52px;
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Gun.png?fileID=7392651483920194821&guid=820d572091b85c34bb7540e3cf8929a1&type=3#TX_Powerup_Gun_0");
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Gun.png?fileID=21300000&guid=820d572091b85c34bb7540e3cf8929a1&type=3#TX_Powerup_Gun");
     -unity-background-image-tint-color: #ff2a47;
 }
 

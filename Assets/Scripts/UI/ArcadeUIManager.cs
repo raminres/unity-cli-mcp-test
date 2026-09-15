@@ -459,7 +459,18 @@ namespace Arcade.UI
             if (laserSprite == null)
             {
                 var gunSp = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Gun.png");
-                laserSprite = gunSp != null ? gunSp : UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Laser.png");
+                if (gunSp == null)
+                {
+                    var all = UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/UI/Icons/TX_Powerup_Gun.png");
+                    if (all != null)
+                    {
+                        for (int i = 0; i < all.Length; i++)
+                        {
+                            if (all[i] is Sprite s) { gunSp = s; break; }
+                        }
+                    }
+                }
+                laserSprite = gunSp;
             }
 #endif
 
