@@ -4444,6 +4444,49 @@ namespace Arcade.Tests
             Object.DestroyImmediate(badgeObj);
         }
 
+        [Test]
+        public void ArcadeUIManager_MultiplierBadge_SetsIconBackgroundImageWhenActive()
+        {
+            var uiGo = new GameObject("TestUI");
+            var uiMgr = uiGo.AddComponent<ArcadeUIManager>();
+
+            var root = new UnityEngine.UIElements.VisualElement();
+            var badge = new UnityEngine.UIElements.VisualElement { name = "multiplier-status-badge" };
+            var icon = new UnityEngine.UIElements.VisualElement { name = "multiplier-status-icon" };
+            var valLabel = new UnityEngine.UIElements.Label { name = "multiplier-value-label" };
+            var timerLabel = new UnityEngine.UIElements.Label { name = "multiplier-timer-label" };
+            badge.Add(icon);
+            badge.Add(valLabel);
+            badge.Add(timerLabel);
+            root.Add(badge);
+
+            var sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            typeof(ArcadeUIManager).GetField("multiplierSprite", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, sprite);
+
+            var bindMethod = typeof(ArcadeUIManager).GetMethod("BindElements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            typeof(ArcadeUIManager).GetField("root", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, root);
+            bindMethod.Invoke(uiMgr, null);
+
+            uiMgr.HandleScoreMultiplierStateChanged(true, 2, 10f);
+
+            Assert.IsFalse(badge.ClassListContains("powerup-hidden"));
+            Assert.IsTrue(badge.ClassListContains("mult-tier-2x"));
+            Assert.IsNotNull(icon.style.backgroundImage.value.sprite, "Multiplier icon must have valid backgroundImage sprite assigned when active.");
+
+            Object.DestroyImmediate(uiGo);
+            Object.DestroyImmediate(sprite);
+        }
+
+        [Test]
+        public void PaddleLaserController_HyperBeamMaterial_ConfiguredWithGradientShaderAndTexture()
+        {
+            var mat = PaddleLaserController.GetOrCreateHyperBeamMaterial();
+            Assert.IsNotNull(mat, "HyperBeam material must not be null.");
+            Assert.IsNotNull(mat.shader, "Shader must not be null.");
+            Assert.IsTrue(mat.shader.name.Contains("LaserHyperBeam") || mat.shader.name.Contains("Unlit"));
+            Assert.IsTrue(mat.HasProperty("_MainTex") || mat.HasProperty("_BaseMap"), "Shader must support gradient texture property.");
+        }
+
         #endregion
     }
 }

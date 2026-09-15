@@ -474,6 +474,14 @@ namespace Arcade.Editor
 
             var paddleCtrl = paddleGo.AddComponent<PaddleController>();
             paddleCtrl.EnsureSteppedMeshHierarchy();
+            var laserCtrl = paddleGo.AddComponent<PaddleLaserController>();
+            var beamMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_LaserHyperBeam.mat");
+            if (beamMat != null)
+            {
+                var laserSo = new SerializedObject(laserCtrl);
+                laserSo.FindProperty("hyperBeamMaterialAsset").objectReferenceValue = beamMat;
+                laserSo.ApplyModifiedProperties();
+            }
 
             // 8. Ball (Sphere) with Dual-Layer Trail
             var ballGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -556,17 +564,17 @@ namespace Arcade.Editor
             if (hudPanelSettings != null) panelRenderer.panelSettings = hudPanelSettings;
             var uiMgr = uiGo.AddComponent<ArcadeUIManager>();
             var uiMgrSo = new SerializedObject(uiMgr);
-            var heartFill = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Heart_Fill.png");
-            var heartEmpty = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Heart_Empty.png");
+            var heartFill = LoadSpriteFromPath("Assets/UI/Icons/TX_Heart_Fill.png");
+            var heartEmpty = LoadSpriteFromPath("Assets/UI/Icons/TX_Heart_Empty.png");
             if (heartFill != null) uiMgrSo.FindProperty("heartFillSprite").objectReferenceValue = heartFill;
             if (heartEmpty != null) uiMgrSo.FindProperty("heartEmptySprite").objectReferenceValue = heartEmpty;
 
-            var lvlIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Level_Settings.png");
-            var muteIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Volume_Mute.png");
-            var volUpIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Volume_Up.png");
-            var setIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Settings.png");
-            var pauseIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Pause.png");
-            var playIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Play.png");
+            var lvlIcon = LoadSpriteFromPath("Assets/UI/Icons/TX_Level_Settings.png");
+            var muteIcon = LoadSpriteFromPath("Assets/UI/Icons/TX_Volume_Mute.png");
+            var volUpIcon = LoadSpriteFromPath("Assets/UI/Icons/TX_Volume_Up.png");
+            var setIcon = LoadSpriteFromPath("Assets/UI/Icons/TX_Settings.png");
+            var pauseIcon = LoadSpriteFromPath("Assets/UI/Icons/TX_Pause.png");
+            var playIcon = LoadSpriteFromPath("Assets/UI/Icons/TX_Play.png");
 
             if (lvlIcon != null) uiMgrSo.FindProperty("levelSettingsSprite").objectReferenceValue = lvlIcon;
             if (muteIcon != null) uiMgrSo.FindProperty("volumeMuteSprite").objectReferenceValue = muteIcon;
@@ -575,22 +583,12 @@ namespace Arcade.Editor
             if (pauseIcon != null) uiMgrSo.FindProperty("pauseSprite").objectReferenceValue = pauseIcon;
             if (playIcon != null) uiMgrSo.FindProperty("playSprite").objectReferenceValue = playIcon;
 
-            var shieldIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Shield.png");
-            var multiBallIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Multi_Ball.png");
-            var paddleExpandIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
-            var multiplierIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
-            var laserIcon = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Gun.png");
-            if (laserIcon == null)
-            {
-                var all = AssetDatabase.LoadAllAssetsAtPath("Assets/UI/Icons/TX_Powerup_Gun.png");
-                if (all != null)
-                {
-                    for (int i = 0; i < all.Length; i++)
-                    {
-                        if (all[i] is Sprite s) { laserIcon = s; break; }
-                    }
-                }
-            }
+            var shieldIcon = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Shield.png");
+            var multiBallIcon = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Multi_Ball.png");
+            var paddleExpandIcon = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
+            var multiplierIcon = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
+            var laserIcon = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Gun.png");
+
             if (shieldIcon != null) uiMgrSo.FindProperty("shieldSprite").objectReferenceValue = shieldIcon;
             if (multiBallIcon != null) uiMgrSo.FindProperty("multiBallSprite").objectReferenceValue = multiBallIcon;
             if (paddleExpandIcon != null) uiMgrSo.FindProperty("paddleExpandSprite").objectReferenceValue = paddleExpandIcon;
@@ -680,6 +678,21 @@ namespace Arcade.Editor
             texturesProp.GetArrayElementAtIndex(2).objectReferenceValue = texC;
             texturesProp.GetArrayElementAtIndex(3).objectReferenceValue = texD;
             bgSo.ApplyModifiedProperties();
+        }
+
+        private static Sprite LoadSpriteFromPath(string path)
+        {
+            var sp = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (sp != null) return sp;
+            var all = AssetDatabase.LoadAllAssetsAtPath(path);
+            if (all != null)
+            {
+                for (int i = 0; i < all.Length; i++)
+                {
+                    if (all[i] is Sprite s) return s;
+                }
+            }
+            return null;
         }
     }
 }

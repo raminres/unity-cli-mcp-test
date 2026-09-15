@@ -2019,19 +2019,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6517e16bdfe0ed04cad51250d5945064, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.UI.ArcadeUIManager
-  heartFillSprite: {fileID: 21300000, guid: 5c78b93fab88e17459882a82ea8a4a6f, type: 3}
-  heartEmptySprite: {fileID: 21300000, guid: c9c893b5713e23449815fbcff6eb5834, type: 3}
+  heartFillSprite: {fileID: -7640236142769103314, guid: 5c78b93fab88e17459882a82ea8a4a6f, type: 3}
+  heartEmptySprite: {fileID: -4203376285367048203, guid: c9c893b5713e23449815fbcff6eb5834, type: 3}
   shieldSprite: {fileID: 3950488328852594513, guid: 16428cb230612564080e96abe31d3eea, type: 3}
   multiBallSprite: {fileID: -5547497205224055285, guid: 3098a697d024c2547bdafd3878c03c4b, type: 3}
-  paddleExpandSprite: {fileID: 21300000, guid: a78437860f4b9b54184a24a248743a7d, type: 3}
-  multiplierSprite: {fileID: 21300000, guid: 1d8d97a548b3e734687c47462e523395, type: 3}
-  levelSettingsSprite: {fileID: 21300000, guid: 31f75bf5242ae5841843e322927f8164, type: 3}
-  volumeMuteSprite: {fileID: 21300000, guid: 19323d3393a6acb4c9810de7a485552e, type: 3}
-  volumeUpSprite: {fileID: 21300000, guid: 9b70a43178d3e484aaa75e906b4ade94, type: 3}
-  settingsSprite: {fileID: 21300000, guid: d24cd8b25486cfe45a7731b9a5d3afce, type: 3}
-  pauseSprite: {fileID: 21300000, guid: de14abab37824164b93573467f215b5c, type: 3}
-  playSprite: {fileID: 21300000, guid: dd600ea38ce338d4394fa625707eaee8, type: 3}
-  laserSprite: {fileID: 21300000, guid: 820d572091b85c34bb7540e3cf8929a1, type: 3}
+  paddleExpandSprite: {fileID: 1887180088086137092, guid: a78437860f4b9b54184a24a248743a7d, type: 3}
+  multiplierSprite: {fileID: 4154364225601366484, guid: 1d8d97a548b3e734687c47462e523395, type: 3}
+  levelSettingsSprite: {fileID: -2273729428417534996, guid: 31f75bf5242ae5841843e322927f8164, type: 3}
+  volumeMuteSprite: {fileID: 8794034334353336319, guid: 19323d3393a6acb4c9810de7a485552e, type: 3}
+  volumeUpSprite: {fileID: 6809731119358267359, guid: 9b70a43178d3e484aaa75e906b4ade94, type: 3}
+  settingsSprite: {fileID: 1324879886458065431, guid: d24cd8b25486cfe45a7731b9a5d3afce, type: 3}
+  pauseSprite: {fileID: -6814120416911178420, guid: de14abab37824164b93573467f215b5c, type: 3}
+  playSprite: {fileID: 4347884672928528282, guid: dd600ea38ce338d4394fa625707eaee8, type: 3}
+  laserSprite: {fileID: 7392651483920194821, guid: 820d572091b85c34bb7540e3cf8929a1, type: 3}
 --- !u!1931382934 &1588724071
 PanelRenderer:
   m_ObjectHideFlags: 0
@@ -2117,6 +2117,7 @@ GameObject:
   - component: {fileID: 1714151287}
   - component: {fileID: 1714151289}
   - component: {fileID: 1714151286}
+  - component: {fileID: 1714151290}
   m_Layer: 0
   m_Name: Paddle
   m_TagString: Untagged
@@ -2148,6 +2149,26 @@ MonoBehaviour:
   stepBottom: {fileID: 1930269267}
   rb: {fileID: 0}
   rootCollider: {fileID: 1714151287}
+  laserController: {fileID: 1714151290}
+--- !u!114 &1714151290
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1714151285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92252efb4d891834ba256901675b4174, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.PaddleLaserController
+  fireRateInterval: 0.32
+  mountSpacingRatio: 0.38
+  beamWidth: 3.2
+  beamHeight: 31
+  hyperBeamDuration: 5
+  beamSurgeDuration: 0.35
+  hyperBeamMaterialAsset: {fileID: 2100000, guid: a49c3725b8214311bb633857a621cf92, type: 2}
 --- !u!65 &1714151287
 BoxCollider:
   m_ObjectHideFlags: 0

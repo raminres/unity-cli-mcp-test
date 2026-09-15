@@ -453,9 +453,37 @@ namespace Arcade.UI
             if (multiBallSprite == null)
                 multiBallSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Multi_Ball.png");
             if (paddleExpandSprite == null)
-                paddleExpandSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
+            {
+                var sp = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
+                if (sp == null)
+                {
+                    var all = UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/UI/Icons/TX_Powerup_Arrows_Outward.png");
+                    if (all != null)
+                    {
+                        for (int i = 0; i < all.Length; i++)
+                        {
+                            if (all[i] is Sprite s) { sp = s; break; }
+                        }
+                    }
+                }
+                paddleExpandSprite = sp;
+            }
             if (multiplierSprite == null)
-                multiplierSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
+            {
+                var sp = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
+                if (sp == null)
+                {
+                    var all = UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
+                    if (all != null)
+                    {
+                        for (int i = 0; i < all.Length; i++)
+                        {
+                            if (all[i] is Sprite s) { sp = s; break; }
+                        }
+                    }
+                }
+                multiplierSprite = sp;
+            }
             if (laserSprite == null)
             {
                 var gunSp = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Powerup_Gun.png");
@@ -1156,6 +1184,12 @@ namespace Arcade.UI
             {
                 multiplierStatusBadge.RemoveFromClassList("powerup-hidden");
                 multiplierStatusBadge.style.display = DisplayStyle.Flex;
+
+                var iconMultiplier = multiplierStatusBadge.Q<VisualElement>("multiplier-status-icon");
+                if (iconMultiplier != null && multiplierSprite != null)
+                {
+                    iconMultiplier.style.backgroundImage = new StyleBackground(multiplierSprite);
+                }
 
                 multiplierStatusBadge.RemoveFromClassList("mult-tier-2x");
                 multiplierStatusBadge.RemoveFromClassList("mult-tier-3x");

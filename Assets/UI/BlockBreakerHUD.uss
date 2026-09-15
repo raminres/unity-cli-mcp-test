@@ -222,17 +222,33 @@
 }
 
 .icon-paddle-expand {
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Arrows_Outward.png?fileID=21300000&guid=a78437860f4b9b54184a24a248743a7d&type=3#TX_Powerup_Arrows_Outward");
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Arrows_Outward.png?fileID=1887180088086137092&guid=a78437860f4b9b54184a24a248743a7d&type=3#TX_Powerup_Arrows_Outward_0");
     -unity-background-image-tint-color: #00e5ff;
 }
 
 .icon-multiplier {
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Extra_Points.png?fileID=21300000&guid=1d8d97a548b3e734687c47462e523395&type=3#TX_Powerup_Extra_Points");
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Extra_Points.png?fileID=4154364225601366484&guid=1d8d97a548b3e734687c47462e523395&type=3#TX_Powerup_Extra_Points_0");
     -unity-background-image-tint-color: #ffd700;
 }
 
+.mult-tier-2x .icon-multiplier {
+    -unity-background-image-tint-color: #ffd700;
+}
+
+.mult-tier-3x .icon-multiplier {
+    -unity-background-image-tint-color: #ff8c00;
+}
+
+.mult-tier-4x .icon-multiplier {
+    -unity-background-image-tint-color: #ff1744;
+}
+
+.mult-tier-5x .icon-multiplier {
+    -unity-background-image-tint-color: #d500f9;
+}
+
 .icon-laser {
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Gun.png?fileID=21300000&guid=820d572091b85c34bb7540e3cf8929a1&type=3#TX_Powerup_Gun");
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Gun.png?fileID=7392651483920194821&guid=820d572091b85c34bb7540e3cf8929a1&type=3#TX_Powerup_Gun_0");
     -unity-background-image-tint-color: #ff2a47;
 }
 

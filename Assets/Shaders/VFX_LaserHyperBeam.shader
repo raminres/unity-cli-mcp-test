@@ -2,6 +2,8 @@ Shader "Arcade/VFX_LaserHyperBeam"
 {
     Properties
     {
+        _MainTex ("Beam Gradient", 2D) = "white" {}
+        _BaseMap ("Base Map (Fallback)", 2D) = "white" {}
         _CoreColor ("Core Color", Color) = (1.0, 1.0, 1.0, 1.0)
         _InnerColor ("Inner Color", Color) = (1.0, 0.35, 0.6, 1.0)
         _OuterColor ("Outer Color", Color) = (1.0, 0.08, 0.28, 0.85)
@@ -51,7 +53,12 @@ Shader "Arcade/VFX_LaserHyperBeam"
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
+
             CBUFFER_START(UnityPerMaterial)
+                float4 _MainTex_ST;
+                float4 _BaseMap_ST;
                 half4 _CoreColor;
                 half4 _InnerColor;
                 half4 _OuterColor;
@@ -102,12 +109,17 @@ Shader "Arcade/VFX_LaserHyperBeam"
                 // Gradient color blending: outer aura -> inner pink glow -> intense white core
                 half3 col = lerp(_OuterColor.rgb, _InnerColor.rgb, innerMask);
                 col = lerp(col, _CoreColor.rgb, coreMask);
+
+                // Modulate with explicit texture if provided
+                half4 texCol = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
+                col *= texCol.rgb;
+
                 col *= ripple;
                 col += _BaseFlareColor.rgb * (baseFlare * (1.0 - distCenter));
                 col += _CoreColor.rgb * tipGlow;
 
                 // Alpha blending: high opacity in core, soft fade at lateral flanks
-                float alpha = saturate(edgeFade * (_OuterColor.a + coreMask * 0.35 + baseFlare * 0.25));
+                float alpha = saturate(edgeFade * (_OuterColor.a + coreMask * 0.35 + baseFlare * 0.25) * texCol.a);
 
                 return half4(col, alpha);
             }
