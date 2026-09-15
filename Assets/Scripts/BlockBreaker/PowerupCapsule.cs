@@ -443,7 +443,7 @@ namespace Arcade.BlockBreaker
         /// </summary>
         public static void ClearAllFallingCapsules()
         {
-            var capsules = FindObjectsByType<PowerupCapsule>(FindObjectsSortMode.None);
+            var capsules = FindObjectsByType<PowerupCapsule>();
             for (int i = 0; i < capsules.Length; i++)
             {
                 if (capsules[i] != null)
@@ -464,6 +464,24 @@ namespace Arcade.BlockBreaker
                 DestroyImmediate(gameObject);
             }
         }
+
+#if UNITY_EDITOR
+        private static Sprite LoadSpriteSafe(string path)
+        {
+            var sp = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (sp != null) return sp;
+
+            var all = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path);
+            if (all != null)
+            {
+                for (int i = 0; i < all.Length; i++)
+                {
+                    if (all[i] is Sprite s) return s;
+                }
+            }
+            return null;
+        }
+#endif
 
         /// <summary>
         /// Resolves the billboard sprite icon matching the powerup archetype.
@@ -505,22 +523,6 @@ namespace Arcade.BlockBreaker
             }
 
 #if UNITY_EDITOR
-        private static Sprite LoadSpriteSafe(string path)
-        {
-            var sp = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
-            if (sp != null) return sp;
-
-            var all = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path);
-            if (all != null)
-            {
-                for (int i = 0; i < all.Length; i++)
-                {
-                    if (all[i] is Sprite s) return s;
-                }
-            }
-            return null;
-        }
-
             switch (type)
             {
                 case BlockSpecialType.PaddleExpander:
