@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 7
   levelName: 'Level 7: Neon Heart'
-  levelDescription: An arcade heart silhouette with extra heart drops. Keep the rhythm alive as ball velocity continues to accelerate.
+  levelDescription: An arcade heart silhouette with extra heart drops. Maintain rhythm as ball velocity accelerates and sluggish paddle/ball debuffs test your reflexes.
   layoutType: 10
   colorPattern: 0
   columns: 13
@@ -27,7 +27,7 @@ MonoBehaviour:
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.16
-  initialPaddleWidth: 5
+  initialPaddleWidth: 4.8
   multiplier2xCount: 2
   multiplier3xCount: 1
   multiplier4xCount: 0
@@ -41,6 +41,12 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 0
   laserDuration: 10
+  paddleShortenerCount: 1
+  paddleSlowerCount: 1
+  brickFreezerCount: 0
+  ballSizeDecreaserCount: 1
+  ballSlowerCount: 1
+  paddleFreezerCount: 0
   parTime: 50
   timeBonusMax: 4000
   starThresholds: 800c0000581b000004290000i

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 15
   levelName: 'Level 15: Chaos Labyrinth'
-  levelDescription: The ultimate 15-level grand climax! A master custom-authored ASCII labyrinth with tactical pockets, top velocity, and the entire powerup arsenal.
+  levelDescription: The ultimate 15-level grand climax! Master ASCII labyrinth featuring peak velocity, maximum powerup firepower, and an unrelenting barrage of 13 hazard blocks.
   layoutType: 16
   colorPattern: 1
   columns: 14
@@ -37,7 +37,7 @@ MonoBehaviour:
     XXXXXXXXXXXXXX'
   customLayoutRows: []
   ballSpeedMultiplier: 1.48
-  initialPaddleWidth: 5
+  initialPaddleWidth: 4.5
   multiplier2xCount: 2
   multiplier3xCount: 2
   multiplier4xCount: 2
@@ -51,6 +51,12 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 2
   laserDuration: 10
+  paddleShortenerCount: 2
+  paddleSlowerCount: 2
+  brickFreezerCount: 3
+  ballSizeDecreaserCount: 2
+  ballSlowerCount: 2
+  paddleFreezerCount: 2
   parTime: 70
   timeBonusMax: 7000
   starThresholds: d4300000a8610000a08c0000i

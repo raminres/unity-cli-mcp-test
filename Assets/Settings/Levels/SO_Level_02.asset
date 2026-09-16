@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 2
   levelName: 'Level 2: Glass & Gold'
-  levelDescription: A sparkling diamond gem formation. Introduces durable glass-encased bricks requiring two strikes and score multiplier targets for big points.
+  levelDescription: A sparkling diamond gem formation. Introduces durable glass-encased bricks, score multipliers, and hazard awareness with the inward Paddle Shortener.
   layoutType: 1
   colorPattern: 0
   columns: 12
@@ -27,7 +27,7 @@ MonoBehaviour:
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 0.96
-  initialPaddleWidth: 5.2
+  initialPaddleWidth: 5
   multiplier2xCount: 1
   multiplier3xCount: 0
   multiplier4xCount: 0
@@ -41,6 +41,12 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 0
   laserDuration: 10
+  paddleShortenerCount: 1
+  paddleSlowerCount: 0
+  brickFreezerCount: 0
+  ballSizeDecreaserCount: 0
+  ballSlowerCount: 0
+  paddleFreezerCount: 0
   parTime: 40
   timeBonusMax: 3000
   starThresholds: 2003000008070000800c0000i

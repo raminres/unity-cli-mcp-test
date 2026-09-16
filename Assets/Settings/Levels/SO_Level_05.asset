@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 5
   levelName: 'Level 5: Multi-Ball Ring'
-  levelDescription: A perimeter fortress framing a hollow bouncing chamber. Trigger Multi-Ball to unleash 3 balls ricocheting inside the inner sanctum!
-  layoutType: 9
+  levelDescription: A perimeter fortress framing a hollow bouncing chamber. Juggling 3 balls gets intense when Brick Freezers, Paddle Slowers, and sudden Paddle Freezers hit the arena!
+  layoutType: 6
   colorPattern: 2
   columns: 13
   rowsPerTier: 2
@@ -42,11 +42,11 @@ MonoBehaviour:
   laserCount: 0
   laserDuration: 10
   paddleShortenerCount: 0
-  paddleSlowerCount: 0
-  brickFreezerCount: 0
+  paddleSlowerCount: 1
+  brickFreezerCount: 1
   ballSizeDecreaserCount: 0
   ballSlowerCount: 0
-  paddleFreezerCount: 0
+  paddleFreezerCount: 1
   parTime: 45
   timeBonusMax: 3500
   starThresholds: d007000030110000901a0000i

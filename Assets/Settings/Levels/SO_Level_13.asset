@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 13
   levelName: 'Level 13: Quantum Lattice'
-  levelDescription: A 50% density quantum lattice mesh with high-frequency empty gaps. Unlocks the supreme 5X combo multiplier!
+  levelDescription: A 50% density quantum lattice mesh with 5X combo multipliers. Fast-paced chaos with 10 total hazards challenging paddle control at high speed.
   layoutType: 9
   colorPattern: 1
   columns: 14
@@ -27,7 +27,7 @@ MonoBehaviour:
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.4
-  initialPaddleWidth: 5
+  initialPaddleWidth: 4.6
   multiplier2xCount: 2
   multiplier3xCount: 2
   multiplier4xCount: 2
@@ -41,6 +41,12 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 0
   laserDuration: 10
+  paddleShortenerCount: 2
+  paddleSlowerCount: 1
+  brickFreezerCount: 2
+  ballSizeDecreaserCount: 2
+  ballSlowerCount: 1
+  paddleFreezerCount: 2
   parTime: 55
   timeBonusMax: 5500
   starThresholds: f02300005046000090650000i

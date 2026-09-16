@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 4
   levelName: 'Level 4: Kinetic Shield'
-  levelDescription: An imposing heraldic crest shield. Deploy the bottom laser Shield power-up for a 10-second safety net, and collect extra heart lives.
+  levelDescription: An imposing heraldic crest shield. Deploy the bottom laser Shield power-up while contending with glacial Brick Freezers and Ball Shrink hazards.
   layoutType: 12
   colorPattern: 0
   columns: 13
@@ -41,6 +41,12 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 0
   laserDuration: 10
+  paddleShortenerCount: 0
+  paddleSlowerCount: 0
+  brickFreezerCount: 1
+  ballSizeDecreaserCount: 1
+  ballSlowerCount: 0
+  paddleFreezerCount: 0
   parTime: 50
   timeBonusMax: 3500
   starThresholds: 40060000ac0d000018150000i

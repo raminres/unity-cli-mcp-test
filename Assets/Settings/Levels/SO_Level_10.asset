@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 10
   levelName: 'Level 10: The Hourglass'
-  levelDescription: A high-tension hourglass funnel pinching the center. Thread the ball through the bottleneck to sweep out the upper chamber.
+  levelDescription: A high-tension hourglass funnel pinching the center. Thread the bottleneck with a leaner paddle while managing 7 active hazard drops.
   layoutType: 4
   colorPattern: 0
   columns: 13
@@ -27,7 +27,7 @@ MonoBehaviour:
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.28
-  initialPaddleWidth: 5
+  initialPaddleWidth: 4.6
   multiplier2xCount: 2
   multiplier3xCount: 2
   multiplier4xCount: 1
@@ -41,6 +41,12 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 0
   laserDuration: 10
+  paddleShortenerCount: 1
+  paddleSlowerCount: 1
+  brickFreezerCount: 2
+  ballSizeDecreaserCount: 1
+  ballSlowerCount: 1
+  paddleFreezerCount: 1
   parTime: 60
   timeBonusMax: 5000
   starThresholds: a8160000e02e00005c440000i

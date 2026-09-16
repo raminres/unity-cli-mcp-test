@@ -2,12 +2,12 @@
 
 [![Unity Version](https://img.shields.io/badge/Unity-6%20(6000.6.0f1)-black.svg?style=flat&logo=unity)](https://unity.com/)
 [![Render Pipeline](https://img.shields.io/badge/Render%20Pipeline-URP-blue.svg)](https://unity.com/srp/universal-render-pipeline)
-[![Automated Tests](https://img.shields.io/badge/Tests-204%2F204%20Passing%20(100%25)-brightgreen.svg)]()
+[![Automated Tests](https://img.shields.io/badge/Tests-205%2F205%20Passing%20(100%25)-brightgreen.svg)]()
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%20(Swift)%20%7C%20WebGPU%20%7C%20PC-purple.svg)]()
 [![Git LFS](https://img.shields.io/badge/Git-LFS%20Enabled-orange.svg)](https://git-lfs.github.com/)
 [![AI Integration](https://img.shields.io/badge/AI%20Assistant-Google%20Antigravity-green.svg)]()
 
-**BlockBreaker 3D** is a physics-driven arcade brick breaker built with Unity 6 (6000.6.0f1) and the Universal Render Pipeline (URP). Features 3-tier stepped pyramid paddle deflection with tangential surface friction and kinetic speed pops, Model A brick color physical interactions (dampen/boost/scatter), anti-trap trajectory physics, explosive chain cascades, armored 2-hit glass bricks, twin laser blaster cannons, lone block clutch hyper-beam railguns, a complete hazard & powerdown debuff subsystem with tumbling diamond drops, an escalating 15-level campaign arc with high-density grids (11–14 columns), mobile safe-area touch controls, frame-0 shader prewarming, and an automated NUnit test suite (204 tests).
+**BlockBreaker 3D** is a physics-driven arcade brick breaker built with Unity 6 (6000.6.0f1) and the Universal Render Pipeline (URP). Features 3-tier stepped pyramid paddle deflection with tangential surface friction and kinetic speed pops, Model A brick color physical interactions (dampen/boost/scatter), anti-trap trajectory physics, explosive chain cascades, armored 2-hit glass bricks, twin laser blaster cannons, lone block clutch hyper-beam railguns, an escalating 15-level campaign arc with high-density grids (11–14 columns) and progressive hazard saturation (up to 13 powerdowns), mobile safe-area touch controls, frame-0 shader prewarming, and an automated NUnit test suite (205 tests).
 
 Acts as a production testbed for **Google Antigravity**, **Unity MCP (Model Context Protocol)**, and **Unity CLI** agentic workflows.
 
@@ -54,25 +54,25 @@ Acts as a production testbed for **Google Antigravity**, **Unity MCP (Model Cont
 
 ## 🕹️ 15-Level Campaign Arc
 
-Levels are authored as modular ScriptableObjects (`Assets/Settings/Levels/SO_Level_01.asset` to `SO_Level_15.asset`) with high-density grids (11–14 columns, $13.75\text{u}$ to $17.5\text{u}$ span) and outer flank bumper blocks eliminating empty side highways:
+Levels are authored as modular ScriptableObjects (`Assets/Settings/Levels/SO_Level_01.asset` to `SO_Level_15.asset`) with high-density grids (11–14 columns, $13.75\text{u}$ to $17.5\text{u}$ span), escalating hazards, and leaner paddle widths for high-intensity arcade challenge:
 
-| Level | Name | Archetype | Grid | Blocks | Speed | Modifiers Breakdown | Par | 3-Star |
-| :---: | :--- | :---: | :---: | :---: | :---: | :--- | :---: | :---: |
-| **1** | **First Flight** | `Pyramid` | $11 \times 6$ | **42** | `0.92x` | • 1x Expander | 35s | 1,200 |
-| **2** | **Glass & Gold** | `Diamond` | $12 \times 6$ | **42** | `0.96x` | • 1x 2X, 2x Glass, 1x Expander | 40s | 1,800 |
-| **3** | **Twin Pillars** | `Pillars` | $13 \times 6$ | **42** | `1.00x` | • 2x Bombs, 2x 2X, 1x Expander, 1x Laser | 45s | 2,400 |
-| **4** | **Kinetic Shield** | `Shield` | $13 \times 6$ | **62** | `1.04x` | • 1x Shield, 1x Heart, 1x Bomb, 2x Glass | 50s | 3,200 |
-| **5** | **Multi-Ball Ring** | `HollowBox` | $13 \times 6$ | **34** | `1.08x` | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass | 45s | 3,800 |
-| **6** | **Royal Crown** | `Crown` | $13 \times 6$ | **70** | `1.12x` | • 1x 3X, 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass, 1x Laser | 60s | 5,000 |
-| **7** | **Neon Heart** | `Heart` | $13 \times 6$ | **52** | `1.16x` | • 2x Hearts, 1x Shield, 1x 3X, 2x 2X, 1x Bomb, 2x Glass, 1x Multi-Ball | 50s | 4,200 |
-| **8** | **Space Invader** | `Invader` | $13 \times 6$ | **34** | `1.20x` | • 2x Bombs, 2x 2X, 2x 3X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Glass, 1x Laser | 45s | 4,500 |
-| **9** | **Crossfire** | `Cross` | $13 \times 6$ | **48** | `1.24x` | • 1x 4X, 2x 2X, 1x 3X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball | 50s | 5,200 |
-| **10** | **The Hourglass** | `Hourglass` | $13 \times 6$ | **56** | `1.28x` | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball | 55s | 6,000 |
-| **11** | **Chevron Strike** | `Chevron` | $13 \times 6$ | **38** | `1.32x` | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 2x Multi-Balls, 1x Laser | 45s | 4,800 |
-| **12** | **Castle Bastion** | `Castle` | $14 \times 6$ | **59** | `1.36x` | • 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls | 60s | 7,000 |
-| **13** | **Quantum Lattice** | `CheckerboardEmpty` | $14 \times 6$ | **45** | `1.40x` | • 1x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls | 50s | 6,500 |
-| **14** | **Striped Vault** | `Stripes` | $14 \times 6$ | **44** | `1.44x` | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls, 1x Laser | 55s | 7,200 |
-| **15** | **Chaos Labyrinth** | `Custom` | $14 \times 6$ | **66** | `1.48x` | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 4x Bombs, 4x Glass, 2x Hearts, 2x Shields, 2x Multi-Balls, 2x Lasers | 65s | 8,500 |
+| Level | Name | Archetype | Grid | Blocks | Speed | Paddle | Buffs & Hazards Breakdown | Par | 3-Star |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :--- | :---: | :---: |
+| **1** | **First Flight** | `Pyramid` | $11 \times 6$ | **42** | `0.92x` | `5.5u` | • 1x Expander *(Tutorial Warmup, 0 Hazards)* | 35s | 1,200 |
+| **2** | **Glass & Gold** | `Diamond` | $12 \times 6$ | **42** | `0.96x` | `5.0u` | • 1x 2X, 2x Glass, 1x Expander<br>⚠️ **1x Shortener** | 40s | 1,800 |
+| **3** | **Twin Pillars** | `Pillars` | $13 \times 6$ | **42** | `1.00x` | `5.0u` | • 2x Bombs, 2x 2X, 1x Expander, 1x Laser<br>⚠️ **1x Paddle Slower, 1x Ball Slower** | 45s | 2,400 |
+| **4** | **Kinetic Shield** | `Shield` | $13 \times 6$ | **62** | `1.04x` | `5.0u` | • 1x Shield, 1x Heart, 1x Bomb, 2x Glass<br>⚠️ **1x Brick Freezer, 1x Ball Shrink** | 50s | 3,200 |
+| **5** | **Multi-Ball Ring** | `HollowBox` | $13 \times 6$ | **34** | `1.08x` | `5.0u` | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass<br>⚠️ **1x Brick Freezer, 1x Paddle Slower, 1x Paddle Freezer** | 45s | 3,800 |
+| **6** | **Royal Crown** | `Crown` | $13 \times 6$ | **70** | `1.12x` | `4.8u` | • 1x 3X, 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass, 1x Laser<br>⚠️ **1x Shortener, 1x Brick Freezer, 1x Ball Shrink, 1x Paddle Freezer** | 60s | 5,000 |
+| **7** | **Neon Heart** | `Heart` | $13 \times 6$ | **52** | `1.16x` | `4.8u` | • 2x Hearts, 1x Shield, 1x 3X, 2x 2X, 1x Bomb, 2x Glass, 1x Multi-Ball<br>⚠️ **1x Shortener, 1x Paddle Slower, 1x Ball Shrink, 1x Ball Slower** | 50s | 4,200 |
+| **8** | **Space Invader** | `Invader` | $13 \times 6$ | **34** | `1.20x` | `4.8u` | • 2x Bombs, 2x 2X, 2x 3X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Glass, 1x Laser<br>⚠️ **1x Shortener, 1x Brick Freezer, 1x Ball Shrink, 1x Ball Slower, 1x Paddle Freezer** | 45s | 4,500 |
+| **9** | **Crossfire** | `Cross` | $13 \times 6$ | **48** | `1.24x` | `4.8u` | • 1x 4X, 2x 2X, 1x 3X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball<br>⚠️ **1x Shortener, 1x Paddle Slower, 2x Brick Freezers, 1x Ball Shrink, 1x Paddle Freezer** | 50s | 5,200 |
+| **10** | **The Hourglass** | `Hourglass` | $13 \times 6$ | **56** | `1.28x` | `4.6u` | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball<br>⚠️ **1x Shortener, 1x Paddle Slower, 2x Brick Freezers, 1x Ball Shrink, 1x Ball Slower, 1x Paddle Freezer** | 55s | 6,000 |
+| **11** | **Chevron Strike** | `Chevron` | $13 \times 6$ | **38** | `1.32x` | `4.6u` | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 2x Multi-Balls, 1x Laser<br>⚠️ **1x Shortener, 1x Paddle Slower, 2x Brick Freezers, 2x Ball Shrinks, 1x Ball Slower, 1x Paddle Freezer** | 45s | 4,800 |
+| **12** | **Castle Bastion** | `Castle` | $14 \times 6$ | **59** | `1.36x` | `4.6u` | • 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls<br>⚠️ **1x Shortener, 1x Paddle Slower, 2x Brick Freezers, 2x Ball Shrinks, 1x Ball Slower, 2x Paddle Freezers** | 60s | 7,000 |
+| **13** | **Quantum Lattice** | `CheckerboardEmpty` | $14 \times 6$ | **45** | `1.40x` | `4.6u` | • 1x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls<br>⚠️ **2x Shorteners, 1x Paddle Slower, 2x Brick Freezers, 2x Ball Shrinks, 1x Ball Slower, 2x Paddle Freezers** | 50s | 6,500 |
+| **14** | **Striped Vault** | `Stripes` | $14 \times 6$ | **44** | `1.44x` | `4.5u` | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls, 1x Laser<br>⚠️ **2x Shorteners, 2x Paddle Slowers, 2x Brick Freezers, 2x Ball Shrinks, 1x Ball Slower, 2x Paddle Freezers** | 55s | 7,200 |
+| **15** | **Chaos Labyrinth** | `Custom` | $14 \times 6$ | **66** | `1.48x` | `4.5u` | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 4x Bombs, 4x Glass, 2x Hearts, 2x Shields, 2x Multi-Balls, 2x Lasers<br>⚠️ **2x Shorteners, 2x Paddle Slowers, 3x Brick Freezers, 2x Ball Shrinks, 2x Ball Slowers, 2x Paddle Freezers** | 65s | 8,500 |
 
 *Dynamic Volley Pacing increases ball speed +8% every 10s of active rally.*
 
@@ -129,7 +129,7 @@ Levels are authored as modular ScriptableObjects (`Assets/Settings/Levels/SO_Lev
 
 ## 🧪 Automated Test Suite
 
-The project includes **204 unit and integration tests** executing via Unity CLI EditMode test runner:
+The project includes **205 unit and integration tests** executing via Unity CLI EditMode test runner:
 
 ```bash
 # Execute test suite via Unity CLI:

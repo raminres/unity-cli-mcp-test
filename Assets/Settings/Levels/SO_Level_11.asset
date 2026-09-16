@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 11
   levelName: 'Level 11: Chevron Strike'
-  levelDescription: Aggressive forward arrowhead formation. Deflect angled strikes cleanly and ride high-velocity multi-ball surges.
+  levelDescription: Aggressive forward arrowhead formation. Deflect fast angled strikes and double ball-shrink hazards while riding high-velocity multi-ball surges.
   layoutType: 13
   colorPattern: 2
   columns: 13
@@ -27,7 +27,7 @@ MonoBehaviour:
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.32
-  initialPaddleWidth: 5
+  initialPaddleWidth: 4.6
   multiplier2xCount: 2
   multiplier3xCount: 2
   multiplier4xCount: 1
@@ -41,6 +41,12 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 1
   laserDuration: 10
+  paddleShortenerCount: 1
+  paddleSlowerCount: 1
+  brickFreezerCount: 2
+  ballSizeDecreaserCount: 2
+  ballSlowerCount: 1
+  paddleFreezerCount: 1
   parTime: 45
   timeBonusMax: 5000
   starThresholds: 901a0000bc3400002c4c0000i

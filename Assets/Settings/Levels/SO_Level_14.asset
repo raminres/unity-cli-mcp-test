@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 14
   levelName: 'Level 14: Striped Vault'
-  levelDescription: Horizontal clearance tiers separating fortified block bands. Precision bank shots between layers rack up massive scores with 5X multipliers.
+  levelDescription: Horizontal clearance tiers separating fortified block bands. Heavy debuff density with double Shorteners, double Freezers, and high-velocity ricochets.
   layoutType: 8
   colorPattern: 0
   columns: 14
@@ -27,7 +27,7 @@ MonoBehaviour:
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.44
-  initialPaddleWidth: 5
+  initialPaddleWidth: 4.5
   multiplier2xCount: 2
   multiplier3xCount: 2
   multiplier4xCount: 2
@@ -41,6 +41,12 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 1
   laserDuration: 10
+  paddleShortenerCount: 2
+  paddleSlowerCount: 2
+  brickFreezerCount: 2
+  ballSizeDecreaserCount: 2
+  ballSlowerCount: 1
+  paddleFreezerCount: 2
   parTime: 60
   timeBonusMax: 6000
   starThresholds: 302a00000852000030750000i

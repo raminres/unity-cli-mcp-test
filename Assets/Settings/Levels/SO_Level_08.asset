@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 8
   levelName: 'Level 8: Space Invader'
-  levelDescription: Retro 8-bit space invader alien silhouette! Battle past explosive perimeter bombs and collect 3X multipliers while juggling multi-balls.
+  levelDescription: Retro 8-bit space invader alien silhouette! Battle past explosive perimeter bombs, dodging falling freeze hazards while juggling multi-balls.
   layoutType: 11
   colorPattern: 1
   columns: 13
@@ -27,7 +27,7 @@ MonoBehaviour:
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.2
-  initialPaddleWidth: 5
+  initialPaddleWidth: 4.8
   multiplier2xCount: 2
   multiplier3xCount: 2
   multiplier4xCount: 0
@@ -41,6 +41,12 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 1
   laserDuration: 10
+  paddleShortenerCount: 1
+  paddleSlowerCount: 0
+  brickFreezerCount: 1
+  ballSizeDecreaserCount: 1
+  ballSlowerCount: 1
+  paddleFreezerCount: 1
   parTime: 50
   timeBonusMax: 4500
   starThresholds: a00f000034210000d4300000i

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 9
   levelName: 'Level 9: Crossfire'
-  levelDescription: Four intersecting firing arms meet at an explosive nexus. Introduces the rare 4X score multiplier and devastating bomb chain reactions.
+  levelDescription: Four intersecting firing arms meet at an explosive nexus. Introduces the rare 4X score multiplier against 6 escalating hazards including double Brick Freezers.
   layoutType: 5
   colorPattern: 2
   columns: 13
@@ -27,7 +27,7 @@ MonoBehaviour:
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.24
-  initialPaddleWidth: 5
+  initialPaddleWidth: 4.8
   multiplier2xCount: 2
   multiplier3xCount: 1
   multiplier4xCount: 1
@@ -41,6 +41,12 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 0
   laserDuration: 10
+  paddleShortenerCount: 1
+  paddleSlowerCount: 1
+  brickFreezerCount: 2
+  ballSizeDecreaserCount: 1
+  ballSlowerCount: 0
+  paddleFreezerCount: 1
   parTime: 55
   timeBonusMax: 4500
   starThresholds: c012000010270000a4380000i

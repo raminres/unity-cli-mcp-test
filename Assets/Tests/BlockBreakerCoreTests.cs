@@ -2344,6 +2344,39 @@ namespace Arcade.Tests
         }
 
         [Test]
+        public void Campaign_LevelsContainProgressiveHazardsAndLeanerPaddleTuning()
+        {
+            int prevHazards = 0;
+            for (int i = 1; i <= 15; i++)
+            {
+                var cfg = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i:D2}.asset");
+                Assert.IsNotNull(cfg, $"SO_Level_{i:D2} must exist.");
+
+                int totalHazards = cfg.PaddleShortenerCount + cfg.PaddleSlowerCount + cfg.BrickFreezerCount +
+                                   cfg.BallSizeDecreaserCount + cfg.BallSlowerCount + cfg.PaddleFreezerCount;
+
+                if (i == 1)
+                {
+                    Assert.AreEqual(0, totalHazards, "Level 1 must have 0 hazards as tutorial warmup.");
+                    Assert.AreEqual(5.5f, cfg.InitialPaddleWidth, 0.01f);
+                }
+                else
+                {
+                    Assert.GreaterOrEqual(totalHazards, prevHazards, $"Level {i} hazards ({totalHazards}) must be >= Level {i - 1} hazards ({prevHazards}).");
+                    Assert.LessOrEqual(cfg.InitialPaddleWidth, 5.0f, $"Level {i} paddle width should be leaner (<= 5.0).");
+                }
+
+                prevHazards = totalHazards;
+            }
+
+            var lvl15 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_15.asset");
+            int lvl15Hazards = lvl15.PaddleShortenerCount + lvl15.PaddleSlowerCount + lvl15.BrickFreezerCount +
+                               lvl15.BallSizeDecreaserCount + lvl15.BallSlowerCount + lvl15.PaddleFreezerCount;
+            Assert.AreEqual(13, lvl15Hazards, "Level 15 must have 13 hazard blocks for supreme climax challenge.");
+            Assert.AreEqual(4.5f, lvl15.InitialPaddleWidth, 0.01f, "Level 15 paddle must be high-skill tuned at 4.5f.");
+        }
+
+        [Test]
         public void BallController_ResumeFromPauseBeforeLaunch_RemainsDockedOnPaddle()
         {
             var ballObj = new GameObject("TestBall");
