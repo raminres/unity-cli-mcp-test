@@ -55,6 +55,10 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float verticalSpacing = 1.3f;
         [SerializeField] private float startCenterY = 15.5f;
 
+        [Header("Side Flank Bumper Blocks")]
+        [Tooltip("When enabled, places side flank bumper blocks along the outer grid columns (c == 0 and c == cols - 1) on mid-section rows to eliminate dead side gutters.")]
+        [SerializeField] private bool includeSideFlanks = true;
+
         [Header("Custom Layout Pattern (When LayoutType is Custom)")]
         [Tooltip("Multi-line ASCII layout where '.' or space is empty, 'X'/'#' is filled, and 'B','G','R' specify explicit colors.")]
         [TextArea(6, 14)]
@@ -134,6 +138,8 @@ namespace Arcade.BlockBreaker
         public float HorizontalSpacing => horizontalSpacing;
         public float VerticalSpacing => verticalSpacing;
         public float StartCenterY => startCenterY;
+        public bool IncludeSideFlanks => includeSideFlanks;
+        public void SetIncludeSideFlanksForTesting(bool val) => includeSideFlanks = val;
         public string CustomLayout => customLayout;
         public string[] CustomLayoutRows => customLayoutRows;
         public float BallSpeedMultiplier => ballSpeedMultiplier;
@@ -192,9 +198,11 @@ namespace Arcade.BlockBreaker
             if (row < 0 || row >= rows || col < 0 || col >= cols)
                 return false;
 
-            return layoutType switch
+            if (layoutType == LevelLayoutType.FullGrid)
+                return true;
+
+            bool baseShape = layoutType switch
             {
-                LevelLayoutType.FullGrid => true,
                 LevelLayoutType.Diamond => EvaluateDiamond(row, col, rows, cols),
                 LevelLayoutType.Pyramid => EvaluatePyramid(row, col, rows, cols),
                 LevelLayoutType.InvertedPyramid => EvaluateInvertedPyramid(row, col, rows, cols),
@@ -213,6 +221,19 @@ namespace Arcade.BlockBreaker
                 LevelLayoutType.Custom => EvaluateCustom(row, col),
                 _ => true
             };
+
+            if (baseShape) return true;
+
+            // Side Flanks: place outer flank bumpers on mid-section rows for tapered/open archetypes
+            if (includeSideFlanks && layoutType != LevelLayoutType.Custom && (col == 0 || col == cols - 1))
+            {
+                if (row >= rows / 3 && row <= (rows * 2 / 3))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -349,8 +370,9 @@ namespace Arcade.BlockBreaker
         private bool EvaluateChevron(int r, int c, int rows, int cols)
         {
             float cx = (cols - 1) / 2f;
-            float targetRow = Mathf.Abs(c - cx) * 1.25f;
-            return Mathf.Abs(r - targetRow) <= 1.0f;
+            float slope = cx > 0.01f ? (float)(rows - 1.5f) / cx : 1.0f;
+            float targetRow = Mathf.Abs(c - cx) * slope;
+            return Mathf.Abs(r - targetRow) <= 1.25f;
         }
 
         private bool EvaluateCrown(int r, int c, int rows, int cols)

@@ -40,6 +40,12 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float activeSmashSpeedMultiplier = 1.08f; // +8% speed impulse on active paddle strikes
         private int consecutiveSideWallBounces = 0;
 
+        [Header("Color Tier Physical Interaction Settings (Model A)")]
+        [SerializeField] private float redDampenAmount = 1.2f; // Absorbs impact energy, slowing ball by 1.2 u/s
+        [SerializeField] private float greenBoostPercent = 0.10f; // Spring bumper impulse (+10% speed)
+        [SerializeField] private float blueScatterMinAngleDeg = 18f; // Optical prism deflection min scatter
+        [SerializeField] private float blueScatterMaxAngleDeg = 28f; // Optical prism deflection max scatter
+
         private float currentSpeed;
         private bool isLaunched = false;
         private bool isPrimaryBall = true;
@@ -51,6 +57,8 @@ namespace Arcade.BlockBreaker
 
         public bool IsLaunched => isLaunched;
         public Vector3 Velocity => rb != null ? rb.linearVelocity : Vector3.zero;
+        public float BaseSpeed => baseSpeed;
+        public float MaxSpeed => maxSpeed;
         public float CurrentSpeed => currentSpeed;
         public float ActiveVolleyTime => activeVolleyTime;
         public float NextSpeedRampTime => nextSpeedRampTime;
@@ -63,6 +71,10 @@ namespace Arcade.BlockBreaker
         public float MaxPaddleVelocitySteerAngleDeg => maxPaddleVelocitySteerAngleDeg;
         public float ActiveSmashVelocityThreshold => activeSmashVelocityThreshold;
         public float ActiveSmashSpeedMultiplier => activeSmashSpeedMultiplier;
+        public float RedDampenAmount => redDampenAmount;
+        public float GreenBoostPercent => greenBoostPercent;
+        public float BlueScatterMinAngleDeg => blueScatterMinAngleDeg;
+        public float BlueScatterMaxAngleDeg => blueScatterMaxAngleDeg;
         public void SetPaddleVelocityInfluenceForTesting(float val) => paddleVelocityInfluence = val;
         public void SetCurrentSpeedForTesting(float speed) => currentSpeed = speed;
         public int ConsecutiveSideWallBounces => consecutiveSideWallBounces;
@@ -71,6 +83,7 @@ namespace Arcade.BlockBreaker
         public int CurrentVolleyMultiplier => GetVolleyMultiplier(currentVolleyStreak);
         public void SetVolleyStreakForTesting(int streak) => currentVolleyStreak = streak;
         public void HandlePaddleCollisionForTesting(PaddleController hitPaddle) => HandlePaddleCollision(hitPaddle);
+        public void ApplyBlockColorInteractionForTesting(BlockColorTier tier, Collision collision = null) => ApplyBlockColorInteraction(tier, collision);
 
         public static int GetVolleyMultiplier(int streak)
         {
@@ -164,6 +177,7 @@ namespace Arcade.BlockBreaker
 
         public void Initialize(ArcadeGameManager manager, PaddleController paddleController)
         {
+            if (rb == null) rb = GetComponent<Rigidbody>();
             if (paddleController != null) paddle = paddleController;
             if (manager != null)
             {
@@ -524,7 +538,8 @@ namespace Arcade.BlockBreaker
             {
                 consecutiveSideWallBounces = 0; // Reset consecutive wall bounces on block impact
                 currentVolleyStreak++;
-                currentSpeed = Mathf.Min(currentSpeed + speedIncrementPerHit, maxSpeed);
+
+                ApplyBlockColorInteraction(block.Tier, collision);
 
                 if (ArcadeGameManager.Instance != null)
                 {
@@ -581,6 +596,48 @@ namespace Arcade.BlockBreaker
                 float remainingSpeedSqr = Mathf.Max(0.01f, (effectiveSpeed * effectiveSpeed) - (vy * vy));
                 float vx = (vel.x >= 0f ? 1f : -1f) * Mathf.Sqrt(remainingSpeedSqr);
                 rb.linearVelocity = new Vector3(vx, vy, 0f);
+            }
+        }
+
+        /// <summary>
+        /// Applies Model A physical interactions based on block color tier:
+        /// 1. Red: Absorbs kinetic energy, dampening ball speed by redDampenAmount (floored at baseSpeed).
+        /// 2. Green: Spring bumper impulse, accelerating ball speed by greenBoostPercent (capped at maxSpeed).
+        /// 3. Blue: Optical prism refraction, scattering exit angle by +/- [18°, 28°] to break trajectory loops.
+        /// </summary>
+        public void ApplyBlockColorInteraction(BlockColorTier tier, Collision collision = null)
+        {
+            if (rb == null) rb = GetComponent<Rigidbody>();
+            switch (tier)
+            {
+                case BlockColorTier.Red:
+                    currentSpeed = Mathf.Max(baseSpeed, currentSpeed - redDampenAmount);
+                    if (rb != null && rb.linearVelocity.sqrMagnitude > 0.01f)
+                    {
+                        rb.linearVelocity = rb.linearVelocity.normalized * currentSpeed;
+                    }
+                    break;
+
+                case BlockColorTier.Green:
+                    currentSpeed = Mathf.Min(currentSpeed * (1f + greenBoostPercent), maxSpeed);
+                    if (rb != null && rb.linearVelocity.sqrMagnitude > 0.01f)
+                    {
+                        rb.linearVelocity = rb.linearVelocity.normalized * currentSpeed;
+                    }
+                    break;
+
+                case BlockColorTier.Blue:
+                    currentSpeed = Mathf.Min(currentSpeed + speedIncrementPerHit, maxSpeed);
+                    if (rb != null && rb.linearVelocity.sqrMagnitude > 0.01f)
+                    {
+                        float scatterAngle = Random.Range(blueScatterMinAngleDeg, blueScatterMaxAngleDeg);
+                        if (Random.value < 0.5f) scatterAngle = -scatterAngle;
+
+                        Quaternion rot = Quaternion.Euler(0f, 0f, scatterAngle);
+                        Vector3 scattered = rot * rb.linearVelocity;
+                        rb.linearVelocity = SanitizeTrajectory(scattered, currentSpeed, minVerticalAngleDeg, minHorizontalAngleDeg, transform.position.x);
+                    }
+                    break;
             }
         }
 

@@ -17,12 +17,13 @@ MonoBehaviour:
   levelDescription: A perimeter fortress framing a hollow bouncing chamber. Trigger Multi-Ball to unleash 3 balls ricocheting inside the inner sanctum!
   layoutType: 6
   colorPattern: 2
-  columns: 8
+  columns: 13
   rowsPerTier: 2
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
+  includeSideFlanks: 1
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.08
@@ -40,6 +41,6 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 0
   laserDuration: 10
-  parTime: 40
+  parTime: 45
   timeBonusMax: 3500
-  starThresholds: 40060000100e00007c150000i
+  starThresholds: d007000030110000901a0000i

@@ -17,12 +17,13 @@ MonoBehaviour:
   levelDescription: A 50% density quantum lattice mesh with high-frequency empty gaps. Unlocks the supreme 5X combo multiplier!
   layoutType: 9
   colorPattern: 1
-  columns: 10
+  columns: 14
   rowsPerTier: 2
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
+  includeSideFlanks: 1
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.4
@@ -40,6 +41,6 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 0
   laserDuration: 10
-  parTime: 50
+  parTime: 55
   timeBonusMax: 5500
-  starThresholds: 08200000803e0000d8590000i
+  starThresholds: f02300005046000090650000i

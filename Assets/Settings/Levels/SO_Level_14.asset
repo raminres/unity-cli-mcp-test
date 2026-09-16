@@ -17,12 +17,13 @@ MonoBehaviour:
   levelDescription: Horizontal clearance tiers separating fortified block bands. Precision bank shots between layers rack up massive scores with 5X multipliers.
   layoutType: 8
   colorPattern: 0
-  columns: 10
+  columns: 14
   rowsPerTier: 2
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
+  includeSideFlanks: 1
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.44
@@ -40,6 +41,6 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 1
   laserDuration: 10
-  parTime: 55
+  parTime: 60
   timeBonusMax: 6000
-  starThresholds: 1c2500004448000084670000i
+  starThresholds: 302a00000852000030750000i

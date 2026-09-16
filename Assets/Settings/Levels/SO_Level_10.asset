@@ -17,12 +17,13 @@ MonoBehaviour:
   levelDescription: A high-tension hourglass funnel pinching the center. Thread the ball through the bottleneck to sweep out the upper chamber.
   layoutType: 4
   colorPattern: 0
-  columns: 9
+  columns: 13
   rowsPerTier: 2
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
+  includeSideFlanks: 1
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.28
@@ -40,6 +41,6 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 0
   laserDuration: 10
-  parTime: 55
+  parTime: 60
   timeBonusMax: 5000
-  starThresholds: 8813000004290000983a0000i
+  starThresholds: a8160000e02e00005c440000i

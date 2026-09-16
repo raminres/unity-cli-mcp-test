@@ -17,12 +17,13 @@ MonoBehaviour:
   levelDescription: Four intersecting firing arms meet at an explosive nexus. Introduces the rare 4X score multiplier and devastating bomb chain reactions.
   layoutType: 5
   colorPattern: 2
-  columns: 9
+  columns: 13
   rowsPerTier: 2
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
+  includeSideFlanks: 1
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.24
@@ -40,6 +41,6 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 0
   laserDuration: 10
-  parTime: 50
+  parTime: 55
   timeBonusMax: 4500
-  starThresholds: 6810000028230000c8320000i
+  starThresholds: c012000010270000a4380000i

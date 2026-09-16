@@ -17,12 +17,13 @@ MonoBehaviour:
   levelDescription: Aggressive forward arrowhead formation. Deflect angled strikes cleanly and ride high-velocity multi-ball surges.
   layoutType: 13
   colorPattern: 2
-  columns: 9
+  columns: 13
   rowsPerTier: 2
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
+  includeSideFlanks: 1
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.32
@@ -40,6 +41,6 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 1
   laserDuration: 10
-  parTime: 40
+  parTime: 45
   timeBonusMax: 5000
-  starThresholds: 70170000e02e00005c440000i
+  starThresholds: 901a0000bc3400002c4c0000i

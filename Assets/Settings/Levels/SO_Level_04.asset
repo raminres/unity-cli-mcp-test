@@ -17,12 +17,13 @@ MonoBehaviour:
   levelDescription: An imposing heraldic crest shield. Deploy the bottom laser Shield power-up for a 10-second safety net, and collect extra heart lives.
   layoutType: 12
   colorPattern: 0
-  columns: 8
+  columns: 13
   rowsPerTier: 2
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
+  includeSideFlanks: 1
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.04
@@ -40,6 +41,6 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 0
   laserDuration: 10
-  parTime: 45
+  parTime: 50
   timeBonusMax: 3500
-  starThresholds: b0040000f00a000068100000i
+  starThresholds: 40060000ac0d000018150000i

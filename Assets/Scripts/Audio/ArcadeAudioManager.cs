@@ -191,9 +191,10 @@ namespace Arcade.Audio
 
         /// <summary>
         /// Plays Break sound (AU_Break.mp3) when the ball hits/destroys a brick,
-        /// dynamically pitch-scaling upwards by +1 semitone per consecutive volley combo streak.
+        /// dynamically pitch-scaling upwards by +1 semitone per consecutive volley combo streak,
+        /// and modulated by Model A color tier (Red heavier, Green punchy, Blue crystalline).
         /// </summary>
-        public void PlayBreak(int comboStreak = 0)
+        public void PlayBreak(int comboStreak = 0, int colorTier = 0)
         {
             float pitch = 1.0f;
             if (comboStreak > 1)
@@ -202,12 +203,26 @@ namespace Arcade.Audio
                 int semitones = Mathf.Clamp(comboStreak - 1, 0, 9);
                 pitch = Mathf.Pow(1.059463f, semitones);
             }
+
+            if (colorTier == 1) // Red (Dampener)
+            {
+                pitch *= 0.90f;
+            }
+            else if (colorTier == 2) // Green (Turbo)
+            {
+                pitch *= 1.10f;
+            }
+            else if (colorTier == 3) // Blue (Prism)
+            {
+                pitch *= 1.25f;
+            }
+
             PlaySound(clipBreak != null ? clipBreak : clipBlockHitRed, pitch);
         }
 
         public void PlayBlockHit(int colorTier = 1)
         {
-            PlayBreak(0);
+            PlayBreak(0, colorTier);
         }
 
         /// <summary>

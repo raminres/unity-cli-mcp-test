@@ -17,12 +17,13 @@ MonoBehaviour:
   levelDescription: Gentle warmup stepped pyramid with comfortable ball speed. Introduces the Paddle Expander to widen your paddle and master bounce angles.
   layoutType: 2
   colorPattern: 0
-  columns: 7
-  rowsPerTier: 1
+  columns: 11
+  rowsPerTier: 2
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
+  includeSideFlanks: 1
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 0.92
@@ -40,6 +41,6 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 0
   laserDuration: 10
-  parTime: 30
+  parTime: 35
   timeBonusMax: 2500
-  starThresholds: 2c0100002003000078050000i
+  starThresholds: f4010000b004000098080000i

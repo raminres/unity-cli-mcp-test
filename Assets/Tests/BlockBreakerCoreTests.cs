@@ -1902,11 +1902,11 @@ namespace Arcade.Tests
             var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset");
             Assert.IsNotNull(config);
 
-            // Level 1: 7 cols * 3 rows in a Stepped Pyramid = 15 blocks
-            Assert.AreEqual(7, config.Columns);
-            Assert.AreEqual(1, config.RowsPerTier);
-            Assert.AreEqual(3, config.TotalRows);
-            Assert.AreEqual(15, config.TotalBlocks);
+            // Level 1: 11 cols * 6 rows in a Stepped Pyramid = 42 blocks
+            Assert.AreEqual(11, config.Columns);
+            Assert.AreEqual(2, config.RowsPerTier);
+            Assert.AreEqual(6, config.TotalRows);
+            Assert.AreEqual(42, config.TotalBlocks);
             Assert.AreEqual(LevelLayoutType.Pyramid, config.LayoutType);
 
             // Generous warmup paddle and comfortable speed
@@ -4775,6 +4775,123 @@ namespace Arcade.Tests
             Object.DestroyImmediate(testBomb);
         }
 
+        #region Model A Color Physics & Level Density Redesign Tests
+
+        [Test]
+        public void BallController_BlockCollision_RedTier_DampensSpeedTowardBaseSpeed()
+        {
+            var ballObj = new GameObject("TestBall_RedTier");
+            ballObj.transform.SetParent(testRoot.transform);
+            var rb = ballObj.AddComponent<Rigidbody>();
+            var ball = ballObj.AddComponent<BallController>();
+            ball.Initialize(gameManager, paddle);
+
+            float initialSpeed = 18f;
+            Vector3 customVelocity = new Vector3(10f, 10f, 0f).normalized * initialSpeed;
+            ball.SetCurrentSpeedForTesting(initialSpeed);
+            rb.linearVelocity = customVelocity;
+
+            // 1. Red dampens speed by redDampenAmount (1.2f)
+            ball.ApplyBlockColorInteractionForTesting(BlockColorTier.Red);
+            Assert.AreEqual(initialSpeed - ball.RedDampenAmount, ball.CurrentSpeed, 0.001f, "Red tier must dampen ball speed by RedDampenAmount.");
+            Assert.AreEqual(initialSpeed - ball.RedDampenAmount, rb.linearVelocity.magnitude, 0.001f, "Rigidbody velocity must match dampened speed.");
+
+            // 2. Red damping never reduces speed below baseSpeed (14f)
+            float nearBaseSpeed = ball.BaseSpeed + 0.5f;
+            ball.SetCurrentSpeedForTesting(nearBaseSpeed);
+            rb.linearVelocity = customVelocity.normalized * nearBaseSpeed;
+            ball.ApplyBlockColorInteractionForTesting(BlockColorTier.Red);
+            Assert.AreEqual(ball.BaseSpeed, ball.CurrentSpeed, 0.001f, "Red tier damping must floor at BaseSpeed.");
+            Assert.AreEqual(ball.BaseSpeed, rb.linearVelocity.magnitude, 0.001f, "Rigidbody velocity must floor at BaseSpeed.");
+        }
+
+        [Test]
+        public void BallController_BlockCollision_GreenTier_AcceleratesSpeedUpToMaxSpeed()
+        {
+            var ballObj = new GameObject("TestBall_GreenTier");
+            ballObj.transform.SetParent(testRoot.transform);
+            var rb = ballObj.AddComponent<Rigidbody>();
+            var ball = ballObj.AddComponent<BallController>();
+            ball.Initialize(gameManager, paddle);
+
+            float initialSpeed = 15f;
+            Vector3 customVelocity = Vector3.up * initialSpeed;
+            ball.SetCurrentSpeedForTesting(initialSpeed);
+            rb.linearVelocity = customVelocity;
+
+            // 1. Green accelerates speed by 10% (greenBoostPercent)
+            ball.ApplyBlockColorInteractionForTesting(BlockColorTier.Green);
+            float expectedSpeed = initialSpeed * (1f + ball.GreenBoostPercent);
+            Assert.AreEqual(expectedSpeed, ball.CurrentSpeed, 0.001f, "Green tier must boost speed by GreenBoostPercent.");
+            Assert.AreEqual(expectedSpeed, rb.linearVelocity.magnitude, 0.001f, "Rigidbody velocity must match boosted speed.");
+
+            // 2. Green acceleration is capped at maxSpeed (22f)
+            float nearMaxSpeed = ball.MaxSpeed - 0.5f;
+            ball.SetCurrentSpeedForTesting(nearMaxSpeed);
+            rb.linearVelocity = customVelocity.normalized * nearMaxSpeed;
+            ball.ApplyBlockColorInteractionForTesting(BlockColorTier.Green);
+            Assert.AreEqual(ball.MaxSpeed, ball.CurrentSpeed, 0.001f, "Green tier acceleration must cap at MaxSpeed.");
+            Assert.AreEqual(ball.MaxSpeed, rb.linearVelocity.magnitude, 0.001f, "Rigidbody velocity must cap at MaxSpeed.");
+        }
+
+        [Test]
+        public void BallController_BlockCollision_BlueTier_AppliesPrismScatterDeflectionAndSanitizes()
+        {
+            var ballObj = new GameObject("TestBall_BlueTier");
+            ballObj.transform.SetParent(testRoot.transform);
+            var rb = ballObj.AddComponent<Rigidbody>();
+            var ball = ballObj.AddComponent<BallController>();
+            ball.Initialize(gameManager, paddle);
+
+            float speed = 16f;
+            Vector3 initialVelocity = new Vector3(8f, 13.8564f, 0f).normalized * speed;
+
+            // Run multiple scatters to verify angle change and trajectory sanitization
+            for (int i = 0; i < 20; i++)
+            {
+                ball.SetCurrentSpeedForTesting(speed);
+                rb.linearVelocity = initialVelocity;
+
+                ball.ApplyBlockColorInteractionForTesting(BlockColorTier.Blue);
+                Vector3 scattered = rb.linearVelocity;
+
+                // Speed increment or preserved
+                Assert.GreaterOrEqual(scattered.magnitude, speed, "Blue tier prism scatter must maintain or increase speed.");
+
+                // Sanitized: vertical floor >= sin(20 deg)
+                float minVertical = scattered.magnitude * Mathf.Sin(20f * Mathf.Deg2Rad);
+                Assert.GreaterOrEqual(Mathf.Abs(scattered.y), minVertical - 0.01f, "Scattered velocity must satisfy vertical floor.");
+
+                // Sanitized: exclusion deadzone >= sin(5 deg)
+                float minHorizontal = scattered.magnitude * Mathf.Sin(5f * Mathf.Deg2Rad);
+                Assert.GreaterOrEqual(Mathf.Abs(scattered.x), minHorizontal - 0.01f, "Scattered velocity must avoid vertical deadzone.");
+            }
+        }
+
+        [Test]
+        public void Campaign_AllFifteenLevels_HaveEnrichedBrickDensityAndNoEmptyGutters()
+        {
+            for (int i = 1; i <= 15; i++)
+            {
+                string path = $"Assets/Settings/Levels/SO_Level_{i:D2}.asset";
+                var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>(path);
+                Assert.IsNotNull(config, $"SO_Level_{i:D2} must exist.");
+
+                // Grid width must be at least 11 columns to eliminate 6u empty side gutters
+                Assert.GreaterOrEqual(config.Columns, 11, $"Level {i} must have at least 11 columns.");
+
+                // Total rows must be at least 6
+                Assert.GreaterOrEqual(config.TotalRows, 6, $"Level {i} must have at least 6 total rows.");
+
+                // Total block count must be at least 30 blocks
+                Assert.GreaterOrEqual(config.TotalBlocks, 30, $"Level {i} must contain at least 30 blocks for dense gameplay.");
+
+                // Side flanks bumper blocks enabled
+                Assert.IsTrue(config.IncludeSideFlanks, $"Level {i} must have IncludeSideFlanks enabled.");
+            }
+        }
+
+        #endregion
         #endregion
     }
 }

@@ -152,7 +152,7 @@ namespace Arcade.BlockBreaker
                 }
                 else
                 {
-                    ArcadeAudioManager.Instance.PlayBreak(volleyStreak);
+                    ArcadeAudioManager.Instance.PlayBreak(volleyStreak, (int)colorTier);
                     if (specialType != BlockSpecialType.Normal && specialType != BlockSpecialType.GlassEnclosed)
                     {
                         ArcadeAudioManager.Instance.PlayPowerup();
