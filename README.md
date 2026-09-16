@@ -2,12 +2,12 @@
 
 [![Unity Version](https://img.shields.io/badge/Unity-6%20(6000.6.0f1)-black.svg?style=flat&logo=unity)](https://unity.com/)
 [![Render Pipeline](https://img.shields.io/badge/Render%20Pipeline-URP-blue.svg)](https://unity.com/srp/universal-render-pipeline)
-[![Automated Tests](https://img.shields.io/badge/Tests-203%2F203%20Passing%20(100%25)-brightgreen.svg)]()
+[![Automated Tests](https://img.shields.io/badge/Tests-204%2F204%20Passing%20(100%25)-brightgreen.svg)]()
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%20(Swift)%20%7C%20WebGPU%20%7C%20PC-purple.svg)]()
 [![Git LFS](https://img.shields.io/badge/Git-LFS%20Enabled-orange.svg)](https://git-lfs.github.com/)
 [![AI Integration](https://img.shields.io/badge/AI%20Assistant-Google%20Antigravity-green.svg)]()
 
-**BlockBreaker 3D** is a physics-driven arcade brick breaker built with Unity 6 (6000.6.0f1) and the Universal Render Pipeline (URP). Features 3-tier stepped pyramid paddle deflection with tangential surface friction and kinetic speed pops, Model A brick color physical interactions (dampen/boost/scatter), anti-trap trajectory physics, explosive chain cascades, armored 2-hit glass bricks, twin laser blaster cannons, lone block clutch hyper-beam railguns, a complete hazard & powerdown debuff subsystem with tumbling diamond drops, an escalating 15-level campaign arc with high-density grids (11–14 columns), mobile safe-area touch controls, frame-0 shader prewarming, and an automated NUnit test suite (203 tests).
+**BlockBreaker 3D** is a physics-driven arcade brick breaker built with Unity 6 (6000.6.0f1) and the Universal Render Pipeline (URP). Features 3-tier stepped pyramid paddle deflection with tangential surface friction and kinetic speed pops, Model A brick color physical interactions (dampen/boost/scatter), anti-trap trajectory physics, explosive chain cascades, armored 2-hit glass bricks, twin laser blaster cannons, lone block clutch hyper-beam railguns, a complete hazard & powerdown debuff subsystem with tumbling diamond drops, an escalating 15-level campaign arc with high-density grids (11–14 columns), mobile safe-area touch controls, frame-0 shader prewarming, and an automated NUnit test suite (204 tests).
 
 Acts as a production testbed for **Google Antigravity**, **Unity MCP (Model Context Protocol)**, and **Unity CLI** agentic workflows.
 
@@ -129,7 +129,7 @@ Levels are authored as modular ScriptableObjects (`Assets/Settings/Levels/SO_Lev
 
 ## 🧪 Automated Test Suite
 
-The project includes **203 unit and integration tests** executing via Unity CLI EditMode test runner:
+The project includes **204 unit and integration tests** executing via Unity CLI EditMode test runner:
 
 ```bash
 # Execute test suite via Unity CLI:

@@ -19,3 +19,9 @@ MonoBehaviour:
   multiBallSprite: {fileID: -5547497205224055285, guid: 3098a697d024c2547bdafd3878c03c4b, type: 3}
   multiplierSprite: {fileID: 21300000, guid: 1d8d97a548b3e734687c47462e523395, type: 3}
   laserSprite: {fileID: 21300000, guid: 820d572091b85c34bb7540e3cf8929a1, type: 3}
+  paddleShortenerSprite: {fileID: 21300000, guid: 6ebcd1fa1b3d001468147f32590c82ca, type: 3}
+  paddleSlowerSprite: {fileID: 21300000, guid: 3f526f475d1500f468a096116384b160, type: 3}
+  brickFreezerSprite: {fileID: 21300000, guid: 1277b2b2863c91b43ad1fd4d7204e52d, type: 3}
+  ballSizeDecreaserSprite: {fileID: 21300000, guid: d41c63e0db548c14296c560508e963a9, type: 3}
+  ballSlowerSprite: {fileID: 21300000, guid: 62d7230a48b7706468a7d6c48b12b01e, type: 3}
+  paddleFreezerSprite: {fileID: 21300000, guid: 5c5ea66d3fadd934592fd49d80b0f741, type: 3}

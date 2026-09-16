@@ -5201,6 +5201,39 @@ namespace Arcade.Tests
             Object.DestroyImmediate(uiGo);
         }
 
+        [Test]
+        public void PowerupIconSet_ContainsAllAssignedPowerdownSprites_LoadsCorrectly()
+        {
+            var iconSet = UnityEditor.AssetDatabase.LoadAssetAtPath<PowerupIconSet>("Assets/Settings/SO_PowerupIcons.asset");
+            Assert.IsNotNull(iconSet, "SO_PowerupIcons.asset must exist");
+
+            Assert.IsNotNull(iconSet.PaddleShortenerSprite, "PaddleShortenerSprite should be assigned");
+            Assert.AreEqual("TX_Powerdown_Arrows_Inward", iconSet.PaddleShortenerSprite.name);
+
+            Assert.IsNotNull(iconSet.PaddleSlowerSprite, "PaddleSlowerSprite should be assigned");
+            Assert.AreEqual("TX_Powerdown_Slower_Paddle", iconSet.PaddleSlowerSprite.name);
+
+            Assert.IsNotNull(iconSet.BrickFreezerSprite, "BrickFreezerSprite should be assigned");
+            Assert.AreEqual("TX_Powerdown_Frozen_Brick", iconSet.BrickFreezerSprite.name);
+
+            Assert.IsNotNull(iconSet.BallSizeDecreaserSprite, "BallSizeDecreaserSprite should be assigned");
+            Assert.AreEqual("TX_Powerdown_Smaller_Ball", iconSet.BallSizeDecreaserSprite.name);
+
+            Assert.IsNotNull(iconSet.BallSlowerSprite, "BallSlowerSprite should be assigned");
+            Assert.AreEqual("TX_Powerdown_Slower_Ball", iconSet.BallSlowerSprite.name);
+
+            Assert.IsNotNull(iconSet.PaddleFreezerSprite, "PaddleFreezerSprite should be assigned");
+            Assert.AreEqual("TX_Powerdown_Frozen_Paddle", iconSet.PaddleFreezerSprite.name);
+
+            // Also verify GetSprite mapping
+            Assert.AreEqual(iconSet.PaddleShortenerSprite, iconSet.GetSprite(BlockSpecialType.PaddleShortener));
+            Assert.AreEqual(iconSet.PaddleSlowerSprite, iconSet.GetSprite(BlockSpecialType.PaddleSlower));
+            Assert.AreEqual(iconSet.BrickFreezerSprite, iconSet.GetSprite(BlockSpecialType.BrickFreezer));
+            Assert.AreEqual(iconSet.BallSizeDecreaserSprite, iconSet.GetSprite(BlockSpecialType.BallSizeDecreaser));
+            Assert.AreEqual(iconSet.BallSlowerSprite, iconSet.GetSprite(BlockSpecialType.BallSlower));
+            Assert.AreEqual(iconSet.PaddleFreezerSprite, iconSet.GetSprite(BlockSpecialType.PaddleFreezer));
+        }
+
         #endregion
 
         #endregion

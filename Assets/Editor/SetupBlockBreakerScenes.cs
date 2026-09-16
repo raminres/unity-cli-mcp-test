@@ -709,6 +709,13 @@ namespace Arcade.Editor
             var multiplier = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
             var laser = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Gun.png");
 
+            var shortener = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerdown_Arrows_Inward.png");
+            var slowerPaddle = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerdown_Slower_Paddle.png");
+            var brickFreezer = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerdown_Frozen_Brick.png");
+            var smallerBall = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerdown_Smaller_Ball.png");
+            var slowerBall = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerdown_Slower_Ball.png");
+            var frozenPaddle = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerdown_Frozen_Paddle.png");
+
             var so = new SerializedObject(iconSet);
             if (expander != null) so.FindProperty("expanderSprite").objectReferenceValue = expander;
             if (bomb != null) so.FindProperty("bombSprite").objectReferenceValue = bomb;
@@ -717,6 +724,13 @@ namespace Arcade.Editor
             if (multiBall != null) so.FindProperty("multiBallSprite").objectReferenceValue = multiBall;
             if (multiplier != null) so.FindProperty("multiplierSprite").objectReferenceValue = multiplier;
             if (laser != null) so.FindProperty("laserSprite").objectReferenceValue = laser;
+
+            if (shortener != null) so.FindProperty("paddleShortenerSprite").objectReferenceValue = shortener;
+            if (slowerPaddle != null) so.FindProperty("paddleSlowerSprite").objectReferenceValue = slowerPaddle;
+            if (brickFreezer != null) so.FindProperty("brickFreezerSprite").objectReferenceValue = brickFreezer;
+            if (smallerBall != null) so.FindProperty("ballSizeDecreaserSprite").objectReferenceValue = smallerBall;
+            if (slowerBall != null) so.FindProperty("ballSlowerSprite").objectReferenceValue = slowerBall;
+            if (frozenPaddle != null) so.FindProperty("paddleFreezerSprite").objectReferenceValue = frozenPaddle;
             so.ApplyModifiedProperties();
 
             EditorUtility.SetDirty(iconSet);

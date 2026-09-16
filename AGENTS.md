@@ -167,8 +167,8 @@ Persistent, high-density technical context for BlockBreaker.
 
 ## 9. Automated Testing Architecture
 - **Test Suite ([BlockBreakerCoreTests.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Tests/BlockBreakerCoreTests.cs))**:
-  - 203 automated NUnit EditMode unit/integration tests running via Unity CLI:
+  - 204 automated NUnit EditMode unit/integration tests running via Unity CLI:
     ```bash
     unity cmd run_tests --mode editor
     ```
-  - Validates physics deflection math, boundary clamps, powerup & powerdown lifecycles, diamond falling geometry, freeze struggle nudge, defrost hit absorption, campaign progression, safe area framing, level clear timing, entity freeze, and UI element bindings.
+  - Validates physics deflection math, boundary clamps, powerup & powerdown lifecycles, diamond falling geometry, freeze struggle nudge, defrost hit absorption, powerdown sprite assignments, campaign progression, safe area framing, level clear timing, entity freeze, and UI element bindings.
