@@ -15,7 +15,7 @@ MonoBehaviour:
   levelNumber: 5
   levelName: 'Level 5: Multi-Ball Ring'
   levelDescription: A perimeter fortress framing a hollow bouncing chamber. Trigger Multi-Ball to unleash 3 balls ricocheting inside the inner sanctum!
-  layoutType: 6
+  layoutType: 9
   colorPattern: 2
   columns: 13
   rowsPerTier: 2
@@ -41,6 +41,12 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 0
   laserDuration: 10
+  paddleShortenerCount: 0
+  paddleSlowerCount: 0
+  brickFreezerCount: 0
+  ballSizeDecreaserCount: 0
+  ballSlowerCount: 0
+  paddleFreezerCount: 0
   parTime: 45
   timeBonusMax: 3500
   starThresholds: d007000030110000901a0000i

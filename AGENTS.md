@@ -100,12 +100,23 @@ Persistent, high-density technical context for BlockBreaker.
 
 ---
 
-## 5. Powerups, Clutch Hyper-Beam & Level Clear Pacing
+## 5. Powerups, Hazards, Clutch Hyper-Beam & Level Clear Pacing
 - **Collectible Drops ([PowerupCapsule.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/PowerupCapsule.cs))**:
-  - Fall speed $4.5\text{ u/s}$, tumbling 3D capsule at $Z = -1.0\text{f}$ in front of bricks.
-  - Hierarchy: Root container (scale $1.0$, zero renderers/colliders), Child 1 `Visual_Capsule` (scale $0.85$, `MeshRenderer`), Child 2 `Icon_Billboard` (scale $0.95$, `SpriteRenderer`, $Z = -0.6\text{f}$, locked to identity rotation). Exactly 1 mesh and 1 sprite renderer.
+  - Fall speed $4.5\text{ u/s}$, tumbling 3D shapes at $Z = -1.0\text{f}$ in front of bricks.
+  - **Differentiated 3D Geometries**:
+    - **Powerups**: Rounded tumbling 3D capsule (`PrimitiveType.Capsule`, scale $0.85$, positive cyan emissive glow `#00f2fe`).
+    - **Powerdowns / Hazards**: Sharp, faceted tumbling 3D diamond (`PrimitiveType.Cube` rotated $45^\circ$ on all axes via `Quaternion.Euler(45f, 45f, 45f)`, scale $0.72$, warning crimson emissive glow `#ff1744`).
+  - Hierarchy: Root container (scale $1.0$, zero renderers/colliders), Child 1 `Visual_Capsule` (mesh renderer), Child 2 `Icon_Billboard` (scale $0.95$, `SpriteRenderer`, $Z = -0.6\text{f}$, locked to identity rotation). Exactly 1 mesh and 1 sprite renderer.
   - Lifecycle: `ClearAllFallingCapsules()` destroys drops on life loss, shield save, level clear, game over, or advancement. `TryIntercept()` blocks collection while docked.
-  - Powerup Types: Expander (cyan), Extra Heart (pink), Shield (blue, 10s killzone safety net), Multi-Ball (magenta, 2 extra balls at $\pm 35^\circ$), Score Multipliers (gold 2X, orange 3X, crimson 4X, magenta 5X), Laser Blaster (ruby, twin edge cannons firing bolts at $34\text{ u/s}$ every $0.32\text{s}$ for 10s, [PaddleLaserController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/PaddleLaserController.cs)).
+  - **Positive Powerup Buffs (`#00f2fe`)**:
+    - Expander (cyan paddle widening $+10\%$, max $12.0$), Extra Heart (pink life $+1$), Shield (blue, 10s killzone safety net), Multi-Ball (magenta, 2 extra balls at $\pm 35^\circ$), Score Multipliers (gold 2X, orange 3X, crimson 4X, magenta 5X), Laser Blaster (ruby, twin cannons at $34\text{ u/s}$ for 10s).
+  - **Negative Powerdown Debuffs (`#ff1744`)**:
+    - **Paddle Shortener** (`PaddleShortener`): Shrinks paddle width by $-18\%$ (clamped to `MIN_PADDLE_WIDTH = 2.4f`) for 10s.
+    - **Paddle Slower** (`PaddleSlower`): Induces sluggish input drag and inertia for 8s.
+    - **Brick Freezer** (`BrickFreezer`): Encites up to 5 field bricks in glacial ice; frozen bricks absorb 1 defrost hit before shattering.
+    - **Ball Size Decreaser** (`BallSizeDecreaser`): Shrinks ball radius to $60\%$ ($0.8\text{u} \to 0.48\text{u}$) for 10s.
+    - **Ball Slower** (`BallSlower`): Slows ball velocity to $9.5\text{ u/s}$ for 8s.
+    - **Paddle Freezer** (`PaddleFreezer`): Immobilizes paddle for $1.2\text{s}$. Moving while frozen triggers a high-frequency sinusoidal struggle/tremor animation (`Mathf.Sin(Time.time * 45f) * 0.07f`) demonstrating active physical freeze rather than unresponsive input.
   - Environmental: Bomb Bricks (radius $2.5\text{u}$ cascade), Glass-Enclosed Bricks (2-hit armored crystal).
 - **Lone Block Clutch Countdown & Option B Hyper-Beam Railgun**:
   - When 1 brick remains, activates 12s timer with decaying multiplier ($10\times \to 1\times$).
@@ -114,8 +125,9 @@ Persistent, high-density technical context for BlockBreaker.
   - Golden celebratory center banner (`level-clear-banner`) displays `"LEVEL CLEARED!"` with context subtext.
   - Dual Delay: $1.0\text{s}$ standard clear, $1.5\text{s}$ hyper-beam clear before scorecard modal opens.
   - Entity Freeze: All balls freeze velocity (`BallController.FreezeBall()`, `ArcadeGameManager.FreezeAllBalls()`), paddle movement input is locked, falling capsules and laser bolts freeze.
-- **Inspector-Assigned Sprites ([PowerupIconSet.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/PowerupIconSet.cs))**:
-  - All 7 powerup/modifier sprites managed in ScriptableObject `Assets/Settings/SO_PowerupIcons.asset` and assigned in C# via `new StyleBackground(sprite)`. Completely bypasses fragile USS URLs, guaranteeing 100% reliable rendering on iOS/Apple Metal builds.
+- **Inspector-Assigned Sprites & HUD Timers ([PowerupIconSet.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/PowerupIconSet.cs))**:
+  - All powerup and powerdown sprites managed in ScriptableObject `Assets/Settings/SO_PowerupIcons.asset` and assigned in C# via `new StyleBackground(sprite)`.
+  - Top center HUD indicators style powerdown timers with glowing crimson borders (`.powerdown-badge`) and timer countdowns (`.powerdown-timer-label`).
 
 ---
 
@@ -142,8 +154,8 @@ Persistent, high-density technical context for BlockBreaker.
   - Detached frosted glass pods with touch targets $\ge 54\text{px}$. Typography: `FT_Montserrat` (headers, score), `FT_Inter` (body, buttons).
   - High scores leaderboard modal, card-based gameplay guide, and interactive credits modal.
 - **Audio Engine ([ArcadeAudioManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/Audio/ArcadeAudioManager.cs))**:
-  - Persistent singleton with dedicated clips (`AU_Pop`, `AU_Break`, `AU_Powerup`, `AU_Powerup_Laser`, `AU_Powerup_Shield`, `AU_Life_Lost`, `AU_Level_Success`, `AU_Game_Over`, `AU_Button_Press`, `AU_Glass_Break`, `AU_Bomb_Explosion`).
-  - Procedural synthesizer fallback for guaranteed sound on any platform.
+  - Persistent singleton with dedicated clips (`AU_Pop`, `AU_Break`, `AU_Powerup`, `AU_Powerup_Laser`, `AU_Powerup_Shield`, `AU_Life_Lost`, `AU_Level_Success`, `AU_Game_Over`, `AU_Button_Press`, `AU_Glass_Break`, `AU_Bomb_Explosion`, `AU_Powerdown`).
+  - Procedural synthesizer fallback for guaranteed sound on any platform, including downward frequency chirp synthesis for powerdowns.
 
 ---
 
@@ -155,8 +167,8 @@ Persistent, high-density technical context for BlockBreaker.
 
 ## 9. Automated Testing Architecture
 - **Test Suite ([BlockBreakerCoreTests.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Tests/BlockBreakerCoreTests.cs))**:
-  - 183 automated NUnit EditMode unit/integration tests running via Unity CLI:
+  - 203 automated NUnit EditMode unit/integration tests running via Unity CLI:
     ```bash
     unity cmd run_tests --mode editor
     ```
-  - Validates physics deflection math, boundary clamps, powerup lifecycles, campaign progression, safe area framing, level clear timing, entity freeze, and UI element bindings.
+  - Validates physics deflection math, boundary clamps, powerup & powerdown lifecycles, diamond falling geometry, freeze struggle nudge, defrost hit absorption, campaign progression, safe area framing, level clear timing, entity freeze, and UI element bindings.

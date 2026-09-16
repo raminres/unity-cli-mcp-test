@@ -108,6 +108,18 @@ namespace Arcade.Core
         [Header("Asset References")]
         [SerializeField] private Material powerupCapsuleMaterial;
 
+        // Powerdown states and timers
+        private bool isPaddleShortened = false;
+        private float paddleShortenTimeRemaining = 0f;
+        private bool isPaddleSlowed = false;
+        private float paddleSlowTimeRemaining = 0f;
+        private bool isPaddleFrozen = false;
+        private float paddleFreezeTimeRemaining = 0f;
+        private bool isBallShrunk = false;
+        private float ballShrinkTimeRemaining = 0f;
+        private bool isBallSlowed = false;
+        private float ballSlowTimeRemaining = 0f;
+
         private GameState previousStateBeforePause;
         private readonly System.Collections.Generic.List<BallController> activeBalls = new System.Collections.Generic.List<BallController>();
 
@@ -132,6 +144,8 @@ namespace Arcade.Core
         public event Action<Vector3, int, int, string> OnBlockPointsAwarded; // (worldPos, awardedPoints, totalMultiplier, tag)
         public event Action<LevelSummaryData> OnLevelCompletedWithTally;
         public event Action<float, bool> OnLevelClearPending; // (delaySeconds, wasClearedWithLaser)
+        public event Action<BlockSpecialType, bool, float> OnPowerdownStateChanged; // (type, isActive, duration)
+        public event Action<BlockSpecialType, float> OnPowerdownTick;               // (type, timeRemaining)
 
         public GameState State => currentState;
         public int CurrentLevel => currentLevel;
@@ -158,6 +172,18 @@ namespace Arcade.Core
         public float ClutchTimeRemaining => clutchTimeRemaining;
         public int ClutchMultiplier => clutchMultiplier;
         public float ClutchDuration => clutchDuration;
+        public bool IsPaddleShortened => isPaddleShortened;
+        public float PaddleShortenTimeRemaining => paddleShortenTimeRemaining;
+        public bool IsPaddleSlowed => isPaddleSlowed;
+        public float PaddleSlowTimeRemaining => paddleSlowTimeRemaining;
+        public bool IsPaddleFrozen => isPaddleFrozen;
+        public float PaddleFreezeTimeRemaining => paddleFreezeTimeRemaining;
+        public bool IsBallShrunk => isBallShrunk;
+        public float BallShrinkTimeRemaining => ballShrinkTimeRemaining;
+        public bool IsBallSizeDecreased => isBallShrunk;
+        public float BallSizeDecreaseTimeRemaining => ballShrinkTimeRemaining;
+        public bool IsBallSlowed => isBallSlowed;
+        public float BallSlowTimeRemaining => ballSlowTimeRemaining;
         public System.Collections.Generic.IReadOnlyList<BallController> ActiveBalls => activeBalls;
         public int ActiveBallCount => activeBalls.Count;
 
@@ -253,6 +279,26 @@ namespace Arcade.Core
                 if (isClutchModeActive)
                 {
                     TickClutchMode(Time.deltaTime);
+                }
+                if (isPaddleShortened)
+                {
+                    TickPaddleShortener(Time.deltaTime);
+                }
+                if (isPaddleSlowed)
+                {
+                    TickPaddleSlower(Time.deltaTime);
+                }
+                if (isPaddleFrozen)
+                {
+                    TickPaddleFreezer(Time.deltaTime);
+                }
+                if (isBallShrunk)
+                {
+                    TickBallSizeDecreaser(Time.deltaTime);
+                }
+                if (isBallSlowed)
+                {
+                    TickBallSlower(Time.deltaTime);
                 }
             }
         }
@@ -417,6 +463,257 @@ namespace Arcade.Core
                 DeactivateLaserPowerup();
             }
         }
+
+        #region Powerdown Management
+
+        public void ActivatePaddleShortener(float duration = 10f)
+        {
+            isPaddleShortened = true;
+            paddleShortenTimeRemaining = duration;
+
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null)
+            {
+                paddle.ShrinkWidth(BlockModifierExtensions.PADDLE_SHORTEN_PERCENT);
+            }
+
+            OnPowerdownStateChanged?.Invoke(BlockSpecialType.PaddleShortener, true, duration);
+            OnPowerdownTick?.Invoke(BlockSpecialType.PaddleShortener, duration);
+        }
+
+        public void DeactivatePaddleShortener()
+        {
+            if (!isPaddleShortened && paddleShortenTimeRemaining <= 0f) return;
+
+            isPaddleShortened = false;
+            paddleShortenTimeRemaining = 0f;
+
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null)
+            {
+                paddle.ResetToBaseWidth();
+            }
+
+            OnPowerdownStateChanged?.Invoke(BlockSpecialType.PaddleShortener, false, 0f);
+        }
+
+        public void TickPaddleShortener(float delta)
+        {
+            if (!isPaddleShortened) return;
+
+            paddleShortenTimeRemaining -= delta;
+            OnPowerdownTick?.Invoke(BlockSpecialType.PaddleShortener, Mathf.Max(0f, paddleShortenTimeRemaining));
+
+            if (paddleShortenTimeRemaining <= 0f)
+            {
+                DeactivatePaddleShortener();
+            }
+        }
+
+        public void ActivatePaddleSlower(float duration = 8f)
+        {
+            isPaddleSlowed = true;
+            paddleSlowTimeRemaining = duration;
+
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null)
+            {
+                paddle.SetSlowed(true);
+            }
+
+            OnPowerdownStateChanged?.Invoke(BlockSpecialType.PaddleSlower, true, duration);
+            OnPowerdownTick?.Invoke(BlockSpecialType.PaddleSlower, duration);
+        }
+
+        public void DeactivatePaddleSlower()
+        {
+            if (!isPaddleSlowed && paddleSlowTimeRemaining <= 0f) return;
+
+            isPaddleSlowed = false;
+            paddleSlowTimeRemaining = 0f;
+
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null)
+            {
+                paddle.SetSlowed(false);
+            }
+
+            OnPowerdownStateChanged?.Invoke(BlockSpecialType.PaddleSlower, false, 0f);
+        }
+
+        public void TickPaddleSlower(float delta)
+        {
+            if (!isPaddleSlowed) return;
+
+            paddleSlowTimeRemaining -= delta;
+            OnPowerdownTick?.Invoke(BlockSpecialType.PaddleSlower, Mathf.Max(0f, paddleSlowTimeRemaining));
+
+            if (paddleSlowTimeRemaining <= 0f)
+            {
+                DeactivatePaddleSlower();
+            }
+        }
+
+        public void ActivatePaddleFreezer(float duration = 1.2f)
+        {
+            isPaddleFrozen = true;
+            paddleFreezeTimeRemaining = duration;
+
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null)
+            {
+                paddle.SetFrozen(true);
+            }
+
+            OnPowerdownStateChanged?.Invoke(BlockSpecialType.PaddleFreezer, true, duration);
+            OnPowerdownTick?.Invoke(BlockSpecialType.PaddleFreezer, duration);
+        }
+
+        public void DeactivatePaddleFreezer()
+        {
+            if (!isPaddleFrozen && paddleFreezeTimeRemaining <= 0f) return;
+
+            isPaddleFrozen = false;
+            paddleFreezeTimeRemaining = 0f;
+
+            var paddle = FindAnyObjectByType<PaddleController>();
+            if (paddle != null)
+            {
+                paddle.SetFrozen(false);
+            }
+
+            OnPowerdownStateChanged?.Invoke(BlockSpecialType.PaddleFreezer, false, 0f);
+        }
+
+        public void TickPaddleFreezer(float delta)
+        {
+            if (!isPaddleFrozen) return;
+
+            paddleFreezeTimeRemaining -= delta;
+            OnPowerdownTick?.Invoke(BlockSpecialType.PaddleFreezer, Mathf.Max(0f, paddleFreezeTimeRemaining));
+
+            if (paddleFreezeTimeRemaining <= 0f)
+            {
+                DeactivatePaddleFreezer();
+            }
+        }
+
+        public void ActivateBallSizeDecreaser(float duration = 10f)
+        {
+            isBallShrunk = true;
+            ballShrinkTimeRemaining = duration;
+
+            for (int i = 0; i < activeBalls.Count; i++)
+            {
+                if (activeBalls[i] != null) activeBalls[i].SetBallShrunk(true);
+            }
+
+            OnPowerdownStateChanged?.Invoke(BlockSpecialType.BallSizeDecreaser, true, duration);
+            OnPowerdownTick?.Invoke(BlockSpecialType.BallSizeDecreaser, duration);
+        }
+
+        public void DeactivateBallSizeDecreaser()
+        {
+            if (!isBallShrunk && ballShrinkTimeRemaining <= 0f) return;
+
+            isBallShrunk = false;
+            ballShrinkTimeRemaining = 0f;
+
+            for (int i = 0; i < activeBalls.Count; i++)
+            {
+                if (activeBalls[i] != null) activeBalls[i].SetBallShrunk(false);
+            }
+
+            OnPowerdownStateChanged?.Invoke(BlockSpecialType.BallSizeDecreaser, false, 0f);
+        }
+
+        public void TickBallSizeDecreaser(float delta)
+        {
+            if (!isBallShrunk) return;
+
+            ballShrinkTimeRemaining -= delta;
+            OnPowerdownTick?.Invoke(BlockSpecialType.BallSizeDecreaser, Mathf.Max(0f, ballShrinkTimeRemaining));
+
+            if (ballShrinkTimeRemaining <= 0f)
+            {
+                DeactivateBallSizeDecreaser();
+            }
+        }
+
+        public void ActivateBallSlower(float duration = 8f)
+        {
+            isBallSlowed = true;
+            ballSlowTimeRemaining = duration;
+
+            for (int i = 0; i < activeBalls.Count; i++)
+            {
+                if (activeBalls[i] != null) activeBalls[i].SetBallSlowed(true);
+            }
+
+            OnPowerdownStateChanged?.Invoke(BlockSpecialType.BallSlower, true, duration);
+            OnPowerdownTick?.Invoke(BlockSpecialType.BallSlower, duration);
+        }
+
+        public void DeactivateBallSlower()
+        {
+            if (!isBallSlowed && ballSlowTimeRemaining <= 0f) return;
+
+            isBallSlowed = false;
+            ballSlowTimeRemaining = 0f;
+
+            for (int i = 0; i < activeBalls.Count; i++)
+            {
+                if (activeBalls[i] != null) activeBalls[i].SetBallSlowed(false);
+            }
+
+            OnPowerdownStateChanged?.Invoke(BlockSpecialType.BallSlower, false, 0f);
+        }
+
+        public void TickBallSlower(float delta)
+        {
+            if (!isBallSlowed) return;
+
+            ballSlowTimeRemaining -= delta;
+            OnPowerdownTick?.Invoke(BlockSpecialType.BallSlower, Mathf.Max(0f, ballSlowTimeRemaining));
+
+            if (ballSlowTimeRemaining <= 0f)
+            {
+                DeactivateBallSlower();
+            }
+        }
+
+        public void ActivateBrickFreezer(int count = 5)
+        {
+            var blocks = FindObjectsByType<Block>(FindObjectsSortMode.None);
+            int frozenCount = 0;
+            for (int i = 0; i < blocks.Length; i++)
+            {
+                if (!blocks[i].IsDestroyed && !blocks[i].IsFrozen && blocks[i].SpecialType != BlockSpecialType.GlassEnclosed)
+                {
+                    blocks[i].Freeze(1);
+                    frozenCount++;
+                    if (frozenCount >= count) break;
+                }
+            }
+
+            if (ArcadeAudioManager.Instance != null)
+            {
+                ArcadeAudioManager.Instance.PlayGlassBreak();
+            }
+
+            OnPowerdownStateChanged?.Invoke(BlockSpecialType.BrickFreezer, true, 0f);
+        }
+
+        public void ClearActivePowerdowns()
+        {
+            DeactivatePaddleShortener();
+            DeactivatePaddleSlower();
+            DeactivatePaddleFreezer();
+            DeactivateBallSizeDecreaser();
+            DeactivateBallSlower();
+        }
+
+        #endregion
 
         public void StartClutchMode(float duration = 12f)
         {
@@ -956,6 +1253,7 @@ namespace Arcade.Core
             DeactivateScoreMultiplier();
             DeactivateLaserPowerup();
             EndClutchMode();
+            ClearActivePowerdowns();
             SetState(GameState.LevelClear);
 
             // Fetch current level configuration
@@ -1026,6 +1324,7 @@ namespace Arcade.Core
             DeactivateScoreMultiplier();
             DeactivateLaserPowerup();
             EndClutchMode();
+            ClearActivePowerdowns();
             Time.timeScale = 1f;
 
             var generator = FindAnyObjectByType<BlockBreaker.LevelGenerator>();
@@ -1054,6 +1353,7 @@ namespace Arcade.Core
             DeactivateScoreMultiplier();
             DeactivateLaserPowerup();
             EndClutchMode();
+            ClearActivePowerdowns();
             Time.timeScale = 1f;
 
             var generator = FindAnyObjectByType<BlockBreaker.LevelGenerator>();
@@ -1077,6 +1377,7 @@ namespace Arcade.Core
             DeactivateScoreMultiplier();
             DeactivateLaserPowerup();
             EndClutchMode();
+            ClearActivePowerdowns();
             if (currentScore > 0)
             {
                 HighScoreManager.RecordScore(currentScore, currentLevel, totalRunElapsedTime, currentSessionId);

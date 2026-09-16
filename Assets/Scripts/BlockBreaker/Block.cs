@@ -32,6 +32,9 @@ namespace Arcade.BlockBreaker
         [SerializeField] private GameObject glassShell;
 
         private bool isDestroyed = false;
+        private bool isFrozen = false;
+        private int requiredDefrostHits = 0;
+        private Material originalMaterial;
 
         public BlockColorTier Tier => colorTier;
         public BlockSpecialType SpecialType => specialType;
@@ -40,6 +43,8 @@ namespace Arcade.BlockBreaker
         public Color ParticleColor => particleColor;
         public int HitPoints => hitPoints;
         public bool IsDestroyed => isDestroyed;
+        public bool IsFrozen => isFrozen;
+        public int RequiredDefrostHits => requiredDefrostHits;
         public GameObject GlassShell => glassShell;
 
         private void Awake()
@@ -52,12 +57,42 @@ namespace Arcade.BlockBreaker
             glassShell = shell;
         }
 
+        public void Freeze(int defrostHits = 1)
+        {
+            if (isDestroyed) return;
+            isFrozen = true;
+            requiredDefrostHits = defrostHits;
+
+            if (meshRenderer != null)
+            {
+                if (originalMaterial == null) originalMaterial = meshRenderer.sharedMaterial;
+                var propBlock = new MaterialPropertyBlock();
+                meshRenderer.GetPropertyBlock(propBlock);
+                propBlock.SetColor("_BaseColor", new Color(0.65f, 0.92f, 1.0f, 1.0f));
+                propBlock.SetColor("_EmissionColor", new Color(0.2f, 0.7f, 1.0f, 1.0f) * 1.5f);
+                meshRenderer.SetPropertyBlock(propBlock);
+            }
+        }
+
+        public void Unfreeze()
+        {
+            isFrozen = false;
+            requiredDefrostHits = 0;
+            if (meshRenderer != null)
+            {
+                meshRenderer.SetPropertyBlock(null);
+                if (originalMaterial != null) meshRenderer.sharedMaterial = originalMaterial;
+            }
+        }
+
         public void Initialize(BlockColorTier tier, Material material, Color vfxColor, BlockSpecialType special = BlockSpecialType.Normal)
         {
             colorTier = tier;
             particleColor = vfxColor;
             specialType = special;
             isDestroyed = false;
+            isFrozen = false;
+            requiredDefrostHits = 0;
 
             basePoints = tier switch
             {
@@ -84,6 +119,7 @@ namespace Arcade.BlockBreaker
 
             if (meshRenderer != null && material != null)
             {
+                originalMaterial = material;
                 meshRenderer.sharedMaterial = material;
             }
         }
@@ -103,6 +139,25 @@ namespace Arcade.BlockBreaker
         public void TakeHit(Vector3 hitNormal, int volleyMultiplier = 1, int volleyStreak = 0, int chainMultiplier = 1, string bonusTag = "")
         {
             if (isDestroyed) return;
+
+            if (isFrozen)
+            {
+                requiredDefrostHits--;
+                if (ArcadeAudioManager.Instance != null)
+                {
+                    ArcadeAudioManager.Instance.PlayGlassBreak();
+                }
+                if (BlockVFXManager.Instance != null)
+                {
+                    BlockVFXManager.Instance.PlayBlockShatter(transform.position, new Color(0.6f, 0.95f, 1.0f, 0.8f), hitNormal);
+                }
+
+                if (requiredDefrostHits <= 0)
+                {
+                    Unfreeze();
+                }
+                return;
+            }
 
             hitPoints--;
             if (hitPoints > 0)

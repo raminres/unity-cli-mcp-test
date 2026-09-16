@@ -276,6 +276,58 @@ namespace Arcade.Audio
             }
         }
 
+        private AudioClip synthPowerdownClip;
+
+        /// <summary>
+        /// Plays Power-down sound when a hazard/debuff capsule is collected by the paddle.
+        /// </summary>
+        public void PlayPowerdown()
+        {
+            if (synthPowerdownClip == null)
+            {
+                synthPowerdownClip = SynthesizePowerdownChirp();
+            }
+
+            if (synthPowerdownClip != null)
+            {
+                PlaySound(synthPowerdownClip, 1.0f);
+            }
+            else if (clipLifeLost != null)
+            {
+                PlaySound(clipLifeLost, 1.25f);
+            }
+            else
+            {
+                PlayPop();
+            }
+        }
+
+        private AudioClip SynthesizePowerdownChirp()
+        {
+            int sampleRate = 44100;
+            float duration = 0.22f;
+            int sampleCount = Mathf.RoundToInt(sampleRate * duration);
+            float[] samples = new float[sampleCount];
+            float startFreq = 480f;
+            float endFreq = 110f;
+            float phase = 0f;
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float t = (float)i / sampleCount;
+                float currentFreq = Mathf.Lerp(startFreq, endFreq, t * t);
+                phase += 2f * Mathf.PI * currentFreq / sampleRate;
+                float envelope = 1f - Mathf.Pow(t, 0.7f);
+                // Slight crunchy buzz tone for arcade hazard
+                float tone = Mathf.Sin(phase) * 0.7f + Mathf.Sign(Mathf.Sin(phase * 0.5f)) * 0.15f;
+                samples[i] = tone * envelope * 0.45f;
+            }
+
+            var clip = AudioClip.Create("SynthPowerdown", sampleCount, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
+        }
+
         /// <summary>
         /// Plays Glass Break sound (AU_Glass_Break.mp3) when a reinforced glass shell is cracked.
         /// </summary>

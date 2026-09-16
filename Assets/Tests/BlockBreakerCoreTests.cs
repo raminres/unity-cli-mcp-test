@@ -4891,6 +4891,318 @@ namespace Arcade.Tests
             }
         }
 
+        #region Powerdown & Hazard Subsystem Tests
+
+        [Test]
+        public void BlockModifier_PowerdownExtensions_IdentifiesHazardsAndBuffs()
+        {
+            // All 6 hazards classified as powerdown
+            Assert.IsTrue(BlockSpecialType.PaddleShortener.IsPowerdown());
+            Assert.IsTrue(BlockSpecialType.PaddleSlower.IsPowerdown());
+            Assert.IsTrue(BlockSpecialType.BrickFreezer.IsPowerdown());
+            Assert.IsTrue(BlockSpecialType.BallSizeDecreaser.IsPowerdown());
+            Assert.IsTrue(BlockSpecialType.BallSlower.IsPowerdown());
+            Assert.IsTrue(BlockSpecialType.PaddleFreezer.IsPowerdown());
+
+            // Buffs are NOT powerdowns
+            Assert.IsFalse(BlockSpecialType.PaddleExpander.IsPowerdown());
+            Assert.IsFalse(BlockSpecialType.ExtraHeart.IsPowerdown());
+            Assert.IsFalse(BlockSpecialType.Shield.IsPowerdown());
+            Assert.IsFalse(BlockSpecialType.MultiBall.IsPowerdown());
+            Assert.IsFalse(BlockSpecialType.Laser.IsPowerdown());
+            Assert.IsFalse(BlockSpecialType.ScoreMultiplier2x.IsPowerdown());
+
+            // Buffs classified as powerups
+            Assert.IsTrue(BlockSpecialType.PaddleExpander.IsPowerup());
+            Assert.IsTrue(BlockSpecialType.ExtraHeart.IsPowerup());
+            Assert.IsTrue(BlockSpecialType.Shield.IsPowerup());
+            Assert.IsTrue(BlockSpecialType.MultiBall.IsPowerup());
+            Assert.IsTrue(BlockSpecialType.Laser.IsPowerup());
+            Assert.IsTrue(BlockSpecialType.ScoreMultiplier2x.IsPowerup());
+            Assert.IsFalse(BlockSpecialType.PaddleShortener.IsPowerup());
+
+            // Unified Palette
+            Assert.AreEqual(new Color(1.0f, 0.10f, 0.25f), BlockModifierExtensions.UnifiedPowerdownColor);
+            Assert.AreEqual(new Color(0.0f, 0.95f, 1.0f), BlockModifierExtensions.UnifiedPowerupColor);
+        }
+
+        [Test]
+        public void PowerupCapsule_Spawn_Powerdown_CreatesDiamondCubeMeshAndHazardGlow()
+        {
+            // Spawn Powerdown (PaddleShortener)
+            var powerdown = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.PaddleShortener);
+            Assert.IsNotNull(powerdown);
+            Assert.IsNotNull(powerdown.VisualCapsuleTransform);
+
+            var cubeMf = powerdown.VisualCapsuleTransform.GetComponent<MeshFilter>();
+            Assert.IsNotNull(cubeMf);
+            Assert.IsNotNull(cubeMf.sharedMesh);
+            Assert.IsTrue(cubeMf.sharedMesh.name.IndexOf("Cube", System.StringComparison.OrdinalIgnoreCase) >= 0,
+                "Powerdowns must instantiate a 3D Cube primitive mesh to tumble as a diamond.");
+            Assert.AreEqual(new Vector3(0.72f, 0.72f, 0.72f), powerdown.VisualCapsuleTransform.localScale);
+
+            // Spawn Powerup (PaddleExpander)
+            var powerup = PowerupCapsule.Spawn(new Vector3(5f, 0f, 0f), BlockSpecialType.PaddleExpander);
+            Assert.IsNotNull(powerup);
+            Assert.IsNotNull(powerup.VisualCapsuleTransform);
+
+            var capsuleMf = powerup.VisualCapsuleTransform.GetComponent<MeshFilter>();
+            Assert.IsNotNull(capsuleMf);
+            Assert.IsNotNull(capsuleMf.sharedMesh);
+            Assert.IsTrue(capsuleMf.sharedMesh.name.IndexOf("Capsule", System.StringComparison.OrdinalIgnoreCase) >= 0,
+                "Powerups must instantiate a 3D Capsule primitive mesh.");
+            Assert.AreEqual(new Vector3(0.85f, 0.85f, 0.85f), powerup.VisualCapsuleTransform.localScale);
+
+            Object.DestroyImmediate(powerdown.gameObject);
+            Object.DestroyImmediate(powerup.gameObject);
+        }
+
+        [Test]
+        public void PaddleController_ShrinkWidth_ReducesWidthAndEnforcesMinFloor()
+        {
+            var paddleGo = new GameObject("Paddle");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+            paddle.ResetWidth(5.0f);
+
+            Assert.AreEqual(5.0f, paddle.CurrentWidth, 0.01f);
+
+            // Shrink by 18%
+            paddle.ShrinkWidth(0.18f);
+            float expectedWidth = 5.0f * (1f - 0.18f); // 4.10f
+            Assert.AreEqual(expectedWidth, paddle.CurrentWidth, 0.05f);
+
+            // Excessive shrink clamps to minWidth (2.4f)
+            paddle.ShrinkWidth(0.90f);
+            Assert.AreEqual(2.4f, paddle.CurrentWidth, 0.01f, "Paddle width must be clamped at minimum floor (2.4f).");
+
+            Object.DestroyImmediate(paddleGo);
+        }
+
+        [Test]
+        public void PaddleController_FreezeAndSlow_ControlsStateFlags()
+        {
+            var paddleGo = new GameObject("Paddle");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+
+            Assert.IsFalse(paddle.IsFrozen);
+            Assert.IsFalse(paddle.IsSlowed);
+
+            paddle.SetFrozen(true);
+            Assert.IsTrue(paddle.IsFrozen);
+
+            paddle.SetFrozen(false);
+            Assert.IsFalse(paddle.IsFrozen);
+
+            paddle.SetSlowed(true);
+            Assert.IsTrue(paddle.IsSlowed);
+
+            paddle.SetSlowed(false);
+            Assert.IsFalse(paddle.IsSlowed);
+
+            Object.DestroyImmediate(paddleGo);
+        }
+
+        [Test]
+        public void BallController_BallShrunk_ScalesBallToSixtyPercent()
+        {
+            var ballGo = new GameObject("Ball");
+            var ball = ballGo.AddComponent<BallController>();
+
+            Vector3 initialScale = ballGo.transform.localScale;
+
+            ball.SetBallShrunk(true);
+            Assert.IsTrue(ball.IsBallShrunk);
+            Assert.AreEqual(initialScale.x * 0.60f, ballGo.transform.localScale.x, 0.01f);
+
+            ball.SetBallShrunk(false);
+            Assert.IsFalse(ball.IsBallShrunk);
+            Assert.AreEqual(initialScale.x, ballGo.transform.localScale.x, 0.01f);
+
+            Object.DestroyImmediate(ballGo);
+        }
+
+        [Test]
+        public void BallController_BallSlowed_SetsSlowState()
+        {
+            var ballGo = new GameObject("Ball");
+            var ball = ballGo.AddComponent<BallController>();
+
+            Assert.IsFalse(ball.IsBallSlowed);
+
+            ball.SetBallSlowed(true);
+            Assert.IsTrue(ball.IsBallSlowed);
+
+            ball.SetBallSlowed(false);
+            Assert.IsFalse(ball.IsBallSlowed);
+
+            Object.DestroyImmediate(ballGo);
+        }
+
+        [Test]
+        public void Block_Freeze_AbsorbsHitAndRequiresDefrostHitBeforeDestruction()
+        {
+            var blockGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var block = blockGo.AddComponent<Block>();
+            block.Initialize(BlockColorTier.Red, null, Color.red, BlockSpecialType.Normal);
+
+            // Freeze block with 1 defrost hit required
+            block.Freeze(1);
+            Assert.IsTrue(block.IsFrozen);
+            Assert.IsFalse(block.IsDestroyed);
+
+            // Hit 1: Absorbs hit, defrosted, NOT destroyed
+            block.TakeHit(Vector3.up);
+            Assert.IsFalse(block.IsFrozen, "Block must defrost upon taking hit.");
+            Assert.IsFalse(block.IsDestroyed, "Block must absorb defrost hit without being destroyed.");
+
+            // Hit 2: Block is now normal, should be destroyed
+            block.TakeHit(Vector3.up);
+            Assert.IsTrue(block.IsDestroyed, "Block should be destroyed on subsequent hit after defrosting.");
+
+            Object.DestroyImmediate(blockGo);
+        }
+
+        [Test]
+        public void ArcadeGameManager_PowerdownLifecycle_ActivatesTicksAndDeactivates()
+        {
+            var gmGo = new GameObject("ArcadeGameManager");
+            var gm = gmGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(gm);
+
+            int eventCount = 0;
+            BlockSpecialType lastType = BlockSpecialType.Normal;
+            bool lastActive = false;
+
+            gm.OnPowerdownStateChanged += (type, active, duration) =>
+            {
+                eventCount++;
+                lastType = type;
+                lastActive = active;
+            };
+
+            // Test PaddleShortener
+            gm.ActivatePaddleShortener(10f);
+            Assert.IsTrue(gm.IsPaddleShortened);
+            Assert.AreEqual(10f, gm.PaddleShortenTimeRemaining);
+            Assert.AreEqual(BlockSpecialType.PaddleShortener, lastType);
+            Assert.IsTrue(lastActive);
+
+            gm.TickPaddleShortener(5f);
+            Assert.AreEqual(5f, gm.PaddleShortenTimeRemaining);
+
+            gm.DeactivatePaddleShortener();
+            Assert.IsFalse(gm.IsPaddleShortened);
+
+            // Test PaddleSlower
+            gm.ActivatePaddleSlower(8f);
+            Assert.IsTrue(gm.IsPaddleSlowed);
+            Assert.AreEqual(BlockSpecialType.PaddleSlower, lastType);
+
+            // Test PaddleFreezer
+            gm.ActivatePaddleFreezer(1.2f);
+            Assert.IsTrue(gm.IsPaddleFrozen);
+            Assert.AreEqual(BlockSpecialType.PaddleFreezer, lastType);
+
+            // Test BallSizeDecreaser
+            gm.ActivateBallSizeDecreaser(10f);
+            Assert.IsTrue(gm.IsBallSizeDecreased);
+            Assert.IsTrue(gm.IsBallShrunk);
+            Assert.AreEqual(BlockSpecialType.BallSizeDecreaser, lastType);
+
+            // Test BallSlower
+            gm.ActivateBallSlower(8f);
+            Assert.IsTrue(gm.IsBallSlowed);
+            Assert.AreEqual(BlockSpecialType.BallSlower, lastType);
+
+            // Clear all active powerdowns
+            gm.ClearActivePowerdowns();
+            Assert.IsFalse(gm.IsPaddleShortened);
+            Assert.IsFalse(gm.IsPaddleSlowed);
+            Assert.IsFalse(gm.IsPaddleFrozen);
+            Assert.IsFalse(gm.IsBallSizeDecreased);
+            Assert.IsFalse(gm.IsBallSlowed);
+
+            ArcadeGameManager.SetInstanceForTesting(null);
+            Object.DestroyImmediate(gmGo);
+        }
+
+        [Test]
+        public void ArcadeUIManager_PowerdownStateChanged_UpdatesTopCenterTimersAndBadges()
+        {
+            var uiGo = new GameObject("UI");
+            uiGo.AddComponent<PanelRenderer>();
+            var uiMgr = uiGo.AddComponent<ArcadeUIManager>();
+
+            var root = new VisualElement();
+
+            var shrinkBadge = new VisualElement { name = "paddle-shrink-status-badge" };
+            shrinkBadge.AddToClassList("powerup-hidden");
+            var shrinkLabel = new Label { name = "paddle-shrink-timer-label" };
+            shrinkBadge.Add(shrinkLabel);
+
+            var slowBadge = new VisualElement { name = "paddle-slow-status-badge" };
+            slowBadge.AddToClassList("powerup-hidden");
+            var slowLabel = new Label { name = "paddle-slow-timer-label" };
+            slowBadge.Add(slowLabel);
+
+            var freezeBadge = new VisualElement { name = "paddle-freeze-status-badge" };
+            freezeBadge.AddToClassList("powerup-hidden");
+            var freezeLabel = new Label { name = "paddle-freeze-timer-label" };
+            freezeBadge.Add(freezeLabel);
+
+            var ballShrinkBadge = new VisualElement { name = "ball-shrink-status-badge" };
+            ballShrinkBadge.AddToClassList("powerup-hidden");
+            var ballShrinkLabel = new Label { name = "ball-shrink-timer-label" };
+            ballShrinkBadge.Add(ballShrinkLabel);
+
+            var ballSlowBadge = new VisualElement { name = "ball-slow-status-badge" };
+            ballSlowBadge.AddToClassList("powerup-hidden");
+            var ballSlowLabel = new Label { name = "ball-slow-timer-label" };
+            ballSlowBadge.Add(ballSlowLabel);
+
+            root.Add(shrinkBadge);
+            root.Add(slowBadge);
+            root.Add(freezeBadge);
+            root.Add(ballShrinkBadge);
+            root.Add(ballSlowBadge);
+
+            typeof(ArcadeUIManager).GetField("paddleShrinkStatusBadge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, shrinkBadge);
+            typeof(ArcadeUIManager).GetField("paddleShrinkTimerLabel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, shrinkLabel);
+            typeof(ArcadeUIManager).GetField("paddleSlowStatusBadge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, slowBadge);
+            typeof(ArcadeUIManager).GetField("paddleSlowTimerLabel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, slowLabel);
+            typeof(ArcadeUIManager).GetField("paddleFreezeStatusBadge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, freezeBadge);
+            typeof(ArcadeUIManager).GetField("paddleFreezeTimerLabel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, freezeLabel);
+            typeof(ArcadeUIManager).GetField("ballShrinkStatusBadge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, ballShrinkBadge);
+            typeof(ArcadeUIManager).GetField("ballShrinkTimerLabel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, ballShrinkLabel);
+            typeof(ArcadeUIManager).GetField("ballSlowStatusBadge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, ballSlowBadge);
+            typeof(ArcadeUIManager).GetField("ballSlowTimerLabel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, ballSlowLabel);
+
+            // Activate Paddle Shortener
+            uiMgr.HandlePowerdownStateChanged(BlockSpecialType.PaddleShortener, true, 10f);
+            Assert.IsFalse(shrinkBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual(DisplayStyle.Flex, shrinkBadge.style.display.value);
+            Assert.AreEqual("10s", shrinkLabel.text);
+
+            // Tick Paddle Shortener
+            uiMgr.HandlePowerdownTick(BlockSpecialType.PaddleShortener, 7.3f);
+            Assert.AreEqual("8s", shrinkLabel.text);
+
+            // Deactivate Paddle Shortener
+            uiMgr.HandlePowerdownStateChanged(BlockSpecialType.PaddleShortener, false, 0f);
+            Assert.IsTrue(shrinkBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual(DisplayStyle.None, shrinkBadge.style.display.value);
+
+            // Activate Paddle Freezer
+            uiMgr.HandlePowerdownStateChanged(BlockSpecialType.PaddleFreezer, true, 1.2f);
+            Assert.IsFalse(freezeBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual(DisplayStyle.Flex, freezeBadge.style.display.value);
+            Assert.AreEqual("2s", freezeLabel.text);
+
+            Object.DestroyImmediate(uiGo);
+        }
+
+        #endregion
+
         #endregion
         #endregion
     }

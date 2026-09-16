@@ -223,8 +223,14 @@ namespace Arcade.BlockBreaker
             int shieldCount = currentLevelConfig != null ? currentLevelConfig.ShieldCount : 0;
             int multiBallCount = currentLevelConfig != null ? currentLevelConfig.MultiBallCount : 0;
             int laserCount = currentLevelConfig != null ? currentLevelConfig.LaserCount : 0;
+            int shortenCount = currentLevelConfig != null ? currentLevelConfig.PaddleShortenerCount : 0;
+            int slowCount = currentLevelConfig != null ? currentLevelConfig.PaddleSlowerCount : 0;
+            int freezeCount = currentLevelConfig != null ? currentLevelConfig.BrickFreezerCount : 0;
+            int ballShrinkCount = currentLevelConfig != null ? currentLevelConfig.BallSizeDecreaserCount : 0;
+            int ballSlowCount = currentLevelConfig != null ? currentLevelConfig.BallSlowerCount : 0;
+            int paddleFreezeCount = currentLevelConfig != null ? currentLevelConfig.PaddleFreezerCount : 0;
 
-            var specialMap = DistributeSpecialBlocks(totalActiveBlocks, mult2x, mult3x, mult4x, mult5x, expCount, bombCount, glassCount, heartCount, shieldCount, multiBallCount, laserCount);
+            var specialMap = DistributeSpecialBlocks(totalActiveBlocks, mult2x, mult3x, mult4x, mult5x, expCount, bombCount, glassCount, heartCount, shieldCount, multiBallCount, laserCount, shortenCount, slowCount, freezeCount, ballShrinkCount, ballSlowCount, paddleFreezeCount);
 
             int blockIndex = 0;
             for (int r = 0; r < totalRows; r++)
@@ -359,7 +365,7 @@ namespace Arcade.BlockBreaker
             return DistributeSpecialBlocks(totalBlocks, mult2xCount, mult3xCount, 0, 0, expanderCount, bombCount, glassCount, heartCount, shieldCount, multiBallCount);
         }
 
-        public Dictionary<int, BlockSpecialType> DistributeSpecialBlocks(int totalBlocks, int mult2xCount, int mult3xCount, int mult4xCount, int mult5xCount, int expanderCount, int bombCount, int glassCount, int heartCount, int shieldCount, int multiBallCount, int laserCount = 0)
+        public Dictionary<int, BlockSpecialType> DistributeSpecialBlocks(int totalBlocks, int mult2xCount, int mult3xCount, int mult4xCount, int mult5xCount, int expanderCount, int bombCount, int glassCount, int heartCount, int shieldCount, int multiBallCount, int laserCount = 0, int shortenCount = 0, int slowCount = 0, int freezeCount = 0, int ballShrinkCount = 0, int ballSlowCount = 0, int paddleFreezeCount = 0)
         {
             var map = new Dictionary<int, BlockSpecialType>();
             if (totalBlocks <= 0) return map;
@@ -428,6 +434,36 @@ namespace Arcade.BlockBreaker
             for (int i = 0; i < laserCount && cursor < availableIndices.Count; i++, cursor++)
             {
                 map[availableIndices[cursor]] = BlockSpecialType.Laser;
+            }
+
+            for (int i = 0; i < shortenCount && cursor < availableIndices.Count; i++, cursor++)
+            {
+                map[availableIndices[cursor]] = BlockSpecialType.PaddleShortener;
+            }
+
+            for (int i = 0; i < slowCount && cursor < availableIndices.Count; i++, cursor++)
+            {
+                map[availableIndices[cursor]] = BlockSpecialType.PaddleSlower;
+            }
+
+            for (int i = 0; i < freezeCount && cursor < availableIndices.Count; i++, cursor++)
+            {
+                map[availableIndices[cursor]] = BlockSpecialType.BrickFreezer;
+            }
+
+            for (int i = 0; i < ballShrinkCount && cursor < availableIndices.Count; i++, cursor++)
+            {
+                map[availableIndices[cursor]] = BlockSpecialType.BallSizeDecreaser;
+            }
+
+            for (int i = 0; i < ballSlowCount && cursor < availableIndices.Count; i++, cursor++)
+            {
+                map[availableIndices[cursor]] = BlockSpecialType.BallSlower;
+            }
+
+            for (int i = 0; i < paddleFreezeCount && cursor < availableIndices.Count; i++, cursor++)
+            {
+                map[availableIndices[cursor]] = BlockSpecialType.PaddleFreezer;
             }
 
             return map;

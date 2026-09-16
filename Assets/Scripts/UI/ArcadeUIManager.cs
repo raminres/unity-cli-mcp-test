@@ -145,6 +145,18 @@ namespace Arcade.UI
         private Label clutchMultiplierLabel;
         private Label clutchTimerLabel;
 
+        // Active Powerdown Badges
+        private VisualElement paddleShrinkStatusBadge;
+        private Label paddleShrinkTimerLabel;
+        private VisualElement paddleSlowStatusBadge;
+        private Label paddleSlowTimerLabel;
+        private VisualElement ballShrinkStatusBadge;
+        private Label ballShrinkTimerLabel;
+        private VisualElement ballSlowStatusBadge;
+        private Label ballSlowTimerLabel;
+        private VisualElement paddleFreezeStatusBadge;
+        private Label paddleFreezeTimerLabel;
+
         private Button btnApplyLevel;
         private Button btnCloseLevelSettings;
 
@@ -195,6 +207,16 @@ namespace Arcade.UI
         public VisualElement ClutchStatusBadge => clutchStatusBadge;
         public Label ClutchMultiplierLabel => clutchMultiplierLabel;
         public Label ClutchTimerLabel => clutchTimerLabel;
+        public VisualElement PaddleShrinkStatusBadge => paddleShrinkStatusBadge;
+        public Label PaddleShrinkTimerLabel => paddleShrinkTimerLabel;
+        public VisualElement PaddleSlowStatusBadge => paddleSlowStatusBadge;
+        public Label PaddleSlowTimerLabel => paddleSlowTimerLabel;
+        public VisualElement BallShrinkStatusBadge => ballShrinkStatusBadge;
+        public Label BallShrinkTimerLabel => ballShrinkTimerLabel;
+        public VisualElement BallSlowStatusBadge => ballSlowStatusBadge;
+        public Label BallSlowTimerLabel => ballSlowTimerLabel;
+        public VisualElement PaddleFreezeStatusBadge => paddleFreezeStatusBadge;
+        public Label PaddleFreezeTimerLabel => paddleFreezeTimerLabel;
         public Label TimerLabel => timerLabel;
         public Label ScoreDeltaLabel => scoreDeltaLabel;
         public VisualElement ComboStatusBadge => comboStatusBadge;
@@ -535,6 +557,18 @@ namespace Arcade.UI
             clutchMultiplierLabel = root.Q<Label>("clutch-multiplier-label");
             clutchTimerLabel = root.Q<Label>("clutch-timer-label");
 
+            // Query Powerdown Badges
+            paddleShrinkStatusBadge = root.Q<VisualElement>("paddle-shrink-status-badge");
+            paddleShrinkTimerLabel = root.Q<Label>("paddle-shrink-timer-label");
+            paddleSlowStatusBadge = root.Q<VisualElement>("paddle-slow-status-badge");
+            paddleSlowTimerLabel = root.Q<Label>("paddle-slow-timer-label");
+            ballShrinkStatusBadge = root.Q<VisualElement>("ball-shrink-status-badge");
+            ballShrinkTimerLabel = root.Q<Label>("ball-shrink-timer-label");
+            ballSlowStatusBadge = root.Q<VisualElement>("ball-slow-status-badge");
+            ballSlowTimerLabel = root.Q<Label>("ball-slow-timer-label");
+            paddleFreezeStatusBadge = root.Q<VisualElement>("paddle-freeze-status-badge");
+            paddleFreezeTimerLabel = root.Q<Label>("paddle-freeze-timer-label");
+
             var iconShield = root.Q<VisualElement>("shield-status-icon");
             if (iconShield != null && shieldSprite != null)
                 iconShield.style.backgroundImage = new StyleBackground(shieldSprite);
@@ -558,6 +592,29 @@ namespace Arcade.UI
             var iconClutch = root.Q<VisualElement>("clutch-status-icon");
             if (iconClutch != null && laserSprite != null)
                 iconClutch.style.backgroundImage = new StyleBackground(laserSprite);
+
+            if (iconSet != null)
+            {
+                var iconPaddleShrink = root.Q<VisualElement>("paddle-shrink-status-icon");
+                if (iconPaddleShrink != null && iconSet.PaddleShortenerSprite != null)
+                    iconPaddleShrink.style.backgroundImage = new StyleBackground(iconSet.PaddleShortenerSprite);
+
+                var iconPaddleSlow = root.Q<VisualElement>("paddle-slow-status-icon");
+                if (iconPaddleSlow != null && iconSet.PaddleSlowerSprite != null)
+                    iconPaddleSlow.style.backgroundImage = new StyleBackground(iconSet.PaddleSlowerSprite);
+
+                var iconBallShrink = root.Q<VisualElement>("ball-shrink-status-icon");
+                if (iconBallShrink != null && iconSet.BallSizeDecreaserSprite != null)
+                    iconBallShrink.style.backgroundImage = new StyleBackground(iconSet.BallSizeDecreaserSprite);
+
+                var iconBallSlow = root.Q<VisualElement>("ball-slow-status-icon");
+                if (iconBallSlow != null && iconSet.BallSlowerSprite != null)
+                    iconBallSlow.style.backgroundImage = new StyleBackground(iconSet.BallSlowerSprite);
+
+                var iconPaddleFreeze = root.Q<VisualElement>("paddle-freeze-status-icon");
+                if (iconPaddleFreeze != null && iconSet.PaddleFreezerSprite != null)
+                    iconPaddleFreeze.style.backgroundImage = new StyleBackground(iconSet.PaddleFreezerSprite);
+            }
 
             if (comboStatusIcon != null && multiplierSprite != null)
                 comboStatusIcon.style.backgroundImage = new StyleBackground(multiplierSprite);
@@ -856,6 +913,8 @@ namespace Arcade.UI
                 ArcadeGameManager.Instance.OnBlockPointsAwarded += HandleBlockPointsAwarded;
                 ArcadeGameManager.Instance.OnLevelCompletedWithTally += HandleLevelCompletedWithTally;
                 ArcadeGameManager.Instance.OnLevelClearPending += HandleLevelClearPending;
+                ArcadeGameManager.Instance.OnPowerdownStateChanged += HandlePowerdownStateChanged;
+                ArcadeGameManager.Instance.OnPowerdownTick += HandlePowerdownTick;
             }
         }
 
@@ -882,6 +941,8 @@ namespace Arcade.UI
                 ArcadeGameManager.Instance.OnBlockPointsAwarded -= HandleBlockPointsAwarded;
                 ArcadeGameManager.Instance.OnLevelCompletedWithTally -= HandleLevelCompletedWithTally;
                 ArcadeGameManager.Instance.OnLevelClearPending -= HandleLevelClearPending;
+                ArcadeGameManager.Instance.OnPowerdownStateChanged -= HandlePowerdownStateChanged;
+                ArcadeGameManager.Instance.OnPowerdownTick -= HandlePowerdownTick;
             }
         }
 
@@ -898,6 +959,11 @@ namespace Arcade.UI
                 HandleScoreMultiplierStateChanged(ArcadeGameManager.Instance.ActiveScoreMultiplier > 1, ArcadeGameManager.Instance.ActiveScoreMultiplier, ArcadeGameManager.Instance.MultiplierTimeRemaining);
                 HandleLaserPowerupStateChanged(ArcadeGameManager.Instance.IsLaserActive, ArcadeGameManager.Instance.LaserTimeRemaining);
                 HandleClutchStateChanged(ArcadeGameManager.Instance.IsClutchModeActive, ArcadeGameManager.Instance.ClutchTimeRemaining, ArcadeGameManager.Instance.ClutchMultiplier);
+                HandlePowerdownStateChanged(BlockSpecialType.PaddleShortener, ArcadeGameManager.Instance.IsPaddleShortened, ArcadeGameManager.Instance.PaddleShortenTimeRemaining);
+                HandlePowerdownStateChanged(BlockSpecialType.PaddleSlower, ArcadeGameManager.Instance.IsPaddleSlowed, ArcadeGameManager.Instance.PaddleSlowTimeRemaining);
+                HandlePowerdownStateChanged(BlockSpecialType.BallSizeDecreaser, ArcadeGameManager.Instance.IsBallSizeDecreased, ArcadeGameManager.Instance.BallSizeDecreaseTimeRemaining);
+                HandlePowerdownStateChanged(BlockSpecialType.BallSlower, ArcadeGameManager.Instance.IsBallSlowed, ArcadeGameManager.Instance.BallSlowTimeRemaining);
+                HandlePowerdownStateChanged(BlockSpecialType.PaddleFreezer, ArcadeGameManager.Instance.IsPaddleFrozen, ArcadeGameManager.Instance.PaddleFreezeTimeRemaining);
                 if (timerLabel != null) timerLabel.text = HighScoreManager.FormatTime(ArcadeGameManager.Instance.LevelElapsedTime);
                 HandleVolleyComboChanged(ArcadeGameManager.Instance.CurrentVolleyStreak, ArcadeGameManager.Instance.CurrentVolleyMultiplier);
             }
@@ -1254,6 +1320,68 @@ namespace Arcade.UI
         {
             if (laserTimerLabel != null)
                 laserTimerLabel.text = $"{Mathf.CeilToInt(timeRemaining)}s";
+        }
+
+        public void HandlePowerdownStateChanged(BlockSpecialType type, bool active, float remaining)
+        {
+            VisualElement badge = null;
+            Label timerLbl = null;
+
+            switch (type)
+            {
+                case BlockSpecialType.PaddleShortener:
+                    badge = paddleShrinkStatusBadge;
+                    timerLbl = paddleShrinkTimerLabel;
+                    break;
+                case BlockSpecialType.PaddleSlower:
+                    badge = paddleSlowStatusBadge;
+                    timerLbl = paddleSlowTimerLabel;
+                    break;
+                case BlockSpecialType.BallSizeDecreaser:
+                    badge = ballShrinkStatusBadge;
+                    timerLbl = ballShrinkTimerLabel;
+                    break;
+                case BlockSpecialType.BallSlower:
+                    badge = ballSlowStatusBadge;
+                    timerLbl = ballSlowTimerLabel;
+                    break;
+                case BlockSpecialType.PaddleFreezer:
+                    badge = paddleFreezeStatusBadge;
+                    timerLbl = paddleFreezeTimerLabel;
+                    break;
+            }
+
+            if (badge == null) return;
+
+            if (active)
+            {
+                badge.RemoveFromClassList("powerup-hidden");
+                badge.style.display = DisplayStyle.Flex;
+                if (timerLbl != null) timerLbl.text = $"{Mathf.CeilToInt(remaining)}s";
+            }
+            else
+            {
+                badge.AddToClassList("powerup-hidden");
+                badge.style.display = DisplayStyle.None;
+            }
+        }
+
+        public void HandlePowerdownTick(BlockSpecialType type, float timeRemaining)
+        {
+            Label timerLbl = type switch
+            {
+                BlockSpecialType.PaddleShortener => paddleShrinkTimerLabel,
+                BlockSpecialType.PaddleSlower => paddleSlowTimerLabel,
+                BlockSpecialType.BallSizeDecreaser => ballShrinkTimerLabel,
+                BlockSpecialType.BallSlower => ballSlowTimerLabel,
+                BlockSpecialType.PaddleFreezer => paddleFreezeTimerLabel,
+                _ => null
+            };
+
+            if (timerLbl != null)
+            {
+                timerLbl.text = $"{Mathf.CeilToInt(timeRemaining)}s";
+            }
         }
 
         public void HandleClutchStateChanged(bool active, float remaining, int multiplier)

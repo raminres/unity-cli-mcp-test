@@ -2,12 +2,12 @@
 
 [![Unity Version](https://img.shields.io/badge/Unity-6%20(6000.6.0f1)-black.svg?style=flat&logo=unity)](https://unity.com/)
 [![Render Pipeline](https://img.shields.io/badge/Render%20Pipeline-URP-blue.svg)](https://unity.com/srp/universal-render-pipeline)
-[![Automated Tests](https://img.shields.io/badge/Tests-194%2F194%20Passing%20(100%25)-brightgreen.svg)]()
+[![Automated Tests](https://img.shields.io/badge/Tests-203%2F203%20Passing%20(100%25)-brightgreen.svg)]()
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%20(Swift)%20%7C%20WebGPU%20%7C%20PC-purple.svg)]()
 [![Git LFS](https://img.shields.io/badge/Git-LFS%20Enabled-orange.svg)](https://git-lfs.github.com/)
 [![AI Integration](https://img.shields.io/badge/AI%20Assistant-Google%20Antigravity-green.svg)]()
 
-**BlockBreaker 3D** is a physics-driven arcade brick breaker built with Unity 6 (6000.6.0f1) and the Universal Render Pipeline (URP). Features 3-tier stepped pyramid paddle deflection with tangential surface friction and kinetic speed pops, Model A brick color physical interactions (dampen/boost/scatter), anti-trap trajectory physics, explosive chain cascades, armored 2-hit glass bricks, twin laser blaster cannons, lone block clutch hyper-beam railguns, an escalating 15-level campaign arc with high-density grids (11–14 columns), mobile safe-area touch controls, frame-0 shader prewarming, and an automated NUnit test suite (194 tests).
+**BlockBreaker 3D** is a physics-driven arcade brick breaker built with Unity 6 (6000.6.0f1) and the Universal Render Pipeline (URP). Features 3-tier stepped pyramid paddle deflection with tangential surface friction and kinetic speed pops, Model A brick color physical interactions (dampen/boost/scatter), anti-trap trajectory physics, explosive chain cascades, armored 2-hit glass bricks, twin laser blaster cannons, lone block clutch hyper-beam railguns, a complete hazard & powerdown debuff subsystem with tumbling diamond drops, an escalating 15-level campaign arc with high-density grids (11–14 columns), mobile safe-area touch controls, frame-0 shader prewarming, and an automated NUnit test suite (203 tests).
 
 Acts as a production testbed for **Google Antigravity**, **Unity MCP (Model Context Protocol)**, and **Unity CLI** agentic workflows.
 
@@ -29,6 +29,11 @@ Acts as a production testbed for **Google Antigravity**, **Unity MCP (Model Cont
   - **Consecutive Side-Wall Steepener ($35^\circ$)**: $\ge 2$ wall bounces steepen trajectory to $\ge 35^\circ$.
   - **Vertical Deadzone Exclusion ($[85^\circ, 95^\circ]$)**: Eliminates repetitive vertical loops.
   - **$45^\circ$ Continuous Corner Chamfers**: Continuous perimeter wedges at top corners eliminate corner trapping.
+- **Powerdown & Hazard Subsystem**:
+  - **Visual Differentiation**: Positive powerups radiate positive cyan glow (`#00f2fe`), whereas powerdowns display warning crimson (`#ff1744`) across brick badges, falling drop meshes, billboard sprites, and top HUD timers.
+  - **Diamond Drop Geometry**: Powerdowns tumble down as sharp, faceted 3D diamonds (cube rotated $45^\circ$ along all axes) to instantly distinguish them from rounded powerup capsules.
+  - **Paddle Freeze Struggle Feedback**: When immobilized by a paddle freezer, attempting to move triggers a high-frequency sinusoidal tremor (`Mathf.Sin(Time.time * 45f) * 0.07f`), visually conveying a frozen mechanical state rather than unresponsive input.
+  - **Defrost Absorption**: Frozen field bricks absorb a defrost hit before shattering, preventing automatic cascading.
 - **Lone Block Clutch Countdown & Option B Hyper-Beam Railgun**:
   - Activates when 1 brick remains. Decaying score multiplier ($10\times \to 1\times$) over 12 seconds.
   - On timer expiration, engages emergency Railgun Overcharge: a vertical hyper-beam surges from the paddle deck to the ceiling over $0.65\text{s}$, vaporizing remaining blocks.
@@ -41,7 +46,7 @@ Acts as a production testbed for **Google Antigravity**, **Unity MCP (Model Cont
   - Delays scorecard modal by $1.0\text{s}$ (standard hits) or $1.5\text{s}$ (hyper-beam clear), completely freezing active balls, paddle input, and falling drops during the transition.
   - Victory scorecard modal tallies blocks, peak combo, par time vs elapsed time, and flawless life bonus (+1,000 pts) with 1–3 star rating.
 - **Cross-Platform UI Toolkit Architecture**:
-  - Native Unity 6 `PanelRenderer`. Powerup sprites bound directly via ScriptableObject `SO_PowerupIcons`, guaranteeing 100% reliable rendering on iOS/Apple Metal builds.
+  - Native Unity 6 `PanelRenderer`. Powerup and powerdown sprites bound directly via ScriptableObject `SO_PowerupIcons`, guaranteeing 100% reliable rendering on iOS/Apple Metal builds.
   - `SafeAreaController` adapts HUD pods to iPhone notches and Dynamic Island.
   - `ResponsiveCameraController` guarantees full arena visibility across 16:9, 9:16, and 9:19.5 aspect ratios.
 
@@ -73,14 +78,25 @@ Levels are authored as modular ScriptableObjects (`Assets/Settings/Levels/SO_Lev
 
 ---
 
-## ⚡ Powerups & Collectibles
+## ⚡ Powerups & Hazards
 
+### Positive Buffs (Cyan / Emerald Glow `#00f2fe`)
 - 🌟 **Paddle Expander**: Widens paddle $+10\%$ compounding (max $12.0$) with spring overshoot animation.
 - ✖️ **Score Multipliers (2X–5X)**: 10-second global score multiplier for all block breaks.
 - 🛡️ **Shield**: 10-second defensive safety net. Intercepts falling balls back into docked launch without life loss.
 - ⚡ **Multi-Ball**: Spawns 2 extra balls at $\pm 35^\circ$ diverging angles. Points multiplied by live ball count.
 - 💖 **Extra Heart**: Grants $+1$ life (up to 5 max) with flying heart HUD parabolic animation.
 - 🔫 **Laser Blaster**: Twin paddle-mounted cannons fire ruby bolts ($34\text{ u/s}$) at $0.32\text{s}$ intervals for 10s.
+
+### Hazards & Debuffs (Warning Crimson Glow `#ff1744` & Tumbling Diamonds)
+- 🔻 **Paddle Shortener**: Shrinks paddle width $-18\%$ (clamped to min $2.4\text{u}$) for 10s.
+- 🐌 **Paddle Slower**: Introduces high-friction input inertia and sluggish paddle response for 8s.
+- ❄️ **Brick Freezer**: Encases up to 5 field blocks in glacial ice, requiring 1 defrost hit before shattering.
+- 🔍 **Ball Size Decreaser**: Shrinks ball radius to $60\%$ ($0.8\text{u} \to 0.48\text{u}$) for 10s.
+- 🐢 **Ball Slower**: Drops ball velocity to $9.5\text{ u/s}$ for 8s.
+- 🧊 **Paddle Freezer**: Freezes paddle for $1.2\text{s}$; player input triggers an active mechanical tremor animation.
+
+### Environmental Bricks
 - 💎 **Glass-Enclosed Bricks**: Translucent crystal shell requiring 2 hits (Hit 1: crystal shatter, Hit 2: brick destruction for $2\times$ pts).
 - 💥 **Bomb Bricks**: Detonates adjacent bricks in a $2.5$-unit radius with compound chain multipliers.
 
@@ -113,7 +129,7 @@ Levels are authored as modular ScriptableObjects (`Assets/Settings/Levels/SO_Lev
 
 ## 🧪 Automated Test Suite
 
-The project includes **183 unit and integration tests** executing via Unity CLI EditMode test runner:
+The project includes **203 unit and integration tests** executing via Unity CLI EditMode test runner:
 
 ```bash
 # Execute test suite via Unity CLI:

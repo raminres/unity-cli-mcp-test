@@ -313,6 +313,44 @@
     text-shadow: 0 0 8px rgba(213, 0, 249, 0.8);
 }
 
+/* Hazard / Powerdown Badges */
+.powerdown-badge {
+    border-color: #ff1744;
+    box-shadow: 0 0 14px rgba(255, 23, 68, 0.95);
+    background-color: rgba(30, 10, 14, 0.92);
+}
+
+.powerdown-badge .powerup-timer-label,
+.powerdown-timer-label {
+    color: #ff1744;
+    text-shadow: 0 0 10px rgba(255, 23, 68, 0.95);
+}
+
+.powerdown-badge .powerup-status-icon {
+    -unity-background-image-tint-color: #ff1744;
+}
+
+.paddle-shrink-badge {
+    border-color: #ff1744;
+}
+
+.paddle-slow-badge {
+    border-color: #ff3860;
+}
+
+.ball-shrink-badge {
+    border-color: #ff1744;
+}
+
+.ball-slow-badge {
+    border-color: #ff3860;
+}
+
+.paddle-freeze-badge {
+    border-color: #ff1744;
+    box-shadow: 0 0 16px rgba(255, 23, 68, 0.95);
+}
+
 .powerup-hidden {
     display: none;
     opacity: 0;

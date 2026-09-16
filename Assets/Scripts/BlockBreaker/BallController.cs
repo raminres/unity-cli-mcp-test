@@ -75,6 +75,50 @@ namespace Arcade.BlockBreaker
         public float GreenBoostPercent => greenBoostPercent;
         public float BlueScatterMinAngleDeg => blueScatterMinAngleDeg;
         public float BlueScatterMaxAngleDeg => blueScatterMaxAngleDeg;
+        public bool IsBallShrunk => isBallShrunk;
+        public bool IsBallSlowed => isBallSlowed;
+        public float SluggishSpeed => sluggishSpeed;
+
+        private Vector3 initialBallScale = Vector3.one * 0.8f;
+        private bool isBallShrunk = false;
+        private bool isBallSlowed = false;
+        private float sluggishSpeed = 9.5f;
+
+        public void SetBallShrunk(bool shrunk)
+        {
+            if (!isBallShrunk && shrunk)
+            {
+                initialBallScale = transform.localScale;
+            }
+            isBallShrunk = shrunk;
+            if (initialBallScale == Vector3.zero) initialBallScale = Vector3.one * 0.8f;
+            transform.localScale = shrunk ? initialBallScale * 0.60f : initialBallScale;
+        }
+
+        public void SetBallSlowed(bool slowed)
+        {
+            isBallSlowed = slowed;
+            if (slowed)
+            {
+                currentSpeed = Mathf.Min(currentSpeed, sluggishSpeed);
+                if (rb != null && rb.linearVelocity.sqrMagnitude > 0.01f)
+                {
+                    rb.linearVelocity = rb.linearVelocity.normalized * currentSpeed;
+                }
+            }
+            else
+            {
+                if (currentSpeed < baseSpeed)
+                {
+                    currentSpeed = baseSpeed;
+                    if (rb != null && rb.linearVelocity.sqrMagnitude > 0.01f)
+                    {
+                        rb.linearVelocity = rb.linearVelocity.normalized * currentSpeed;
+                    }
+                }
+            }
+        }
+
         public void SetPaddleVelocityInfluenceForTesting(float val) => paddleVelocityInfluence = val;
         public void SetCurrentSpeedForTesting(float speed) => currentSpeed = speed;
         public int ConsecutiveSideWallBounces => consecutiveSideWallBounces;
@@ -104,6 +148,7 @@ namespace Arcade.BlockBreaker
         private void Awake()
         {
             if (rb == null) rb = GetComponent<Rigidbody>();
+            if (transform.localScale.sqrMagnitude > 0.01f) initialBallScale = transform.localScale;
 
             rb.useGravity = false;
             rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
