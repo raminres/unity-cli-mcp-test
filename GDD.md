@@ -1,6 +1,6 @@
 # BlockBreaker: Game Design Document (GDD)
 
-**Version**: 3.5  
+**Version**: 4.0  
 **Status**: Living Design Specification  
 **Project**: BlockBreaker (`com.RaminRasulzade.BlockBreaker`)  
 **Target Engine**: Unity 6 (6000.6.0f1) Universal Render Pipeline (URP)  
@@ -11,14 +11,14 @@
 ## 1. Executive Summary & Vision
 
 ### 1.1 Game Concept
-**BlockBreaker** is a physics-driven 3D arcade brick breaker built with Unity 6. Blending tactical paddle deflection, skill-based volley combo multipliers, real-time floating feedback, explosive chain reactions, and vibrant Universal Render Pipeline visuals, BlockBreaker delivers an escalating arcade experience across a progressive 15-level campaign arc.
+**BlockBreaker** is a physics-driven 3D arcade brick breaker built with Unity 6. Blending tactical paddle deflection, skill-based volley combo multipliers, real-time floating feedback, explosive chain reactions, an escalating hazard/powerdown debuff system with tumbling diamond drops, and vibrant Universal Render Pipeline visuals, BlockBreaker delivers an escalating arcade experience across a progressive 15-level campaign arc.
 
 ### 1.2 Core Pillars
-1. **Kinetic Control & Agency**: Deflection is player-directed through 3-tier stepped paddle contact geometry, paddle momentum transfer, and anti-trap trajectory guards.
-2. **Skill-Driven Hybrid Scoring**: Compounding rewards through unreturned volley rallies, compound bomb chains, multi-ball juggling, under-par speed bonuses, and flawless life bonuses.
-3. **Dual-Layer Readability**: Points are communicated at the impact point (world-space floating popups) and on the HUD dashboard (score delta ticker + live combo badge).
+1. **Kinetic Control & Agency**: Deflection is player-directed through 3-tier stepped paddle contact geometry, paddle momentum transfer, active kinetic strikes, and anti-trap trajectory guards.
+2. **Skill-Driven Hybrid Scoring & Hazard Tension**: Compounding rewards through unreturned volley rallies, compound bomb chains, and multi-ball juggling, balanced against tactical hazard evasion and defrost management.
+3. **Dual-Layer Readability**: Points and debuff statuses are communicated at the impact point (world-space floating popups), on falling pickups (cyan capsules vs crimson diamonds), and on the HUD dashboard (score delta ticker + live combo badge + top center powerdown countdown timers).
 4. **Cross-Platform Polish**: Mobile touch (iOS Dynamic Island / notch safe-area compliance) and desktop controls, zero-allocation rendering, and hitch-free Apple Metal execution.
-5. **Acoustic Feedback**: Handcrafted arcade sound effects, ascending musical pitch scales on combo streaks, and procedural synthesis fallbacks.
+5. **Acoustic Feedback**: Handcrafted arcade sound effects, ascending musical pitch scales on combo streaks, downward frequency chirps on debuffs, and procedural synthesis fallbacks.
 
 ---
 
@@ -102,18 +102,31 @@ Tallies blocks destroyed, peak volley combo, elapsed time vs par time, time bonu
 
 ---
 
-## 5. Powerups & Collectibles
+## 5. Powerups, Hazards & Debuffs Subsystem
 
-| Modifier | Capsule Tint & Icon | Type | Description |
-| :--- | :--- | :--- | :--- |
-| **Paddle Expander** | Neon cyan & arrow | Power-up | 10s buff widening paddle $+10\%$ compounding (max $12.0$) with spring overshoot. |
-| **Multiplier (2X–5X)** | Tiered gold/orange/ruby/magenta | Buff | 10s global score multiplier buff for all block breaks. |
-| **Shield** | Electric blue & shield | Defensive | 10s defensive safety net at arena bottom, redocking balls without life loss. |
-| **Multi-Ball** | Neon magenta & 3-ball | Kinetic | Spawns 2 extra balls at $\pm 35^\circ$. Points multiplied by live ball count. |
-| **Extra Heart** | Neon pink & heart | Recovery | Grants $+1$ life (up to 5 max) with HUD flying heart animation. |
-| **Laser Blaster** | Ruby red & laser guns | Offensive | 10s twin paddle cannons firing ruby bolts ($34\text{ u/s}$) at $0.32\text{s}$ intervals. |
-| **Glass-Enclosed** | Translucent 1.18x shell | Armored | 2-hit brick (Hit 1: crystal shatter, Hit 2: brick destruction for $2\times$ pts). |
-| **Bomb Brick** | Crimson BOMB badge | Hazard | Detonates in $2.5$-unit radius with compounding chain multipliers. |
+### 5.1 Positive Buffs (Glowing Cyan `#00f2fe` & Tumbling 3D Capsules)
+- **Visual Presentation**: Rounded 3D capsule mesh with positive cyan glow (`#00f2fe`).
+- **Modifiers**:
+  - **Paddle Expander**: 10s buff widening paddle $+10\%$ compounding (max $12.0$) with spring overshoot. Icon: `TX_Powerup_Arrows_Outward.png`.
+  - **Multiplier (2X–5X)**: 10s global score multiplier for all block breaks. Icon: `TX_Powerup_Extra_Points.png`.
+  - **Shield**: 10s defensive safety net at arena bottom, redocking balls without life loss. Icon: `TX_Powerup_Shield.png`.
+  - **Multi-Ball**: Spawns 2 extra balls at $\pm 35^\circ$. Points multiplied by live ball count. Icon: `TX_Powerup_Multi_Ball.png`.
+  - **Extra Heart**: Grants $+1$ life (up to 5 max) with HUD flying heart animation. Icon: `TX_Powerup_Heart_Plus.png`.
+  - **Laser Blaster**: 10s twin paddle cannons firing ruby bolts ($34\text{ u/s}$) at $0.32\text{s}$ intervals. Icon: `TX_Powerup_Gun.png`.
+
+### 5.2 Negative Debuffs / Hazards (Warning Crimson `#ff1744` & Tumbling 3D Diamonds)
+- **Visual Presentation**: Faceted 3D diamond (`PrimitiveType.Cube` rotated $45^\circ$ on all axes) with warning crimson glow (`#ff1744`). Top center HUD status badges feature crimson glow and live countdown timers.
+- **Hazards Breakdown**:
+  - **Paddle Shortener** (`PaddleShortener`): Shrinks paddle width $-18\%$ (clamped to min $2.4\text{u}$) for 10s. Icon: `TX_Powerdown_Arrows_Inward.png`.
+  - **Paddle Slower** (`PaddleSlower`): Induces sluggish input lag and $-50\%$ keyboard velocity for 8s. Icon: `TX_Powerdown_Slower_Paddle.png`.
+  - **Brick Freezer** (`BrickFreezer`): Encases up to 5 field blocks in glacial ice; frozen blocks absorb 1 defrost hit before shattering. Icon: `TX_Powerdown_Frozen_Brick.png`.
+  - **Ball Size Decreaser** (`BallSizeDecreaser`): Shrinks ball radius to $60\%$ ($0.8\text{u} \to 0.48\text{u}$) for 10s. Icon: `TX_Powerdown_Smaller_Ball.png`.
+  - **Ball Slower** (`BallSlower`): Slows ball velocity to $9.5\text{ u/s}$ for 8s. Icon: `TX_Powerdown_Slower_Ball.png`.
+  - **Paddle Freezer** (`PaddleFreezer`): Immobilizes paddle for $1.2\text{s}$. Moving triggers a sinusoidal struggle/shiver animation (`Mathf.Sin(Time.time * 45f) * 0.07f`) demonstrating active physical freeze. Icon: `TX_Powerdown_Frozen_Paddle.png`.
+
+### 5.3 Environmental Blocks
+- **Glass-Enclosed**: Translucent shell requiring 2 hits (Hit 1: crystal shatter, Hit 2: brick destruction for $2\times$ pts).
+- **Bomb Brick**: Detonates in $2.5$-unit radius with compounding chain multipliers.
 
 ---
 
@@ -122,24 +135,25 @@ Tallies blocks destroyed, peak volley combo, elapsed time vs par time, time bonu
 - **Arena Density Redesign**:
   - Grid dimensions expanded from legacy 7–10 columns to **11–14 columns** ($13.75\text{u}$ to $17.5\text{u}$ grid span), extending bricks to within $1.6\text{u}$ of side walls ($X = \pm 10.25$) and eliminating empty side highways.
   - `IncludeSideFlanks` enabled across campaign levels, strategically placing bumper bricks along outer edges to break up ball traversal loops.
+  - **Progressive Hazard Escalation**: Monotonically escalating hazard saturation (from 0 on warmup up to 13 on climax) paired with leaner paddle widths ($5.5\text{u} \to 4.5\text{u}$).
 
-| Level | Name | Archetype | Grid | Blocks | Speed | Modifiers Breakdown | Par | 3-Star Target |
-| :---: | :--- | :---: | :---: | :---: | :---: | :--- | :---: | :---: |
-| **1** | **First Flight** | `Pyramid` | $11 \times 6$ | **42** | `0.92x` | • 1x Expander | 35s | 1,200 pts |
-| **2** | **Glass & Gold** | `Diamond` | $12 \times 6$ | **42** | `0.96x` | • 1x 2X, 2x Glass, 1x Expander | 40s | 1,800 pts |
-| **3** | **Twin Pillars** | `Pillars` | $13 \times 6$ | **42** | `1.00x` | • 2x Bombs, 2x 2X, 1x Expander, 1x Laser | 45s | 2,400 pts |
-| **4** | **Kinetic Shield** | `Shield` | $13 \times 6$ | **62** | `1.04x` | • 1x Shield, 1x Heart, 1x Bomb, 2x Glass | 50s | 3,200 pts |
-| **5** | **Multi-Ball Ring** | `HollowBox` | $13 \times 6$ | **34** | `1.08x` | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass | 45s | 3,800 pts |
-| **6** | **Royal Crown** | `Crown` | $13 \times 6$ | **70** | `1.12x` | • 1x 3X, 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass, 1x Laser | 60s | 5,000 pts |
-| **7** | **Neon Heart** | `Heart` | $13 \times 6$ | **52** | `1.16x` | • 2x Hearts, 1x Shield, 1x 3X, 2x 2X, 1x Bomb, 2x Glass, 1x Multi-Ball | 50s | 4,200 pts |
-| **8** | **Space Invader** | `Invader` | $13 \times 6$ | **34** | `1.20x` | • 2x Bombs, 2x 2X, 2x 3X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Glass, 1x Laser | 45s | 4,500 pts |
-| **9** | **Crossfire** | `Cross` | $13 \times 6$ | **48** | `1.24x` | • 1x 4X, 2x 2X, 1x 3X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball | 50s | 5,200 pts |
-| **10** | **The Hourglass** | `Hourglass` | $13 \times 6$ | **56** | `1.28x` | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball | 55s | 6,000 pts |
-| **11** | **Chevron Strike** | `Chevron` | $13 \times 6$ | **38** | `1.32x` | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 2x Multi-Balls, 1x Laser | 45s | 4,800 pts |
-| **12** | **Castle Bastion** | `Castle` | $14 \times 6$ | **59** | `1.36x` | • 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls | 60s | 7,000 pts |
-| **13** | **Quantum Lattice** | `CheckerboardEmpty` | $14 \times 6$ | **45** | `1.40x` | • 1x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls | 50s | 6,500 pts |
-| **14** | **Striped Vault** | `Stripes` | $14 \times 6$ | **44** | `1.44x` | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls, 1x Laser | 55s | 7,200 pts |
-| **15** | **Chaos Labyrinth** | `Custom` | $14 \times 6$ | **66** | `1.48x` | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 4x Bombs, 4x Glass, 2x Hearts, 2x Shields, 2x Multi-Balls, 2x Lasers | 65s | 8,500 pts |
+| Level | Name | Archetype | Grid | Blocks | Speed | Paddle | Buffs & Hazards Breakdown | Par | 3-Star Target |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :--- | :---: | :---: |
+| **1** | **First Flight** | `Pyramid` | $11 \times 6$ | **42** | `0.92x` | `5.5u` | • 1x Expander *(Tutorial Warmup, 0 Hazards)* | 35s | 1,200 pts |
+| **2** | **Glass & Gold** | `Diamond` | $12 \times 6$ | **42** | `0.96x` | `5.0u` | • 1x 2X, 2x Glass, 1x Expander<br>⚠️ **1x Shortener** | 40s | 1,800 pts |
+| **3** | **Twin Pillars** | `Pillars` | $13 \times 6$ | **42** | `1.00x` | `5.0u` | • 2x Bombs, 2x 2X, 1x Expander, 1x Laser<br>⚠️ **1x Paddle Slower, 1x Ball Slower** | 45s | 2,400 pts |
+| **4** | **Kinetic Shield** | `Shield` | $13 \times 6$ | **62** | `1.04x` | `5.0u` | • 1x Shield, 1x Heart, 1x Bomb, 2x Glass<br>⚠️ **1x Brick Freezer, 1x Ball Shrink** | 50s | 3,200 pts |
+| **5** | **Multi-Ball Ring** | `HollowBox` | $13 \times 6$ | **34** | `1.08x` | `5.0u` | • 2x Multi-Ball, 1x Shield, 1x Bomb, 2x Glass<br>⚠️ **1x Brick Freezer, 1x Paddle Slower, 1x Paddle Freezer** | 45s | 3,800 pts |
+| **6** | **Royal Crown** | `Crown` | $13 \times 6$ | **70** | `1.12x` | `4.8u` | • 1x 3X, 2x 2X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Bombs, 3x Glass, 1x Laser<br>⚠️ **1x Shortener, 1x Brick Freezer, 1x Ball Shrink, 1x Paddle Freezer** | 60s | 5,000 pts |
+| **7** | **Neon Heart** | `Heart` | $13 \times 6$ | **52** | `1.16x` | `4.8u` | • 2x Hearts, 1x Shield, 1x 3X, 2x 2X, 1x Bomb, 2x Glass, 1x Multi-Ball<br>⚠️ **1x Shortener, 1x Paddle Slower, 1x Ball Shrink, 1x Ball Slower** | 50s | 4,200 pts |
+| **8** | **Space Invader** | `Invader` | $13 \times 6$ | **34** | `1.20x` | `4.8u` | • 2x Bombs, 2x 2X, 2x 3X, 1x Heart, 1x Shield, 1x Multi-Ball, 2x Glass, 1x Laser<br>⚠️ **1x Shortener, 1x Brick Freezer, 1x Ball Shrink, 1x Ball Slower, 1x Paddle Freezer** | 45s | 4,500 pts |
+| **9** | **Crossfire** | `Cross` | $13 \times 6$ | **48** | `1.24x` | `4.8u` | • 1x 4X, 2x 2X, 1x 3X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball<br>⚠️ **1x Shortener, 1x Paddle Slower, 2x Brick Freezers, 1x Ball Shrink, 1x Paddle Freezer** | 50s | 5,200 pts |
+| **10** | **The Hourglass** | `Hourglass` | $13 \times 6$ | **56** | `1.28x` | `4.6u` | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 1x Multi-Ball<br>⚠️ **1x Shortener, 1x Paddle Slower, 2x Brick Freezers, 1x Ball Shrink, 1x Ball Slower, 1x Paddle Freezer** | 55s | 6,000 pts |
+| **11** | **Chevron Strike** | `Chevron` | $13 \times 6$ | **38** | `1.32x` | `4.6u` | • 1x 4X, 2x 3X, 2x 2X, 2x Bombs, 3x Glass, 1x Heart, 1x Shield, 2x Multi-Balls, 1x Laser<br>⚠️ **1x Shortener, 1x Paddle Slower, 2x Brick Freezers, 2x Ball Shrinks, 1x Ball Slower, 1x Paddle Freezer** | 45s | 4,800 pts |
+| **12** | **Castle Bastion** | `Castle` | $14 \times 6$ | **59** | `1.36x` | `4.6u` | • 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls<br>⚠️ **1x Shortener, 1x Paddle Slower, 2x Brick Freezers, 2x Ball Shrinks, 1x Ball Slower, 2x Paddle Freezers** | 60s | 7,000 pts |
+| **13** | **Quantum Lattice** | `CheckerboardEmpty` | $14 \times 6$ | **45** | `1.40x` | `4.6u` | • 1x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls<br>⚠️ **2x Shorteners, 1x Paddle Slower, 2x Brick Freezers, 2x Ball Shrinks, 1x Ball Slower, 2x Paddle Freezers** | 50s | 6,500 pts |
+| **14** | **Striped Vault** | `Stripes` | $14 \times 6$ | **44** | `1.44x` | `4.5u` | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 3x Bombs, 4x Glass, 1x Heart, 2x Shields, 2x Multi-Balls, 1x Laser<br>⚠️ **2x Shorteners, 2x Paddle Slowers, 2x Brick Freezers, 2x Ball Shrinks, 1x Ball Slower, 2x Paddle Freezers** | 55s | 7,200 pts |
+| **15** | **Chaos Labyrinth** | `Custom` | $14 \times 6$ | **66** | `1.48x` | `4.5u` | • 2x 5X, 2x 4X, 2x 3X, 2x 2X, 4x Bombs, 4x Glass, 2x Hearts, 2x Shields, 2x Multi-Balls, 2x Lasers<br>⚠️ **2x Shorteners, 2x Paddle Slowers, 3x Brick Freezers, 2x Ball Shrinks, 2x Ball Slowers, 2x Paddle Freezers** | 65s | 8,500 pts |
 
 ---
 
@@ -147,7 +161,7 @@ Tallies blocks destroyed, peak volley combo, elapsed time vs par time, time bonu
 
 ### 7.1 HUD Layout & Dashboard Insets
 - `SafeAreaController.cs` dynamically handles insets for iPhone notches and Dynamic Island.
-- **Top Bar**: Left pod (5-heart life gauge), Center pod (cumulative score + delta ticker `+150`), Timer pod (`MM:SS`), Combo badge with multiplier icon & status text, Right pod (Mute, Settings, Pause).
+- **Top Bar**: Left pod (5-heart life gauge), Center pod (cumulative score + delta ticker `+150`), Timer pod (`MM:SS`), Combo badge with multiplier icon & status text, Powerdown status pods with live countdowns (`.powerdown-badge`, `.powerdown-timer-label`), Right pod (Mute, Settings, Pause).
 - **Powerup & Badges**: Inspector-assigned ScriptableObject `SO_PowerupIcons` guarantees reliable sprite rendering across iOS/Metal and PC.
 
 ---
@@ -155,10 +169,11 @@ Tallies blocks destroyed, peak volley combo, elapsed time vs par time, time bonu
 ## 8. Audio Architecture
 
 - **Dedicated Sound Effects (`AU_`)**:
-  - Deflection: `AU_Pop.mp3`
-  - Brick Shatter: `AU_Break.mp3` with $+1$ semitone pitch scaling per combo streak.
+  - Deflection: `AU_Pop.mp3` (with active strike high-pitch pop at $1.22\times$).
+  - Brick Shatter: `AU_Break.mp3` with $+1$ semitone pitch scaling per combo streak and color-tier character (Red $0.90\times$, Green $1.10\times$, Blue $1.25\times$).
   - Star Tally: `PlayStarEarned` triumphant chimes for 1-star, 2-star, and 3-star scorecard reveals.
   - Powerups & Weapons: `AU_Powerup.mp3`, `AU_Powerup_Shield.mp3`, `AU_Powerup_Laser.mp3`.
-  - Explosions: `AU_Bomb_Explosion.mp3`, `AU_Glass_Break.mp3`.
+  - Powerdowns / Debuffs: `AU_Powerdown` (procedural downward frequency sweep $480\text{Hz} \to 110\text{Hz}$).
+  - Explosions & Shatters: `AU_Bomb_Explosion.mp3`, `AU_Glass_Break.mp3`.
   - Fanfares: `AU_Life_Lost.mp3`, `AU_Level_Success.mp3`, `AU_Game_Over.mp3`.
 - **Procedural Synthesizer Fallback**: Built-in fallback generating real-time waveforms if audio clips are unassigned.
