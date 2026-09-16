@@ -202,15 +202,18 @@ namespace Arcade.BlockBreaker
 
         /// <summary>
         /// Triggers a micro-squash recoil effect on ball contact.
+        /// When isSmash is true, delivers a deeper, snappier squash response.
         /// </summary>
-        public void TriggerImpactRecoil()
+        public void TriggerImpactRecoil(bool isSmash = false)
         {
             if (!Application.isPlaying || !gameObject.activeInHierarchy) return;
             if (recoilCoroutine != null) StopCoroutine(recoilCoroutine);
-            recoilCoroutine = StartCoroutine(AnimateImpactRecoil(0.12f));
+            float duration = isSmash ? 0.14f : 0.12f;
+            float squashAmount = isSmash ? 0.18f : 0.12f;
+            recoilCoroutine = StartCoroutine(AnimateImpactRecoil(duration, squashAmount));
         }
 
-        private IEnumerator AnimateImpactRecoil(float duration)
+        private IEnumerator AnimateImpactRecoil(float duration, float squashAmount)
         {
             float elapsed = 0f;
             float currentW = transform.localScale.x;
@@ -219,7 +222,7 @@ namespace Arcade.BlockBreaker
             {
                 elapsed += Time.deltaTime;
                 float u = Mathf.Clamp01(elapsed / duration);
-                float squash = 1.0f - Mathf.Sin(u * Mathf.PI) * 0.12f;
+                float squash = 1.0f - Mathf.Sin(u * Mathf.PI) * squashAmount;
 
                 transform.localScale = new Vector3(currentW, squash, 1.0f);
                 yield return null;

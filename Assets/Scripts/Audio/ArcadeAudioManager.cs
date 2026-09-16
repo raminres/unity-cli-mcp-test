@@ -172,9 +172,16 @@ namespace Arcade.Audio
             PlaySound(clipPop != null ? clipPop : clipPaddleBounce, 1.0f);
         }
 
-        public void PlayPaddleBounce()
+        public void PlayPaddleBounce(bool isSmash = false)
         {
-            PlayPop();
+            if (isSmash)
+            {
+                PlaySound(clipPop != null ? clipPop : clipPaddleBounce, 1.22f);
+            }
+            else
+            {
+                PlayPop();
+            }
         }
 
         public void PlayWallBounce()

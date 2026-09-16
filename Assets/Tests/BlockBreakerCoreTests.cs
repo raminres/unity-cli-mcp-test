@@ -2846,6 +2846,104 @@ namespace Arcade.Tests
         }
 
         [Test]
+        public void BallController_CalculatePaddleDeflection_StrongSwipeOpposite_ReversesHorizontalDirection()
+        {
+            // Ball flying down-right at ~60° polar angle (positive X)
+            Vector3 inVelRight = new Vector3(8f, -14f, 0f);
+
+            // Stationary paddle: optical reflection preserves rightward momentum
+            Vector3 bounceStationary = BallController.CalculatePaddleDeflection(
+                inVelRight, 0f, paddleVelocityX: 0f);
+            Assert.Greater(bounceStationary.x, 0f, "Stationary paddle must reflect rightward.");
+
+            // Strong leftward swipe against the ball (e.g. -20 u/s)
+            Vector3 bounceCutLeft = BallController.CalculatePaddleDeflection(
+                inVelRight, 0f, paddleVelocityX: -20f, velocityInfluence: 1.5f, maxVelocitySteerDeg: 45f);
+
+            Assert.Less(bounceCutLeft.x, 0f, "Strong leftward swipe against rightward ball must reverse horizontal velocity across 90° (cut/hook).");
+            Assert.Greater(bounceCutLeft.y, 0f, "Reversed cut must deflect upward.");
+            float angleDeg = Mathf.Atan2(bounceCutLeft.y, bounceCutLeft.x) * Mathf.Rad2Deg;
+            Assert.GreaterOrEqual(angleDeg, 95f, "Reversed angle must cross outside the vertical exclusion deadzone.");
+            Assert.LessOrEqual(angleDeg, 155f, "Reversed angle must remain within playable arcade bounds.");
+        }
+
+        [Test]
+        public void BallController_CalculatePaddleDeflection_SwipeWithBall_SharpensAngleTowardHorizontal()
+        {
+            // Ball flying down-right
+            Vector3 inVelRight = new Vector3(8f, -14f, 0f);
+
+            Vector3 bounceStationary = BallController.CalculatePaddleDeflection(
+                inVelRight, 0f, paddleVelocityX: 0f);
+
+            // Swiping right with the ball (tangential acceleration)
+            Vector3 bounceSwipeRight = BallController.CalculatePaddleDeflection(
+                inVelRight, 0f, paddleVelocityX: 16f, velocityInfluence: 1.5f, maxVelocitySteerDeg: 45f);
+
+            Assert.Greater(bounceSwipeRight.x, bounceStationary.x,
+                "Swiping with the ball must impart rightward tangential velocity, resulting in a shallower, faster horizontal exit.");
+            float angleDeg = Mathf.Atan2(bounceSwipeRight.y, bounceSwipeRight.x) * Mathf.Rad2Deg;
+            Assert.GreaterOrEqual(angleDeg, 25f, "Angle must not fall below minAngleDeg (25°).");
+        }
+
+        [Test]
+        public void BallController_CalculatePaddleDeflection_MaxSteerClamp_ClampsAtConfiguredLimit()
+        {
+            Vector3 inVelVertical = new Vector3(0f, -14f, 0f);
+
+            // Extreme swipe speed (50 u/s -> would be 75° deflection without clamp)
+            Vector3 bounceExtreme = BallController.CalculatePaddleDeflection(
+                inVelVertical, 0f, paddleVelocityX: 50f, velocityInfluence: 1.5f, maxVelocitySteerDeg: 45f);
+
+            float angleDeg = Mathf.Atan2(bounceExtreme.y, bounceExtreme.x) * Mathf.Rad2Deg;
+            // 90° - 45° = 45°
+            Assert.AreEqual(45f, angleDeg, 0.1f, "Extreme swipe must be cleanly clamped at maxVelocitySteerDeg (45°).");
+        }
+
+        [Test]
+        public void BallController_HandlePaddleCollision_MovingPaddle_AppliesKineticSpeedPop()
+        {
+            var ballObj = new GameObject("TestBall_Smash");
+            ballObj.transform.position = new Vector3(0f, -5.5f, 0f);
+            var rb = ballObj.AddComponent<Rigidbody>();
+            rb.linearVelocity = new Vector3(0f, -14f, 0f);
+            var ball = ballObj.AddComponent<BallController>();
+            ball.SetCurrentSpeedForTesting(14.0f);
+
+            paddle.transform.position = new Vector3(0f, -6.0f, 0f);
+            paddle.SetVelocityXForTesting(8.0f); // Actively moving paddle (>= 3.5 u/s threshold)
+
+            ball.HandlePaddleCollisionForTesting(paddle);
+
+            float expectedSpeed = 14.0f * 1.08f; // +8% speed impulse
+            Assert.AreEqual(expectedSpeed, ball.CurrentSpeed, 0.05f,
+                "Striking with moving paddle (>= 3.5 u/s) must trigger kinetic speed pop (+8%).");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void BallController_HandlePaddleCollision_StationaryPaddle_MaintainsSpeed()
+        {
+            var ballObj = new GameObject("TestBall_Stationary");
+            ballObj.transform.position = new Vector3(0f, -5.5f, 0f);
+            var rb = ballObj.AddComponent<Rigidbody>();
+            rb.linearVelocity = new Vector3(0f, -14f, 0f);
+            var ball = ballObj.AddComponent<BallController>();
+            ball.SetCurrentSpeedForTesting(14.0f);
+
+            paddle.transform.position = new Vector3(0f, -6.0f, 0f);
+            paddle.SetVelocityXForTesting(0.0f); // Stationary paddle
+
+            ball.HandlePaddleCollisionForTesting(paddle);
+
+            Assert.AreEqual(14.0f, ball.CurrentSpeed, 0.01f,
+                "Striking with stationary paddle must maintain constant currentSpeed with zero smash pop.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
         public void BallController_SanitizeTrajectory_EnforcesMinimumVerticalAngleFloor()
         {
             float speed = 20f;

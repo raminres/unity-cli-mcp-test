@@ -2,12 +2,12 @@
 
 [![Unity Version](https://img.shields.io/badge/Unity-6%20(6000.6.0f1)-black.svg?style=flat&logo=unity)](https://unity.com/)
 [![Render Pipeline](https://img.shields.io/badge/Render%20Pipeline-URP-blue.svg)](https://unity.com/srp/universal-render-pipeline)
-[![Automated Tests](https://img.shields.io/badge/Tests-183%2F183%20Passing%20(100%25)-brightgreen.svg)]()
+[![Automated Tests](https://img.shields.io/badge/Tests-190%2F190%20Passing%20(100%25)-brightgreen.svg)]()
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%20(Swift)%20%7C%20WebGPU%20%7C%20PC-purple.svg)]()
 [![Git LFS](https://img.shields.io/badge/Git-LFS%20Enabled-orange.svg)](https://git-lfs.github.com/)
 [![AI Integration](https://img.shields.io/badge/AI%20Assistant-Google%20Antigravity-green.svg)]()
 
-**BlockBreaker 3D** is a physics-driven arcade brick breaker built with Unity 6 (6000.6.0f1) and the Universal Render Pipeline (URP). Features 3-tier stepped pyramid paddle deflection, anti-trap trajectory physics, explosive chain cascades, armored 2-hit glass bricks, twin laser blaster cannons, lone block clutch hyper-beam railguns, an escalating 15-level campaign arc, mobile safe-area touch controls, frame-0 shader prewarming, and an automated NUnit test suite (183 tests).
+**BlockBreaker 3D** is a physics-driven arcade brick breaker built with Unity 6 (6000.6.0f1) and the Universal Render Pipeline (URP). Features 3-tier stepped pyramid paddle deflection with tangential surface friction and kinetic speed pops, anti-trap trajectory physics, explosive chain cascades, armored 2-hit glass bricks, twin laser blaster cannons, lone block clutch hyper-beam railguns, an escalating 15-level campaign arc, mobile safe-area touch controls, frame-0 shader prewarming, and an automated NUnit test suite (190 tests).
 
 Acts as a production testbed for **Google Antigravity**, **Unity MCP (Model Context Protocol)**, and **Unity CLI** agentic workflows.
 
@@ -17,8 +17,9 @@ Acts as a production testbed for **Google Antigravity**, **Unity MCP (Model Cont
 
 - **3-Tier Inverted Stepped Pyramid Paddle**:
   - Strike Deck ($W = 5.0, H = 0.24$ at $Y = -6.0$, cyan neon rim), Mid Chassis ($W = 3.6, H = 0.20$), Keel/Thrusters ($W = 2.2, H = 0.16$). Ultra-thin $0.60$ vertical profile prevents phantom side catches.
-- **Dynamic Deflection & Paddle Steering**:
-  - Continuous ray reflection preserving incoming horizontal momentum, subtle offset steering ($-32 \times \text{offset}$), and paddle momentum transfer ($\pm 12^\circ$ velocity sweep), clamped to $[25^\circ, 155^\circ]$.
+- **Dynamic Paddle Friction, Tangential Slicing & Kinetic Pop**:
+  - Tangential surface friction with expanded steering authority ($\pm 45^\circ$, $1.5\text{ deg/(u/s)}$). Slicing against the ball reverses horizontal travel across $90^\circ$ (reversal cut/hook).
+  - Active strikes ($|V_x| \ge 3.5\text{ u/s}$) trigger a $+8\%$ kinetic speed impulse, high-pitch pop audio (`1.22f`), deep squash recoil ($18\%$), and electric cyan impact sparks. Stationary paddle preserves steady cushion control.
 - **Anti-Trap Ball Physics**:
   - **Minimum Vertical Floor ($20^\circ$)**: Enforces $|v_y| \ge v \cdot \sin(20^\circ)$ to eliminate shallow horizontal traps.
   - **Consecutive Side-Wall Steepener ($35^\circ$)**: $\ge 2$ wall bounces steepen trajectory to $\ge 35^\circ$.

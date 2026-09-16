@@ -377,6 +377,51 @@ namespace Arcade.BlockBreaker
         }
 
         /// <summary>
+        /// Emits a directional spark burst at the paddle collision contact point.
+        /// An active smash produces an energetic, wider burst of bright cyan sparks.
+        /// </summary>
+        public void PlayPaddleHitSpark(Vector3 position, bool isSmash = false)
+        {
+            GameObject burstObj = burstPool.Count > 0 ? burstPool.Dequeue() : CreateNewBurstInstance();
+            burstObj.transform.position = position;
+            burstObj.SetActive(true);
+
+            var ps = burstObj.GetComponent<ParticleSystem>();
+            if (ps != null)
+            {
+                var psr = burstObj.GetComponent<ParticleSystemRenderer>();
+                if (psr != null)
+                {
+                    Material mat = GetOrCreateParticleMaterial();
+                    if (mat != null && psr.sharedMaterial != mat)
+                    {
+                        psr.sharedMaterial = mat;
+                    }
+                }
+
+                Color sparkColor = isSmash ? new Color(0.2f, 1f, 1f, 1f) : new Color(0f, 0.85f, 1f, 0.8f);
+                int count = isSmash ? 24 : 10;
+                float lifetime = isSmash ? 0.45f : 0.35f;
+
+                ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams
+                {
+                    startColor = sparkColor * 1.5f,
+                    startLifetime = lifetime,
+                    applyShapeToPosition = true
+                };
+                ps.Emit(emitParams, count);
+            }
+
+            activeVfxList.Add(new ActiveVFX
+            {
+                gameObject = burstObj,
+                particleSystem = ps,
+                elapsed = 0f,
+                duration = isSmash ? 0.5f : 0.4f
+            });
+        }
+
+        /// <summary>
         /// Shatters a block into spark particles and 8 physical 3D tumbling debris sub-boxes.
         /// </summary>
         public void PlayBlockShatter(Vector3 position, Color blockColor, Vector3 hitNormal)

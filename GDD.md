@@ -33,9 +33,10 @@
 - **Strike Collider & Contact Normal Guard**:
   - Primary `BoxCollider` fitted strictly to Tier 1 ($H = 0.24$, center $Y = +0.38$). Below $Y = -6.24$, zero collision volume exists.
   - Normal Threshold: `BallController.IsValidPaddleBounceNormal(normal)` (`normal.y >= 0.25f`) guarantees brushing balls fall cleanly into killzone.
-- **Optical Ray Deflection & Paddle Steering Formula**:
-  - Computed via `BallController.CalculatePaddleDeflection(inVelocity, hitOffset, steerStrength = 32f, minAngleDeg = 25f, maxAngleDeg = 155f, paddleVelocityX, velocityInfluence = 0.5f, verticalDeadzoneAngleDeg = 5f)`.
-  - Preserves incoming horizontal momentum (`rayAngleDeg = Mathf.Atan2(|inVelocity.y|, inVelocity.x) * Rad2Deg`), applies offset steering `steer = -hitOffset * 32f`, applies paddle momentum transfer `clamp(-paddleVelocityX * 0.5f, -12°, +12°)`, strictly excludes vertical deadzone $[85^\circ, 95^\circ]$, and clamps to $[25^\circ, 155^\circ]$.
+- **Optical Ray Deflection, Paddle Friction & Steering Formula**:
+  - Computed via `BallController.CalculatePaddleDeflection(inVelocity, hitOffset, steerStrength = 32f, minAngleDeg = 25f, maxAngleDeg = 155f, paddleVelocityX, velocityInfluence = 1.5f, verticalDeadzoneAngleDeg = 5f, maxVelocitySteerDeg = 45f)`.
+  - Preserves forward momentum on stationary paddle (`rayAngleDeg = Mathf.Atan2(|inVelocity.y|, inVelocity.x) * Rad2Deg`), applies offset steering `steer = -hitOffset * 32f`, applies paddle tangential velocity steering `clamp(-paddleVelocityX * 1.5f, -45°, +45°)`. A deliberate swipe opposite to ball direction reverses horizontal momentum across $90^\circ$ (reversal cut/slice). Strictly excludes vertical deadzone $[85^\circ, 95^\circ]$, and clamps to $[25^\circ, 155^\circ]$.
+  - **Kinetic Speed Pop ("Active Strike")**: Striking with moving paddle ($|V_x| \ge 3.5\text{ u/s}$) triggers $+8\%$ speed impulse (capped at `maxSpeed = 22f`), accompanied by snappier high-pitch pop audio (`pitch = 1.22f`), deep squash recoil ($18\%$), and electric cyan spark burst. Stationary paddle retains constant speed for cushion control.
 - **Anti-Trap Ball Physics**:
   - **Minimum Vertical Floor ($20^\circ$)**: Mathematical enforcement $|v_y| \ge v \cdot \sin(20^\circ)$ prevents shallow horizontal trapping.
   - **Consecutive Side-Wall Steepener ($35^\circ$)**: $\ge 2$ consecutive wall bounces steepens trajectory to $\ge 35^\circ$.

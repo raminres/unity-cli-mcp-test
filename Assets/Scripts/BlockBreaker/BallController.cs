@@ -34,7 +34,10 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float minHorizontalAngleDeg = 5f; // Floor to prevent vertical 90-degree ping-pong loops
         [SerializeField] private float consecutiveWallSteepAngleDeg = 35f; // Boost angle on repeated side-wall bounces
         [SerializeField] private float verticalDeadzoneAngleDeg = 5f; // Exclusion half-angle around 90-degree vertical
-        [SerializeField] private float paddleVelocityInfluence = 0.5f; // Momentum transfer from paddle movement
+        [SerializeField] private float paddleVelocityInfluence = 1.5f; // Momentum transfer from paddle movement
+        [SerializeField] private float maxPaddleVelocitySteerAngleDeg = 45f; // Maximum steering angle deviation imparted by paddle swipe
+        [SerializeField] private float activeSmashVelocityThreshold = 3.5f; // Horizontal paddle speed threshold to trigger kinetic pop
+        [SerializeField] private float activeSmashSpeedMultiplier = 1.08f; // +8% speed impulse on active paddle strikes
         private int consecutiveSideWallBounces = 0;
 
         private float currentSpeed;
@@ -57,11 +60,17 @@ namespace Arcade.BlockBreaker
         public float ConsecutiveWallSteepAngleDeg => consecutiveWallSteepAngleDeg;
         public float VerticalDeadzoneAngleDeg => verticalDeadzoneAngleDeg;
         public float PaddleVelocityInfluence => paddleVelocityInfluence;
+        public float MaxPaddleVelocitySteerAngleDeg => maxPaddleVelocitySteerAngleDeg;
+        public float ActiveSmashVelocityThreshold => activeSmashVelocityThreshold;
+        public float ActiveSmashSpeedMultiplier => activeSmashSpeedMultiplier;
+        public void SetPaddleVelocityInfluenceForTesting(float val) => paddleVelocityInfluence = val;
+        public void SetCurrentSpeedForTesting(float speed) => currentSpeed = speed;
         public int ConsecutiveSideWallBounces => consecutiveSideWallBounces;
         public void SetConsecutiveSideWallBouncesForTesting(int count) => consecutiveSideWallBounces = count;
         public int CurrentVolleyStreak => currentVolleyStreak;
         public int CurrentVolleyMultiplier => GetVolleyMultiplier(currentVolleyStreak);
         public void SetVolleyStreakForTesting(int streak) => currentVolleyStreak = streak;
+        public void HandlePaddleCollisionForTesting(PaddleController hitPaddle) => HandlePaddleCollision(hitPaddle);
 
         public static int GetVolleyMultiplier(int streak)
         {
@@ -506,7 +515,6 @@ namespace Arcade.BlockBreaker
                 }
 
                 HandlePaddleCollision(hitPaddle);
-                hitPaddle.TriggerImpactRecoil();
                 return;
             }
 
@@ -591,8 +599,9 @@ namespace Arcade.BlockBreaker
             float minAngleDeg = 25f,
             float maxAngleDeg = 155f,
             float paddleVelocityX = 0f,
-            float velocityInfluence = 0.5f,
-            float verticalDeadzoneAngleDeg = 5f)
+            float velocityInfluence = 1.5f,
+            float verticalDeadzoneAngleDeg = 5f,
+            float maxVelocitySteerDeg = 45f)
         {
             float inX = inVelocity.x;
             float inY = Mathf.Abs(inVelocity.y); // Upward reflection normal
@@ -614,7 +623,7 @@ namespace Arcade.BlockBreaker
             // Paddle velocity momentum transfer:
             // Sliding paddle right (+X) biases angle right (-deg in polar coordinates).
             // Sliding paddle left (-X) biases angle left (+deg in polar coordinates).
-            float velocitySteerDeg = Mathf.Clamp(-paddleVelocityX * velocityInfluence, -12f, 12f);
+            float velocitySteerDeg = Mathf.Clamp(-paddleVelocityX * velocityInfluence, -maxVelocitySteerDeg, maxVelocitySteerDeg);
 
             float computedAngleDeg = rayAngleDeg + steerAngleDeg + velocitySteerDeg;
 
@@ -664,6 +673,7 @@ namespace Arcade.BlockBreaker
 
             float hitOffset = hitPaddle.CalculateHitOffset(transform.position.x);
             float paddleVelX = hitPaddle.VelocityX;
+            bool isSmash = Mathf.Abs(paddleVelX) >= activeSmashVelocityThreshold;
 
             Vector3 inVelocity = rb != null ? rb.linearVelocity : Vector3.down * currentSpeed;
             Vector3 newDir = CalculatePaddleDeflection(
@@ -674,7 +684,13 @@ namespace Arcade.BlockBreaker
                 155f,
                 paddleVelX,
                 paddleVelocityInfluence,
-                verticalDeadzoneAngleDeg);
+                verticalDeadzoneAngleDeg,
+                maxPaddleVelocitySteerAngleDeg);
+
+            if (isSmash)
+            {
+                currentSpeed = Mathf.Min(currentSpeed * activeSmashSpeedMultiplier, maxSpeed);
+            }
 
             if (rb != null)
             {
@@ -683,8 +699,15 @@ namespace Arcade.BlockBreaker
 
             if (ArcadeAudioManager.Instance != null)
             {
-                ArcadeAudioManager.Instance.PlayPaddleBounce();
+                ArcadeAudioManager.Instance.PlayPaddleBounce(isSmash);
             }
+
+            if (BlockVFXManager.Instance != null)
+            {
+                BlockVFXManager.Instance.PlayPaddleHitSpark(transform.position, isSmash);
+            }
+
+            hitPaddle.TriggerImpactRecoil(isSmash);
         }
 
         private void OnTriggerEnter(Collider other)
