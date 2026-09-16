@@ -48,6 +48,7 @@ namespace Arcade.BlockBreaker
         public bool IsSlowed => isSlowed;
         public bool IsFrozen => isFrozen;
         public PaddleLaserController LaserController => laserController != null ? laserController : (laserController = GetComponent<PaddleLaserController>() ?? gameObject.AddComponent<PaddleLaserController>());
+        public BoxCollider PaddleCollider => rootCollider != null ? rootCollider : (rootCollider = GetComponent<BoxCollider>());
 
         public Transform StepTop => stepTop;
         public Transform StepMid => stepMid;

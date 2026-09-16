@@ -1508,7 +1508,8 @@ namespace Arcade.Tests
             gameManager.HandleBallFell(ball);
 
             Assert.AreEqual(livesBefore, gameManager.Lives, "Shield must prevent life loss when ball falls.");
-            Assert.AreEqual(GameState.ReadyToLaunch, gameManager.State, "Game must reset to ReadyToLaunch.");
+            Assert.AreEqual(GameState.Playing, gameManager.State, "Game must remain Playing without resetting to ReadyToLaunch.");
+            Assert.Greater(ball.Velocity.y, 0f, "Ball must be deflected upward by shield.");
 
             Object.DestroyImmediate(ballObj);
         }
@@ -1664,7 +1665,7 @@ namespace Arcade.Tests
             gameManager.HandleBallFell(gameManager.ActiveBalls[0]);
 
             Assert.AreEqual(livesBefore, gameManager.Lives, "Shield must save the last ball from life loss.");
-            Assert.AreEqual(GameState.ReadyToLaunch, gameManager.State, "Game must reset to ReadyToLaunch.");
+            Assert.AreEqual(GameState.Playing, gameManager.State, "Game must remain in Playing state.");
 
             Object.DestroyImmediate(ballObj);
         }
@@ -5096,6 +5097,127 @@ namespace Arcade.Tests
         }
 
         [Test]
+        public void Block_BrickFreezer_InitializesFrozen_RemovesBadgeOnFirstHit_DestroysOnSecondHit_AwardsZeroPoints()
+        {
+            var blockGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var block = blockGo.AddComponent<Block>();
+            block.Initialize(BlockColorTier.Blue, null, Color.cyan, BlockSpecialType.BrickFreezer);
+
+            var badgeGo = new GameObject("UI_Badge");
+            badgeGo.transform.SetParent(blockGo.transform);
+            badgeGo.AddComponent<BlockBadge>();
+
+            Assert.IsTrue(block.IsFrozen, "BrickFreezer block must initialize in frozen state.");
+            Assert.AreEqual(0, block.Points, "Powerdown blocks must award 0 points.");
+            Assert.IsFalse(block.IsDestroyed);
+
+            // Hit 1: Absorbs hit, defrosted, badge removed
+            block.TakeHit(Vector3.up);
+            Assert.IsFalse(block.IsFrozen, "Block must defrost upon first hit.");
+            Assert.IsFalse(block.IsDestroyed, "Block must absorb defrost hit without being destroyed.");
+            Assert.IsNull(blockGo.GetComponentInChildren<BlockBadge>(), "Badge icon must disappear on first hit.");
+
+            // Hit 2: Block breaks, awards 0 points
+            block.TakeHit(Vector3.up);
+            Assert.IsTrue(block.IsDestroyed, "Block must be destroyed on second hit.");
+
+            Object.DestroyImmediate(blockGo);
+        }
+
+        [Test]
+        public void Block_CollectiblePowerdown_Destruction_AwardsZeroPoints_AndSpawnsFallingDiamond()
+        {
+            PowerupCapsule.ClearAllFallingCapsules();
+
+            var blockGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var block = blockGo.AddComponent<Block>();
+            block.Initialize(BlockColorTier.Red, null, Color.red, BlockSpecialType.PaddleShortener);
+
+            Assert.AreEqual(0, block.Points, "Powerdown block Points property must be 0.");
+            Assert.IsTrue(block.SpecialType.IsCollectiblePowerdown());
+
+            // Destroy block - should spawn falling capsule
+            block.DestroyBlock(Vector3.up);
+            Assert.IsTrue(block.IsDestroyed);
+
+            var capsules = Object.FindObjectsByType<PowerupCapsule>(FindObjectsSortMode.None);
+            Assert.AreEqual(1, capsules.Length, "Destroying collectible powerdown block must spawn falling capsule.");
+
+            var cap = capsules[0];
+            Assert.AreEqual(BlockSpecialType.PaddleShortener, cap.SpecialType);
+            Assert.IsNotNull(cap.VisualCapsuleTransform);
+
+            var cubeMf = cap.VisualCapsuleTransform.GetComponent<MeshFilter>();
+            Assert.IsNotNull(cubeMf);
+            Assert.IsTrue(cubeMf.sharedMesh.name.IndexOf("Cube", System.StringComparison.OrdinalIgnoreCase) >= 0,
+                "Powerdown capsule must be 3D diamond cube mesh.");
+
+            PowerupCapsule.ClearAllFallingCapsules();
+            Object.DestroyImmediate(blockGo);
+        }
+
+        [Test]
+        public void PowerupCapsule_PowerdownFallbacks_ResolveAllPowerdownSprites()
+        {
+            var types = new[]
+            {
+                BlockSpecialType.PaddleShortener,
+                BlockSpecialType.PaddleSlower,
+                BlockSpecialType.BrickFreezer,
+                BlockSpecialType.BallSizeDecreaser,
+                BlockSpecialType.BallSlower,
+                BlockSpecialType.PaddleFreezer
+            };
+
+            foreach (var t in types)
+            {
+                var sprite = PowerupCapsule.GetSpriteForType(t);
+                Assert.IsNotNull(sprite, $"PowerupCapsule must resolve a non-null sprite for {t}");
+            }
+        }
+
+        [Test]
+        public void BlockBadge_Coloration_BindsCorrectColors_WithoutCyanOverride()
+        {
+            var badgeGo = new GameObject("TestBadge");
+            var badge = badgeGo.AddComponent<BlockBadge>();
+
+            var root = new UnityEngine.UIElements.VisualElement();
+            var plate = new UnityEngine.UIElements.VisualElement { name = "badge-plate" };
+            var icon = new UnityEngine.UIElements.VisualElement { name = "badge-icon" };
+            plate.Add(icon);
+            root.Add(plate);
+
+            var typeField = typeof(BlockBadge).GetField("specialType", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            // Test Laser
+            typeField.SetValue(badge, BlockSpecialType.Laser);
+            badge.UpdateUI(root);
+            Assert.AreEqual(BlockSpecialType.Laser.GetBadgeColor(), icon.style.unityBackgroundImageTintColor.value,
+                "Laser icon tint must match Laser badge color (#ff2a47), not overridden by cyan.");
+
+            // Test ExtraHeart
+            typeField.SetValue(badge, BlockSpecialType.ExtraHeart);
+            badge.UpdateUI(root);
+            Assert.AreEqual(BlockSpecialType.ExtraHeart.GetBadgeColor(), icon.style.unityBackgroundImageTintColor.value,
+                "ExtraHeart icon tint must match Heart badge color (#ff3b56), not overridden by cyan.");
+
+            // Test MultiBall
+            typeField.SetValue(badge, BlockSpecialType.MultiBall);
+            badge.UpdateUI(root);
+            Assert.AreEqual(BlockSpecialType.MultiBall.GetBadgeColor(), icon.style.unityBackgroundImageTintColor.value,
+                "MultiBall icon tint must match MultiBall badge color (#e056fd), not overridden by cyan.");
+
+            // Test Powerdown (PaddleShortener)
+            typeField.SetValue(badge, BlockSpecialType.PaddleShortener);
+            badge.UpdateUI(root);
+            Assert.AreEqual(BlockModifierExtensions.UnifiedPowerdownColor, icon.style.unityBackgroundImageTintColor.value,
+                "Powerdown icon tint must match UnifiedPowerdownColor (#ff1744).");
+
+            Object.DestroyImmediate(badgeGo);
+        }
+
+        [Test]
         public void ArcadeGameManager_PowerdownLifecycle_ActivatesTicksAndDeactivates()
         {
             var gmGo = new GameObject("ArcadeGameManager");
@@ -5266,6 +5388,162 @@ namespace Arcade.Tests
             Assert.AreEqual(iconSet.BallSlowerSprite, iconSet.GetSprite(BlockSpecialType.BallSlower));
             Assert.AreEqual(iconSet.PaddleFreezerSprite, iconSet.GetSprite(BlockSpecialType.PaddleFreezer));
         }
+
+        #region 27. Physical Shield Wall & Anti-Trap Passthrough Tests
+
+        [Test]
+        public void ShieldWall_BounceFromShield_DeflectsUpward_AndPreservesSpeedAndCombo()
+        {
+            var ballObj = new GameObject("TestBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.GetComponent<Rigidbody>();
+            if (ballRb == null) ballRb = ballObj.AddComponent<Rigidbody>();
+            var ballCol = ballObj.GetComponent<SphereCollider>();
+            if (ballCol == null) ballCol = ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+            typeof(BallController).GetField("isLaunched", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, true);
+
+            gameManager.RegisterBall(ball);
+            gameManager.SetState(GameState.Playing);
+
+            ball.SetCurrentSpeedForTesting(15f);
+            ball.SetVolleyStreakForTesting(3);
+            ball.SetConsecutiveSideWallBouncesForTesting(2);
+
+            // Set ball falling downward
+            ballRb.linearVelocity = new Vector3(2f, -14.8f, 0f);
+
+            // Bounce from shield wall contact at X = 2f
+            ball.BounceFromShield(new Vector3(2f, -7.6f, 0f));
+
+            // Verify upward deflection
+            Assert.Greater(ballRb.linearVelocity.y, 0f, "Ball must deflect upward.");
+            float angleDeg = Mathf.Atan2(ballRb.linearVelocity.y, ballRb.linearVelocity.x) * Mathf.Rad2Deg;
+            Assert.GreaterOrEqual(angleDeg, 35f, "Upward angle must be at least 35 degrees.");
+            Assert.LessOrEqual(angleDeg, 145f, "Upward angle must be at most 145 degrees.");
+            Assert.AreEqual(0, ball.ConsecutiveSideWallBounces, "Shield bounce must reset consecutive wall bounces.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void BallController_BelowPaddleMovingUp_IgnoresPaddleCollision_PhasesThrough()
+        {
+            var ballObj = new GameObject("TestBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.GetComponent<Rigidbody>();
+            if (ballRb == null) ballRb = ballObj.AddComponent<Rigidbody>();
+            var ballCol = ballObj.GetComponent<SphereCollider>();
+            if (ballCol == null) ballCol = ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+            typeof(BallController).GetField("ballCollider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballCol);
+            typeof(BallController).GetField("isLaunched", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, true);
+
+            gameManager.RegisterBall(ball);
+            gameManager.SetState(GameState.Playing);
+
+            // Set paddle to arena height (-6.5f) where top deck is at -6.0f
+            paddle.transform.position = new Vector3(0f, -6.5f, 0f);
+
+            // Position ball below paddle top deck (~ -6.0f) at Y = -7.0f, moving UPWARDS
+            ballObj.transform.position = new Vector3(0f, -7.0f, 0f);
+            ballRb.linearVelocity = new Vector3(0f, 12f, 0f);
+
+            ball.UpdatePaddlePassThrough();
+
+            Assert.IsTrue(ball.IsPaddleCollisionIgnored, "Ball below paddle moving upward must ignore paddle collision to phase through.");
+
+            // Now ball reaches above paddle top deck at Y = -5.5f, moving UPWARDS
+            ballObj.transform.position = new Vector3(0f, -5.5f, 0f);
+            ball.UpdatePaddlePassThrough();
+
+            Assert.IsFalse(ball.IsPaddleCollisionIgnored, "Ball above paddle strike deck must restore solid collision.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void ShieldWall_WarningPulse_ActivatesInFinalSeconds()
+        {
+            var wallGo = new GameObject("TestShieldWall");
+            var wall = wallGo.AddComponent<ShieldWall>();
+
+            wall.Activate(10f);
+            Assert.IsFalse(wall.IsWarningActive, "Warning must be inactive when shield has full duration.");
+
+            wall.SetTimeRemaining(4.0f);
+            Assert.IsFalse(wall.IsWarningActive, "Warning must be inactive above threshold (2.5s).");
+
+            wall.SetTimeRemaining(2.0f);
+            Assert.IsTrue(wall.IsWarningActive, "Warning must activate when remaining time is below 2.5s.");
+
+            Object.DestroyImmediate(wallGo);
+        }
+
+        [Test]
+        public void ShieldWall_TweenParameters_ExposedAndConfigurable()
+        {
+            var wallGo = new GameObject("TestShieldWall");
+            var wall = wallGo.AddComponent<ShieldWall>();
+            wall.EnsureComponents();
+
+            Assert.Greater(wall.AppearDuration, 0f);
+            Assert.Greater(wall.DisappearDuration, 0f);
+            Assert.IsNotNull(wall.AppearCurve);
+            Assert.IsNotNull(wall.DisappearCurve);
+            Assert.AreEqual(20.4f, wall.TargetScale.x, 0.1f);
+            Assert.AreEqual(-7.6f, wall.WallY, 0.1f);
+
+            wall.AppearDuration = 0.5f;
+            Assert.AreEqual(0.5f, wall.AppearDuration, 0.001f);
+
+            Object.DestroyImmediate(wallGo);
+        }
+
+        [Test]
+        public void GameManager_ActivateShield_DrivesShieldWallLifecycle()
+        {
+            var wallGo = new GameObject("TestShieldWall");
+            var wall = wallGo.AddComponent<ShieldWall>();
+            wallGo.SetActive(false);
+
+            gameManager.RegisterShieldWall(wall);
+
+            Assert.IsFalse(gameManager.IsShieldActive);
+
+            gameManager.ActivateShield(10f);
+            Assert.IsTrue(gameManager.IsShieldActive);
+            Assert.IsTrue(wallGo.activeSelf, "ShieldWall GameObject must be active when shield is activated.");
+
+            gameManager.TickShield(10.5f);
+            Assert.IsFalse(gameManager.IsShieldActive);
+
+            Object.DestroyImmediate(wallGo);
+        }
+
+        [Test]
+        public void ShieldWall_Material_IsNativeURPCompatible()
+        {
+            var wallGo = new GameObject("TestShieldWall");
+            var wall = wallGo.AddComponent<ShieldWall>();
+            wall.EnsureComponents();
+
+            var rend = wallGo.GetComponent<MeshRenderer>();
+            Assert.IsNotNull(rend);
+            Assert.IsNotNull(rend.sharedMaterial);
+            Assert.IsTrue(rend.sharedMaterial.HasProperty("_BaseColor"), "Material must have URP _BaseColor property for iOS compatibility.");
+            Assert.IsTrue(rend.sharedMaterial.HasProperty("_EmissionColor"), "Material must have URP _EmissionColor property for iOS compatibility.");
+
+            Object.DestroyImmediate(wallGo);
+        }
+
+        #endregion
 
         #endregion
 

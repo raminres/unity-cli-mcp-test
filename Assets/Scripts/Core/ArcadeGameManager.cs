@@ -93,6 +93,7 @@ namespace Arcade.Core
         [Header("Power-Up States")]
         [SerializeField] private bool isShieldActive = false;
         [SerializeField] private float shieldTimeRemaining = 0f;
+        [SerializeField] private BlockBreaker.ShieldWall shieldWall;
         [SerializeField] private bool isPaddleExpanded = false;
         [SerializeField] private float paddleExpandTimeRemaining = 0f;
         [SerializeField] private int activeScoreMultiplier = 1;
@@ -162,6 +163,22 @@ namespace Arcade.Core
         public LevelSummaryData CurrentLevelSummary => currentLevelSummary;
         public bool IsShieldActive => isShieldActive;
         public float ShieldTimeRemaining => shieldTimeRemaining;
+        public BlockBreaker.ShieldWall ActiveShieldWall => shieldWall;
+        public void RegisterShieldWall(BlockBreaker.ShieldWall wall) => shieldWall = wall;
+
+        public BlockBreaker.ShieldWall EnsureShieldWall()
+        {
+            if (shieldWall != null) return shieldWall;
+            shieldWall = FindAnyObjectByType<BlockBreaker.ShieldWall>(FindObjectsInactive.Include);
+            if (shieldWall == null)
+            {
+                var boundaries = GameObject.Find("Boundaries") ?? GameObject.Find("ArenaBoundaries");
+                var wallGo = new GameObject("ShieldWall");
+                if (boundaries != null) wallGo.transform.SetParent(boundaries.transform);
+                shieldWall = wallGo.AddComponent<BlockBreaker.ShieldWall>();
+            }
+            return shieldWall;
+        }
         public bool IsPaddleExpanded => isPaddleExpanded;
         public float PaddleExpandTimeRemaining => paddleExpandTimeRemaining;
         public int ActiveScoreMultiplier => activeScoreMultiplier;
@@ -307,6 +324,13 @@ namespace Arcade.Core
         {
             isShieldActive = true;
             shieldTimeRemaining = duration;
+
+            var wall = EnsureShieldWall();
+            if (wall != null)
+            {
+                wall.Activate(duration);
+            }
+
             OnShieldStateChanged?.Invoke(true, duration);
             OnShieldTick?.Invoke(duration);
         }
@@ -317,6 +341,12 @@ namespace Arcade.Core
 
             isShieldActive = false;
             shieldTimeRemaining = 0f;
+
+            if (shieldWall != null)
+            {
+                shieldWall.Deactivate();
+            }
+
             OnShieldStateChanged?.Invoke(false, 0f);
         }
 
@@ -325,6 +355,11 @@ namespace Arcade.Core
             if (!isShieldActive) return;
 
             shieldTimeRemaining -= delta;
+            if (shieldWall != null)
+            {
+                shieldWall.SetTimeRemaining(Mathf.Max(0f, shieldTimeRemaining));
+            }
+
             OnShieldTick?.Invoke(Mathf.Max(0f, shieldTimeRemaining));
 
             if (shieldTimeRemaining <= 0f)
@@ -890,6 +925,16 @@ namespace Arcade.Core
         {
             if (currentState != GameState.Playing || isLevelClearPending) return;
 
+            if (isShieldActive)
+            {
+                // Shield saves any falling ball! Deflects upward without interrupting play, losing lives, or clearing capsules.
+                if (ball != null)
+                {
+                    ball.BounceFromShield(new Vector3(ball.transform.position.x, -7.6f, 0f));
+                }
+                return;
+            }
+
             if (activeBalls.Count > 1)
             {
                 // Multi-ball: one of multiple balls fell. No life lost!
@@ -912,26 +957,6 @@ namespace Arcade.Core
                         else DestroyImmediate(ball.gameObject);
                     }
                 }
-                return;
-            }
-
-            // Last remaining ball fell
-            if (isShieldActive)
-            {
-                // Shield saves the ball! Ball resets to paddle in ReadyToLaunch without losing life.
-                BlockBreaker.PowerupCapsule.ClearAllFallingCapsules();
-                if (ball != null)
-                {
-                    ball.ResetBallToPaddle();
-                }
-                SetState(GameState.ReadyToLaunch);
-
-                if (ArcadeAudioManager.Instance != null)
-                {
-                    ArcadeAudioManager.Instance.PlayShieldDeflect();
-                }
-
-                SaveCurrentGameSession();
                 return;
             }
 
@@ -1091,7 +1116,10 @@ namespace Arcade.Core
                 else if (multiBallMult > 1) displayTag = $"x{multiBallMult} MULTI-BALL!";
             }
 
-            OnBlockPointsAwarded?.Invoke(worldPos, awardedPoints, totalMult, displayTag);
+            if (awardedPoints > 0)
+            {
+                OnBlockPointsAwarded?.Invoke(worldPos, awardedPoints, totalMult, displayTag);
+            }
             OnScoreChanged?.Invoke(currentScore, awardedPoints);
             SaveCurrentGameSession();
 

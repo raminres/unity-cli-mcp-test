@@ -119,13 +119,11 @@ namespace Arcade.BlockBreaker
                 {
                     icon.style.display = DisplayStyle.Flex;
                     icon.AddToClassList("badge-icon-expander");
-                    icon.AddToClassList("badge-icon-powerup");
                 }
                 else if (specialType == BlockSpecialType.Laser)
                 {
                     icon.style.display = DisplayStyle.Flex;
                     icon.AddToClassList("badge-icon-laser");
-                    icon.AddToClassList("badge-icon-powerup");
                 }
                 else if (specialType == BlockSpecialType.Bomb)
                 {
@@ -136,19 +134,16 @@ namespace Arcade.BlockBreaker
                 {
                     icon.style.display = DisplayStyle.Flex;
                     icon.AddToClassList("badge-icon-heart-plus");
-                    icon.AddToClassList("badge-icon-powerup");
                 }
                 else if (specialType == BlockSpecialType.Shield)
                 {
                     icon.style.display = DisplayStyle.Flex;
                     icon.AddToClassList("badge-icon-shield");
-                    icon.AddToClassList("badge-icon-powerup");
                 }
                 else if (specialType == BlockSpecialType.MultiBall)
                 {
                     icon.style.display = DisplayStyle.Flex;
                     icon.AddToClassList("badge-icon-multiball");
-                    icon.AddToClassList("badge-icon-powerup");
                 }
                 else if (specialType == BlockSpecialType.ScoreMultiplier2x)
                 {
@@ -178,6 +173,8 @@ namespace Arcade.BlockBreaker
                 {
                     icon.style.display = DisplayStyle.None;
                 }
+
+                icon.style.unityBackgroundImageTintColor = specialType.GetBadgeColor();
             }
 
             if (label != null)
@@ -266,30 +263,31 @@ namespace Arcade.BlockBreaker
                 else if (specialType == BlockSpecialType.PaddleExpander)
                 {
                     plate.AddToClassList("badge-plate-expander");
-                    plate.AddToClassList("badge-plate-powerup");
                 }
                 else if (specialType == BlockSpecialType.Bomb)
                     plate.AddToClassList("badge-plate-bomb");
                 else if (specialType == BlockSpecialType.ExtraHeart)
                 {
                     plate.AddToClassList("badge-plate-heart-plus");
-                    plate.AddToClassList("badge-plate-powerup");
                 }
                 else if (specialType == BlockSpecialType.Shield)
                 {
                     plate.AddToClassList("badge-plate-shield");
-                    plate.AddToClassList("badge-plate-powerup");
                 }
                 else if (specialType == BlockSpecialType.MultiBall)
                 {
                     plate.AddToClassList("badge-plate-multiball");
-                    plate.AddToClassList("badge-plate-powerup");
                 }
                 else if (specialType == BlockSpecialType.Laser)
                 {
                     plate.AddToClassList("badge-plate-laser");
-                    plate.AddToClassList("badge-plate-powerup");
                 }
+
+                Color badgeColor = specialType.GetBadgeColor();
+                plate.style.borderTopColor = badgeColor;
+                plate.style.borderRightColor = badgeColor;
+                plate.style.borderBottomColor = badgeColor;
+                plate.style.borderLeftColor = badgeColor;
             }
         }
     }

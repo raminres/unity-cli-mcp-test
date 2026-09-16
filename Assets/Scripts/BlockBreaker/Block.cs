@@ -38,7 +38,7 @@ namespace Arcade.BlockBreaker
 
         public BlockColorTier Tier => colorTier;
         public BlockSpecialType SpecialType => specialType;
-        public int Points => basePoints * scoreMultiplier;
+        public int Points => specialType.IsPowerdown() ? 0 : basePoints * scoreMultiplier;
         public int ScoreMultiplier => scoreMultiplier;
         public Color ParticleColor => particleColor;
         public int HitPoints => hitPoints;
@@ -83,6 +83,16 @@ namespace Arcade.BlockBreaker
                 meshRenderer.SetPropertyBlock(null);
                 if (originalMaterial != null) meshRenderer.sharedMaterial = originalMaterial;
             }
+
+            // Remove badge icon so the frozen icon disappears on the first hit
+            var badge = GetComponentInChildren<BlockBadge>();
+            if (badge != null)
+            {
+                if (Application.isPlaying)
+                    Destroy(badge.gameObject);
+                else
+                    DestroyImmediate(badge.gameObject);
+            }
         }
 
         public void Initialize(BlockColorTier tier, Material material, Color vfxColor, BlockSpecialType special = BlockSpecialType.Normal)
@@ -121,6 +131,11 @@ namespace Arcade.BlockBreaker
             {
                 originalMaterial = material;
                 meshRenderer.sharedMaterial = material;
+            }
+
+            if (special == BlockSpecialType.BrickFreezer)
+            {
+                Freeze(1);
             }
         }
 
@@ -221,18 +236,9 @@ namespace Arcade.BlockBreaker
                 BlockVFXManager.Instance.PlayBlockShatter(transform.position, particleColor, hitNormal);
             }
 
-            // 3. Apply Special Modifier Effects
-            bool isCollectibleBuff = (specialType == BlockSpecialType.PaddleExpander ||
-                                      specialType == BlockSpecialType.ExtraHeart ||
-                                      specialType == BlockSpecialType.Shield ||
-                                      specialType == BlockSpecialType.MultiBall ||
-                                      specialType == BlockSpecialType.ScoreMultiplier2x ||
-                                      specialType == BlockSpecialType.ScoreMultiplier3x ||
-                                      specialType == BlockSpecialType.ScoreMultiplier4x ||
-                                      specialType == BlockSpecialType.ScoreMultiplier5x ||
-                                      specialType == BlockSpecialType.Laser);
+            bool isCollectible = specialType.IsPowerup() || specialType.IsCollectiblePowerdown();
 
-            if (isCollectibleBuff && Application.isPlaying)
+            if (isCollectible && (Application.isPlaying || specialType.IsCollectiblePowerdown()))
             {
                 PowerupCapsule.Spawn(transform.position, specialType);
             }
@@ -309,12 +315,14 @@ namespace Arcade.BlockBreaker
             // 4. Notify Game Manager with multiplied points
             if (ArcadeGameManager.Instance != null)
             {
-                int pointsToRecord = (specialType == BlockSpecialType.ScoreMultiplier2x ||
-                                      specialType == BlockSpecialType.ScoreMultiplier3x ||
-                                      specialType == BlockSpecialType.ScoreMultiplier4x ||
-                                      specialType == BlockSpecialType.ScoreMultiplier5x)
-                    ? basePoints
-                    : Points;
+                int pointsToRecord = specialType.IsPowerdown()
+                    ? 0
+                    : (specialType == BlockSpecialType.ScoreMultiplier2x ||
+                       specialType == BlockSpecialType.ScoreMultiplier3x ||
+                       specialType == BlockSpecialType.ScoreMultiplier4x ||
+                       specialType == BlockSpecialType.ScoreMultiplier5x)
+                        ? basePoints
+                        : Points;
 
                 ArcadeGameManager.Instance.RecordBlockDestroyed(
                     pointsToRecord,

@@ -1463,7 +1463,7 @@ namespace Arcade.UI
                     if (comboLabel != null) comboLabel.text = "COMBO ENDED";
                     if (comboStatusIcon != null) comboStatusIcon.style.display = DisplayStyle.None;
 
-                    if (gameObject.activeInHierarchy)
+                    if (Application.isPlaying && gameObject.activeInHierarchy)
                     {
                         comboEndedCoroutine = StartCoroutine(ShowComboEndedRoutine());
                     }
@@ -1504,6 +1504,8 @@ namespace Arcade.UI
 
         public void HandleBlockPointsAwarded(Vector3 worldPos, int awardedPoints, int totalMultiplier, string bonusTag)
         {
+            if (awardedPoints <= 0) return;
+
             if (worldPos != Vector3.zero)
             {
                 AnimateFlyingScore(worldPos, awardedPoints, totalMultiplier, bonusTag);

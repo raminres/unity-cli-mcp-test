@@ -61,6 +61,16 @@ namespace Arcade.BlockBreaker
             _ => false
         };
 
+        public static bool IsCollectiblePowerdown(this BlockSpecialType type) => type switch
+        {
+            BlockSpecialType.PaddleShortener => true,
+            BlockSpecialType.PaddleSlower => true,
+            BlockSpecialType.BallSizeDecreaser => true,
+            BlockSpecialType.BallSlower => true,
+            BlockSpecialType.PaddleFreezer => true,
+            _ => false
+        };
+
         public static bool IsPowerup(this BlockSpecialType type) => type switch
         {
             BlockSpecialType.PaddleExpander => true,

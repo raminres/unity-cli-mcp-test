@@ -153,7 +153,7 @@ namespace Arcade.BlockBreaker
         public void Initialize(BlockSpecialType type, Color color, Material sharedMat = null, Transform visual = null, Transform icon = null)
         {
             specialType = type;
-            glowColor = type.IsPowerdown() ? BlockModifierExtensions.UnifiedPowerdownColor : BlockModifierExtensions.UnifiedPowerupColor;
+            glowColor = type.IsPowerdown() ? BlockModifierExtensions.UnifiedPowerdownColor : type.GetBadgeColor();
 
             if (visual != null) visualCapsuleTransform = visual;
             if (icon != null) iconTransform = icon;
@@ -165,7 +165,7 @@ namespace Arcade.BlockBreaker
             if (iconRenderer != null)
             {
                 iconRenderer.sprite = sprite;
-                iconRenderer.color = type.IsPowerdown() ? BlockModifierExtensions.UnifiedPowerdownColor : BlockModifierExtensions.UnifiedPowerupColor;
+                iconRenderer.color = Color.white;
             }
         }
 
@@ -642,6 +642,18 @@ namespace Arcade.BlockBreaker
                     return LoadSpriteSafe("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
                 case BlockSpecialType.Laser:
                     return LoadSpriteSafe("Assets/UI/Icons/TX_Powerup_Gun.png");
+                case BlockSpecialType.PaddleShortener:
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerdown_Arrows_Inward.png");
+                case BlockSpecialType.PaddleSlower:
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerdown_Slower_Paddle.png");
+                case BlockSpecialType.BrickFreezer:
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerdown_Frozen_Brick.png");
+                case BlockSpecialType.BallSizeDecreaser:
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerdown_Smaller_Ball.png");
+                case BlockSpecialType.BallSlower:
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerdown_Slower_Ball.png");
+                case BlockSpecialType.PaddleFreezer:
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerdown_Frozen_Paddle.png");
             }
 #endif
             return null;
@@ -673,7 +685,7 @@ namespace Arcade.BlockBreaker
             var comp = rootGo.AddComponent<PowerupCapsule>();
 
             baseMat = baseMat ?? GetOrCreateCapsuleMaterial();
-            Color color = type.IsPowerdown() ? BlockModifierExtensions.UnifiedPowerdownColor : BlockModifierExtensions.UnifiedPowerupColor;
+            Color color = type.IsPowerdown() ? BlockModifierExtensions.UnifiedPowerdownColor : type.GetBadgeColor();
 
             // Initialize ensures exactly 1 Visual_Capsule mesh child and 1 Icon_Billboard sprite child
             comp.Initialize(type, color, baseMat);

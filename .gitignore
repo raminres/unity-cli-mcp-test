@@ -34,7 +34,9 @@ ExportedObj/
 *.csproj
 *.unityproj
 *.sln
+*.slnx
 *.suo
+.vscode/
 *.tmp
 *.user
 *.userprefs

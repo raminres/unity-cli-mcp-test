@@ -465,6 +465,14 @@ namespace Arcade.Editor
             killCol.size = new Vector3(24f, 2.0f, 4f);
             killCol.isTrigger = true;
 
+            // Bottom Physical Shield Wall (Energy Barrier for Shield powerup)
+            var shieldWallGo = new GameObject("ShieldWall");
+            shieldWallGo.transform.SetParent(boundariesRoot.transform);
+            shieldWallGo.transform.position = new Vector3(0f, -7.6f, 0f);
+            shieldWallGo.transform.localScale = Vector3.zero;
+            shieldWallGo.AddComponent<ShieldWall>();
+            shieldWallGo.SetActive(false);
+
             // 7. Paddle Platform (Inverted Stepped Pyramid / Trapezoid)
             var paddleGo = new GameObject("Paddle");
             paddleGo.transform.position = new Vector3(0f, -6.5f, 0f);
