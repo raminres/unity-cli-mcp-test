@@ -32,14 +32,19 @@ namespace Arcade.BlockBreaker
         [SerializeField] private GameObject glassShell;
 
         private bool isDestroyed = false;
+        private bool isFrozen = false;
+        private int requiredDefrostHits = 0;
+        private Material originalMaterial;
 
         public BlockColorTier Tier => colorTier;
         public BlockSpecialType SpecialType => specialType;
-        public int Points => basePoints * scoreMultiplier;
+        public int Points => specialType.IsPowerdown() ? 0 : basePoints * scoreMultiplier;
         public int ScoreMultiplier => scoreMultiplier;
         public Color ParticleColor => particleColor;
         public int HitPoints => hitPoints;
         public bool IsDestroyed => isDestroyed;
+        public bool IsFrozen => isFrozen;
+        public int RequiredDefrostHits => requiredDefrostHits;
         public GameObject GlassShell => glassShell;
 
         private void Awake()
@@ -52,12 +57,52 @@ namespace Arcade.BlockBreaker
             glassShell = shell;
         }
 
+        public void Freeze(int defrostHits = 1)
+        {
+            if (isDestroyed) return;
+            isFrozen = true;
+            requiredDefrostHits = defrostHits;
+
+            if (meshRenderer != null)
+            {
+                if (originalMaterial == null) originalMaterial = meshRenderer.sharedMaterial;
+                var propBlock = new MaterialPropertyBlock();
+                meshRenderer.GetPropertyBlock(propBlock);
+                propBlock.SetColor("_BaseColor", new Color(0.65f, 0.92f, 1.0f, 1.0f));
+                propBlock.SetColor("_EmissionColor", new Color(0.2f, 0.7f, 1.0f, 1.0f) * 1.5f);
+                meshRenderer.SetPropertyBlock(propBlock);
+            }
+        }
+
+        public void Unfreeze()
+        {
+            isFrozen = false;
+            requiredDefrostHits = 0;
+            if (meshRenderer != null)
+            {
+                meshRenderer.SetPropertyBlock(null);
+                if (originalMaterial != null) meshRenderer.sharedMaterial = originalMaterial;
+            }
+
+            // Remove badge icon so the frozen icon disappears on the first hit
+            var badge = GetComponentInChildren<BlockBadge>();
+            if (badge != null)
+            {
+                if (Application.isPlaying)
+                    Destroy(badge.gameObject);
+                else
+                    DestroyImmediate(badge.gameObject);
+            }
+        }
+
         public void Initialize(BlockColorTier tier, Material material, Color vfxColor, BlockSpecialType special = BlockSpecialType.Normal)
         {
             colorTier = tier;
             particleColor = vfxColor;
             specialType = special;
             isDestroyed = false;
+            isFrozen = false;
+            requiredDefrostHits = 0;
 
             basePoints = tier switch
             {
@@ -84,7 +129,13 @@ namespace Arcade.BlockBreaker
 
             if (meshRenderer != null && material != null)
             {
+                originalMaterial = material;
                 meshRenderer.sharedMaterial = material;
+            }
+
+            if (special == BlockSpecialType.BrickFreezer)
+            {
+                Freeze(1);
             }
         }
 
@@ -103,6 +154,25 @@ namespace Arcade.BlockBreaker
         public void TakeHit(Vector3 hitNormal, int volleyMultiplier = 1, int volleyStreak = 0, int chainMultiplier = 1, string bonusTag = "")
         {
             if (isDestroyed) return;
+
+            if (isFrozen)
+            {
+                requiredDefrostHits--;
+                if (ArcadeAudioManager.Instance != null)
+                {
+                    ArcadeAudioManager.Instance.PlayGlassBreak();
+                }
+                if (BlockVFXManager.Instance != null)
+                {
+                    BlockVFXManager.Instance.PlayBlockShatter(transform.position, new Color(0.6f, 0.95f, 1.0f, 0.8f), hitNormal);
+                }
+
+                if (requiredDefrostHits <= 0)
+                {
+                    Unfreeze();
+                }
+                return;
+            }
 
             hitPoints--;
             if (hitPoints > 0)
@@ -152,7 +222,7 @@ namespace Arcade.BlockBreaker
                 }
                 else
                 {
-                    ArcadeAudioManager.Instance.PlayBreak(volleyStreak);
+                    ArcadeAudioManager.Instance.PlayBreak(volleyStreak, (int)colorTier);
                     if (specialType != BlockSpecialType.Normal && specialType != BlockSpecialType.GlassEnclosed)
                     {
                         ArcadeAudioManager.Instance.PlayPowerup();
@@ -166,18 +236,9 @@ namespace Arcade.BlockBreaker
                 BlockVFXManager.Instance.PlayBlockShatter(transform.position, particleColor, hitNormal);
             }
 
-            // 3. Apply Special Modifier Effects
-            bool isCollectibleBuff = (specialType == BlockSpecialType.PaddleExpander ||
-                                      specialType == BlockSpecialType.ExtraHeart ||
-                                      specialType == BlockSpecialType.Shield ||
-                                      specialType == BlockSpecialType.MultiBall ||
-                                      specialType == BlockSpecialType.ScoreMultiplier2x ||
-                                      specialType == BlockSpecialType.ScoreMultiplier3x ||
-                                      specialType == BlockSpecialType.ScoreMultiplier4x ||
-                                      specialType == BlockSpecialType.ScoreMultiplier5x ||
-                                      specialType == BlockSpecialType.Laser);
+            bool isCollectible = specialType.IsPowerup() || specialType.IsCollectiblePowerdown();
 
-            if (isCollectibleBuff && Application.isPlaying)
+            if (isCollectible && (Application.isPlaying || specialType.IsCollectiblePowerdown()))
             {
                 PowerupCapsule.Spawn(transform.position, specialType);
             }
@@ -254,12 +315,14 @@ namespace Arcade.BlockBreaker
             // 4. Notify Game Manager with multiplied points
             if (ArcadeGameManager.Instance != null)
             {
-                int pointsToRecord = (specialType == BlockSpecialType.ScoreMultiplier2x ||
-                                      specialType == BlockSpecialType.ScoreMultiplier3x ||
-                                      specialType == BlockSpecialType.ScoreMultiplier4x ||
-                                      specialType == BlockSpecialType.ScoreMultiplier5x)
-                    ? basePoints
-                    : Points;
+                int pointsToRecord = specialType.IsPowerdown()
+                    ? 0
+                    : (specialType == BlockSpecialType.ScoreMultiplier2x ||
+                       specialType == BlockSpecialType.ScoreMultiplier3x ||
+                       specialType == BlockSpecialType.ScoreMultiplier4x ||
+                       specialType == BlockSpecialType.ScoreMultiplier5x)
+                        ? basePoints
+                        : Points;
 
                 ArcadeGameManager.Instance.RecordBlockDestroyed(
                     pointsToRecord,

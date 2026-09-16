@@ -14,19 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 6
   levelName: 'Level 6: Royal Crown'
-  levelDescription: A triple-peaked royal crown with blazing 3X score multipliers and reinforced glass towers. Precision rebounds at high angles are rewarded.
+  levelDescription: A triple-peaked royal crown with blazing 3X score multipliers and reinforced glass towers, threatened by a mix of 4 distinct powerdown debuffs.
   layoutType: 14
   colorPattern: 0
-  columns: 9
+  columns: 13
   rowsPerTier: 2
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
+  includeSideFlanks: 1
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.12
-  initialPaddleWidth: 5
+  initialPaddleWidth: 4.8
   multiplier2xCount: 1
   multiplier3xCount: 2
   multiplier4xCount: 0
@@ -40,6 +41,12 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 1
   laserDuration: 10
-  parTime: 55
+  paddleShortenerCount: 1
+  paddleSlowerCount: 0
+  brickFreezerCount: 1
+  ballSizeDecreaserCount: 1
+  ballSlowerCount: 0
+  paddleFreezerCount: 1
+  parTime: 60
   timeBonusMax: 4000
-  starThresholds: 98080000881300004c1d0000i
+  starThresholds: 280a0000a816000060220000i

@@ -72,17 +72,18 @@ namespace Arcade.BlockBreaker
             var label = root.Q<Label>("badge-text");
             var plate = root.Q<VisualElement>("badge-plate");
 
+            Sprite spriteToUse = iconSprite;
+            if (spriteToUse == null && LevelGenerator.Instance != null && LevelGenerator.Instance.IconSet != null)
+            {
+                spriteToUse = LevelGenerator.Instance.IconSet.GetSprite(specialType);
+            }
+            if (spriteToUse == null)
+            {
+                spriteToUse = PowerupCapsule.GetSpriteForType(specialType);
+            }
+
             if (icon != null)
             {
-                Sprite spriteToUse = iconSprite;
-                if (spriteToUse == null && LevelGenerator.Instance != null && LevelGenerator.Instance.IconSet != null)
-                {
-                    spriteToUse = LevelGenerator.Instance.IconSet.GetSprite(specialType);
-                }
-                if (spriteToUse == null)
-                {
-                    spriteToUse = PowerupCapsule.GetSpriteForType(specialType);
-                }
                 if (spriteToUse != null)
                 {
                     icon.style.backgroundImage = new StyleBackground(spriteToUse);
@@ -99,8 +100,22 @@ namespace Arcade.BlockBreaker
                 icon.RemoveFromClassList("badge-icon-shield");
                 icon.RemoveFromClassList("badge-icon-multiball");
                 icon.RemoveFromClassList("badge-icon-laser");
+                icon.RemoveFromClassList("badge-icon-powerup");
+                icon.RemoveFromClassList("badge-icon-powerdown");
 
-                if (specialType == BlockSpecialType.PaddleExpander)
+                if (specialType.IsPowerdown())
+                {
+                    icon.AddToClassList("badge-icon-powerdown");
+                    if (spriteToUse != null)
+                    {
+                        icon.style.display = DisplayStyle.Flex;
+                    }
+                    else
+                    {
+                        icon.style.display = DisplayStyle.None;
+                    }
+                }
+                else if (specialType == BlockSpecialType.PaddleExpander)
                 {
                     icon.style.display = DisplayStyle.Flex;
                     icon.AddToClassList("badge-icon-expander");
@@ -158,6 +173,8 @@ namespace Arcade.BlockBreaker
                 {
                     icon.style.display = DisplayStyle.None;
                 }
+
+                icon.style.unityBackgroundImageTintColor = specialType.GetBadgeColor();
             }
 
             if (label != null)
@@ -167,9 +184,24 @@ namespace Arcade.BlockBreaker
                 label.RemoveFromClassList("badge-text-x4");
                 label.RemoveFromClassList("badge-text-x5");
                 label.RemoveFromClassList("badge-text-expander");
+                label.RemoveFromClassList("badge-text-powerdown");
                 label.RemoveFromClassList("badge-text-hidden");
 
-                if (specialType == BlockSpecialType.ScoreMultiplier2x)
+                if (specialType.IsPowerdown())
+                {
+                    if (spriteToUse == null)
+                    {
+                        label.style.display = DisplayStyle.Flex;
+                        label.text = specialType.GetBadgeText();
+                        label.AddToClassList("badge-text-powerdown");
+                    }
+                    else
+                    {
+                        label.style.display = DisplayStyle.None;
+                        label.AddToClassList("badge-text-hidden");
+                    }
+                }
+                else if (specialType == BlockSpecialType.ScoreMultiplier2x)
                 {
                     label.style.display = DisplayStyle.Flex;
                     label.text = "x2";
@@ -213,8 +245,14 @@ namespace Arcade.BlockBreaker
                 plate.RemoveFromClassList("badge-plate-shield");
                 plate.RemoveFromClassList("badge-plate-multiball");
                 plate.RemoveFromClassList("badge-plate-laser");
+                plate.RemoveFromClassList("badge-plate-powerup");
+                plate.RemoveFromClassList("badge-plate-powerdown");
 
-                if (specialType == BlockSpecialType.ScoreMultiplier2x)
+                if (specialType.IsPowerdown())
+                {
+                    plate.AddToClassList("badge-plate-powerdown");
+                }
+                else if (specialType == BlockSpecialType.ScoreMultiplier2x)
                     plate.AddToClassList("badge-plate-x2");
                 else if (specialType == BlockSpecialType.ScoreMultiplier3x)
                     plate.AddToClassList("badge-plate-x3");
@@ -223,17 +261,33 @@ namespace Arcade.BlockBreaker
                 else if (specialType == BlockSpecialType.ScoreMultiplier5x)
                     plate.AddToClassList("badge-plate-x5");
                 else if (specialType == BlockSpecialType.PaddleExpander)
+                {
                     plate.AddToClassList("badge-plate-expander");
+                }
                 else if (specialType == BlockSpecialType.Bomb)
                     plate.AddToClassList("badge-plate-bomb");
                 else if (specialType == BlockSpecialType.ExtraHeart)
+                {
                     plate.AddToClassList("badge-plate-heart-plus");
+                }
                 else if (specialType == BlockSpecialType.Shield)
+                {
                     plate.AddToClassList("badge-plate-shield");
+                }
                 else if (specialType == BlockSpecialType.MultiBall)
+                {
                     plate.AddToClassList("badge-plate-multiball");
+                }
                 else if (specialType == BlockSpecialType.Laser)
+                {
                     plate.AddToClassList("badge-plate-laser");
+                }
+
+                Color badgeColor = specialType.GetBadgeColor();
+                plate.style.borderTopColor = badgeColor;
+                plate.style.borderRightColor = badgeColor;
+                plate.style.borderBottomColor = badgeColor;
+                plate.style.borderLeftColor = badgeColor;
             }
         }
     }

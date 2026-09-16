@@ -1508,7 +1508,8 @@ namespace Arcade.Tests
             gameManager.HandleBallFell(ball);
 
             Assert.AreEqual(livesBefore, gameManager.Lives, "Shield must prevent life loss when ball falls.");
-            Assert.AreEqual(GameState.ReadyToLaunch, gameManager.State, "Game must reset to ReadyToLaunch.");
+            Assert.AreEqual(GameState.Playing, gameManager.State, "Game must remain Playing without resetting to ReadyToLaunch.");
+            Assert.Greater(ball.Velocity.y, 0f, "Ball must be deflected upward by shield.");
 
             Object.DestroyImmediate(ballObj);
         }
@@ -1664,7 +1665,7 @@ namespace Arcade.Tests
             gameManager.HandleBallFell(gameManager.ActiveBalls[0]);
 
             Assert.AreEqual(livesBefore, gameManager.Lives, "Shield must save the last ball from life loss.");
-            Assert.AreEqual(GameState.ReadyToLaunch, gameManager.State, "Game must reset to ReadyToLaunch.");
+            Assert.AreEqual(GameState.Playing, gameManager.State, "Game must remain in Playing state.");
 
             Object.DestroyImmediate(ballObj);
         }
@@ -1902,11 +1903,11 @@ namespace Arcade.Tests
             var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_01.asset");
             Assert.IsNotNull(config);
 
-            // Level 1: 7 cols * 3 rows in a Stepped Pyramid = 15 blocks
-            Assert.AreEqual(7, config.Columns);
-            Assert.AreEqual(1, config.RowsPerTier);
-            Assert.AreEqual(3, config.TotalRows);
-            Assert.AreEqual(15, config.TotalBlocks);
+            // Level 1: 11 cols * 6 rows in a Stepped Pyramid = 42 blocks
+            Assert.AreEqual(11, config.Columns);
+            Assert.AreEqual(2, config.RowsPerTier);
+            Assert.AreEqual(6, config.TotalRows);
+            Assert.AreEqual(42, config.TotalBlocks);
             Assert.AreEqual(LevelLayoutType.Pyramid, config.LayoutType);
 
             // Generous warmup paddle and comfortable speed
@@ -2341,6 +2342,39 @@ namespace Arcade.Tests
             Assert.IsNotNull(lvl15);
             Assert.AreEqual(2, lvl15.Multiplier4xCount, "Level 15 must contain 2x 4X multipliers.");
             Assert.AreEqual(2, lvl15.Multiplier5xCount, "Level 15 must contain 2x 5X multipliers.");
+        }
+
+        [Test]
+        public void Campaign_LevelsContainProgressiveHazardsAndLeanerPaddleTuning()
+        {
+            int prevHazards = 0;
+            for (int i = 1; i <= 15; i++)
+            {
+                var cfg = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i:D2}.asset");
+                Assert.IsNotNull(cfg, $"SO_Level_{i:D2} must exist.");
+
+                int totalHazards = cfg.PaddleShortenerCount + cfg.PaddleSlowerCount + cfg.BrickFreezerCount +
+                                   cfg.BallSizeDecreaserCount + cfg.BallSlowerCount + cfg.PaddleFreezerCount;
+
+                if (i == 1)
+                {
+                    Assert.AreEqual(0, totalHazards, "Level 1 must have 0 hazards as tutorial warmup.");
+                    Assert.AreEqual(5.5f, cfg.InitialPaddleWidth, 0.01f);
+                }
+                else
+                {
+                    Assert.GreaterOrEqual(totalHazards, prevHazards, $"Level {i} hazards ({totalHazards}) must be >= Level {i - 1} hazards ({prevHazards}).");
+                    Assert.LessOrEqual(cfg.InitialPaddleWidth, 5.0f, $"Level {i} paddle width should be leaner (<= 5.0).");
+                }
+
+                prevHazards = totalHazards;
+            }
+
+            var lvl15 = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>("Assets/Settings/Levels/SO_Level_15.asset");
+            int lvl15Hazards = lvl15.PaddleShortenerCount + lvl15.PaddleSlowerCount + lvl15.BrickFreezerCount +
+                               lvl15.BallSizeDecreaserCount + lvl15.BallSlowerCount + lvl15.PaddleFreezerCount;
+            Assert.AreEqual(13, lvl15Hazards, "Level 15 must have 13 hazard blocks for supreme climax challenge.");
+            Assert.AreEqual(4.5f, lvl15.InitialPaddleWidth, 0.01f, "Level 15 paddle must be high-skill tuned at 4.5f.");
         }
 
         [Test]
@@ -2843,6 +2877,104 @@ namespace Arcade.Tests
             Assert.Greater(bounceMovingRight.x, 0f, "Rightward paddle sweep must bias deflection rightward.");
             Assert.Less(bounceMovingLeft.x, 0f, "Leftward paddle sweep must bias deflection leftward.");
             Assert.Greater(bounceMovingRight.x, bounceMovingLeft.x, "Rightward sweep must produce larger X velocity than leftward sweep.");
+        }
+
+        [Test]
+        public void BallController_CalculatePaddleDeflection_StrongSwipeOpposite_ReversesHorizontalDirection()
+        {
+            // Ball flying down-right at ~60° polar angle (positive X)
+            Vector3 inVelRight = new Vector3(8f, -14f, 0f);
+
+            // Stationary paddle: optical reflection preserves rightward momentum
+            Vector3 bounceStationary = BallController.CalculatePaddleDeflection(
+                inVelRight, 0f, paddleVelocityX: 0f);
+            Assert.Greater(bounceStationary.x, 0f, "Stationary paddle must reflect rightward.");
+
+            // Strong leftward swipe against the ball (e.g. -20 u/s)
+            Vector3 bounceCutLeft = BallController.CalculatePaddleDeflection(
+                inVelRight, 0f, paddleVelocityX: -20f, velocityInfluence: 1.5f, maxVelocitySteerDeg: 45f);
+
+            Assert.Less(bounceCutLeft.x, 0f, "Strong leftward swipe against rightward ball must reverse horizontal velocity across 90° (cut/hook).");
+            Assert.Greater(bounceCutLeft.y, 0f, "Reversed cut must deflect upward.");
+            float angleDeg = Mathf.Atan2(bounceCutLeft.y, bounceCutLeft.x) * Mathf.Rad2Deg;
+            Assert.GreaterOrEqual(angleDeg, 95f, "Reversed angle must cross outside the vertical exclusion deadzone.");
+            Assert.LessOrEqual(angleDeg, 155f, "Reversed angle must remain within playable arcade bounds.");
+        }
+
+        [Test]
+        public void BallController_CalculatePaddleDeflection_SwipeWithBall_SharpensAngleTowardHorizontal()
+        {
+            // Ball flying down-right
+            Vector3 inVelRight = new Vector3(8f, -14f, 0f);
+
+            Vector3 bounceStationary = BallController.CalculatePaddleDeflection(
+                inVelRight, 0f, paddleVelocityX: 0f);
+
+            // Swiping right with the ball (tangential acceleration)
+            Vector3 bounceSwipeRight = BallController.CalculatePaddleDeflection(
+                inVelRight, 0f, paddleVelocityX: 16f, velocityInfluence: 1.5f, maxVelocitySteerDeg: 45f);
+
+            Assert.Greater(bounceSwipeRight.x, bounceStationary.x,
+                "Swiping with the ball must impart rightward tangential velocity, resulting in a shallower, faster horizontal exit.");
+            float angleDeg = Mathf.Atan2(bounceSwipeRight.y, bounceSwipeRight.x) * Mathf.Rad2Deg;
+            Assert.GreaterOrEqual(angleDeg, 25f, "Angle must not fall below minAngleDeg (25°).");
+        }
+
+        [Test]
+        public void BallController_CalculatePaddleDeflection_MaxSteerClamp_ClampsAtConfiguredLimit()
+        {
+            Vector3 inVelVertical = new Vector3(0f, -14f, 0f);
+
+            // Extreme swipe speed (50 u/s -> would be 75° deflection without clamp)
+            Vector3 bounceExtreme = BallController.CalculatePaddleDeflection(
+                inVelVertical, 0f, paddleVelocityX: 50f, velocityInfluence: 1.5f, maxVelocitySteerDeg: 45f);
+
+            float angleDeg = Mathf.Atan2(bounceExtreme.y, bounceExtreme.x) * Mathf.Rad2Deg;
+            // 90° - 45° = 45°
+            Assert.AreEqual(45f, angleDeg, 0.1f, "Extreme swipe must be cleanly clamped at maxVelocitySteerDeg (45°).");
+        }
+
+        [Test]
+        public void BallController_HandlePaddleCollision_MovingPaddle_AppliesKineticSpeedPop()
+        {
+            var ballObj = new GameObject("TestBall_Smash");
+            ballObj.transform.position = new Vector3(0f, -5.5f, 0f);
+            var rb = ballObj.AddComponent<Rigidbody>();
+            rb.linearVelocity = new Vector3(0f, -14f, 0f);
+            var ball = ballObj.AddComponent<BallController>();
+            ball.SetCurrentSpeedForTesting(14.0f);
+
+            paddle.transform.position = new Vector3(0f, -6.0f, 0f);
+            paddle.SetVelocityXForTesting(8.0f); // Actively moving paddle (>= 3.5 u/s threshold)
+
+            ball.HandlePaddleCollisionForTesting(paddle);
+
+            float expectedSpeed = 14.0f * 1.08f; // +8% speed impulse
+            Assert.AreEqual(expectedSpeed, ball.CurrentSpeed, 0.05f,
+                "Striking with moving paddle (>= 3.5 u/s) must trigger kinetic speed pop (+8%).");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void BallController_HandlePaddleCollision_StationaryPaddle_MaintainsSpeed()
+        {
+            var ballObj = new GameObject("TestBall_Stationary");
+            ballObj.transform.position = new Vector3(0f, -5.5f, 0f);
+            var rb = ballObj.AddComponent<Rigidbody>();
+            rb.linearVelocity = new Vector3(0f, -14f, 0f);
+            var ball = ballObj.AddComponent<BallController>();
+            ball.SetCurrentSpeedForTesting(14.0f);
+
+            paddle.transform.position = new Vector3(0f, -6.0f, 0f);
+            paddle.SetVelocityXForTesting(0.0f); // Stationary paddle
+
+            ball.HandlePaddleCollisionForTesting(paddle);
+
+            Assert.AreEqual(14.0f, ball.CurrentSpeed, 0.01f,
+                "Striking with stationary paddle must maintain constant currentSpeed with zero smash pop.");
+
+            Object.DestroyImmediate(ballObj);
         }
 
         [Test]
@@ -4677,6 +4809,745 @@ namespace Arcade.Tests
             Object.DestroyImmediate(testBomb);
         }
 
+        #region Model A Color Physics & Level Density Redesign Tests
+
+        [Test]
+        public void BallController_BlockCollision_RedTier_DampensSpeedTowardBaseSpeed()
+        {
+            var ballObj = new GameObject("TestBall_RedTier");
+            ballObj.transform.SetParent(testRoot.transform);
+            var rb = ballObj.AddComponent<Rigidbody>();
+            var ball = ballObj.AddComponent<BallController>();
+            ball.Initialize(gameManager, paddle);
+
+            float initialSpeed = 18f;
+            Vector3 customVelocity = new Vector3(10f, 10f, 0f).normalized * initialSpeed;
+            ball.SetCurrentSpeedForTesting(initialSpeed);
+            rb.linearVelocity = customVelocity;
+
+            // 1. Red dampens speed by redDampenAmount (1.2f)
+            ball.ApplyBlockColorInteractionForTesting(BlockColorTier.Red);
+            Assert.AreEqual(initialSpeed - ball.RedDampenAmount, ball.CurrentSpeed, 0.001f, "Red tier must dampen ball speed by RedDampenAmount.");
+            Assert.AreEqual(initialSpeed - ball.RedDampenAmount, rb.linearVelocity.magnitude, 0.001f, "Rigidbody velocity must match dampened speed.");
+
+            // 2. Red damping never reduces speed below baseSpeed (14f)
+            float nearBaseSpeed = ball.BaseSpeed + 0.5f;
+            ball.SetCurrentSpeedForTesting(nearBaseSpeed);
+            rb.linearVelocity = customVelocity.normalized * nearBaseSpeed;
+            ball.ApplyBlockColorInteractionForTesting(BlockColorTier.Red);
+            Assert.AreEqual(ball.BaseSpeed, ball.CurrentSpeed, 0.001f, "Red tier damping must floor at BaseSpeed.");
+            Assert.AreEqual(ball.BaseSpeed, rb.linearVelocity.magnitude, 0.001f, "Rigidbody velocity must floor at BaseSpeed.");
+        }
+
+        [Test]
+        public void BallController_BlockCollision_GreenTier_AcceleratesSpeedUpToMaxSpeed()
+        {
+            var ballObj = new GameObject("TestBall_GreenTier");
+            ballObj.transform.SetParent(testRoot.transform);
+            var rb = ballObj.AddComponent<Rigidbody>();
+            var ball = ballObj.AddComponent<BallController>();
+            ball.Initialize(gameManager, paddle);
+
+            float initialSpeed = 15f;
+            Vector3 customVelocity = Vector3.up * initialSpeed;
+            ball.SetCurrentSpeedForTesting(initialSpeed);
+            rb.linearVelocity = customVelocity;
+
+            // 1. Green accelerates speed by 10% (greenBoostPercent)
+            ball.ApplyBlockColorInteractionForTesting(BlockColorTier.Green);
+            float expectedSpeed = initialSpeed * (1f + ball.GreenBoostPercent);
+            Assert.AreEqual(expectedSpeed, ball.CurrentSpeed, 0.001f, "Green tier must boost speed by GreenBoostPercent.");
+            Assert.AreEqual(expectedSpeed, rb.linearVelocity.magnitude, 0.001f, "Rigidbody velocity must match boosted speed.");
+
+            // 2. Green acceleration is capped at maxSpeed (22f)
+            float nearMaxSpeed = ball.MaxSpeed - 0.5f;
+            ball.SetCurrentSpeedForTesting(nearMaxSpeed);
+            rb.linearVelocity = customVelocity.normalized * nearMaxSpeed;
+            ball.ApplyBlockColorInteractionForTesting(BlockColorTier.Green);
+            Assert.AreEqual(ball.MaxSpeed, ball.CurrentSpeed, 0.001f, "Green tier acceleration must cap at MaxSpeed.");
+            Assert.AreEqual(ball.MaxSpeed, rb.linearVelocity.magnitude, 0.001f, "Rigidbody velocity must cap at MaxSpeed.");
+        }
+
+        [Test]
+        public void BallController_BlockCollision_BlueTier_AppliesPrismScatterDeflectionAndSanitizes()
+        {
+            var ballObj = new GameObject("TestBall_BlueTier");
+            ballObj.transform.SetParent(testRoot.transform);
+            var rb = ballObj.AddComponent<Rigidbody>();
+            var ball = ballObj.AddComponent<BallController>();
+            ball.Initialize(gameManager, paddle);
+
+            float speed = 16f;
+            Vector3 initialVelocity = new Vector3(8f, 13.8564f, 0f).normalized * speed;
+
+            // Run multiple scatters to verify angle change and trajectory sanitization
+            for (int i = 0; i < 20; i++)
+            {
+                ball.SetCurrentSpeedForTesting(speed);
+                rb.linearVelocity = initialVelocity;
+
+                ball.ApplyBlockColorInteractionForTesting(BlockColorTier.Blue);
+                Vector3 scattered = rb.linearVelocity;
+
+                // Speed increment or preserved
+                Assert.GreaterOrEqual(scattered.magnitude, speed, "Blue tier prism scatter must maintain or increase speed.");
+
+                // Sanitized: vertical floor >= sin(20 deg)
+                float minVertical = scattered.magnitude * Mathf.Sin(20f * Mathf.Deg2Rad);
+                Assert.GreaterOrEqual(Mathf.Abs(scattered.y), minVertical - 0.01f, "Scattered velocity must satisfy vertical floor.");
+
+                // Sanitized: exclusion deadzone >= sin(5 deg)
+                float minHorizontal = scattered.magnitude * Mathf.Sin(5f * Mathf.Deg2Rad);
+                Assert.GreaterOrEqual(Mathf.Abs(scattered.x), minHorizontal - 0.01f, "Scattered velocity must avoid vertical deadzone.");
+            }
+        }
+
+        [Test]
+        public void Campaign_AllFifteenLevels_HaveEnrichedBrickDensityAndNoEmptyGutters()
+        {
+            for (int i = 1; i <= 15; i++)
+            {
+                string path = $"Assets/Settings/Levels/SO_Level_{i:D2}.asset";
+                var config = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelConfiguration>(path);
+                Assert.IsNotNull(config, $"SO_Level_{i:D2} must exist.");
+
+                // Grid width must be at least 11 columns to eliminate 6u empty side gutters
+                Assert.GreaterOrEqual(config.Columns, 11, $"Level {i} must have at least 11 columns.");
+
+                // Total rows must be at least 6
+                Assert.GreaterOrEqual(config.TotalRows, 6, $"Level {i} must have at least 6 total rows.");
+
+                // Total block count must be at least 30 blocks
+                Assert.GreaterOrEqual(config.TotalBlocks, 30, $"Level {i} must contain at least 30 blocks for dense gameplay.");
+
+                // Side flanks bumper blocks enabled
+                Assert.IsTrue(config.IncludeSideFlanks, $"Level {i} must have IncludeSideFlanks enabled.");
+            }
+        }
+
+        #region Powerdown & Hazard Subsystem Tests
+
+        [Test]
+        public void BlockModifier_PowerdownExtensions_IdentifiesHazardsAndBuffs()
+        {
+            // All 6 hazards classified as powerdown
+            Assert.IsTrue(BlockSpecialType.PaddleShortener.IsPowerdown());
+            Assert.IsTrue(BlockSpecialType.PaddleSlower.IsPowerdown());
+            Assert.IsTrue(BlockSpecialType.BrickFreezer.IsPowerdown());
+            Assert.IsTrue(BlockSpecialType.BallSizeDecreaser.IsPowerdown());
+            Assert.IsTrue(BlockSpecialType.BallSlower.IsPowerdown());
+            Assert.IsTrue(BlockSpecialType.PaddleFreezer.IsPowerdown());
+
+            // Buffs are NOT powerdowns
+            Assert.IsFalse(BlockSpecialType.PaddleExpander.IsPowerdown());
+            Assert.IsFalse(BlockSpecialType.ExtraHeart.IsPowerdown());
+            Assert.IsFalse(BlockSpecialType.Shield.IsPowerdown());
+            Assert.IsFalse(BlockSpecialType.MultiBall.IsPowerdown());
+            Assert.IsFalse(BlockSpecialType.Laser.IsPowerdown());
+            Assert.IsFalse(BlockSpecialType.ScoreMultiplier2x.IsPowerdown());
+
+            // Buffs classified as powerups
+            Assert.IsTrue(BlockSpecialType.PaddleExpander.IsPowerup());
+            Assert.IsTrue(BlockSpecialType.ExtraHeart.IsPowerup());
+            Assert.IsTrue(BlockSpecialType.Shield.IsPowerup());
+            Assert.IsTrue(BlockSpecialType.MultiBall.IsPowerup());
+            Assert.IsTrue(BlockSpecialType.Laser.IsPowerup());
+            Assert.IsTrue(BlockSpecialType.ScoreMultiplier2x.IsPowerup());
+            Assert.IsFalse(BlockSpecialType.PaddleShortener.IsPowerup());
+
+            // Unified Palette
+            Assert.AreEqual(new Color(1.0f, 0.10f, 0.25f), BlockModifierExtensions.UnifiedPowerdownColor);
+            Assert.AreEqual(new Color(0.0f, 0.95f, 1.0f), BlockModifierExtensions.UnifiedPowerupColor);
+        }
+
+        [Test]
+        public void PowerupCapsule_Spawn_Powerdown_CreatesDiamondCubeMeshAndHazardGlow()
+        {
+            // Spawn Powerdown (PaddleShortener)
+            var powerdown = PowerupCapsule.Spawn(Vector3.zero, BlockSpecialType.PaddleShortener);
+            Assert.IsNotNull(powerdown);
+            Assert.IsNotNull(powerdown.VisualCapsuleTransform);
+
+            var cubeMf = powerdown.VisualCapsuleTransform.GetComponent<MeshFilter>();
+            Assert.IsNotNull(cubeMf);
+            Assert.IsNotNull(cubeMf.sharedMesh);
+            Assert.IsTrue(cubeMf.sharedMesh.name.IndexOf("Cube", System.StringComparison.OrdinalIgnoreCase) >= 0,
+                "Powerdowns must instantiate a 3D Cube primitive mesh to tumble as a diamond.");
+            Assert.AreEqual(new Vector3(0.72f, 0.72f, 0.72f), powerdown.VisualCapsuleTransform.localScale);
+
+            // Spawn Powerup (PaddleExpander)
+            var powerup = PowerupCapsule.Spawn(new Vector3(5f, 0f, 0f), BlockSpecialType.PaddleExpander);
+            Assert.IsNotNull(powerup);
+            Assert.IsNotNull(powerup.VisualCapsuleTransform);
+
+            var capsuleMf = powerup.VisualCapsuleTransform.GetComponent<MeshFilter>();
+            Assert.IsNotNull(capsuleMf);
+            Assert.IsNotNull(capsuleMf.sharedMesh);
+            Assert.IsTrue(capsuleMf.sharedMesh.name.IndexOf("Capsule", System.StringComparison.OrdinalIgnoreCase) >= 0,
+                "Powerups must instantiate a 3D Capsule primitive mesh.");
+            Assert.AreEqual(new Vector3(0.85f, 0.85f, 0.85f), powerup.VisualCapsuleTransform.localScale);
+
+            Object.DestroyImmediate(powerdown.gameObject);
+            Object.DestroyImmediate(powerup.gameObject);
+        }
+
+        [Test]
+        public void PaddleController_ShrinkWidth_ReducesWidthAndEnforcesMinFloor()
+        {
+            var paddleGo = new GameObject("Paddle");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+            paddle.ResetWidth(5.0f);
+
+            Assert.AreEqual(5.0f, paddle.CurrentWidth, 0.01f);
+
+            // Shrink by 18%
+            paddle.ShrinkWidth(0.18f);
+            float expectedWidth = 5.0f * (1f - 0.18f); // 4.10f
+            Assert.AreEqual(expectedWidth, paddle.CurrentWidth, 0.05f);
+
+            // Excessive shrink clamps to minWidth (2.4f)
+            paddle.ShrinkWidth(0.90f);
+            Assert.AreEqual(2.4f, paddle.CurrentWidth, 0.01f, "Paddle width must be clamped at minimum floor (2.4f).");
+
+            Object.DestroyImmediate(paddleGo);
+        }
+
+        [Test]
+        public void PaddleController_FreezeAndSlow_ControlsStateFlags()
+        {
+            var paddleGo = new GameObject("Paddle");
+            var paddle = paddleGo.AddComponent<PaddleController>();
+
+            Assert.IsFalse(paddle.IsFrozen);
+            Assert.IsFalse(paddle.IsSlowed);
+
+            paddle.SetFrozen(true);
+            Assert.IsTrue(paddle.IsFrozen);
+
+            paddle.SetFrozen(false);
+            Assert.IsFalse(paddle.IsFrozen);
+
+            paddle.SetSlowed(true);
+            Assert.IsTrue(paddle.IsSlowed);
+
+            paddle.SetSlowed(false);
+            Assert.IsFalse(paddle.IsSlowed);
+
+            Object.DestroyImmediate(paddleGo);
+        }
+
+        [Test]
+        public void BallController_BallShrunk_ScalesBallToSixtyPercent()
+        {
+            var ballGo = new GameObject("Ball");
+            var ball = ballGo.AddComponent<BallController>();
+
+            Vector3 initialScale = ballGo.transform.localScale;
+
+            ball.SetBallShrunk(true);
+            Assert.IsTrue(ball.IsBallShrunk);
+            Assert.AreEqual(initialScale.x * 0.60f, ballGo.transform.localScale.x, 0.01f);
+
+            ball.SetBallShrunk(false);
+            Assert.IsFalse(ball.IsBallShrunk);
+            Assert.AreEqual(initialScale.x, ballGo.transform.localScale.x, 0.01f);
+
+            Object.DestroyImmediate(ballGo);
+        }
+
+        [Test]
+        public void BallController_BallSlowed_SetsSlowState()
+        {
+            var ballGo = new GameObject("Ball");
+            var ball = ballGo.AddComponent<BallController>();
+
+            Assert.IsFalse(ball.IsBallSlowed);
+
+            ball.SetBallSlowed(true);
+            Assert.IsTrue(ball.IsBallSlowed);
+
+            ball.SetBallSlowed(false);
+            Assert.IsFalse(ball.IsBallSlowed);
+
+            Object.DestroyImmediate(ballGo);
+        }
+
+        [Test]
+        public void Block_Freeze_AbsorbsHitAndRequiresDefrostHitBeforeDestruction()
+        {
+            var blockGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var block = blockGo.AddComponent<Block>();
+            block.Initialize(BlockColorTier.Red, null, Color.red, BlockSpecialType.Normal);
+
+            // Freeze block with 1 defrost hit required
+            block.Freeze(1);
+            Assert.IsTrue(block.IsFrozen);
+            Assert.IsFalse(block.IsDestroyed);
+
+            // Hit 1: Absorbs hit, defrosted, NOT destroyed
+            block.TakeHit(Vector3.up);
+            Assert.IsFalse(block.IsFrozen, "Block must defrost upon taking hit.");
+            Assert.IsFalse(block.IsDestroyed, "Block must absorb defrost hit without being destroyed.");
+
+            // Hit 2: Block is now normal, should be destroyed
+            block.TakeHit(Vector3.up);
+            Assert.IsTrue(block.IsDestroyed, "Block should be destroyed on subsequent hit after defrosting.");
+
+            Object.DestroyImmediate(blockGo);
+        }
+
+        [Test]
+        public void Block_BrickFreezer_InitializesFrozen_RemovesBadgeOnFirstHit_DestroysOnSecondHit_AwardsZeroPoints()
+        {
+            var blockGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var block = blockGo.AddComponent<Block>();
+            block.Initialize(BlockColorTier.Blue, null, Color.cyan, BlockSpecialType.BrickFreezer);
+
+            var badgeGo = new GameObject("UI_Badge");
+            badgeGo.transform.SetParent(blockGo.transform);
+            badgeGo.AddComponent<BlockBadge>();
+
+            Assert.IsTrue(block.IsFrozen, "BrickFreezer block must initialize in frozen state.");
+            Assert.AreEqual(0, block.Points, "Powerdown blocks must award 0 points.");
+            Assert.IsFalse(block.IsDestroyed);
+
+            // Hit 1: Absorbs hit, defrosted, badge removed
+            block.TakeHit(Vector3.up);
+            Assert.IsFalse(block.IsFrozen, "Block must defrost upon first hit.");
+            Assert.IsFalse(block.IsDestroyed, "Block must absorb defrost hit without being destroyed.");
+            Assert.IsNull(blockGo.GetComponentInChildren<BlockBadge>(), "Badge icon must disappear on first hit.");
+
+            // Hit 2: Block breaks, awards 0 points
+            block.TakeHit(Vector3.up);
+            Assert.IsTrue(block.IsDestroyed, "Block must be destroyed on second hit.");
+
+            Object.DestroyImmediate(blockGo);
+        }
+
+        [Test]
+        public void Block_CollectiblePowerdown_Destruction_AwardsZeroPoints_AndSpawnsFallingDiamond()
+        {
+            PowerupCapsule.ClearAllFallingCapsules();
+
+            var blockGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var block = blockGo.AddComponent<Block>();
+            block.Initialize(BlockColorTier.Red, null, Color.red, BlockSpecialType.PaddleShortener);
+
+            Assert.AreEqual(0, block.Points, "Powerdown block Points property must be 0.");
+            Assert.IsTrue(block.SpecialType.IsCollectiblePowerdown());
+
+            // Destroy block - should spawn falling capsule
+            block.DestroyBlock(Vector3.up);
+            Assert.IsTrue(block.IsDestroyed);
+
+            var capsules = Object.FindObjectsByType<PowerupCapsule>(FindObjectsSortMode.None);
+            Assert.AreEqual(1, capsules.Length, "Destroying collectible powerdown block must spawn falling capsule.");
+
+            var cap = capsules[0];
+            Assert.AreEqual(BlockSpecialType.PaddleShortener, cap.SpecialType);
+            Assert.IsNotNull(cap.VisualCapsuleTransform);
+
+            var cubeMf = cap.VisualCapsuleTransform.GetComponent<MeshFilter>();
+            Assert.IsNotNull(cubeMf);
+            Assert.IsTrue(cubeMf.sharedMesh.name.IndexOf("Cube", System.StringComparison.OrdinalIgnoreCase) >= 0,
+                "Powerdown capsule must be 3D diamond cube mesh.");
+
+            PowerupCapsule.ClearAllFallingCapsules();
+            Object.DestroyImmediate(blockGo);
+        }
+
+        [Test]
+        public void PowerupCapsule_PowerdownFallbacks_ResolveAllPowerdownSprites()
+        {
+            var types = new[]
+            {
+                BlockSpecialType.PaddleShortener,
+                BlockSpecialType.PaddleSlower,
+                BlockSpecialType.BrickFreezer,
+                BlockSpecialType.BallSizeDecreaser,
+                BlockSpecialType.BallSlower,
+                BlockSpecialType.PaddleFreezer
+            };
+
+            foreach (var t in types)
+            {
+                var sprite = PowerupCapsule.GetSpriteForType(t);
+                Assert.IsNotNull(sprite, $"PowerupCapsule must resolve a non-null sprite for {t}");
+            }
+        }
+
+        [Test]
+        public void BlockBadge_Coloration_BindsCorrectColors_WithoutCyanOverride()
+        {
+            var badgeGo = new GameObject("TestBadge");
+            var badge = badgeGo.AddComponent<BlockBadge>();
+
+            var root = new UnityEngine.UIElements.VisualElement();
+            var plate = new UnityEngine.UIElements.VisualElement { name = "badge-plate" };
+            var icon = new UnityEngine.UIElements.VisualElement { name = "badge-icon" };
+            plate.Add(icon);
+            root.Add(plate);
+
+            var typeField = typeof(BlockBadge).GetField("specialType", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            // Test Laser
+            typeField.SetValue(badge, BlockSpecialType.Laser);
+            badge.UpdateUI(root);
+            Assert.AreEqual(BlockSpecialType.Laser.GetBadgeColor(), icon.style.unityBackgroundImageTintColor.value,
+                "Laser icon tint must match Laser badge color (#ff2a47), not overridden by cyan.");
+
+            // Test ExtraHeart
+            typeField.SetValue(badge, BlockSpecialType.ExtraHeart);
+            badge.UpdateUI(root);
+            Assert.AreEqual(BlockSpecialType.ExtraHeart.GetBadgeColor(), icon.style.unityBackgroundImageTintColor.value,
+                "ExtraHeart icon tint must match Heart badge color (#ff3b56), not overridden by cyan.");
+
+            // Test MultiBall
+            typeField.SetValue(badge, BlockSpecialType.MultiBall);
+            badge.UpdateUI(root);
+            Assert.AreEqual(BlockSpecialType.MultiBall.GetBadgeColor(), icon.style.unityBackgroundImageTintColor.value,
+                "MultiBall icon tint must match MultiBall badge color (#e056fd), not overridden by cyan.");
+
+            // Test Powerdown (PaddleShortener)
+            typeField.SetValue(badge, BlockSpecialType.PaddleShortener);
+            badge.UpdateUI(root);
+            Assert.AreEqual(BlockModifierExtensions.UnifiedPowerdownColor, icon.style.unityBackgroundImageTintColor.value,
+                "Powerdown icon tint must match UnifiedPowerdownColor (#ff1744).");
+
+            Object.DestroyImmediate(badgeGo);
+        }
+
+        [Test]
+        public void ArcadeGameManager_PowerdownLifecycle_ActivatesTicksAndDeactivates()
+        {
+            var gmGo = new GameObject("ArcadeGameManager");
+            var gm = gmGo.AddComponent<ArcadeGameManager>();
+            ArcadeGameManager.SetInstanceForTesting(gm);
+
+            int eventCount = 0;
+            BlockSpecialType lastType = BlockSpecialType.Normal;
+            bool lastActive = false;
+
+            gm.OnPowerdownStateChanged += (type, active, duration) =>
+            {
+                eventCount++;
+                lastType = type;
+                lastActive = active;
+            };
+
+            // Test PaddleShortener
+            gm.ActivatePaddleShortener(10f);
+            Assert.IsTrue(gm.IsPaddleShortened);
+            Assert.AreEqual(10f, gm.PaddleShortenTimeRemaining);
+            Assert.AreEqual(BlockSpecialType.PaddleShortener, lastType);
+            Assert.IsTrue(lastActive);
+
+            gm.TickPaddleShortener(5f);
+            Assert.AreEqual(5f, gm.PaddleShortenTimeRemaining);
+
+            gm.DeactivatePaddleShortener();
+            Assert.IsFalse(gm.IsPaddleShortened);
+
+            // Test PaddleSlower
+            gm.ActivatePaddleSlower(8f);
+            Assert.IsTrue(gm.IsPaddleSlowed);
+            Assert.AreEqual(BlockSpecialType.PaddleSlower, lastType);
+
+            // Test PaddleFreezer
+            gm.ActivatePaddleFreezer(1.2f);
+            Assert.IsTrue(gm.IsPaddleFrozen);
+            Assert.AreEqual(BlockSpecialType.PaddleFreezer, lastType);
+
+            // Test BallSizeDecreaser
+            gm.ActivateBallSizeDecreaser(10f);
+            Assert.IsTrue(gm.IsBallSizeDecreased);
+            Assert.IsTrue(gm.IsBallShrunk);
+            Assert.AreEqual(BlockSpecialType.BallSizeDecreaser, lastType);
+
+            // Test BallSlower
+            gm.ActivateBallSlower(8f);
+            Assert.IsTrue(gm.IsBallSlowed);
+            Assert.AreEqual(BlockSpecialType.BallSlower, lastType);
+
+            // Clear all active powerdowns
+            gm.ClearActivePowerdowns();
+            Assert.IsFalse(gm.IsPaddleShortened);
+            Assert.IsFalse(gm.IsPaddleSlowed);
+            Assert.IsFalse(gm.IsPaddleFrozen);
+            Assert.IsFalse(gm.IsBallSizeDecreased);
+            Assert.IsFalse(gm.IsBallSlowed);
+
+            ArcadeGameManager.SetInstanceForTesting(null);
+            Object.DestroyImmediate(gmGo);
+        }
+
+        [Test]
+        public void ArcadeUIManager_PowerdownStateChanged_UpdatesTopCenterTimersAndBadges()
+        {
+            var uiGo = new GameObject("UI");
+            uiGo.AddComponent<PanelRenderer>();
+            var uiMgr = uiGo.AddComponent<ArcadeUIManager>();
+
+            var root = new VisualElement();
+
+            var shrinkBadge = new VisualElement { name = "paddle-shrink-status-badge" };
+            shrinkBadge.AddToClassList("powerup-hidden");
+            var shrinkLabel = new Label { name = "paddle-shrink-timer-label" };
+            shrinkBadge.Add(shrinkLabel);
+
+            var slowBadge = new VisualElement { name = "paddle-slow-status-badge" };
+            slowBadge.AddToClassList("powerup-hidden");
+            var slowLabel = new Label { name = "paddle-slow-timer-label" };
+            slowBadge.Add(slowLabel);
+
+            var freezeBadge = new VisualElement { name = "paddle-freeze-status-badge" };
+            freezeBadge.AddToClassList("powerup-hidden");
+            var freezeLabel = new Label { name = "paddle-freeze-timer-label" };
+            freezeBadge.Add(freezeLabel);
+
+            var ballShrinkBadge = new VisualElement { name = "ball-shrink-status-badge" };
+            ballShrinkBadge.AddToClassList("powerup-hidden");
+            var ballShrinkLabel = new Label { name = "ball-shrink-timer-label" };
+            ballShrinkBadge.Add(ballShrinkLabel);
+
+            var ballSlowBadge = new VisualElement { name = "ball-slow-status-badge" };
+            ballSlowBadge.AddToClassList("powerup-hidden");
+            var ballSlowLabel = new Label { name = "ball-slow-timer-label" };
+            ballSlowBadge.Add(ballSlowLabel);
+
+            root.Add(shrinkBadge);
+            root.Add(slowBadge);
+            root.Add(freezeBadge);
+            root.Add(ballShrinkBadge);
+            root.Add(ballSlowBadge);
+
+            typeof(ArcadeUIManager).GetField("paddleShrinkStatusBadge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, shrinkBadge);
+            typeof(ArcadeUIManager).GetField("paddleShrinkTimerLabel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, shrinkLabel);
+            typeof(ArcadeUIManager).GetField("paddleSlowStatusBadge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, slowBadge);
+            typeof(ArcadeUIManager).GetField("paddleSlowTimerLabel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, slowLabel);
+            typeof(ArcadeUIManager).GetField("paddleFreezeStatusBadge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, freezeBadge);
+            typeof(ArcadeUIManager).GetField("paddleFreezeTimerLabel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, freezeLabel);
+            typeof(ArcadeUIManager).GetField("ballShrinkStatusBadge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, ballShrinkBadge);
+            typeof(ArcadeUIManager).GetField("ballShrinkTimerLabel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, ballShrinkLabel);
+            typeof(ArcadeUIManager).GetField("ballSlowStatusBadge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, ballSlowBadge);
+            typeof(ArcadeUIManager).GetField("ballSlowTimerLabel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(uiMgr, ballSlowLabel);
+
+            // Activate Paddle Shortener
+            uiMgr.HandlePowerdownStateChanged(BlockSpecialType.PaddleShortener, true, 10f);
+            Assert.IsFalse(shrinkBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual(DisplayStyle.Flex, shrinkBadge.style.display.value);
+            Assert.AreEqual("10s", shrinkLabel.text);
+
+            // Tick Paddle Shortener
+            uiMgr.HandlePowerdownTick(BlockSpecialType.PaddleShortener, 7.3f);
+            Assert.AreEqual("8s", shrinkLabel.text);
+
+            // Deactivate Paddle Shortener
+            uiMgr.HandlePowerdownStateChanged(BlockSpecialType.PaddleShortener, false, 0f);
+            Assert.IsTrue(shrinkBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual(DisplayStyle.None, shrinkBadge.style.display.value);
+
+            // Activate Paddle Freezer
+            uiMgr.HandlePowerdownStateChanged(BlockSpecialType.PaddleFreezer, true, 1.2f);
+            Assert.IsFalse(freezeBadge.ClassListContains("powerup-hidden"));
+            Assert.AreEqual(DisplayStyle.Flex, freezeBadge.style.display.value);
+            Assert.AreEqual("2s", freezeLabel.text);
+
+            Object.DestroyImmediate(uiGo);
+        }
+
+        [Test]
+        public void PowerupIconSet_ContainsAllAssignedPowerdownSprites_LoadsCorrectly()
+        {
+            var iconSet = UnityEditor.AssetDatabase.LoadAssetAtPath<PowerupIconSet>("Assets/Settings/SO_PowerupIcons.asset");
+            Assert.IsNotNull(iconSet, "SO_PowerupIcons.asset must exist");
+
+            Assert.IsNotNull(iconSet.PaddleShortenerSprite, "PaddleShortenerSprite should be assigned");
+            Assert.AreEqual("TX_Powerdown_Arrows_Inward", iconSet.PaddleShortenerSprite.name);
+
+            Assert.IsNotNull(iconSet.PaddleSlowerSprite, "PaddleSlowerSprite should be assigned");
+            Assert.AreEqual("TX_Powerdown_Slower_Paddle", iconSet.PaddleSlowerSprite.name);
+
+            Assert.IsNotNull(iconSet.BrickFreezerSprite, "BrickFreezerSprite should be assigned");
+            Assert.AreEqual("TX_Powerdown_Frozen_Brick", iconSet.BrickFreezerSprite.name);
+
+            Assert.IsNotNull(iconSet.BallSizeDecreaserSprite, "BallSizeDecreaserSprite should be assigned");
+            Assert.AreEqual("TX_Powerdown_Smaller_Ball", iconSet.BallSizeDecreaserSprite.name);
+
+            Assert.IsNotNull(iconSet.BallSlowerSprite, "BallSlowerSprite should be assigned");
+            Assert.AreEqual("TX_Powerdown_Slower_Ball", iconSet.BallSlowerSprite.name);
+
+            Assert.IsNotNull(iconSet.PaddleFreezerSprite, "PaddleFreezerSprite should be assigned");
+            Assert.AreEqual("TX_Powerdown_Frozen_Paddle", iconSet.PaddleFreezerSprite.name);
+
+            // Also verify GetSprite mapping
+            Assert.AreEqual(iconSet.PaddleShortenerSprite, iconSet.GetSprite(BlockSpecialType.PaddleShortener));
+            Assert.AreEqual(iconSet.PaddleSlowerSprite, iconSet.GetSprite(BlockSpecialType.PaddleSlower));
+            Assert.AreEqual(iconSet.BrickFreezerSprite, iconSet.GetSprite(BlockSpecialType.BrickFreezer));
+            Assert.AreEqual(iconSet.BallSizeDecreaserSprite, iconSet.GetSprite(BlockSpecialType.BallSizeDecreaser));
+            Assert.AreEqual(iconSet.BallSlowerSprite, iconSet.GetSprite(BlockSpecialType.BallSlower));
+            Assert.AreEqual(iconSet.PaddleFreezerSprite, iconSet.GetSprite(BlockSpecialType.PaddleFreezer));
+        }
+
+        #region 27. Physical Shield Wall & Anti-Trap Passthrough Tests
+
+        [Test]
+        public void ShieldWall_BounceFromShield_DeflectsUpward_AndPreservesSpeedAndCombo()
+        {
+            var ballObj = new GameObject("TestBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.GetComponent<Rigidbody>();
+            if (ballRb == null) ballRb = ballObj.AddComponent<Rigidbody>();
+            var ballCol = ballObj.GetComponent<SphereCollider>();
+            if (ballCol == null) ballCol = ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+            typeof(BallController).GetField("isLaunched", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, true);
+
+            gameManager.RegisterBall(ball);
+            gameManager.SetState(GameState.Playing);
+
+            ball.SetCurrentSpeedForTesting(15f);
+            ball.SetVolleyStreakForTesting(3);
+            ball.SetConsecutiveSideWallBouncesForTesting(2);
+
+            // Set ball falling downward
+            ballRb.linearVelocity = new Vector3(2f, -14.8f, 0f);
+
+            // Bounce from shield wall contact at X = 2f
+            ball.BounceFromShield(new Vector3(2f, -7.6f, 0f));
+
+            // Verify upward deflection
+            Assert.Greater(ballRb.linearVelocity.y, 0f, "Ball must deflect upward.");
+            float angleDeg = Mathf.Atan2(ballRb.linearVelocity.y, ballRb.linearVelocity.x) * Mathf.Rad2Deg;
+            Assert.GreaterOrEqual(angleDeg, 35f, "Upward angle must be at least 35 degrees.");
+            Assert.LessOrEqual(angleDeg, 145f, "Upward angle must be at most 145 degrees.");
+            Assert.AreEqual(0, ball.ConsecutiveSideWallBounces, "Shield bounce must reset consecutive wall bounces.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void BallController_BelowPaddleMovingUp_IgnoresPaddleCollision_PhasesThrough()
+        {
+            var ballObj = new GameObject("TestBall");
+            var ball = ballObj.AddComponent<BallController>();
+            var ballRb = ballObj.GetComponent<Rigidbody>();
+            if (ballRb == null) ballRb = ballObj.AddComponent<Rigidbody>();
+            var ballCol = ballObj.GetComponent<SphereCollider>();
+            if (ballCol == null) ballCol = ballObj.AddComponent<SphereCollider>();
+            ballObj.AddComponent<MeshRenderer>();
+            ballObj.AddComponent<MeshFilter>();
+            typeof(BallController).GetField("paddle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, paddle);
+            typeof(BallController).GetField("rb", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballRb);
+            typeof(BallController).GetField("ballCollider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, ballCol);
+            typeof(BallController).GetField("isLaunched", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(ball, true);
+
+            gameManager.RegisterBall(ball);
+            gameManager.SetState(GameState.Playing);
+
+            // Set paddle to arena height (-6.5f) where top deck is at -6.0f
+            paddle.transform.position = new Vector3(0f, -6.5f, 0f);
+
+            // Position ball below paddle top deck (~ -6.0f) at Y = -7.0f, moving UPWARDS
+            ballObj.transform.position = new Vector3(0f, -7.0f, 0f);
+            ballRb.linearVelocity = new Vector3(0f, 12f, 0f);
+
+            ball.UpdatePaddlePassThrough();
+
+            Assert.IsTrue(ball.IsPaddleCollisionIgnored, "Ball below paddle moving upward must ignore paddle collision to phase through.");
+
+            // Now ball reaches above paddle top deck at Y = -5.5f, moving UPWARDS
+            ballObj.transform.position = new Vector3(0f, -5.5f, 0f);
+            ball.UpdatePaddlePassThrough();
+
+            Assert.IsFalse(ball.IsPaddleCollisionIgnored, "Ball above paddle strike deck must restore solid collision.");
+
+            Object.DestroyImmediate(ballObj);
+        }
+
+        [Test]
+        public void ShieldWall_WarningPulse_ActivatesInFinalSeconds()
+        {
+            var wallGo = new GameObject("TestShieldWall");
+            var wall = wallGo.AddComponent<ShieldWall>();
+
+            wall.Activate(10f);
+            Assert.IsFalse(wall.IsWarningActive, "Warning must be inactive when shield has full duration.");
+
+            wall.SetTimeRemaining(4.0f);
+            Assert.IsFalse(wall.IsWarningActive, "Warning must be inactive above threshold (2.5s).");
+
+            wall.SetTimeRemaining(2.0f);
+            Assert.IsTrue(wall.IsWarningActive, "Warning must activate when remaining time is below 2.5s.");
+
+            Object.DestroyImmediate(wallGo);
+        }
+
+        [Test]
+        public void ShieldWall_TweenParameters_ExposedAndConfigurable()
+        {
+            var wallGo = new GameObject("TestShieldWall");
+            var wall = wallGo.AddComponent<ShieldWall>();
+            wall.EnsureComponents();
+
+            Assert.Greater(wall.AppearDuration, 0f);
+            Assert.Greater(wall.DisappearDuration, 0f);
+            Assert.IsNotNull(wall.AppearCurve);
+            Assert.IsNotNull(wall.DisappearCurve);
+            Assert.AreEqual(20.4f, wall.TargetScale.x, 0.1f);
+            Assert.AreEqual(-7.6f, wall.WallY, 0.1f);
+
+            wall.AppearDuration = 0.5f;
+            Assert.AreEqual(0.5f, wall.AppearDuration, 0.001f);
+
+            Object.DestroyImmediate(wallGo);
+        }
+
+        [Test]
+        public void GameManager_ActivateShield_DrivesShieldWallLifecycle()
+        {
+            var wallGo = new GameObject("TestShieldWall");
+            var wall = wallGo.AddComponent<ShieldWall>();
+            wallGo.SetActive(false);
+
+            gameManager.RegisterShieldWall(wall);
+
+            Assert.IsFalse(gameManager.IsShieldActive);
+
+            gameManager.ActivateShield(10f);
+            Assert.IsTrue(gameManager.IsShieldActive);
+            Assert.IsTrue(wallGo.activeSelf, "ShieldWall GameObject must be active when shield is activated.");
+
+            gameManager.TickShield(10.5f);
+            Assert.IsFalse(gameManager.IsShieldActive);
+
+            Object.DestroyImmediate(wallGo);
+        }
+
+        [Test]
+        public void ShieldWall_Material_IsNativeURPCompatible()
+        {
+            var wallGo = new GameObject("TestShieldWall");
+            var wall = wallGo.AddComponent<ShieldWall>();
+            wall.EnsureComponents();
+
+            var rend = wallGo.GetComponent<MeshRenderer>();
+            Assert.IsNotNull(rend);
+            Assert.IsNotNull(rend.sharedMaterial);
+            Assert.IsTrue(rend.sharedMaterial.HasProperty("_BaseColor"), "Material must have URP _BaseColor property for iOS compatibility.");
+            Assert.IsTrue(rend.sharedMaterial.HasProperty("_EmissionColor"), "Material must have URP _EmissionColor property for iOS compatibility.");
+
+            Object.DestroyImmediate(wallGo);
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
         #endregion
     }
 }

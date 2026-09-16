@@ -71,6 +71,28 @@
                 <ui:VisualElement name="combo-status-icon" class="powerup-status-icon icon-multiplier" picking-mode="Ignore" />
                 <ui:Label name="combo-label" text="x2 COMBO" class="powerup-timer-label combo-val-text" />
             </ui:VisualElement>
+
+            <!-- Active Hazard / Powerdown Badges -->
+            <ui:VisualElement name="paddle-shrink-status-badge" class="powerup-badge powerdown-badge paddle-shrink-badge powerup-hidden">
+                <ui:VisualElement name="paddle-shrink-status-icon" class="powerup-status-icon icon-paddle-shrink" picking-mode="Ignore" />
+                <ui:Label name="paddle-shrink-timer-label" text="10s" class="powerup-timer-label powerdown-timer-label" />
+            </ui:VisualElement>
+            <ui:VisualElement name="paddle-slow-status-badge" class="powerup-badge powerdown-badge paddle-slow-badge powerup-hidden">
+                <ui:VisualElement name="paddle-slow-status-icon" class="powerup-status-icon icon-paddle-slow" picking-mode="Ignore" />
+                <ui:Label name="paddle-slow-timer-label" text="8s" class="powerup-timer-label powerdown-timer-label" />
+            </ui:VisualElement>
+            <ui:VisualElement name="ball-shrink-status-badge" class="powerup-badge powerdown-badge ball-shrink-badge powerup-hidden">
+                <ui:VisualElement name="ball-shrink-status-icon" class="powerup-status-icon icon-ball-shrink" picking-mode="Ignore" />
+                <ui:Label name="ball-shrink-timer-label" text="10s" class="powerup-timer-label powerdown-timer-label" />
+            </ui:VisualElement>
+            <ui:VisualElement name="ball-slow-status-badge" class="powerup-badge powerdown-badge ball-slow-badge powerup-hidden">
+                <ui:VisualElement name="ball-slow-status-icon" class="powerup-status-icon icon-ball-slow" picking-mode="Ignore" />
+                <ui:Label name="ball-slow-timer-label" text="8s" class="powerup-timer-label powerdown-timer-label" />
+            </ui:VisualElement>
+            <ui:VisualElement name="paddle-freeze-status-badge" class="powerup-badge powerdown-badge paddle-freeze-badge powerup-hidden">
+                <ui:VisualElement name="paddle-freeze-status-icon" class="powerup-status-icon icon-paddle-freeze" picking-mode="Ignore" />
+                <ui:Label name="paddle-freeze-timer-label" text="1s" class="powerup-timer-label powerdown-timer-label" />
+            </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- Center Prompt Banner (Visible before ball launch) -->

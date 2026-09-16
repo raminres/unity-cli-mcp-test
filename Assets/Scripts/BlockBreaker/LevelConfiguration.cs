@@ -55,6 +55,10 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float verticalSpacing = 1.3f;
         [SerializeField] private float startCenterY = 15.5f;
 
+        [Header("Side Flank Bumper Blocks")]
+        [Tooltip("When enabled, places side flank bumper blocks along the outer grid columns (c == 0 and c == cols - 1) on mid-section rows to eliminate dead side gutters.")]
+        [SerializeField] private bool includeSideFlanks = true;
+
         [Header("Custom Layout Pattern (When LayoutType is Custom)")]
         [Tooltip("Multi-line ASCII layout where '.' or space is empty, 'X'/'#' is filled, and 'B','G','R' specify explicit colors.")]
         [TextArea(6, 14)]
@@ -107,6 +111,25 @@ namespace Arcade.BlockBreaker
         [Tooltip("Duration of laser blaster powerup in seconds.")]
         [Range(5f, 25f)] [SerializeField] private float laserDuration = 10f;
 
+        [Header("Hazard / Powerdown Blocks")]
+        [Tooltip("Number of random blocks that shorten paddle width by -18% when destroyed.")]
+        [Range(0, 5)] [SerializeField] private int paddleShortenerCount = 0;
+
+        [Tooltip("Number of random blocks that slow paddle movement lag when destroyed.")]
+        [Range(0, 5)] [SerializeField] private int paddleSlowerCount = 0;
+
+        [Tooltip("Number of random blocks that freeze field bricks in ice when destroyed.")]
+        [Range(0, 5)] [SerializeField] private int brickFreezerCount = 0;
+
+        [Tooltip("Number of random blocks that shrink ball size to 60% when destroyed.")]
+        [Range(0, 5)] [SerializeField] private int ballSizeDecreaserCount = 0;
+
+        [Tooltip("Number of random blocks that slow ball speed below base floor when destroyed.")]
+        [Range(0, 5)] [SerializeField] private int ballSlowerCount = 0;
+
+        [Tooltip("Number of random blocks that freeze/immobilize paddle for 1.2s when destroyed.")]
+        [Range(0, 5)] [SerializeField] private int paddleFreezerCount = 0;
+
         [Header("Scoring Objectives & Speedrun Par")]
         [Tooltip("Target par time in seconds for clearing the level efficiently.")]
         [Range(15f, 180f)] [SerializeField] private float parTime = 40f;
@@ -134,6 +157,8 @@ namespace Arcade.BlockBreaker
         public float HorizontalSpacing => horizontalSpacing;
         public float VerticalSpacing => verticalSpacing;
         public float StartCenterY => startCenterY;
+        public bool IncludeSideFlanks => includeSideFlanks;
+        public void SetIncludeSideFlanksForTesting(bool val) => includeSideFlanks = val;
         public string CustomLayout => customLayout;
         public string[] CustomLayoutRows => customLayoutRows;
         public float BallSpeedMultiplier => ballSpeedMultiplier;
@@ -151,6 +176,12 @@ namespace Arcade.BlockBreaker
         public float ShieldDuration => shieldDuration;
         public int LaserCount => laserCount;
         public float LaserDuration => laserDuration;
+        public int PaddleShortenerCount => paddleShortenerCount;
+        public int PaddleSlowerCount => paddleSlowerCount;
+        public int BrickFreezerCount => brickFreezerCount;
+        public int BallSizeDecreaserCount => ballSizeDecreaserCount;
+        public int BallSlowerCount => ballSlowerCount;
+        public int PaddleFreezerCount => paddleFreezerCount;
         public float ParTime => parTime;
         public int TimeBonusMax => timeBonusMax;
         public int[] StarThresholds => starThresholds != null && starThresholds.Length >= 3 ? starThresholds : new int[] { 800, 1500, 2500 };
@@ -192,9 +223,11 @@ namespace Arcade.BlockBreaker
             if (row < 0 || row >= rows || col < 0 || col >= cols)
                 return false;
 
-            return layoutType switch
+            if (layoutType == LevelLayoutType.FullGrid)
+                return true;
+
+            bool baseShape = layoutType switch
             {
-                LevelLayoutType.FullGrid => true,
                 LevelLayoutType.Diamond => EvaluateDiamond(row, col, rows, cols),
                 LevelLayoutType.Pyramid => EvaluatePyramid(row, col, rows, cols),
                 LevelLayoutType.InvertedPyramid => EvaluateInvertedPyramid(row, col, rows, cols),
@@ -213,6 +246,19 @@ namespace Arcade.BlockBreaker
                 LevelLayoutType.Custom => EvaluateCustom(row, col),
                 _ => true
             };
+
+            if (baseShape) return true;
+
+            // Side Flanks: place outer flank bumpers on mid-section rows for tapered/open archetypes
+            if (includeSideFlanks && layoutType != LevelLayoutType.Custom && (col == 0 || col == cols - 1))
+            {
+                if (row >= rows / 3 && row <= (rows * 2 / 3))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -349,8 +395,9 @@ namespace Arcade.BlockBreaker
         private bool EvaluateChevron(int r, int c, int rows, int cols)
         {
             float cx = (cols - 1) / 2f;
-            float targetRow = Mathf.Abs(c - cx) * 1.25f;
-            return Mathf.Abs(r - targetRow) <= 1.0f;
+            float slope = cx > 0.01f ? (float)(rows - 1.5f) / cx : 1.0f;
+            float targetRow = Mathf.Abs(c - cx) * slope;
+            return Mathf.Abs(r - targetRow) <= 1.25f;
         }
 
         private bool EvaluateCrown(int r, int c, int rows, int cols)
@@ -458,6 +505,12 @@ namespace Arcade.BlockBreaker
             clone.shieldDuration = shieldDuration;
             clone.laserCount = laserCount;
             clone.laserDuration = laserDuration;
+            clone.paddleShortenerCount = paddleShortenerCount;
+            clone.paddleSlowerCount = paddleSlowerCount;
+            clone.brickFreezerCount = brickFreezerCount;
+            clone.ballSizeDecreaserCount = ballSizeDecreaserCount;
+            clone.ballSlowerCount = ballSlowerCount;
+            clone.paddleFreezerCount = paddleFreezerCount;
             clone.parTime = parTime;
             clone.timeBonusMax = timeBonusMax;
             if (starThresholds != null)
@@ -497,6 +550,12 @@ namespace Arcade.BlockBreaker
         public void SetShieldDuration(float val) => shieldDuration = Mathf.Clamp(val, 5f, 30f);
         public void SetLaserCount(int val) => laserCount = Mathf.Clamp(val, 0, 4);
         public void SetLaserDuration(float val) => laserDuration = Mathf.Clamp(val, 5f, 25f);
+        public void SetPaddleShortenerCount(int val) => paddleShortenerCount = Mathf.Clamp(val, 0, 5);
+        public void SetPaddleSlowerCount(int val) => paddleSlowerCount = Mathf.Clamp(val, 0, 5);
+        public void SetBrickFreezerCount(int val) => brickFreezerCount = Mathf.Clamp(val, 0, 5);
+        public void SetBallSizeDecreaserCount(int val) => ballSizeDecreaserCount = Mathf.Clamp(val, 0, 5);
+        public void SetBallSlowerCount(int val) => ballSlowerCount = Mathf.Clamp(val, 0, 5);
+        public void SetPaddleFreezerCount(int val) => paddleFreezerCount = Mathf.Clamp(val, 0, 5);
         public void SetInitialPaddleWidth(float val) => initialPaddleWidth = Mathf.Clamp(val, 3.0f, 8.0f);
         public void SetParTime(float val) => parTime = Mathf.Max(5f, val);
         public void SetTimeBonusMax(int val) => timeBonusMax = Mathf.Max(0, val);

@@ -172,9 +172,16 @@ namespace Arcade.Audio
             PlaySound(clipPop != null ? clipPop : clipPaddleBounce, 1.0f);
         }
 
-        public void PlayPaddleBounce()
+        public void PlayPaddleBounce(bool isSmash = false)
         {
-            PlayPop();
+            if (isSmash)
+            {
+                PlaySound(clipPop != null ? clipPop : clipPaddleBounce, 1.22f);
+            }
+            else
+            {
+                PlayPop();
+            }
         }
 
         public void PlayWallBounce()
@@ -184,9 +191,10 @@ namespace Arcade.Audio
 
         /// <summary>
         /// Plays Break sound (AU_Break.mp3) when the ball hits/destroys a brick,
-        /// dynamically pitch-scaling upwards by +1 semitone per consecutive volley combo streak.
+        /// dynamically pitch-scaling upwards by +1 semitone per consecutive volley combo streak,
+        /// and modulated by Model A color tier (Red heavier, Green punchy, Blue crystalline).
         /// </summary>
-        public void PlayBreak(int comboStreak = 0)
+        public void PlayBreak(int comboStreak = 0, int colorTier = 0)
         {
             float pitch = 1.0f;
             if (comboStreak > 1)
@@ -195,12 +203,26 @@ namespace Arcade.Audio
                 int semitones = Mathf.Clamp(comboStreak - 1, 0, 9);
                 pitch = Mathf.Pow(1.059463f, semitones);
             }
+
+            if (colorTier == 1) // Red (Dampener)
+            {
+                pitch *= 0.90f;
+            }
+            else if (colorTier == 2) // Green (Turbo)
+            {
+                pitch *= 1.10f;
+            }
+            else if (colorTier == 3) // Blue (Prism)
+            {
+                pitch *= 1.25f;
+            }
+
             PlaySound(clipBreak != null ? clipBreak : clipBlockHitRed, pitch);
         }
 
         public void PlayBlockHit(int colorTier = 1)
         {
-            PlayBreak(0);
+            PlayBreak(0, colorTier);
         }
 
         /// <summary>
@@ -252,6 +274,58 @@ namespace Arcade.Audio
             {
                 PlaySound(clipPowerup, 1.0f);
             }
+        }
+
+        private AudioClip synthPowerdownClip;
+
+        /// <summary>
+        /// Plays Power-down sound when a hazard/debuff capsule is collected by the paddle.
+        /// </summary>
+        public void PlayPowerdown()
+        {
+            if (synthPowerdownClip == null)
+            {
+                synthPowerdownClip = SynthesizePowerdownChirp();
+            }
+
+            if (synthPowerdownClip != null)
+            {
+                PlaySound(synthPowerdownClip, 1.0f);
+            }
+            else if (clipLifeLost != null)
+            {
+                PlaySound(clipLifeLost, 1.25f);
+            }
+            else
+            {
+                PlayPop();
+            }
+        }
+
+        private AudioClip SynthesizePowerdownChirp()
+        {
+            int sampleRate = 44100;
+            float duration = 0.22f;
+            int sampleCount = Mathf.RoundToInt(sampleRate * duration);
+            float[] samples = new float[sampleCount];
+            float startFreq = 480f;
+            float endFreq = 110f;
+            float phase = 0f;
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float t = (float)i / sampleCount;
+                float currentFreq = Mathf.Lerp(startFreq, endFreq, t * t);
+                phase += 2f * Mathf.PI * currentFreq / sampleRate;
+                float envelope = 1f - Mathf.Pow(t, 0.7f);
+                // Slight crunchy buzz tone for arcade hazard
+                float tone = Mathf.Sin(phase) * 0.7f + Mathf.Sign(Mathf.Sin(phase * 0.5f)) * 0.15f;
+                samples[i] = tone * envelope * 0.45f;
+            }
+
+            var clip = AudioClip.Create("SynthPowerdown", sampleCount, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
         }
 
         /// <summary>

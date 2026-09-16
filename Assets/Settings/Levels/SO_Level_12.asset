@@ -14,19 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 12
   levelName: 'Level 12: Castle Bastion'
-  levelDescription: Fortified medieval battlements with reinforced twin watchtower turrets, glass fortifications, and explosive armory vaults.
+  levelDescription: Fortified medieval battlements with twin watchtowers. Severe hazard saturation with double Paddle Freezers and dual glacial block encasements.
   layoutType: 15
   colorPattern: 0
-  columns: 10
+  columns: 14
   rowsPerTier: 2
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
+  includeSideFlanks: 1
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1.36
-  initialPaddleWidth: 5
+  initialPaddleWidth: 4.6
   multiplier2xCount: 2
   multiplier3xCount: 2
   multiplier4xCount: 2
@@ -40,6 +41,12 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 0
   laserDuration: 10
-  parTime: 60
+  paddleShortenerCount: 1
+  paddleSlowerCount: 1
+  brickFreezerCount: 2
+  ballSizeDecreaserCount: 2
+  ballSlowerCount: 1
+  paddleFreezerCount: 2
+  parTime: 65
   timeBonusMax: 5500
-  starThresholds: 581b0000b0360000204e0000i
+  starThresholds: 401f0000803e0000d8590000i

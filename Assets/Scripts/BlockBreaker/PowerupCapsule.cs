@@ -153,7 +153,7 @@ namespace Arcade.BlockBreaker
         public void Initialize(BlockSpecialType type, Color color, Material sharedMat = null, Transform visual = null, Transform icon = null)
         {
             specialType = type;
-            glowColor = color;
+            glowColor = type.IsPowerdown() ? BlockModifierExtensions.UnifiedPowerdownColor : type.GetBadgeColor();
 
             if (visual != null) visualCapsuleTransform = visual;
             if (icon != null) iconTransform = icon;
@@ -162,7 +162,7 @@ namespace Arcade.BlockBreaker
             ApplyGlowColor();
 
             Sprite sprite = GetSpriteForType(type);
-            if (iconRenderer != null && sprite != null)
+            if (iconRenderer != null)
             {
                 iconRenderer.sprite = sprite;
                 iconRenderer.color = Color.white;
@@ -222,13 +222,41 @@ namespace Arcade.BlockBreaker
             }
 
             // 4. Configure Visual_Capsule (3D rotating mesh child)
+            bool isPowerdown = specialType.IsPowerdown();
+            PrimitiveType desiredPrimitive = isPowerdown ? PrimitiveType.Cube : PrimitiveType.Capsule;
+
+            // Clean up existing visual if it has wrong primitive type (e.g. Capsule when Cube is needed for diamond powerdown)
+            if (primaryVisual != null)
+            {
+                var mf = primaryVisual.GetComponent<MeshFilter>();
+                if (mf != null && mf.sharedMesh != null)
+                {
+                    bool isCubeMesh = mf.sharedMesh.name.IndexOf("Cube", System.StringComparison.OrdinalIgnoreCase) >= 0;
+                    if (isPowerdown != isCubeMesh)
+                    {
+                        if (Application.isPlaying) Destroy(primaryVisual.gameObject);
+                        else DestroyImmediate(primaryVisual.gameObject);
+                        primaryVisual = null;
+                    }
+                }
+            }
+
             if (primaryVisual == null)
             {
-                var visualGo = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                var visualGo = GameObject.CreatePrimitive(desiredPrimitive);
                 visualGo.name = "Visual_Capsule";
                 visualGo.transform.SetParent(transform, false);
                 visualGo.transform.localPosition = Vector3.zero;
-                visualGo.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
+                if (isPowerdown)
+                {
+                    visualGo.transform.localRotation = Quaternion.Euler(45f, 45f, 45f);
+                    visualGo.transform.localScale = new Vector3(0.72f, 0.72f, 0.72f);
+                }
+                else
+                {
+                    visualGo.transform.localRotation = Quaternion.identity;
+                    visualGo.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
+                }
                 primaryVisual = visualGo.transform;
             }
 
@@ -343,13 +371,20 @@ namespace Arcade.BlockBreaker
             if (isCollected) return;
             isCollected = true;
 
-            // 1. Play Powerup Audio
+            // 1. Play Audio (hazard tone for powerdown, powerup chime for buff)
             if (ArcadeAudioManager.Instance != null)
             {
-                ArcadeAudioManager.Instance.PlayPowerup();
+                if (specialType.IsPowerdown())
+                {
+                    ArcadeAudioManager.Instance.PlayPowerdown();
+                }
+                else
+                {
+                    ArcadeAudioManager.Instance.PlayPowerup();
+                }
             }
 
-            // 2. Trigger appropriate buff
+            // 2. Trigger appropriate buff or powerdown hazard
             switch (specialType)
             {
                 case BlockSpecialType.PaddleExpander:
@@ -421,9 +456,63 @@ namespace Arcade.BlockBreaker
                     {
                         ArcadeGameManager.Instance.ActivateLaserPowerup(BlockModifierExtensions.DEFAULT_LASER_DURATION);
                     }
-                    else if (paddle != null && paddle.LaserController != null)
+                    if (paddle != null && paddle.LaserController != null)
                     {
                         paddle.LaserController.ActivateLaserBlaster(BlockModifierExtensions.DEFAULT_LASER_DURATION);
+                    }
+                    break;
+
+                case BlockSpecialType.PaddleShortener:
+                    if (ArcadeGameManager.Instance != null)
+                    {
+                        ArcadeGameManager.Instance.ActivatePaddleShortener(BlockModifierExtensions.DEFAULT_PADDLE_SHORTEN_DURATION);
+                    }
+                    else if (paddle != null)
+                    {
+                        paddle.ShrinkWidth(BlockModifierExtensions.PADDLE_SHORTEN_PERCENT);
+                    }
+                    break;
+
+                case BlockSpecialType.PaddleSlower:
+                    if (ArcadeGameManager.Instance != null)
+                    {
+                        ArcadeGameManager.Instance.ActivatePaddleSlower(BlockModifierExtensions.DEFAULT_PADDLE_SLOW_DURATION);
+                    }
+                    else if (paddle != null)
+                    {
+                        paddle.SetSlowed(true);
+                    }
+                    break;
+
+                case BlockSpecialType.BrickFreezer:
+                    if (ArcadeGameManager.Instance != null)
+                    {
+                        ArcadeGameManager.Instance.ActivateBrickFreezer();
+                    }
+                    break;
+
+                case BlockSpecialType.BallSizeDecreaser:
+                    if (ArcadeGameManager.Instance != null)
+                    {
+                        ArcadeGameManager.Instance.ActivateBallSizeDecreaser(BlockModifierExtensions.DEFAULT_BALL_SIZE_DECREASE_DURATION);
+                    }
+                    break;
+
+                case BlockSpecialType.BallSlower:
+                    if (ArcadeGameManager.Instance != null)
+                    {
+                        ArcadeGameManager.Instance.ActivateBallSlower(BlockModifierExtensions.DEFAULT_BALL_SLOW_DURATION);
+                    }
+                    break;
+
+                case BlockSpecialType.PaddleFreezer:
+                    if (ArcadeGameManager.Instance != null)
+                    {
+                        ArcadeGameManager.Instance.ActivatePaddleFreezer(BlockModifierExtensions.DEFAULT_PADDLE_FREEZE_DURATION);
+                    }
+                    else if (paddle != null)
+                    {
+                        paddle.SetFrozen(true);
                     }
                     break;
             }
@@ -553,6 +642,18 @@ namespace Arcade.BlockBreaker
                     return LoadSpriteSafe("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
                 case BlockSpecialType.Laser:
                     return LoadSpriteSafe("Assets/UI/Icons/TX_Powerup_Gun.png");
+                case BlockSpecialType.PaddleShortener:
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerdown_Arrows_Inward.png");
+                case BlockSpecialType.PaddleSlower:
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerdown_Slower_Paddle.png");
+                case BlockSpecialType.BrickFreezer:
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerdown_Frozen_Brick.png");
+                case BlockSpecialType.BallSizeDecreaser:
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerdown_Smaller_Ball.png");
+                case BlockSpecialType.BallSlower:
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerdown_Slower_Ball.png");
+                case BlockSpecialType.PaddleFreezer:
+                    return LoadSpriteSafe("Assets/UI/Icons/TX_Powerdown_Frozen_Paddle.png");
             }
 #endif
             return null;
@@ -584,7 +685,7 @@ namespace Arcade.BlockBreaker
             var comp = rootGo.AddComponent<PowerupCapsule>();
 
             baseMat = baseMat ?? GetOrCreateCapsuleMaterial();
-            Color color = type.GetBadgeColor();
+            Color color = type.IsPowerdown() ? BlockModifierExtensions.UnifiedPowerdownColor : type.GetBadgeColor();
 
             // Initialize ensures exactly 1 Visual_Capsule mesh child and 1 Icon_Billboard sprite child
             comp.Initialize(type, color, baseMat);

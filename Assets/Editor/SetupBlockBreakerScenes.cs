@@ -27,6 +27,7 @@ namespace Arcade.Editor
             Debug.Log("<color=green>Block Breaker scenes constructed and registered successfully!</color>");
         }
 
+        [MenuItem("Tools/Arcade/Create Or Update Level Presets")]
         public static void CreateOrUpdateLevelPresets()
         {
             if (!Directory.Exists("Assets/Settings/Levels"))
@@ -34,132 +35,147 @@ namespace Arcade.Editor
                 Directory.CreateDirectory("Assets/Settings/Levels");
             }
 
-            // Level 1: First Flight (Pyramid)
+            // Level 1: First Flight (Pyramid) - Warmup
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_01.asset", 1, "Level 1: First Flight",
                 "Gentle warmup stepped pyramid with comfortable ball speed. Introduces the Paddle Expander to widen your paddle and master bounce angles.",
-                BlockColorPattern.InvertedTiered, LevelLayoutType.Pyramid, 7, 1, 0.92f, 5.5f,
+                BlockColorPattern.InvertedTiered, LevelLayoutType.Pyramid, 11, 2, 0.92f, 5.5f,
                 mult2x: 0, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 0, glass: 0, heart: 0, shield: 0, multiBall: 0,
                 laser: 0, customLayout: null, shieldDuration: 10f,
-                parTime: 30f, timeBonusMax: 2500, starThresholds: new[] { 300, 800, 1400 });
+                parTime: 35f, timeBonusMax: 2500, starThresholds: new[] { 500, 1200, 2200 },
+                paddleShorteners: 0, paddleSlowers: 0, brickFreezers: 0, ballSizeDecreasers: 0, ballSlowers: 0, paddleFreezers: 0);
 
             // Level 2: Glass & Gold (Diamond)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_02.asset", 2, "Level 2: Glass & Gold",
-                "A sparkling diamond gem formation. Introduces durable glass-encased bricks requiring two strikes and score multiplier targets for big points.",
-                BlockColorPattern.InvertedTiered, LevelLayoutType.Diamond, 7, 2, 0.96f, 5.2f,
+                "A sparkling diamond gem formation. Introduces durable glass-encased bricks, score multipliers, and hazard awareness with the inward Paddle Shortener.",
+                BlockColorPattern.InvertedTiered, LevelLayoutType.Diamond, 12, 2, 0.96f, 5.0f,
                 mult2x: 1, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 0, glass: 2, heart: 0, shield: 0, multiBall: 0,
                 laser: 0, customLayout: null, shieldDuration: 10f,
-                parTime: 35f, timeBonusMax: 3000, starThresholds: new[] { 600, 1400, 2400 });
+                parTime: 40f, timeBonusMax: 3000, starThresholds: new[] { 800, 1800, 3200 },
+                paddleShorteners: 1, paddleSlowers: 0, brickFreezers: 0, ballSizeDecreasers: 0, ballSlowers: 0, paddleFreezers: 0);
 
             // Level 3: Twin Pillars (Pillars)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_03.asset", 3, "Level 3: Twin Pillars",
-                "Vertical block columns with open alleyways. Sneak the ball up the corridors for high-velocity top-row cascades, and trigger explosive Bomb bricks.",
-                BlockColorPattern.Checkerboard, LevelLayoutType.Pillars, 7, 2, 1.00f, 5.0f,
+                "Vertical block columns with open alleyways. Sneak the ball up the corridors for high-velocity top-row cascades, but watch out for Paddle and Ball Slower hazards.",
+                BlockColorPattern.Checkerboard, LevelLayoutType.Pillars, 13, 2, 1.00f, 5.0f,
                 mult2x: 2, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 0, heart: 0, shield: 0, multiBall: 0,
                 laser: 1, customLayout: null, shieldDuration: 10f,
-                parTime: 40f, timeBonusMax: 3000, starThresholds: new[] { 900, 2000, 3200 });
+                parTime: 45f, timeBonusMax: 3000, starThresholds: new[] { 1200, 2600, 4200 },
+                paddleShorteners: 0, paddleSlowers: 1, brickFreezers: 0, ballSizeDecreasers: 0, ballSlowers: 1, paddleFreezers: 0);
 
             // Level 4: Kinetic Shield (Shield)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_04.asset", 4, "Level 4: Kinetic Shield",
-                "An imposing heraldic crest shield. Deploy the bottom laser Shield power-up for a 10-second safety net, and collect extra heart lives.",
-                BlockColorPattern.InvertedTiered, LevelLayoutType.Shield, 8, 2, 1.04f, 5.0f,
+                "An imposing heraldic crest shield. Deploy the bottom laser Shield power-up while contending with glacial Brick Freezers and Ball Shrink hazards.",
+                BlockColorPattern.InvertedTiered, LevelLayoutType.Shield, 13, 2, 1.04f, 5.0f,
                 mult2x: 1, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 1, glass: 2, heart: 1, shield: 1, multiBall: 0,
                 laser: 0, customLayout: null, shieldDuration: 10f,
-                parTime: 45f, timeBonusMax: 3500, starThresholds: new[] { 1200, 2800, 4200 });
+                parTime: 50f, timeBonusMax: 3500, starThresholds: new[] { 1600, 3500, 5400 },
+                paddleShorteners: 0, paddleSlowers: 0, brickFreezers: 1, ballSizeDecreasers: 1, ballSlowers: 0, paddleFreezers: 0);
 
             // Level 5: Multi-Ball Ring (HollowBox)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_05.asset", 5, "Level 5: Multi-Ball Ring",
-                "A perimeter fortress framing a hollow bouncing chamber. Trigger Multi-Ball to unleash 3 balls ricocheting inside the inner sanctum!",
-                BlockColorPattern.Checkerboard, LevelLayoutType.HollowBox, 8, 2, 1.08f, 5.0f,
+                "A perimeter fortress framing a hollow bouncing chamber. Juggling 3 balls gets intense when Brick Freezers, Paddle Slowers, and sudden Paddle Freezers hit the arena!",
+                BlockColorPattern.Checkerboard, LevelLayoutType.HollowBox, 13, 2, 1.08f, 5.0f,
                 mult2x: 1, mult3x: 1, mult4x: 0, mult5x: 0, expanders: 0, bombs: 1, glass: 2, heart: 0, shield: 1, multiBall: 2,
                 laser: 0, customLayout: null, shieldDuration: 10f,
-                parTime: 40f, timeBonusMax: 3500, starThresholds: new[] { 1600, 3600, 5500 });
+                parTime: 45f, timeBonusMax: 3500, starThresholds: new[] { 2000, 4400, 6800 },
+                paddleShorteners: 0, paddleSlowers: 1, brickFreezers: 1, ballSizeDecreasers: 0, ballSlowers: 0, paddleFreezers: 1);
 
             // Level 6: Royal Crown (Crown)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_06.asset", 6, "Level 6: Royal Crown",
-                "A triple-peaked royal crown with blazing 3X score multipliers and reinforced glass towers. Precision rebounds at high angles are rewarded.",
-                BlockColorPattern.InvertedTiered, LevelLayoutType.Crown, 9, 2, 1.12f, 5.0f,
+                "A triple-peaked royal crown with blazing 3X score multipliers and reinforced glass towers, threatened by a mix of 4 distinct powerdown debuffs.",
+                BlockColorPattern.InvertedTiered, LevelLayoutType.Crown, 13, 2, 1.12f, 4.8f,
                 mult2x: 1, mult3x: 2, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 1,
                 laser: 1, customLayout: null, shieldDuration: 10f,
-                parTime: 55f, timeBonusMax: 4000, starThresholds: new[] { 2200, 5000, 7500 });
+                parTime: 60f, timeBonusMax: 4000, starThresholds: new[] { 2600, 5800, 8800 },
+                paddleShorteners: 1, paddleSlowers: 0, brickFreezers: 1, ballSizeDecreasers: 1, ballSlowers: 0, paddleFreezers: 1);
 
             // Level 7: Neon Heart (Heart)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_07.asset", 7, "Level 7: Neon Heart",
-                "An arcade heart silhouette with extra heart drops. Keep the rhythm alive as ball velocity continues to accelerate.",
-                BlockColorPattern.InvertedTiered, LevelLayoutType.Heart, 9, 2, 1.16f, 5.0f,
+                "An arcade heart silhouette with extra heart drops. Maintain rhythm as ball velocity accelerates and sluggish paddle/ball debuffs test your reflexes.",
+                BlockColorPattern.InvertedTiered, LevelLayoutType.Heart, 13, 2, 1.16f, 4.8f,
                 mult2x: 2, mult3x: 1, mult4x: 0, mult5x: 0, expanders: 1, bombs: 1, glass: 2, heart: 2, shield: 1, multiBall: 1,
                 laser: 0, customLayout: null, shieldDuration: 10f,
-                parTime: 45f, timeBonusMax: 4000, starThresholds: new[] { 2800, 6200, 9200 });
+                parTime: 50f, timeBonusMax: 4000, starThresholds: new[] { 3200, 7000, 10500 },
+                paddleShorteners: 1, paddleSlowers: 1, brickFreezers: 0, ballSizeDecreasers: 1, ballSlowers: 1, paddleFreezers: 0);
 
             // Level 8: Space Invader (Invader)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_08.asset", 8, "Level 8: Space Invader",
-                "Retro 8-bit space invader alien silhouette! Battle past explosive perimeter bombs and collect 3X multipliers while juggling multi-balls.",
-                BlockColorPattern.Randomized, LevelLayoutType.Invader, 9, 2, 1.20f, 5.0f,
+                "Retro 8-bit space invader alien silhouette! Battle past explosive perimeter bombs, dodging falling freeze hazards while juggling multi-balls.",
+                BlockColorPattern.Randomized, LevelLayoutType.Invader, 13, 2, 1.20f, 4.8f,
                 mult2x: 2, mult3x: 2, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 2, heart: 1, shield: 1, multiBall: 1,
                 laser: 1, customLayout: null, shieldDuration: 10f,
-                parTime: 45f, timeBonusMax: 4500, starThresholds: new[] { 3500, 7500, 11000 });
+                parTime: 50f, timeBonusMax: 4500, starThresholds: new[] { 4000, 8500, 12500 },
+                paddleShorteners: 1, paddleSlowers: 0, brickFreezers: 1, ballSizeDecreasers: 1, ballSlowers: 1, paddleFreezers: 1);
 
             // Level 9: Crossfire (Cross)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_09.asset", 9, "Level 9: Crossfire",
-                "Four intersecting firing arms meet at an explosive nexus. Introduces the rare 4X score multiplier and devastating bomb chain reactions.",
-                BlockColorPattern.Checkerboard, LevelLayoutType.Cross, 9, 2, 1.24f, 5.0f,
+                "Four intersecting firing arms meet at an explosive nexus. Introduces the rare 4X score multiplier against 6 escalating hazards including double Brick Freezers.",
+                BlockColorPattern.Checkerboard, LevelLayoutType.Cross, 13, 2, 1.24f, 4.8f,
                 mult2x: 2, mult3x: 1, mult4x: 1, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 1,
                 laser: 0, customLayout: null, shieldDuration: 10f,
-                parTime: 50f, timeBonusMax: 4500, starThresholds: new[] { 4200, 9000, 13000 });
+                parTime: 55f, timeBonusMax: 4500, starThresholds: new[] { 4800, 10000, 14500 },
+                paddleShorteners: 1, paddleSlowers: 1, brickFreezers: 2, ballSizeDecreasers: 1, ballSlowers: 0, paddleFreezers: 1);
 
             // Level 10: The Hourglass (Hourglass)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_10.asset", 10, "Level 10: The Hourglass",
-                "A high-tension hourglass funnel pinching the center. Thread the ball through the bottleneck to sweep out the upper chamber.",
-                BlockColorPattern.InvertedTiered, LevelLayoutType.Hourglass, 9, 2, 1.28f, 5.0f,
+                "A high-tension hourglass funnel pinching the center. Thread the bottleneck with a leaner paddle while managing 7 active hazard drops.",
+                BlockColorPattern.InvertedTiered, LevelLayoutType.Hourglass, 13, 2, 1.28f, 4.6f,
                 mult2x: 2, mult3x: 2, mult4x: 1, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 1,
                 laser: 0, customLayout: null, shieldDuration: 10f,
-                parTime: 55f, timeBonusMax: 5000, starThresholds: new[] { 5000, 10500, 15000 });
+                parTime: 60f, timeBonusMax: 5000, starThresholds: new[] { 5800, 12000, 17500 },
+                paddleShorteners: 1, paddleSlowers: 1, brickFreezers: 2, ballSizeDecreasers: 1, ballSlowers: 1, paddleFreezers: 1);
 
             // Level 11: Chevron Strike (Chevron)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_11.asset", 11, "Level 11: Chevron Strike",
-                "Aggressive forward arrowhead formation. Deflect angled strikes cleanly and ride high-velocity multi-ball surges.",
-                BlockColorPattern.Checkerboard, LevelLayoutType.Chevron, 9, 2, 1.32f, 5.0f,
+                "Aggressive forward arrowhead formation. Deflect fast angled strikes and double ball-shrink hazards while riding high-velocity multi-ball surges.",
+                BlockColorPattern.Checkerboard, LevelLayoutType.Chevron, 13, 2, 1.32f, 4.6f,
                 mult2x: 2, mult3x: 2, mult4x: 1, mult5x: 0, expanders: 1, bombs: 2, glass: 3, heart: 1, shield: 1, multiBall: 2,
                 laser: 1, customLayout: null, shieldDuration: 10f,
-                parTime: 40f, timeBonusMax: 5000, starThresholds: new[] { 6000, 12000, 17500 });
+                parTime: 45f, timeBonusMax: 5000, starThresholds: new[] { 6800, 13500, 19500 },
+                paddleShorteners: 1, paddleSlowers: 1, brickFreezers: 2, ballSizeDecreasers: 2, ballSlowers: 1, paddleFreezers: 1);
 
             // Level 12: Castle Bastion (Castle)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_12.asset", 12, "Level 12: Castle Bastion",
-                "Fortified medieval battlements with reinforced twin watchtower turrets, glass fortifications, and explosive armory vaults.",
-                BlockColorPattern.InvertedTiered, LevelLayoutType.Castle, 10, 2, 1.36f, 5.0f,
+                "Fortified medieval battlements with twin watchtowers. Severe hazard saturation with double Paddle Freezers and dual glacial block encasements.",
+                BlockColorPattern.InvertedTiered, LevelLayoutType.Castle, 14, 2, 1.36f, 4.6f,
                 mult2x: 2, mult3x: 2, mult4x: 2, mult5x: 0, expanders: 2, bombs: 3, glass: 4, heart: 1, shield: 2, multiBall: 2,
                 laser: 0, customLayout: null, shieldDuration: 10f,
-                parTime: 60f, timeBonusMax: 5500, starThresholds: new[] { 7000, 14000, 20000 });
+                parTime: 65f, timeBonusMax: 5500, starThresholds: new[] { 8000, 16000, 23000 },
+                paddleShorteners: 1, paddleSlowers: 1, brickFreezers: 2, ballSizeDecreasers: 2, ballSlowers: 1, paddleFreezers: 2);
 
             // Level 13: Quantum Lattice (CheckerboardEmpty)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_13.asset", 13, "Level 13: Quantum Lattice",
-                "A 50% density quantum lattice mesh with high-frequency empty gaps. Unlocks the supreme 5X combo multiplier!",
-                BlockColorPattern.Randomized, LevelLayoutType.CheckerboardEmpty, 10, 2, 1.40f, 5.0f,
+                "A 50% density quantum lattice mesh with 5X combo multipliers. Fast-paced chaos with 10 total hazards challenging paddle control at high speed.",
+                BlockColorPattern.Randomized, LevelLayoutType.CheckerboardEmpty, 14, 2, 1.40f, 4.6f,
                 mult2x: 2, mult3x: 2, mult4x: 2, mult5x: 1, expanders: 2, bombs: 3, glass: 4, heart: 1, shield: 2, multiBall: 2,
                 laser: 0, customLayout: null, shieldDuration: 10f,
-                parTime: 50f, timeBonusMax: 5500, starThresholds: new[] { 8200, 16000, 23000 });
+                parTime: 55f, timeBonusMax: 5500, starThresholds: new[] { 9200, 18000, 26000 },
+                paddleShorteners: 2, paddleSlowers: 1, brickFreezers: 2, ballSizeDecreasers: 2, ballSlowers: 1, paddleFreezers: 2);
 
             // Level 14: Striped Vault (Stripes)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_14.asset", 14, "Level 14: Striped Vault",
-                "Horizontal clearance tiers separating fortified block bands. Precision bank shots between layers rack up massive scores with 5X multipliers.",
-                BlockColorPattern.InvertedTiered, LevelLayoutType.Stripes, 10, 2, 1.44f, 5.0f,
+                "Horizontal clearance tiers separating fortified block bands. Heavy debuff density with double Shorteners, double Freezers, and high-velocity ricochets.",
+                BlockColorPattern.InvertedTiered, LevelLayoutType.Stripes, 14, 2, 1.44f, 4.5f,
                 mult2x: 2, mult3x: 2, mult4x: 2, mult5x: 2, expanders: 2, bombs: 3, glass: 4, heart: 1, shield: 2, multiBall: 2,
                 laser: 1, customLayout: null, shieldDuration: 10f,
-                parTime: 55f, timeBonusMax: 6000, starThresholds: new[] { 9500, 18500, 26500 });
+                parTime: 60f, timeBonusMax: 6000, starThresholds: new[] { 10800, 21000, 30000 },
+                paddleShorteners: 2, paddleSlowers: 2, brickFreezers: 2, ballSizeDecreasers: 2, ballSlowers: 1, paddleFreezers: 2);
 
             // Level 15: Chaos Labyrinth (Custom)
             string lvl15Custom =
-                "XXXXXXXXXX\n" +
-                "X..XX..XX.\n" +
-                "XXXX.XXXXX\n" +
-                "X..XX..XX.\n" +
-                "XXXX.XXXXX\n" +
-                "XXXXXXXXXX";
+                "XXXXXXXXXXXXXX\n" +
+                "X..XX..XX..XX.\n" +
+                "XXXX.XXXXXX.XX\n" +
+                "X..XX..XX..XX.\n" +
+                "XXXX.XXXXXX.XX\n" +
+                "XXXXXXXXXXXXXX";
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_15.asset", 15, "Level 15: Chaos Labyrinth",
-                "The ultimate 15-level grand climax! A master custom-authored ASCII labyrinth with tactical pockets, top velocity, and the entire powerup arsenal.",
-                BlockColorPattern.Randomized, LevelLayoutType.Custom, 10, 2, 1.48f, 5.0f,
+                "The ultimate 15-level grand climax! Master ASCII labyrinth featuring peak velocity, maximum powerup firepower, and an unrelenting barrage of 13 hazard blocks.",
+                BlockColorPattern.Randomized, LevelLayoutType.Custom, 14, 2, 1.48f, 4.5f,
                 mult2x: 2, mult3x: 2, mult4x: 2, mult5x: 2, expanders: 2, bombs: 4, glass: 4, heart: 2, shield: 2, multiBall: 2,
                 laser: 2, customLayout: lvl15Custom, shieldDuration: 10f,
-                parTime: 65f, timeBonusMax: 7000, starThresholds: new[] { 11000, 22000, 31000 });
+                parTime: 70f, timeBonusMax: 7000, starThresholds: new[] { 12500, 25000, 36000 },
+                paddleShorteners: 2, paddleSlowers: 2, brickFreezers: 3, ballSizeDecreasers: 2, ballSlowers: 2, paddleFreezers: 2);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -169,7 +185,9 @@ namespace Arcade.Editor
             BlockColorPattern pattern, LevelLayoutType layoutType, int cols, int rowsPerTier, float speed, float paddleWidth,
             int mult2x, int mult3x, int mult4x, int mult5x, int expanders, int bombs, int glass, int heart, int shield, int multiBall,
             int laser = 0, string customLayout = null, float shieldDuration = 10f,
-            float parTime = 40f, int timeBonusMax = 3000, int[] starThresholds = null)
+            float parTime = 40f, int timeBonusMax = 3000, int[] starThresholds = null,
+            int paddleShorteners = 0, int paddleSlowers = 0, int brickFreezers = 0,
+            int ballSizeDecreasers = 0, int ballSlowers = 0, int paddleFreezers = 0)
         {
             var config = AssetDatabase.LoadAssetAtPath<LevelConfiguration>(path);
             if (config == null)
@@ -190,6 +208,8 @@ namespace Arcade.Editor
             so.FindProperty("horizontalSpacing").floatValue = 1.25f;
             so.FindProperty("verticalSpacing").floatValue = 1.3f;
             so.FindProperty("startCenterY").floatValue = 15.5f;
+            var flankProp = so.FindProperty("includeSideFlanks");
+            if (flankProp != null) flankProp.boolValue = true;
             so.FindProperty("ballSpeedMultiplier").floatValue = speed;
             so.FindProperty("initialPaddleWidth").floatValue = paddleWidth;
             so.FindProperty("customLayout").stringValue = customLayout ?? string.Empty;
@@ -206,6 +226,19 @@ namespace Arcade.Editor
             var laserProp = so.FindProperty("laserCount");
             if (laserProp != null) laserProp.intValue = laser;
             so.FindProperty("shieldDuration").floatValue = shieldDuration;
+
+            var shortenerProp = so.FindProperty("paddleShortenerCount");
+            if (shortenerProp != null) shortenerProp.intValue = paddleShorteners;
+            var slowerProp = so.FindProperty("paddleSlowerCount");
+            if (slowerProp != null) slowerProp.intValue = paddleSlowers;
+            var bFreezerProp = so.FindProperty("brickFreezerCount");
+            if (bFreezerProp != null) bFreezerProp.intValue = brickFreezers;
+            var ballShrinkProp = so.FindProperty("ballSizeDecreaserCount");
+            if (ballShrinkProp != null) ballShrinkProp.intValue = ballSizeDecreasers;
+            var ballSlowProp = so.FindProperty("ballSlowerCount");
+            if (ballSlowProp != null) ballSlowProp.intValue = ballSlowers;
+            var pFreezerProp = so.FindProperty("paddleFreezerCount");
+            if (pFreezerProp != null) pFreezerProp.intValue = paddleFreezers;
 
             var parProp = so.FindProperty("parTime");
             if (parProp != null) parProp.floatValue = parTime;
@@ -431,6 +464,14 @@ namespace Arcade.Editor
             var killCol = killZone.AddComponent<BoxCollider>();
             killCol.size = new Vector3(24f, 2.0f, 4f);
             killCol.isTrigger = true;
+
+            // Bottom Physical Shield Wall (Energy Barrier for Shield powerup)
+            var shieldWallGo = new GameObject("ShieldWall");
+            shieldWallGo.transform.SetParent(boundariesRoot.transform);
+            shieldWallGo.transform.position = new Vector3(0f, -7.6f, 0f);
+            shieldWallGo.transform.localScale = Vector3.zero;
+            shieldWallGo.AddComponent<ShieldWall>();
+            shieldWallGo.SetActive(false);
 
             // 7. Paddle Platform (Inverted Stepped Pyramid / Trapezoid)
             var paddleGo = new GameObject("Paddle");
@@ -706,6 +747,13 @@ namespace Arcade.Editor
             var multiplier = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Extra_Points.png");
             var laser = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerup_Gun.png");
 
+            var shortener = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerdown_Arrows_Inward.png");
+            var slowerPaddle = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerdown_Slower_Paddle.png");
+            var brickFreezer = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerdown_Frozen_Brick.png");
+            var smallerBall = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerdown_Smaller_Ball.png");
+            var slowerBall = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerdown_Slower_Ball.png");
+            var frozenPaddle = LoadSpriteFromPath("Assets/UI/Icons/TX_Powerdown_Frozen_Paddle.png");
+
             var so = new SerializedObject(iconSet);
             if (expander != null) so.FindProperty("expanderSprite").objectReferenceValue = expander;
             if (bomb != null) so.FindProperty("bombSprite").objectReferenceValue = bomb;
@@ -714,6 +762,13 @@ namespace Arcade.Editor
             if (multiBall != null) so.FindProperty("multiBallSprite").objectReferenceValue = multiBall;
             if (multiplier != null) so.FindProperty("multiplierSprite").objectReferenceValue = multiplier;
             if (laser != null) so.FindProperty("laserSprite").objectReferenceValue = laser;
+
+            if (shortener != null) so.FindProperty("paddleShortenerSprite").objectReferenceValue = shortener;
+            if (slowerPaddle != null) so.FindProperty("paddleSlowerSprite").objectReferenceValue = slowerPaddle;
+            if (brickFreezer != null) so.FindProperty("brickFreezerSprite").objectReferenceValue = brickFreezer;
+            if (smallerBall != null) so.FindProperty("ballSizeDecreaserSprite").objectReferenceValue = smallerBall;
+            if (slowerBall != null) so.FindProperty("ballSlowerSprite").objectReferenceValue = slowerBall;
+            if (frozenPaddle != null) so.FindProperty("paddleFreezerSprite").objectReferenceValue = frozenPaddle;
             so.ApplyModifiedProperties();
 
             EditorUtility.SetDirty(iconSet);

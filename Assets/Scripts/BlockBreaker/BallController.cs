@@ -34,8 +34,17 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float minHorizontalAngleDeg = 5f; // Floor to prevent vertical 90-degree ping-pong loops
         [SerializeField] private float consecutiveWallSteepAngleDeg = 35f; // Boost angle on repeated side-wall bounces
         [SerializeField] private float verticalDeadzoneAngleDeg = 5f; // Exclusion half-angle around 90-degree vertical
-        [SerializeField] private float paddleVelocityInfluence = 0.5f; // Momentum transfer from paddle movement
+        [SerializeField] private float paddleVelocityInfluence = 1.5f; // Momentum transfer from paddle movement
+        [SerializeField] private float maxPaddleVelocitySteerAngleDeg = 45f; // Maximum steering angle deviation imparted by paddle swipe
+        [SerializeField] private float activeSmashVelocityThreshold = 3.5f; // Horizontal paddle speed threshold to trigger kinetic pop
+        [SerializeField] private float activeSmashSpeedMultiplier = 1.08f; // +8% speed impulse on active paddle strikes
         private int consecutiveSideWallBounces = 0;
+
+        [Header("Color Tier Physical Interaction Settings (Model A)")]
+        [SerializeField] private float redDampenAmount = 1.2f; // Absorbs impact energy, slowing ball by 1.2 u/s
+        [SerializeField] private float greenBoostPercent = 0.10f; // Spring bumper impulse (+10% speed)
+        [SerializeField] private float blueScatterMinAngleDeg = 18f; // Optical prism deflection min scatter
+        [SerializeField] private float blueScatterMaxAngleDeg = 28f; // Optical prism deflection max scatter
 
         private float currentSpeed;
         private bool isLaunched = false;
@@ -48,6 +57,8 @@ namespace Arcade.BlockBreaker
 
         public bool IsLaunched => isLaunched;
         public Vector3 Velocity => rb != null ? rb.linearVelocity : Vector3.zero;
+        public float BaseSpeed => baseSpeed;
+        public float MaxSpeed => maxSpeed;
         public float CurrentSpeed => currentSpeed;
         public float ActiveVolleyTime => activeVolleyTime;
         public float NextSpeedRampTime => nextSpeedRampTime;
@@ -57,11 +68,70 @@ namespace Arcade.BlockBreaker
         public float ConsecutiveWallSteepAngleDeg => consecutiveWallSteepAngleDeg;
         public float VerticalDeadzoneAngleDeg => verticalDeadzoneAngleDeg;
         public float PaddleVelocityInfluence => paddleVelocityInfluence;
+        public float MaxPaddleVelocitySteerAngleDeg => maxPaddleVelocitySteerAngleDeg;
+        public float ActiveSmashVelocityThreshold => activeSmashVelocityThreshold;
+        public float ActiveSmashSpeedMultiplier => activeSmashSpeedMultiplier;
+        public float RedDampenAmount => redDampenAmount;
+        public float GreenBoostPercent => greenBoostPercent;
+        public float BlueScatterMinAngleDeg => blueScatterMinAngleDeg;
+        public float BlueScatterMaxAngleDeg => blueScatterMaxAngleDeg;
+        public bool IsBallShrunk => isBallShrunk;
+        public bool IsBallSlowed => isBallSlowed;
+        public float SluggishSpeed => sluggishSpeed;
+
+        private Vector3 initialBallScale = Vector3.one * 0.8f;
+        private bool isBallShrunk = false;
+        private bool isBallSlowed = false;
+        private float sluggishSpeed = 9.5f;
+        private Collider ballCollider;
+        private bool isPaddleCollisionIgnored = false;
+
+        public bool IsPaddleCollisionIgnored => isPaddleCollisionIgnored;
+
+        public void SetBallShrunk(bool shrunk)
+        {
+            if (!isBallShrunk && shrunk)
+            {
+                initialBallScale = transform.localScale;
+            }
+            isBallShrunk = shrunk;
+            if (initialBallScale == Vector3.zero) initialBallScale = Vector3.one * 0.8f;
+            transform.localScale = shrunk ? initialBallScale * 0.60f : initialBallScale;
+        }
+
+        public void SetBallSlowed(bool slowed)
+        {
+            isBallSlowed = slowed;
+            if (slowed)
+            {
+                currentSpeed = Mathf.Min(currentSpeed, sluggishSpeed);
+                if (rb != null && rb.linearVelocity.sqrMagnitude > 0.01f)
+                {
+                    rb.linearVelocity = rb.linearVelocity.normalized * currentSpeed;
+                }
+            }
+            else
+            {
+                if (currentSpeed < baseSpeed)
+                {
+                    currentSpeed = baseSpeed;
+                    if (rb != null && rb.linearVelocity.sqrMagnitude > 0.01f)
+                    {
+                        rb.linearVelocity = rb.linearVelocity.normalized * currentSpeed;
+                    }
+                }
+            }
+        }
+
+        public void SetPaddleVelocityInfluenceForTesting(float val) => paddleVelocityInfluence = val;
+        public void SetCurrentSpeedForTesting(float speed) => currentSpeed = speed;
         public int ConsecutiveSideWallBounces => consecutiveSideWallBounces;
         public void SetConsecutiveSideWallBouncesForTesting(int count) => consecutiveSideWallBounces = count;
         public int CurrentVolleyStreak => currentVolleyStreak;
         public int CurrentVolleyMultiplier => GetVolleyMultiplier(currentVolleyStreak);
         public void SetVolleyStreakForTesting(int streak) => currentVolleyStreak = streak;
+        public void HandlePaddleCollisionForTesting(PaddleController hitPaddle) => HandlePaddleCollision(hitPaddle);
+        public void ApplyBlockColorInteractionForTesting(BlockColorTier tier, Collision collision = null) => ApplyBlockColorInteraction(tier, collision);
 
         public static int GetVolleyMultiplier(int streak)
         {
@@ -82,6 +152,7 @@ namespace Arcade.BlockBreaker
         private void Awake()
         {
             if (rb == null) rb = GetComponent<Rigidbody>();
+            if (transform.localScale.sqrMagnitude > 0.01f) initialBallScale = transform.localScale;
 
             rb.useGravity = false;
             rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
@@ -122,6 +193,7 @@ namespace Arcade.BlockBreaker
 
         private void OnDestroy()
         {
+            RestorePaddleCollision();
             if (ArcadeGameManager.Instance != null)
             {
                 ArcadeGameManager.Instance.UnregisterBall(this);
@@ -155,6 +227,7 @@ namespace Arcade.BlockBreaker
 
         public void Initialize(ArcadeGameManager manager, PaddleController paddleController)
         {
+            if (rb == null) rb = GetComponent<Rigidbody>();
             if (paddleController != null) paddle = paddleController;
             if (manager != null)
             {
@@ -206,6 +279,8 @@ namespace Arcade.BlockBreaker
             {
                 rb.linearVelocity = SanitizeTrajectory(vel, currentSpeed, minVerticalAngleDeg, minHorizontalAngleDeg, transform.position.x);
             }
+
+            UpdatePaddlePassThrough();
         }
 
         /// <summary>
@@ -361,6 +436,7 @@ namespace Arcade.BlockBreaker
 
         public void ResetBallToPaddle()
         {
+            RestorePaddleCollision();
             SetBallActive(true);
             StopAndDockBall();
         }
@@ -483,6 +559,17 @@ namespace Arcade.BlockBreaker
         {
             if (!isLaunched) return;
 
+            // Check if we hit the Shield Wall
+            ShieldWall shield = collision.gameObject.GetComponent<ShieldWall>()
+                ?? collision.gameObject.GetComponentInParent<ShieldWall>();
+            if (shield != null)
+            {
+                Vector3 contactPoint = collision.contacts.Length > 0 ? collision.contacts[0].point : transform.position;
+                BounceFromShield(contactPoint);
+                shield.PulseOnHit();
+                return;
+            }
+
             // Check if we hit the paddle
             PaddleController hitPaddle = collision.gameObject.GetComponent<PaddleController>()
                 ?? collision.gameObject.GetComponentInParent<PaddleController>();
@@ -506,7 +593,6 @@ namespace Arcade.BlockBreaker
                 }
 
                 HandlePaddleCollision(hitPaddle);
-                hitPaddle.TriggerImpactRecoil();
                 return;
             }
 
@@ -516,7 +602,8 @@ namespace Arcade.BlockBreaker
             {
                 consecutiveSideWallBounces = 0; // Reset consecutive wall bounces on block impact
                 currentVolleyStreak++;
-                currentSpeed = Mathf.Min(currentSpeed + speedIncrementPerHit, maxSpeed);
+
+                ApplyBlockColorInteraction(block.Tier, collision);
 
                 if (ArcadeGameManager.Instance != null)
                 {
@@ -577,6 +664,48 @@ namespace Arcade.BlockBreaker
         }
 
         /// <summary>
+        /// Applies Model A physical interactions based on block color tier:
+        /// 1. Red: Absorbs kinetic energy, dampening ball speed by redDampenAmount (floored at baseSpeed).
+        /// 2. Green: Spring bumper impulse, accelerating ball speed by greenBoostPercent (capped at maxSpeed).
+        /// 3. Blue: Optical prism refraction, scattering exit angle by +/- [18°, 28°] to break trajectory loops.
+        /// </summary>
+        public void ApplyBlockColorInteraction(BlockColorTier tier, Collision collision = null)
+        {
+            if (rb == null) rb = GetComponent<Rigidbody>();
+            switch (tier)
+            {
+                case BlockColorTier.Red:
+                    currentSpeed = Mathf.Max(baseSpeed, currentSpeed - redDampenAmount);
+                    if (rb != null && rb.linearVelocity.sqrMagnitude > 0.01f)
+                    {
+                        rb.linearVelocity = rb.linearVelocity.normalized * currentSpeed;
+                    }
+                    break;
+
+                case BlockColorTier.Green:
+                    currentSpeed = Mathf.Min(currentSpeed * (1f + greenBoostPercent), maxSpeed);
+                    if (rb != null && rb.linearVelocity.sqrMagnitude > 0.01f)
+                    {
+                        rb.linearVelocity = rb.linearVelocity.normalized * currentSpeed;
+                    }
+                    break;
+
+                case BlockColorTier.Blue:
+                    currentSpeed = Mathf.Min(currentSpeed + speedIncrementPerHit, maxSpeed);
+                    if (rb != null && rb.linearVelocity.sqrMagnitude > 0.01f)
+                    {
+                        float scatterAngle = Random.Range(blueScatterMinAngleDeg, blueScatterMaxAngleDeg);
+                        if (Random.value < 0.5f) scatterAngle = -scatterAngle;
+
+                        Quaternion rot = Quaternion.Euler(0f, 0f, scatterAngle);
+                        Vector3 scattered = rot * rb.linearVelocity;
+                        rb.linearVelocity = SanitizeTrajectory(scattered, currentSpeed, minVerticalAngleDeg, minHorizontalAngleDeg, transform.position.x);
+                    }
+                    break;
+            }
+        }
+
+        /// <summary>
         /// Computes a physics-informed paddle deflection vector:
         /// 1. Takes natural optical ray reflection off the horizontal paddle (preserving forward horizontal momentum).
         /// 2. Applies paddle steering based on normalized contact hitOffset (-1 to +1).
@@ -591,8 +720,9 @@ namespace Arcade.BlockBreaker
             float minAngleDeg = 25f,
             float maxAngleDeg = 155f,
             float paddleVelocityX = 0f,
-            float velocityInfluence = 0.5f,
-            float verticalDeadzoneAngleDeg = 5f)
+            float velocityInfluence = 1.5f,
+            float verticalDeadzoneAngleDeg = 5f,
+            float maxVelocitySteerDeg = 45f)
         {
             float inX = inVelocity.x;
             float inY = Mathf.Abs(inVelocity.y); // Upward reflection normal
@@ -614,7 +744,7 @@ namespace Arcade.BlockBreaker
             // Paddle velocity momentum transfer:
             // Sliding paddle right (+X) biases angle right (-deg in polar coordinates).
             // Sliding paddle left (-X) biases angle left (+deg in polar coordinates).
-            float velocitySteerDeg = Mathf.Clamp(-paddleVelocityX * velocityInfluence, -12f, 12f);
+            float velocitySteerDeg = Mathf.Clamp(-paddleVelocityX * velocityInfluence, -maxVelocitySteerDeg, maxVelocitySteerDeg);
 
             float computedAngleDeg = rayAngleDeg + steerAngleDeg + velocitySteerDeg;
 
@@ -664,6 +794,7 @@ namespace Arcade.BlockBreaker
 
             float hitOffset = hitPaddle.CalculateHitOffset(transform.position.x);
             float paddleVelX = hitPaddle.VelocityX;
+            bool isSmash = Mathf.Abs(paddleVelX) >= activeSmashVelocityThreshold;
 
             Vector3 inVelocity = rb != null ? rb.linearVelocity : Vector3.down * currentSpeed;
             Vector3 newDir = CalculatePaddleDeflection(
@@ -674,7 +805,13 @@ namespace Arcade.BlockBreaker
                 155f,
                 paddleVelX,
                 paddleVelocityInfluence,
-                verticalDeadzoneAngleDeg);
+                verticalDeadzoneAngleDeg,
+                maxPaddleVelocitySteerAngleDeg);
+
+            if (isSmash)
+            {
+                currentSpeed = Mathf.Min(currentSpeed * activeSmashSpeedMultiplier, maxSpeed);
+            }
 
             if (rb != null)
             {
@@ -683,8 +820,15 @@ namespace Arcade.BlockBreaker
 
             if (ArcadeAudioManager.Instance != null)
             {
-                ArcadeAudioManager.Instance.PlayPaddleBounce();
+                ArcadeAudioManager.Instance.PlayPaddleBounce(isSmash);
             }
+
+            if (BlockVFXManager.Instance != null)
+            {
+                BlockVFXManager.Instance.PlayPaddleHitSpark(transform.position, isSmash);
+            }
+
+            hitPaddle.TriggerImpactRecoil(isSmash);
         }
 
         private void OnTriggerEnter(Collider other)
@@ -694,6 +838,119 @@ namespace Arcade.BlockBreaker
                 if (ArcadeGameManager.Instance != null)
                 {
                     ArcadeGameManager.Instance.HandleBallFell(this);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles physical deflection when the ball strikes the Shield Wall at the bottom of the arena.
+        /// Implements optical ray reflection with inward center steering, guaranteed steep upward trajectory (>= 35°),
+        /// maintaining ball speed and preserving volley streak / combo.
+        /// </summary>
+        public void BounceFromShield(Vector3 contactPoint)
+        {
+            if (rb == null) rb = GetComponent<Rigidbody>();
+            if (rb == null) return;
+
+            Vector3 inVel = rb.linearVelocity;
+            float inX = inVel.x;
+            float inY = Mathf.Abs(inVel.y); // Upward reflection normal
+
+            if (Mathf.Abs(inX) < 0.01f && inY < 0.01f)
+            {
+                inY = currentSpeed > 0f ? currentSpeed : baseSpeed;
+            }
+
+            // Natural upward reflection angle (0 to 180 degrees)
+            float rayAngleDeg = Mathf.Atan2(inY, inX) * Mathf.Rad2Deg;
+
+            // Inward steering: Balls hitting near outer edges steer back toward center
+            float hitOffset = Mathf.Clamp(contactPoint.x / 10.0f, -1f, 1f);
+            float inwardSteerDeg = -hitOffset * 22f;
+
+            float outAngleDeg = rayAngleDeg + inwardSteerDeg;
+
+            // Exclude vertical deadzone [85°, 95°]
+            if (outAngleDeg >= 85f && outAngleDeg <= 95f)
+            {
+                outAngleDeg = (outAngleDeg >= 90f) ? 95.1f : 84.9f;
+            }
+
+            // Clamp to steep upward arcade bounds [35°, 145°]
+            outAngleDeg = Mathf.Clamp(outAngleDeg, 35f, 145f);
+
+            float rad = outAngleDeg * Mathf.Deg2Rad;
+            Vector3 outDir = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0f).normalized;
+
+            rb.linearVelocity = outDir * currentSpeed;
+
+            consecutiveSideWallBounces = 0; // Reset consecutive wall bounces on shield save
+
+            if (ArcadeGameManager.Instance != null)
+            {
+                ArcadeGameManager.Instance.NotifyVolleySaved(this, currentVolleyStreak);
+            }
+            currentVolleyStreak = 0;
+
+            if (ArcadeAudioManager.Instance != null)
+            {
+                ArcadeAudioManager.Instance.PlayShieldDeflect();
+            }
+
+            if (BlockVFXManager.Instance != null)
+            {
+                BlockVFXManager.Instance.PlayPaddleHitSpark(contactPoint, isSmash: false);
+            }
+        }
+
+        /// <summary>
+        /// Anti-trap mechanism: When the ball is below the paddle's strike deck and traveling upward,
+        /// ignores collision with the paddle so the ball phases smoothly through the paddle back into the playfield.
+        /// Once above the paddle strike deck, solid collision is restored so the paddle can strike it normally again.
+        /// </summary>
+        public void UpdatePaddlePassThrough()
+        {
+            if (!isLaunched || rb == null) return;
+
+            if (paddle == null)
+            {
+                paddle = FindAnyObjectByType<PaddleController>();
+                if (paddle == null) return;
+            }
+
+            var paddleCol = paddle.PaddleCollider;
+            if (paddleCol == null) return;
+
+            if (ballCollider == null) ballCollider = GetComponent<Collider>();
+            if (ballCollider == null) return;
+
+            // Top strike deck of paddle is at paddle.transform.position.y + 0.38f + 0.12f (~ -6.0f)
+            float paddleDeckY = paddle.transform.position.y + 0.50f;
+
+            // If ball is below the paddle's top strike deck and moving UPWARDS,
+            // ignore collision with the paddle so it can phase through cleanly without getting trapped.
+            bool shouldIgnore = (transform.position.y < paddleDeckY) && (rb.linearVelocity.y > 0.05f);
+
+            if (shouldIgnore != isPaddleCollisionIgnored)
+            {
+                isPaddleCollisionIgnored = shouldIgnore;
+                Physics.IgnoreCollision(ballCollider, paddleCol, shouldIgnore);
+            }
+        }
+
+        /// <summary>
+        /// Restores solid paddle collision if it was temporarily disabled for anti-trap passthrough.
+        /// </summary>
+        public void RestorePaddleCollision()
+        {
+            if (isPaddleCollisionIgnored)
+            {
+                isPaddleCollisionIgnored = false;
+                if (ballCollider == null) ballCollider = GetComponent<Collider>();
+                if (paddle == null) paddle = FindAnyObjectByType<PaddleController>();
+                if (ballCollider != null && paddle != null && paddle.PaddleCollider != null)
+                {
+                    Physics.IgnoreCollision(ballCollider, paddle.PaddleCollider, false);
                 }
             }
         }

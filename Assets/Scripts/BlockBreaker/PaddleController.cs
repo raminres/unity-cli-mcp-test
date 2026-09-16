@@ -34,20 +34,44 @@ namespace Arcade.BlockBreaker
         private Coroutine recoilCoroutine;
         private float currentVelocityX;
         private float previousPositionX;
+        private bool isSlowed = false;
+        private bool isFrozen = false;
+        private float frozenAnchorX = 0f;
 
         public float Width => paddleWidth;
+        public float CurrentWidth => paddleWidth;
         public float BaseWidth => basePaddleWidth;
         public float MinX => minX;
         public float MaxX => maxX;
         public int ExpansionCount => expansionCount;
         public float VelocityX => currentVelocityX;
+        public bool IsSlowed => isSlowed;
+        public bool IsFrozen => isFrozen;
         public PaddleLaserController LaserController => laserController != null ? laserController : (laserController = GetComponent<PaddleLaserController>() ?? gameObject.AddComponent<PaddleLaserController>());
+        public BoxCollider PaddleCollider => rootCollider != null ? rootCollider : (rootCollider = GetComponent<BoxCollider>());
 
         public Transform StepTop => stepTop;
         public Transform StepMid => stepMid;
         public Transform StepBottom => stepBottom;
 
         public void SetVelocityXForTesting(float velX) => currentVelocityX = velX;
+
+        public void SetSlowed(bool slowed) => isSlowed = slowed;
+
+        public void SetFrozen(bool frozen)
+        {
+            isFrozen = frozen;
+            if (frozen)
+            {
+                frozenAnchorX = transform.position.x;
+            }
+            else
+            {
+                Vector3 p = transform.position;
+                p.x = frozenAnchorX;
+                transform.position = p;
+            }
+        }
 
         private void Awake()
         {
@@ -110,10 +134,54 @@ namespace Arcade.BlockBreaker
                 return;
             }
 
+            if (isFrozen)
+            {
+                // Visual struggle nudge if player attempts to move while frozen in ice
+                bool isTryingToMove = false;
+                if (ArcadeInputHandler.Instance != null)
+                {
+                    if (ArcadeInputHandler.Instance.HasDirectTargetX)
+                    {
+                        isTryingToMove = Mathf.Abs(ArcadeInputHandler.Instance.DirectTargetWorldX - frozenAnchorX) > 0.15f;
+                    }
+                    else
+                    {
+                        isTryingToMove = Mathf.Abs(ArcadeInputHandler.Instance.HorizontalAxis) > 0.05f;
+                    }
+                }
+
+                if (isTryingToMove)
+                {
+                    float jitter = Mathf.Sin(Time.time * 45f) * 0.07f;
+                    Vector3 p = transform.position;
+                    p.x = Mathf.Clamp(frozenAnchorX + jitter, minX, maxX);
+                    transform.position = p;
+                }
+                else
+                {
+                    Vector3 p = transform.position;
+                    p.x = frozenAnchorX;
+                    transform.position = p;
+                }
+
+                currentVelocityX = 0f;
+                previousPositionX = transform.position.x;
+                return;
+            }
+
             if (ArcadeInputHandler.Instance != null && ArcadeInputHandler.Instance.HasDirectTargetX)
             {
+                float targetX = Mathf.Clamp(ArcadeInputHandler.Instance.DirectTargetWorldX, minX, maxX);
                 Vector3 pos = transform.position;
-                pos.x = Mathf.Clamp(ArcadeInputHandler.Instance.DirectTargetWorldX, minX, maxX);
+                if (isSlowed)
+                {
+                    // Sluggish drag lag for mouse/touch
+                    pos.x = Mathf.MoveTowards(pos.x, targetX, 8.5f * Time.deltaTime);
+                }
+                else
+                {
+                    pos.x = targetX;
+                }
                 transform.position = pos;
             }
             else
@@ -121,8 +189,9 @@ namespace Arcade.BlockBreaker
                 float inputAxis = ArcadeInputHandler.Instance != null ? ArcadeInputHandler.Instance.HorizontalAxis : 0f;
                 if (Mathf.Abs(inputAxis) > 0.001f)
                 {
+                    float speed = isSlowed ? moveSpeed * 0.5f : moveSpeed;
                     Vector3 pos = transform.position;
-                    pos.x += inputAxis * moveSpeed * Time.deltaTime;
+                    pos.x += inputAxis * speed * Time.deltaTime;
                     pos.x = Mathf.Clamp(pos.x, minX, maxX);
                     transform.position = pos;
                 }
@@ -133,12 +202,32 @@ namespace Arcade.BlockBreaker
             previousPositionX = transform.position.x;
         }
 
+        public const float MIN_PADDLE_WIDTH = 2.4f;
+        public const float MAX_PADDLE_WIDTH = 12.0f;
+
+        /// <summary>
+        /// Shrinks the paddle width (e.g. 0.18f for -18%) clamped to minimum width.
+        /// </summary>
+        public void ShrinkWidth(float percentage = 0.18f)
+        {
+            float targetWidth = Mathf.Clamp(paddleWidth * (1.0f - percentage), MIN_PADDLE_WIDTH, MAX_PADDLE_WIDTH);
+            if (Application.isPlaying && gameObject.activeInHierarchy)
+            {
+                if (expandCoroutine != null) StopCoroutine(expandCoroutine);
+                expandCoroutine = StartCoroutine(AnimateExpandOvershoot(targetWidth, 0.30f));
+            }
+            else
+            {
+                SetWidth(targetWidth);
+            }
+        }
+
         /// <summary>
         /// Updates the paddle's horizontal width and recalculates collision boundary limits.
         /// </summary>
         public void SetWidth(float newWidth)
         {
-            paddleWidth = Mathf.Clamp(newWidth, 2.0f, 12.0f);
+            paddleWidth = Mathf.Clamp(newWidth, MIN_PADDLE_WIDTH, MAX_PADDLE_WIDTH);
             Vector3 scale = transform.localScale;
             scale.x = paddleWidth;
             transform.localScale = scale;
@@ -202,15 +291,18 @@ namespace Arcade.BlockBreaker
 
         /// <summary>
         /// Triggers a micro-squash recoil effect on ball contact.
+        /// When isSmash is true, delivers a deeper, snappier squash response.
         /// </summary>
-        public void TriggerImpactRecoil()
+        public void TriggerImpactRecoil(bool isSmash = false)
         {
             if (!Application.isPlaying || !gameObject.activeInHierarchy) return;
             if (recoilCoroutine != null) StopCoroutine(recoilCoroutine);
-            recoilCoroutine = StartCoroutine(AnimateImpactRecoil(0.12f));
+            float duration = isSmash ? 0.14f : 0.12f;
+            float squashAmount = isSmash ? 0.18f : 0.12f;
+            recoilCoroutine = StartCoroutine(AnimateImpactRecoil(duration, squashAmount));
         }
 
-        private IEnumerator AnimateImpactRecoil(float duration)
+        private IEnumerator AnimateImpactRecoil(float duration, float squashAmount)
         {
             float elapsed = 0f;
             float currentW = transform.localScale.x;
@@ -219,7 +311,7 @@ namespace Arcade.BlockBreaker
             {
                 elapsed += Time.deltaTime;
                 float u = Mathf.Clamp01(elapsed / duration);
-                float squash = 1.0f - Mathf.Sin(u * Mathf.PI) * 0.12f;
+                float squash = 1.0f - Mathf.Sin(u * Mathf.PI) * squashAmount;
 
                 transform.localScale = new Vector3(currentW, squash, 1.0f);
                 yield return null;

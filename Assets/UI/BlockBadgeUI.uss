@@ -71,6 +71,14 @@
     box-shadow: 0 0 14px rgba(255, 42, 71, 0.9);
 }
 
+.badge-plate-powerup {
+}
+
+.badge-plate-powerdown {
+    border-color: #ff1744;
+    box-shadow: 0 0 14px rgba(255, 23, 68, 0.95);
+}
+
 .badge-icon {
     -unity-background-scale-mode: scale-to-fit;
     align-self: center;
@@ -172,4 +180,23 @@
 
 .badge-text-hidden {
     display: none;
+}
+
+.badge-icon-powerup {
+    width: 52px;
+    height: 52px;
+}
+
+.badge-icon-powerdown {
+    width: 52px;
+    height: 52px;
+    -unity-background-image-tint-color: #ff1744;
+}
+
+.badge-text-powerdown {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #ff1744;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 10px rgba(255, 23, 68, 0.95);
 }

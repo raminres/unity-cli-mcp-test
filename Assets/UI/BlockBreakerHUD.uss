@@ -293,24 +293,86 @@
     text-shadow: 0 0 8px rgba(255, 0, 127, 0.85);
 }
 
-.mult-tier-2x .multiplier-val-text {
+.mult-tier-2x .multiplier-val-text,
+.mult-tier-2x .powerup-timer-label {
     color: #ffd700;
     text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
 }
 
-.mult-tier-3x .multiplier-val-text {
+.mult-tier-3x .multiplier-val-text,
+.mult-tier-3x .powerup-timer-label {
     color: #ff8c00;
     text-shadow: 0 0 8px rgba(255, 140, 0, 0.8);
 }
 
-.mult-tier-4x .multiplier-val-text {
+.mult-tier-4x .multiplier-val-text,
+.mult-tier-4x .powerup-timer-label {
     color: #ff1744;
     text-shadow: 0 0 8px rgba(255, 23, 68, 0.8);
 }
 
-.mult-tier-5x .multiplier-val-text {
+.mult-tier-5x .multiplier-val-text,
+.mult-tier-5x .powerup-timer-label {
     color: #d500f9;
     text-shadow: 0 0 8px rgba(213, 0, 249, 0.8);
+}
+
+/* Hazard / Powerdown Badges */
+.powerdown-badge {
+    border-color: #ff1744;
+    box-shadow: 0 0 14px rgba(255, 23, 68, 0.95);
+    background-color: rgba(30, 10, 14, 0.92);
+}
+
+.powerdown-badge .powerup-timer-label,
+.powerdown-timer-label {
+    color: #ff1744;
+    text-shadow: 0 0 10px rgba(255, 23, 68, 0.95);
+}
+
+.powerdown-badge .powerup-status-icon {
+    -unity-background-image-tint-color: #ff1744;
+}
+
+.icon-paddle-shrink {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerdown_Arrows_Inward.png?fileID=21300000&guid=6ebcd1fa1b3d001468147f32590c82ca&type=3#TX_Powerdown_Arrows_Inward");
+}
+
+.icon-paddle-slow {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerdown_Slower_Paddle.png?fileID=21300000&guid=3f526f475d1500f468a096116384b160&type=3#TX_Powerdown_Slower_Paddle");
+}
+
+.icon-ball-shrink {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerdown_Smaller_Ball.png?fileID=21300000&guid=d41c63e0db548c14296c560508e963a9&type=3#TX_Powerdown_Smaller_Ball");
+}
+
+.icon-ball-slow {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerdown_Slower_Ball.png?fileID=21300000&guid=62d7230a48b7706468a7d6c48b12b01e&type=3#TX_Powerdown_Slower_Ball");
+}
+
+.icon-paddle-freeze {
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerdown_Frozen_Paddle.png?fileID=21300000&guid=5c5ea66d3fadd934592fd49d80b0f741&type=3#TX_Powerdown_Frozen_Paddle");
+}
+
+.paddle-shrink-badge {
+    border-color: #ff1744;
+}
+
+.paddle-slow-badge {
+    border-color: #ff3860;
+}
+
+.ball-shrink-badge {
+    border-color: #ff1744;
+}
+
+.ball-slow-badge {
+    border-color: #ff3860;
+}
+
+.paddle-freeze-badge {
+    border-color: #ff1744;
+    box-shadow: 0 0 16px rgba(255, 23, 68, 0.95);
 }
 
 .powerup-hidden {
@@ -1017,7 +1079,8 @@
     background-color: rgba(23, 28, 44, 0.75);
     border-radius: 24px;
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(0, 242, 254, 0.35);
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.25);
     margin-left: 10px;
 }
 
@@ -1026,7 +1089,7 @@
     height: 20px;
     background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Speed.png?fileID=21300000&guid=e131922c07022c04fa24072387e3848b&type=3#TX_Powerup_Speed");
     margin-right: 8px;
-    -unity-background-image-tint-color: #21d4fd;
+    -unity-background-image-tint-color: #00f2fe;
 }
 
 .timer-main {
@@ -1034,8 +1097,9 @@
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     font-size: 16px;
     -unity-font-style: bold;
-    color: #e2e8f0;
+    color: #ffffff;
     letter-spacing: 1px;
+    text-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
 }
 
 /* Score Delta Pop */
@@ -1135,6 +1199,26 @@
     -unity-font-style: bold;
     font-size: 14px;
     letter-spacing: 1px;
+}
+
+.combo-badge.mult-tier-2x .combo-val-text {
+    color: #ffd700;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+}
+
+.combo-badge.mult-tier-3x .combo-val-text {
+    color: #ff8c00;
+    text-shadow: 0 0 8px rgba(255, 140, 0, 0.8);
+}
+
+.combo-badge.mult-tier-4x .combo-val-text {
+    color: #ff1744;
+    text-shadow: 0 0 8px rgba(255, 23, 68, 0.8);
+}
+
+.combo-badge.mult-tier-5x .combo-val-text {
+    color: #d500f9;
+    text-shadow: 0 0 8px rgba(213, 0, 249, 0.8);
 }
 
 /* Scorecard Modal */

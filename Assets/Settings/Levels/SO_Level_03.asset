@@ -14,15 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.LevelConfiguration
   levelNumber: 3
   levelName: 'Level 3: Twin Pillars'
-  levelDescription: Vertical block columns with open alleyways. Sneak the ball up the corridors for high-velocity top-row cascades, and trigger explosive Bomb bricks.
+  levelDescription: Vertical block columns with open alleyways. Sneak the ball up the corridors for high-velocity top-row cascades, but watch out for Paddle and Ball Slower hazards.
   layoutType: 7
   colorPattern: 2
-  columns: 7
+  columns: 13
   rowsPerTier: 2
   blockSize: 1
   horizontalSpacing: 1.25
   verticalSpacing: 1.3
   startCenterY: 15.5
+  includeSideFlanks: 1
   customLayout: 
   customLayoutRows: []
   ballSpeedMultiplier: 1
@@ -40,6 +41,12 @@ MonoBehaviour:
   shieldDuration: 10
   laserCount: 1
   laserDuration: 10
-  parTime: 40
+  paddleShortenerCount: 0
+  paddleSlowerCount: 1
+  brickFreezerCount: 0
+  ballSizeDecreaserCount: 0
+  ballSlowerCount: 1
+  paddleFreezerCount: 0
+  parTime: 45
   timeBonusMax: 3000
-  starThresholds: 84030000d0070000800c0000i
+  starThresholds: b0040000280a000068100000i

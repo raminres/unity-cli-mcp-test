@@ -19,6 +19,14 @@ namespace Arcade.BlockBreaker
         [SerializeField] private Sprite multiplierSprite;
         [SerializeField] private Sprite laserSprite;
 
+        [Header("Powerdown Sprites (Assigned in Unity UI)")]
+        [SerializeField] private Sprite paddleShortenerSprite;
+        [SerializeField] private Sprite paddleSlowerSprite;
+        [SerializeField] private Sprite brickFreezerSprite;
+        [SerializeField] private Sprite ballSizeDecreaserSprite;
+        [SerializeField] private Sprite ballSlowerSprite;
+        [SerializeField] private Sprite paddleFreezerSprite;
+
         public Sprite ExpanderSprite => expanderSprite;
         public Sprite BombSprite => bombSprite;
         public Sprite ExtraHeartSprite => extraHeartSprite;
@@ -26,6 +34,13 @@ namespace Arcade.BlockBreaker
         public Sprite MultiBallSprite => multiBallSprite;
         public Sprite MultiplierSprite => multiplierSprite;
         public Sprite LaserSprite => laserSprite;
+
+        public Sprite PaddleShortenerSprite => paddleShortenerSprite;
+        public Sprite PaddleSlowerSprite => paddleSlowerSprite;
+        public Sprite BrickFreezerSprite => brickFreezerSprite;
+        public Sprite BallSizeDecreaserSprite => ballSizeDecreaserSprite;
+        public Sprite BallSlowerSprite => ballSlowerSprite;
+        public Sprite PaddleFreezerSprite => paddleFreezerSprite;
 
         public void SetSprites(Sprite expander, Sprite bomb, Sprite extraHeart, Sprite shield, Sprite multiBall, Sprite multiplier, Sprite laser)
         {
@@ -36,6 +51,16 @@ namespace Arcade.BlockBreaker
             multiBallSprite = multiBall;
             multiplierSprite = multiplier;
             laserSprite = laser;
+        }
+
+        public void SetPowerdownSprites(Sprite shortener, Sprite slower, Sprite brickFreezer, Sprite sizeDecreaser, Sprite ballSlower, Sprite paddleFreezer)
+        {
+            paddleShortenerSprite = shortener;
+            paddleSlowerSprite = slower;
+            brickFreezerSprite = brickFreezer;
+            ballSizeDecreaserSprite = sizeDecreaser;
+            ballSlowerSprite = ballSlower;
+            paddleFreezerSprite = paddleFreezer;
         }
 
         public Sprite GetSprite(BlockSpecialType type)
@@ -59,6 +84,18 @@ namespace Arcade.BlockBreaker
                     return multiplierSprite;
                 case BlockSpecialType.Laser:
                     return laserSprite;
+                case BlockSpecialType.PaddleShortener:
+                    return paddleShortenerSprite;
+                case BlockSpecialType.PaddleSlower:
+                    return paddleSlowerSprite;
+                case BlockSpecialType.BrickFreezer:
+                    return brickFreezerSprite;
+                case BlockSpecialType.BallSizeDecreaser:
+                    return ballSizeDecreaserSprite;
+                case BlockSpecialType.BallSlower:
+                    return ballSlowerSprite;
+                case BlockSpecialType.PaddleFreezer:
+                    return paddleFreezerSprite;
                 default:
                     return null;
             }
