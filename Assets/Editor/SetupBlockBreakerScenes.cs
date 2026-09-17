@@ -382,12 +382,14 @@ namespace Arcade.Editor
             boundariesRoot.name = "Boundaries";
             boundariesRoot.transform.position = Vector3.zero;
 
-            // Bottom Physical Shield Wall (Energy Barrier for Shield powerup)
-            var shieldWallGo = new GameObject("ShieldWall");
+            // Bottom Physical Shield Wall (PF_ShieldWall prefab)
+            var shieldPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Arena/PF_ShieldWall.prefab");
+            GameObject shieldWallGo = (GameObject)PrefabUtility.InstantiatePrefab(shieldPrefab);
+            shieldWallGo.name = "ShieldWall";
             shieldWallGo.transform.SetParent(boundariesRoot.transform);
             shieldWallGo.transform.position = new Vector3(0f, -7.6f, 0f);
             shieldWallGo.transform.localScale = Vector3.zero;
-            shieldWallGo.AddComponent<ShieldWall>();
+            var shieldWall = shieldWallGo.GetComponent<ShieldWall>();
             shieldWallGo.SetActive(false);
 
             // 7. Paddle Platform (PF_Paddle prefab)
@@ -417,6 +419,7 @@ namespace Arcade.Editor
             // 10. Game Coordinators
             var gmGo = new GameObject("GameManager");
             var gm = gmGo.AddComponent<ArcadeGameManager>();
+            gm.RegisterShieldWall(shieldWall);
             var capsuleMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Powerup_Capsule.mat");
             if (capsuleMat != null)
             {

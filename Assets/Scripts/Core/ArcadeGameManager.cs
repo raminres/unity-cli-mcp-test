@@ -173,9 +173,23 @@ namespace Arcade.Core
             if (shieldWall == null)
             {
                 var boundaries = GameObject.Find("Boundaries") ?? GameObject.Find("ArenaBoundaries") ?? GameObject.Find("PF_Walls");
-                var wallGo = new GameObject("ShieldWall");
-                if (boundaries != null) wallGo.transform.SetParent(boundaries.transform);
-                shieldWall = wallGo.AddComponent<BlockBreaker.ShieldWall>();
+                GameObject template = null;
+#if UNITY_EDITOR
+                template = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Arena/PF_ShieldWall.prefab");
+#endif
+                if (template != null)
+                {
+                    var wallGo = Instantiate(template, new Vector3(0f, -7.6f, 0f), Quaternion.identity);
+                    wallGo.name = "ShieldWall";
+                    if (boundaries != null) wallGo.transform.SetParent(boundaries.transform);
+                    shieldWall = wallGo.GetComponent<BlockBreaker.ShieldWall>();
+                }
+                else
+                {
+                    var wallGo = new GameObject("ShieldWall");
+                    if (boundaries != null) wallGo.transform.SetParent(boundaries.transform);
+                    shieldWall = wallGo.AddComponent<BlockBreaker.ShieldWall>();
+                }
             }
             return shieldWall;
         }
