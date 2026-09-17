@@ -14,18 +14,21 @@ namespace Arcade.BlockBreaker
         [SerializeField] private GameObject top;
         [SerializeField] private GameObject chamferLeft;
         [SerializeField] private GameObject chamferRight;
+        [SerializeField] private GameObject killZone;
 
         public GameObject SideLeft => sideLeft;
         public GameObject SideRight => sideRight;
         public GameObject Top => top;
         public GameObject ChamferLeft => chamferLeft;
         public GameObject ChamferRight => chamferRight;
+        public GameObject KillZone => killZone;
 
         public BoxCollider SideLeftCollider => sideLeft != null ? sideLeft.GetComponentInChildren<BoxCollider>() : null;
         public BoxCollider SideRightCollider => sideRight != null ? sideRight.GetComponentInChildren<BoxCollider>() : null;
         public BoxCollider TopCollider => top != null ? top.GetComponentInChildren<BoxCollider>() : null;
         public BoxCollider ChamferLeftCollider => chamferLeft != null ? chamferLeft.GetComponentInChildren<BoxCollider>() : null;
         public BoxCollider ChamferRightCollider => chamferRight != null ? chamferRight.GetComponentInChildren<BoxCollider>() : null;
+        public BoxCollider KillZoneCollider => killZone != null ? killZone.GetComponent<BoxCollider>() : null;
 
         public MeshRenderer SideLeftRenderer => sideLeft != null ? sideLeft.GetComponentInChildren<MeshRenderer>() : null;
         public MeshRenderer SideRightRenderer => sideRight != null ? sideRight.GetComponentInChildren<MeshRenderer>() : null;
@@ -40,6 +43,7 @@ namespace Arcade.BlockBreaker
             if (top == null) top = transform.Find("top")?.gameObject;
             if (chamferLeft == null) chamferLeft = transform.Find("chamfer left")?.gameObject;
             if (chamferRight == null) chamferRight = transform.Find("chamfer right")?.gameObject;
+            if (killZone == null) killZone = transform.Find("KillZone")?.gameObject;
         }
 
         private void Awake()

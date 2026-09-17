@@ -31,6 +31,7 @@ namespace Arcade.Tests
             Assert.IsNotNull(arenaWalls.Top, "Top section must be assigned.");
             Assert.IsNotNull(arenaWalls.ChamferLeft, "ChamferLeft section must be assigned.");
             Assert.IsNotNull(arenaWalls.ChamferRight, "ChamferRight section must be assigned.");
+            Assert.IsNotNull(arenaWalls.KillZone, "KillZone must be assigned.");
         }
 
         [Test]
@@ -98,6 +99,25 @@ namespace Arcade.Tests
             Assert.AreEqual(23.40f, arenaWalls.ChamferRight.transform.localPosition.y, 0.01f);
             Assert.AreEqual(315f, arenaWalls.ChamferRight.transform.localEulerAngles.z, 0.5f); // 315 deg = -45 deg
             Assert.AreEqual(2.5f, arenaWalls.ChamferRightCollider.size.x, 0.01f);
+        }
+
+        [Test]
+        public void WallPrefab_HasKillZone_WithTagAndTriggerCollider()
+        {
+            var go = AssetDatabase.LoadAssetAtPath<GameObject>(WallPrefabPath);
+            Assert.IsNotNull(go, "Prefab must exist.");
+
+            var killZone = go.transform.Find("KillZone");
+            Assert.IsNotNull(killZone, "PF_Walls must contain child 'KillZone'.");
+
+            Assert.AreEqual("KillZone", killZone.tag, "KillZone child must have tag 'KillZone'.");
+            Assert.IsNotNull(killZone.GetComponent<KillZone>(), "KillZone child must have KillZone component.");
+
+            var col = killZone.GetComponent<BoxCollider>();
+            Assert.IsNotNull(col, "KillZone child must have a BoxCollider.");
+            Assert.IsTrue(col.isTrigger, "KillZone collider must be a trigger.");
+            Assert.AreEqual(-9.0f, killZone.localPosition.y, 0.01f, "KillZone must be positioned at Y = -9.0.");
+            Assert.AreEqual(24.0f, col.size.x, 0.01f, "KillZone width must span 24 units.");
         }
     }
 }

@@ -63,6 +63,19 @@ namespace Arcade.Editor
                 new Vector3(2.5f, 0.5f, 2f), new Vector3(2.5f, 0.5f, 2f),
                 matBorder, physBounce);
 
+            // 6. KillZone (Bottom death trigger boundary)
+            GameObject killZoneGo = new GameObject("KillZone");
+            killZoneGo.tag = "KillZone";
+            killZoneGo.transform.SetParent(rootGo.transform, false);
+            killZoneGo.transform.localPosition = new Vector3(0f, -9.0f, 0f);
+            killZoneGo.transform.localRotation = Quaternion.identity;
+            killZoneGo.transform.localScale = Vector3.one;
+
+            var killCol = killZoneGo.AddComponent<BoxCollider>();
+            killCol.size = new Vector3(24f, 2.0f, 4f);
+            killCol.isTrigger = true;
+            killZoneGo.AddComponent<KillZone>();
+
             // Wire ArenaWalls SerializedObject
             var wallsSo = new SerializedObject(arenaWalls);
             wallsSo.FindProperty("sideLeft").objectReferenceValue = sideLeft;
@@ -70,6 +83,7 @@ namespace Arcade.Editor
             wallsSo.FindProperty("top").objectReferenceValue = top;
             wallsSo.FindProperty("chamferLeft").objectReferenceValue = chamferLeft;
             wallsSo.FindProperty("chamferRight").objectReferenceValue = chamferRight;
+            wallsSo.FindProperty("killZone").objectReferenceValue = killZoneGo;
             wallsSo.ApplyModifiedProperties();
 
             // Save Prefab
