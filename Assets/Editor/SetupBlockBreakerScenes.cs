@@ -526,30 +526,46 @@ namespace Arcade.Editor
             }
 
             // 8. Ball (Sphere) with Dual-Layer Trail
-            var ballGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            ballGo.name = "Ball";
-            ballGo.transform.position = new Vector3(0f, -5.65f, 0f);
-            ballGo.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
-            if (ballMat != null) ballGo.GetComponent<MeshRenderer>().sharedMaterial = ballMat;
-            var ballCol = ballGo.GetComponent<SphereCollider>();
-            ballCol.sharedMaterial = bounceMat;
-            var ballRb = ballGo.AddComponent<Rigidbody>();
-            ballRb.useGravity = false;
-            ballRb.collisionDetectionMode = CollisionDetectionMode.Continuous;
-            ballRb.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
-            
-            var ballTrail = ballGo.AddComponent<BallTrail>();
-            if (trailMat != null)
+            GameObject ballGo;
+            BallController ballCtrl;
+            var ballPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Balls/PF_Ball_Standard.prefab");
+            if (ballPrefab != null)
             {
-                ballTrail.Initialize(trailMat, new Color(0f, 0.95f, 1f, 1f));
+                ballGo = (GameObject)PrefabUtility.InstantiatePrefab(ballPrefab);
+                ballGo.name = "Ball";
+                ballGo.transform.position = new Vector3(0f, -5.65f, 0f);
+                ballCtrl = ballGo.GetComponent<BallController>();
             }
-            var ballCtrl = ballGo.AddComponent<BallController>();
+            else
+            {
+                ballGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                ballGo.name = "Ball";
+                ballGo.transform.position = new Vector3(0f, -5.65f, 0f);
+                ballGo.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
+                if (ballMat != null) ballGo.GetComponent<MeshRenderer>().sharedMaterial = ballMat;
+                var ballCol = ballGo.GetComponent<SphereCollider>();
+                ballCol.sharedMaterial = bounceMat;
+                var ballRb = ballGo.AddComponent<Rigidbody>();
+                ballRb.useGravity = false;
+                ballRb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+                ballRb.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
+                
+                var ballTrail = ballGo.AddComponent<BallTrail>();
+                if (trailMat != null)
+                {
+                    ballTrail.Initialize(trailMat, new Color(0f, 0.95f, 1f, 1f));
+                }
+                ballCtrl = ballGo.AddComponent<BallController>();
 
-            // Wire BallController to Paddle and BallTrail
+                var bSo = new SerializedObject(ballCtrl);
+                bSo.FindProperty("rb").objectReferenceValue = ballRb;
+                bSo.FindProperty("ballTrail").objectReferenceValue = ballTrail;
+                bSo.ApplyModifiedProperties();
+            }
+
+            // Wire BallController to Paddle
             var ballSo = new SerializedObject(ballCtrl);
             ballSo.FindProperty("paddle").objectReferenceValue = paddleCtrl;
-            ballSo.FindProperty("rb").objectReferenceValue = ballRb;
-            ballSo.FindProperty("ballTrail").objectReferenceValue = ballTrail;
             ballSo.ApplyModifiedProperties();
 
             // 9. Audio Manager (Fallback if entering gameplay directly)

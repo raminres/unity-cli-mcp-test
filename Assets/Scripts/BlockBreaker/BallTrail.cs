@@ -82,15 +82,16 @@ namespace Arcade.BlockBreaker
             // Outer Trail setup
             if (outerTrail == null)
             {
-                Transform outerChild = transform.Find("Trail_Outer");
+                Transform outerChild = transform.Find("trail/Trail_Outer") ?? transform.Find("Trail_Outer");
                 if (outerChild != null)
                 {
                     outerTrail = outerChild.GetComponent<TrailRenderer>();
                 }
                 if (outerTrail == null)
                 {
+                    Transform parent = transform.Find("trail") ?? transform;
                     GameObject outerObj = new GameObject("Trail_Outer");
-                    outerObj.transform.SetParent(transform, false);
+                    outerObj.transform.SetParent(parent, false);
                     outerObj.transform.localPosition = Vector3.zero;
                     outerTrail = outerObj.AddComponent<TrailRenderer>();
                 }
@@ -100,15 +101,16 @@ namespace Arcade.BlockBreaker
             // Inner Trail setup
             if (innerTrail == null)
             {
-                Transform innerChild = transform.Find("Trail_Inner");
+                Transform innerChild = transform.Find("trail/Trail_Inner") ?? transform.Find("Trail_Inner");
                 if (innerChild != null)
                 {
                     innerTrail = innerChild.GetComponent<TrailRenderer>();
                 }
                 if (innerTrail == null)
                 {
+                    Transform parent = transform.Find("trail") ?? transform;
                     GameObject innerObj = new GameObject("Trail_Inner");
-                    innerObj.transform.SetParent(transform, false);
+                    innerObj.transform.SetParent(parent, false);
                     innerObj.transform.localPosition = Vector3.zero;
                     innerTrail = innerObj.AddComponent<TrailRenderer>();
                 }

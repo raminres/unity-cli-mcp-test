@@ -23,6 +23,15 @@ namespace Arcade.BlockBreaker
         [SerializeField] private BallTrail ballTrail;
         [SerializeField] private Color primaryBallColor = new Color(0f, 0.95f, 1f, 1f); // Electric Cyan
 
+        [Header("Modular Prefab Hierarchy")]
+        [SerializeField] private GameObject modelChild;
+        [SerializeField] private GameObject trailChild;
+        [SerializeField] private GameObject vfxChild;
+
+        public GameObject ModelChild => modelChild;
+        public GameObject TrailChild => trailChild;
+        public GameObject VfxChild => vfxChild;
+
         [Header("Dynamic Volley Pacing")]
         [SerializeField] private float speedRampInterval = 10f; // Seconds between speed boosts during volley
         [SerializeField] private float speedRampStepMultiplier = 0.08f; // +8% of base speed per step (~ +1.1 - 1.4 units/s)
@@ -165,12 +174,44 @@ namespace Arcade.BlockBreaker
                 ballTrail = GetComponent<BallTrail>() ?? gameObject.AddComponent<BallTrail>();
             }
 
-            ballRenderer = GetComponent<Renderer>();
+            EnsureModularChildren();
+            ResolveRenderer();
             propBlock = new MaterialPropertyBlock();
 
             if (isPrimaryBall)
             {
                 SetTrailColor(primaryBallColor);
+            }
+        }
+
+        public void EnsureModularChildren()
+        {
+            if (modelChild == null)
+            {
+                Transform m = transform.Find("model");
+                if (m != null) modelChild = m.gameObject;
+            }
+            if (trailChild == null)
+            {
+                Transform t = transform.Find("trail");
+                if (t != null) trailChild = t.gameObject;
+            }
+            if (vfxChild == null)
+            {
+                Transform v = transform.Find("vfx");
+                if (v != null) vfxChild = v.gameObject;
+            }
+        }
+
+        private void ResolveRenderer()
+        {
+            if (ballRenderer == null && modelChild != null)
+            {
+                ballRenderer = modelChild.GetComponent<Renderer>();
+            }
+            if (ballRenderer == null)
+            {
+                ballRenderer = GetComponent<Renderer>() ?? GetComponentInChildren<Renderer>();
             }
         }
 
@@ -368,7 +409,7 @@ namespace Arcade.BlockBreaker
 
         private void ApplyBallColor(Color color)
         {
-            if (ballRenderer == null) ballRenderer = GetComponent<Renderer>();
+            if (ballRenderer == null) ResolveRenderer();
             if (ballRenderer != null)
             {
                 if (propBlock == null) propBlock = new MaterialPropertyBlock();
@@ -408,8 +449,8 @@ namespace Arcade.BlockBreaker
 
         public void SetBallActive(bool active)
         {
-            var rend = GetComponent<Renderer>();
-            if (rend != null) rend.enabled = active;
+            if (ballRenderer == null) ResolveRenderer();
+            if (ballRenderer != null) ballRenderer.enabled = active;
 
             var col = GetComponent<Collider>();
             if (col != null) col.enabled = active;
