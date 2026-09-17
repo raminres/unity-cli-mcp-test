@@ -299,15 +299,27 @@ namespace Arcade.Editor
             uiGo.AddComponent<SafeAreaController>();
 
             // 4. Background Cosmic Gradient Quad
-            var bgGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            bgGo.name = "Background_Plane";
-            bgGo.transform.position = new Vector3(0f, 0f, 5.0f);
-            bgGo.transform.localScale = new Vector3(40f, 80f, 1f);
-            Object.DestroyImmediate(bgGo.GetComponent<Collider>());
-            var bgMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Background_Gradient.mat");
-            if (bgMat != null) bgGo.GetComponent<MeshRenderer>().sharedMaterial = bgMat;
-            var bgCtrl = bgGo.AddComponent<LevelBackgroundController>();
-            ConfigureBackgroundTextures(bgCtrl);
+            GameObject bgGo;
+            var bgPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Arena/PF_Background.prefab");
+            if (bgPrefab != null)
+            {
+                bgGo = (GameObject)PrefabUtility.InstantiatePrefab(bgPrefab);
+                bgGo.name = "Background_Plane";
+                bgGo.transform.position = new Vector3(0f, 0f, 5.0f);
+                bgGo.transform.localScale = new Vector3(40f, 80f, 1f);
+            }
+            else
+            {
+                bgGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                bgGo.name = "Background_Plane";
+                bgGo.transform.position = new Vector3(0f, 0f, 5.0f);
+                bgGo.transform.localScale = new Vector3(40f, 80f, 1f);
+                Object.DestroyImmediate(bgGo.GetComponent<Collider>());
+                var bgMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Background_Gradient.mat");
+                if (bgMat != null) bgGo.GetComponent<MeshRenderer>().sharedMaterial = bgMat;
+                var bgCtrl = bgGo.AddComponent<LevelBackgroundController>();
+                ConfigureBackgroundTextures(bgCtrl);
+            }
 
             // Save scene
             var path = "Assets/Scenes/LV_BlockBreaker_MainMenu.unity";
@@ -366,15 +378,27 @@ namespace Arcade.Editor
             }
 
             // 4. Background Cosmic Gradient Quad
-            var bgGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            bgGo.name = "Background_Plane";
-            bgGo.transform.position = new Vector3(0f, 8.5f, 6.0f);
-            bgGo.transform.localScale = new Vector3(40f, 80f, 1f);
-            Object.DestroyImmediate(bgGo.GetComponent<Collider>());
-            var bgMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Background_Gradient.mat");
-            if (bgMat != null) bgGo.GetComponent<MeshRenderer>().sharedMaterial = bgMat;
-            var bgCtrl = bgGo.AddComponent<LevelBackgroundController>();
-            ConfigureBackgroundTextures(bgCtrl);
+            GameObject bgGo;
+            var bgPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Arena/PF_Background.prefab");
+            if (bgPrefab != null)
+            {
+                bgGo = (GameObject)PrefabUtility.InstantiatePrefab(bgPrefab);
+                bgGo.name = "Background_Plane";
+                bgGo.transform.position = new Vector3(0f, 8.5f, 6.0f);
+                bgGo.transform.localScale = new Vector3(40f, 80f, 1f);
+            }
+            else
+            {
+                bgGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                bgGo.name = "Background_Plane";
+                bgGo.transform.position = new Vector3(0f, 8.5f, 6.0f);
+                bgGo.transform.localScale = new Vector3(40f, 80f, 1f);
+                Object.DestroyImmediate(bgGo.GetComponent<Collider>());
+                var bgMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Background_Gradient.mat");
+                if (bgMat != null) bgGo.GetComponent<MeshRenderer>().sharedMaterial = bgMat;
+                var bgCtrl = bgGo.AddComponent<LevelBackgroundController>();
+                ConfigureBackgroundTextures(bgCtrl);
+            }
 
             // 5. PhysicMaterial for bouncy, frictionless ball bounces
             var bounceMat = AssetDatabase.LoadAssetAtPath<PhysicsMaterial>("Assets/Materials/BlockBreaker/PM_ArcadeBounce.physicMaterial");

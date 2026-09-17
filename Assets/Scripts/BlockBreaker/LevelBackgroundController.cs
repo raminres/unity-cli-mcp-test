@@ -7,6 +7,7 @@ namespace Arcade.BlockBreaker
     /// high-resolution cosmic gradient textures (TX_Background_Gradient_A through D)
     /// across levels to keep gameplay environments fresh and visually stunning.
     /// </summary>
+    [ExecuteAlways]
     public class LevelBackgroundController : MonoBehaviour
     {
         [Header("Background Textures")]
@@ -14,6 +15,9 @@ namespace Arcade.BlockBreaker
 
         [Header("Rendering Components")]
         [SerializeField] private MeshRenderer meshRenderer;
+        [SerializeField] private GameObject planeChild;
+
+        public GameObject PlaneChild => planeChild;
 
         private MaterialPropertyBlock propBlock;
         private int currentTextureIndex = -1;
@@ -33,7 +37,19 @@ namespace Arcade.BlockBreaker
         {
             Instance = this;
 
-            if (meshRenderer == null) meshRenderer = GetComponent<MeshRenderer>();
+            if (planeChild == null)
+            {
+                Transform p = transform.Find("plane") ?? transform.Find("model");
+                if (p != null) planeChild = p.gameObject;
+            }
+            if (meshRenderer == null && planeChild != null)
+            {
+                meshRenderer = planeChild.GetComponent<MeshRenderer>();
+            }
+            if (meshRenderer == null)
+            {
+                meshRenderer = GetComponent<MeshRenderer>() ?? GetComponentInChildren<MeshRenderer>();
+            }
             if (propBlock == null) propBlock = new MaterialPropertyBlock();
 
 #if UNITY_EDITOR
@@ -130,7 +146,14 @@ namespace Arcade.BlockBreaker
             currentTexture = texture;
             currentTextureIndex = index;
 
-            if (meshRenderer == null) meshRenderer = GetComponent<MeshRenderer>();
+            if (meshRenderer == null && planeChild != null)
+            {
+                meshRenderer = planeChild.GetComponent<MeshRenderer>();
+            }
+            if (meshRenderer == null)
+            {
+                meshRenderer = GetComponent<MeshRenderer>() ?? GetComponentInChildren<MeshRenderer>();
+            }
             if (meshRenderer != null && texture != null)
             {
                 if (propBlock == null) propBlock = new MaterialPropertyBlock();
