@@ -266,20 +266,39 @@ namespace Arcade.Editor
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             scene.name = "LV_BlockBreaker_MainMenu";
 
-            // 1. Camera
+            // 1. Perspective Camera with narrow FOV matching gameplay
             var camGo = new GameObject("Main Camera");
             camGo.tag = "MainCamera";
             var cam = camGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.047f, 0.051f, 0.086f, 1f); // #0c0d16
-            cam.transform.position = new Vector3(0f, 0f, -10f);
+            cam.fieldOfView = 38f;
+            cam.transform.position = new Vector3(0f, 6.0f, -32f);
+            cam.transform.rotation = Quaternion.identity;
             camGo.AddComponent<AudioListener>();
+            camGo.AddComponent<ResponsiveCameraController>();
 
-            // 2. Audio Manager (Persistent)
+            // 2. Post-Processing Volume with Bloom
+            var volGo = new GameObject("Global Volume");
+            var vol = volGo.AddComponent<Volume>();
+            vol.isGlobal = true;
+            var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>("Assets/Settings/SampleSceneProfile.asset");
+            if (profile != null)
+            {
+                vol.sharedProfile = profile;
+                if (profile.TryGet<Bloom>(out var bloom))
+                {
+                    bloom.intensity.value = 1.3f;
+                    bloom.threshold.value = 0.85f;
+                    bloom.scatter.value = 0.7f;
+                }
+            }
+
+            // 3. Audio Manager (Persistent)
             var audioGo = new GameObject("AudioManager");
             ConfigureAudioManager(audioGo);
 
-            // 3. UI Panel Renderer & Manager
+            // 4. UI Panel Renderer & Manager
             var uiGo = new GameObject("UI_MainMenu");
             var panelRenderer = uiGo.AddComponent<PanelRenderer>();
             var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/MainMenuUI.uxml");
@@ -298,11 +317,11 @@ namespace Arcade.Editor
             menuSo.ApplyModifiedProperties();
             uiGo.AddComponent<SafeAreaController>();
 
-            // 4. Background Cosmic Gradient Quad
+            // 5. Background Cosmic Gradient Quad (PF_Background prefab)
             var bgPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Arena/PF_Background.prefab");
             GameObject bgGo = (GameObject)PrefabUtility.InstantiatePrefab(bgPrefab);
             bgGo.name = "Background_Plane";
-            bgGo.transform.position = new Vector3(0f, 0f, 5.0f);
+            bgGo.transform.position = new Vector3(0f, 8.5f, 6.0f);
             bgGo.transform.localScale = new Vector3(40f, 80f, 1f);
 
             // Save scene
