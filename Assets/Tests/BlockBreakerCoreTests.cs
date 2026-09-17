@@ -3435,15 +3435,18 @@ namespace Arcade.Tests
             Assert.IsNull(cap.GetComponent<MeshRenderer>(), "Root capsule container must not have MeshRenderer.");
             Assert.IsNull(cap.GetComponent<SpriteRenderer>(), "Root capsule container must not have SpriteRenderer.");
 
-            // 2. Exactly 2 children: Visual_Capsule and Icon_Billboard
-            Assert.AreEqual(2, cap.transform.childCount, "Powerup capsule must have exactly 2 children (1 visual mesh child, 1 billboard sprite child).");
+            // 2. Exactly 3 children: Visual_Capsule, Icon_Billboard, and Falling_Vfx
+            Assert.AreEqual(3, cap.transform.childCount, "Powerup capsule must have exactly 3 children (1 visual mesh child, 1 billboard sprite child, 1 particle vfx child).");
 
             var visual = cap.VisualCapsuleTransform;
             var icon = cap.IconTransform;
+            var vfx = cap.FallingVfxTransform;
             Assert.IsNotNull(visual, "Visual_Capsule child must exist.");
             Assert.IsNotNull(icon, "Icon_Billboard child must exist.");
+            Assert.IsNotNull(vfx, "Falling_Vfx child must exist.");
             Assert.AreEqual("Visual_Capsule", visual.name);
             Assert.AreEqual("Icon_Billboard", icon.name);
+            Assert.AreEqual("Falling_Vfx", vfx.name);
 
             // 3. Visual_Capsule has 1 mesh, 0 sprites, 0 colliders
             var visualMesh = visual.GetComponent<MeshRenderer>();

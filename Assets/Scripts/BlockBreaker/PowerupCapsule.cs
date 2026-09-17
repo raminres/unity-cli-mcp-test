@@ -29,6 +29,8 @@ namespace Arcade.BlockBreaker
         [SerializeField] private Renderer capsuleRenderer;
         [SerializeField] private Transform iconTransform;
         [SerializeField] private SpriteRenderer iconRenderer;
+        [SerializeField] private Transform fallingVfxTransform;
+        [SerializeField] private ParticleSystem fallingVfx;
 
         private MaterialPropertyBlock propBlock;
         private bool isCollected = false;
@@ -39,10 +41,20 @@ namespace Arcade.BlockBreaker
         public BlockSpecialType SpecialType => specialType;
         public float FallSpeed { get => fallSpeed; set => fallSpeed = value; }
         public Transform VisualCapsuleTransform => visualCapsuleTransform;
+        public Renderer CapsuleRenderer => capsuleRenderer;
         public SpriteRenderer IconRenderer => iconRenderer;
         public Transform IconTransform => iconTransform;
+        public Transform FallingVfxTransform => fallingVfxTransform;
+        public ParticleSystem FallingVfx => fallingVfx;
+
+        public Transform ModelTransform => visualCapsuleTransform;
+        public Transform SpriteTransform => iconTransform;
+
+        public static GameObject PowerupPrefab { get; set; }
+        public static GameObject HazardPrefab { get; set; }
 
         private static Material defaultCapsuleMaterial;
+        private static Material defaultParticleMaterial;
 
         public static void SetDefaultMaterial(Material mat)
         {
@@ -81,6 +93,33 @@ namespace Arcade.BlockBreaker
             return defaultCapsuleMaterial;
         }
 
+        public static Material GetOrCreateParticleMaterial()
+        {
+            if (defaultParticleMaterial != null) return defaultParticleMaterial;
+
+#if UNITY_EDITOR
+            var editorMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_VFX_Burst.mat");
+            if (editorMat != null)
+            {
+                defaultParticleMaterial = editorMat;
+                return defaultParticleMaterial;
+            }
+#endif
+
+            var shader = Shader.Find("Universal Render Pipeline/Particles/Unlit")
+                      ?? Shader.Find("Arcade/VFX_ParticleBurst");
+
+            if (shader != null)
+            {
+                defaultParticleMaterial = new Material(shader)
+                {
+                    name = "M_Drop_Trail_Fallback"
+                };
+            }
+
+            return defaultParticleMaterial;
+        }
+
         private void Awake()
         {
             var col = GetComponent<Collider>();
@@ -90,7 +129,37 @@ namespace Arcade.BlockBreaker
             }
 
             propBlock = new MaterialPropertyBlock();
-            // Note: Visual hierarchy is managed cleanly in EnsureVisualHierarchy/Initialize
+            ResolveModularChildren();
+        }
+
+        public void ResolveModularChildren()
+        {
+            if (visualCapsuleTransform == null)
+            {
+                visualCapsuleTransform = transform.Find("Visual_Capsule") ?? transform.Find("model");
+            }
+            if (capsuleRenderer == null && visualCapsuleTransform != null)
+            {
+                capsuleRenderer = visualCapsuleTransform.GetComponent<Renderer>();
+            }
+
+            if (iconTransform == null)
+            {
+                iconTransform = transform.Find("Icon_Billboard") ?? transform.Find("sprite");
+            }
+            if (iconRenderer == null && iconTransform != null)
+            {
+                iconRenderer = iconTransform.GetComponent<SpriteRenderer>();
+            }
+
+            if (fallingVfxTransform == null)
+            {
+                fallingVfxTransform = transform.Find("Falling_Vfx") ?? transform.Find("falling vfx");
+            }
+            if (fallingVfx == null && fallingVfxTransform != null)
+            {
+                fallingVfx = fallingVfxTransform.GetComponent<ParticleSystem>();
+            }
         }
 
         private void Start()
@@ -167,11 +236,17 @@ namespace Arcade.BlockBreaker
                 iconRenderer.sprite = sprite;
                 iconRenderer.color = Color.white;
             }
+
+            if (fallingVfx != null)
+            {
+                var main = fallingVfx.main;
+                main.startColor = glowColor;
+            }
         }
 
         /// <summary>
-        /// Ensures exactly 1 rotating 3D capsule mesh child (Visual_Capsule) and exactly 1 non-rotating upright
-        /// camera-facing billboard sprite child (Icon_Billboard), stripping any duplicate components or pink shaders.
+        /// Ensures exactly 1 rotating 3D capsule mesh child (Visual_Capsule), exactly 1 non-rotating upright
+        /// camera-facing billboard sprite child (Icon_Billboard), and 1 falling particle VFX child (Falling_Vfx).
         /// </summary>
         public void EnsureVisualHierarchy(Material baseMat = null)
         {
@@ -188,7 +263,7 @@ namespace Arcade.BlockBreaker
             for (int i = transform.childCount - 1; i >= 0; i--)
             {
                 Transform child = transform.GetChild(i);
-                if (child.name == "Visual_Capsule")
+                if (child.name == "Visual_Capsule" || child.name == "model")
                 {
                     if (primaryVisual == null)
                     {
@@ -207,7 +282,7 @@ namespace Arcade.BlockBreaker
             for (int i = transform.childCount - 1; i >= 0; i--)
             {
                 Transform child = transform.GetChild(i);
-                if (child.name == "Icon_Billboard")
+                if (child.name == "Icon_Billboard" || child.name == "sprite")
                 {
                     if (primaryIcon == null)
                     {
@@ -221,7 +296,26 @@ namespace Arcade.BlockBreaker
                 }
             }
 
-            // 4. Configure Visual_Capsule (3D rotating mesh child)
+            // 4. Clean up duplicate Falling_Vfx children (keep only the first)
+            Transform primaryVfx = null;
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = transform.GetChild(i);
+                if (child.name == "Falling_Vfx" || child.name == "falling vfx")
+                {
+                    if (primaryVfx == null)
+                    {
+                        primaryVfx = child;
+                    }
+                    else
+                    {
+                        if (Application.isPlaying) Destroy(child.gameObject);
+                        else DestroyImmediate(child.gameObject);
+                    }
+                }
+            }
+
+            // 5. Configure Visual_Capsule (3D rotating mesh child)
             bool isPowerdown = specialType.IsPowerdown();
             PrimitiveType desiredPrimitive = isPowerdown ? PrimitiveType.Cube : PrimitiveType.Capsule;
 
@@ -280,7 +374,7 @@ namespace Arcade.BlockBreaker
                 capsuleRenderer.sharedMaterial = resolvedMat;
             }
 
-            // 5. Configure Icon_Billboard (2D non-rotating camera-facing sprite child)
+            // 6. Configure Icon_Billboard (2D non-rotating camera-facing sprite child)
             if (primaryIcon == null)
             {
                 var iconGo = new GameObject("Icon_Billboard");
@@ -306,6 +400,47 @@ namespace Arcade.BlockBreaker
                 iconRenderer = iconTransform.gameObject.AddComponent<SpriteRenderer>();
             }
             iconRenderer.sortingOrder = 35;
+
+            // 7. Configure Falling_Vfx (Particle System Trail)
+            if (primaryVfx == null)
+            {
+                var vfxGo = new GameObject("Falling_Vfx");
+                vfxGo.transform.SetParent(transform, false);
+                vfxGo.transform.localPosition = Vector3.zero;
+                vfxGo.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+
+                var ps = vfxGo.AddComponent<ParticleSystem>();
+                var psr = vfxGo.GetComponent<ParticleSystemRenderer>();
+                Material vfxMat = GetOrCreateParticleMaterial();
+                if (vfxMat != null) psr.sharedMaterial = vfxMat;
+
+                var main = ps.main;
+                main.playOnAwake = true;
+                main.loop = true;
+                main.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.55f);
+                main.startSpeed = new ParticleSystem.MinMaxCurve(1.0f, 2.2f);
+                main.startSize = new ParticleSystem.MinMaxCurve(0.14f, 0.22f);
+                main.startColor = glowColor;
+                main.simulationSpace = ParticleSystemSimulationSpace.World;
+
+                var emission = ps.emission;
+                emission.enabled = true;
+                emission.rateOverTime = 25f;
+
+                var shape = ps.shape;
+                shape.enabled = true;
+                shape.shapeType = ParticleSystemShapeType.Sphere;
+                shape.radius = 0.35f;
+
+                var velocityOverLifetime = ps.velocityOverLifetime;
+                velocityOverLifetime.enabled = true;
+                velocityOverLifetime.y = new ParticleSystem.MinMaxCurve(1.5f, 2.5f);
+
+                primaryVfx = vfxGo.transform;
+            }
+
+            fallingVfxTransform = primaryVfx;
+            fallingVfx = primaryVfx.GetComponent<ParticleSystem>();
         }
 
         public void EnsureBillboardIcon()
@@ -666,28 +801,50 @@ namespace Arcade.BlockBreaker
         public static PowerupCapsule Spawn(Vector3 position, BlockSpecialType type, Material baseMat = null)
         {
             position.z = FOREGROUND_Z;
+            bool isHazard = type.IsPowerdown();
 
-            // 1. Root container (does NOT rotate, clean physics)
-            var rootGo = new GameObject($"Powerup_{type}");
-            rootGo.transform.position = position;
-            rootGo.transform.localScale = Vector3.one;
-            rootGo.transform.rotation = Quaternion.identity;
+            GameObject template = isHazard ? HazardPrefab : PowerupPrefab;
+            if (template == null)
+            {
+#if UNITY_EDITOR
+                string path = isHazard 
+                    ? "Assets/Prefabs/Powerups/PF_Drop_Hazard.prefab" 
+                    : "Assets/Prefabs/Powerups/PF_Drop_Powerup.prefab";
+                template = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
+#endif
+            }
 
-            var rb = rootGo.AddComponent<Rigidbody>();
-            rb.isKinematic = true;
-            rb.useGravity = false;
+            PowerupCapsule comp;
+            if (template != null)
+            {
+                GameObject go = Object.Instantiate(template, position, Quaternion.identity);
+                go.name = $"Powerup_{type}";
+                comp = go.GetComponent<PowerupCapsule>();
+            }
+            else
+            {
+                // 1. Root container (does NOT rotate, clean physics)
+                var rootGo = new GameObject($"Powerup_{type}");
+                rootGo.transform.position = position;
+                rootGo.transform.localScale = Vector3.one;
+                rootGo.transform.rotation = Quaternion.identity;
 
-            var box = rootGo.AddComponent<BoxCollider>();
-            box.isTrigger = true;
-            box.size = new Vector3(1.6f, 1.6f, 4.0f);
-            box.center = new Vector3(0f, 0f, 1.0f);
+                var rb = rootGo.AddComponent<Rigidbody>();
+                rb.isKinematic = true;
+                rb.useGravity = false;
 
-            var comp = rootGo.AddComponent<PowerupCapsule>();
+                var box = rootGo.AddComponent<BoxCollider>();
+                box.isTrigger = true;
+                box.size = new Vector3(1.6f, 1.6f, 4.0f);
+                box.center = new Vector3(0f, 0f, 1.0f);
+
+                comp = rootGo.AddComponent<PowerupCapsule>();
+            }
 
             baseMat = baseMat ?? GetOrCreateCapsuleMaterial();
-            Color color = type.IsPowerdown() ? BlockModifierExtensions.UnifiedPowerdownColor : type.GetBadgeColor();
+            Color color = isHazard ? BlockModifierExtensions.UnifiedPowerdownColor : type.GetBadgeColor();
 
-            // Initialize ensures exactly 1 Visual_Capsule mesh child and 1 Icon_Billboard sprite child
+            // Initialize ensures exactly 1 Visual_Capsule mesh child, 1 Icon_Billboard sprite child, and 1 Falling_Vfx child
             comp.Initialize(type, color, baseMat);
             return comp;
         }
