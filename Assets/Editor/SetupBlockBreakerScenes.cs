@@ -497,56 +497,70 @@ namespace Arcade.Editor
             shieldWallGo.AddComponent<ShieldWall>();
             shieldWallGo.SetActive(false);
 
-            // 7. Paddle Platform (Inverted Stepped Pyramid / Trapezoid)
-            var paddleGo = new GameObject("Paddle");
-            paddleGo.transform.position = new Vector3(0f, -6.5f, 0f);
-            paddleGo.transform.localScale = new Vector3(5.0f, 1.0f, 1.0f);
-
-            var paddleCol = paddleGo.AddComponent<BoxCollider>();
-            paddleCol.center = new Vector3(0f, 0.38f, 0f);
-            paddleCol.size = new Vector3(1.0f, 0.24f, 2.8f);
-            paddleCol.sharedMaterial = bounceMat;
-
-            var paddleRb = paddleGo.AddComponent<Rigidbody>();
-            paddleRb.isKinematic = true;
-            paddleRb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-
-            // Tier 1: Top Strike Deck (100% width, H = 0.24, Z = 1.0)
-            var stepTopGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            stepTopGo.name = "Step_Top";
-            stepTopGo.transform.SetParent(paddleGo.transform, false);
-            stepTopGo.transform.localPosition = new Vector3(0f, 0.38f, 0f);
-            stepTopGo.transform.localScale = new Vector3(1.0f, 0.24f, 1.0f);
-            if (paddleDeckMat != null) stepTopGo.GetComponent<MeshRenderer>().sharedMaterial = paddleDeckMat;
-            Object.DestroyImmediate(stepTopGo.GetComponent<Collider>());
-
-            // Tier 2: Mid Chassis (72% width, H = 0.20, Z = 0.88)
-            var stepMidGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            stepMidGo.name = "Step_Mid";
-            stepMidGo.transform.SetParent(paddleGo.transform, false);
-            stepMidGo.transform.localPosition = new Vector3(0f, 0.16f, 0f);
-            stepMidGo.transform.localScale = new Vector3(0.72f, 0.20f, 0.88f);
-            if (paddleMidMat != null) stepMidGo.GetComponent<MeshRenderer>().sharedMaterial = paddleMidMat;
-            Object.DestroyImmediate(stepMidGo.GetComponent<Collider>());
-
-            // Tier 3: Bottom Keel / Thrusters (44% width, H = 0.16, Z = 0.72)
-            var stepBottomGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            stepBottomGo.name = "Step_Bottom";
-            stepBottomGo.transform.SetParent(paddleGo.transform, false);
-            stepBottomGo.transform.localPosition = new Vector3(0f, -0.02f, 0f);
-            stepBottomGo.transform.localScale = new Vector3(0.44f, 0.16f, 0.72f);
-            if (paddleCoreMat != null) stepBottomGo.GetComponent<MeshRenderer>().sharedMaterial = paddleCoreMat;
-            Object.DestroyImmediate(stepBottomGo.GetComponent<Collider>());
-
-            var paddleCtrl = paddleGo.AddComponent<PaddleController>();
-            paddleCtrl.EnsureSteppedMeshHierarchy();
-            var laserCtrl = paddleGo.AddComponent<PaddleLaserController>();
-            var beamMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_LaserHyperBeam.mat");
-            if (beamMat != null)
+            // 7. Paddle Platform (PF_Paddle prefab with procedural fallback)
+            GameObject paddleGo;
+            PaddleController paddleCtrl;
+            var paddlePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Paddle/PF_Paddle.prefab");
+            if (paddlePrefab != null)
             {
-                var laserSo = new SerializedObject(laserCtrl);
-                laserSo.FindProperty("hyperBeamMaterialAsset").objectReferenceValue = beamMat;
-                laserSo.ApplyModifiedProperties();
+                paddleGo = (GameObject)PrefabUtility.InstantiatePrefab(paddlePrefab);
+                paddleGo.name = "Paddle";
+                paddleGo.transform.position = new Vector3(0f, -6.5f, 0f);
+                paddleCtrl = paddleGo.GetComponent<PaddleController>();
+                paddleCtrl.EnsureSteppedMeshHierarchy();
+            }
+            else
+            {
+                paddleGo = new GameObject("Paddle");
+                paddleGo.transform.position = new Vector3(0f, -6.5f, 0f);
+                paddleGo.transform.localScale = new Vector3(5.0f, 1.0f, 1.0f);
+
+                var paddleCol = paddleGo.AddComponent<BoxCollider>();
+                paddleCol.center = new Vector3(0f, 0.38f, 0f);
+                paddleCol.size = new Vector3(1.0f, 0.24f, 2.8f);
+                paddleCol.sharedMaterial = bounceMat;
+
+                var paddleRb = paddleGo.AddComponent<Rigidbody>();
+                paddleRb.isKinematic = true;
+                paddleRb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+
+                // Tier 1: Top Strike Deck (100% width, H = 0.24, Z = 1.0)
+                var stepTopGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                stepTopGo.name = "Step_Top";
+                stepTopGo.transform.SetParent(paddleGo.transform, false);
+                stepTopGo.transform.localPosition = new Vector3(0f, 0.38f, 0f);
+                stepTopGo.transform.localScale = new Vector3(1.0f, 0.24f, 1.0f);
+                if (paddleDeckMat != null) stepTopGo.GetComponent<MeshRenderer>().sharedMaterial = paddleDeckMat;
+                Object.DestroyImmediate(stepTopGo.GetComponent<Collider>());
+
+                // Tier 2: Mid Chassis (72% width, H = 0.20, Z = 0.88)
+                var stepMidGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                stepMidGo.name = "Step_Mid";
+                stepMidGo.transform.SetParent(paddleGo.transform, false);
+                stepMidGo.transform.localPosition = new Vector3(0f, 0.16f, 0f);
+                stepMidGo.transform.localScale = new Vector3(0.72f, 0.20f, 0.88f);
+                if (paddleMidMat != null) stepMidGo.GetComponent<MeshRenderer>().sharedMaterial = paddleMidMat;
+                Object.DestroyImmediate(stepMidGo.GetComponent<Collider>());
+
+                // Tier 3: Bottom Keel / Thrusters (44% width, H = 0.16, Z = 0.72)
+                var stepBottomGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                stepBottomGo.name = "Step_Bottom";
+                stepBottomGo.transform.SetParent(paddleGo.transform, false);
+                stepBottomGo.transform.localPosition = new Vector3(0f, -0.02f, 0f);
+                stepBottomGo.transform.localScale = new Vector3(0.44f, 0.16f, 0.72f);
+                if (paddleCoreMat != null) stepBottomGo.GetComponent<MeshRenderer>().sharedMaterial = paddleCoreMat;
+                Object.DestroyImmediate(stepBottomGo.GetComponent<Collider>());
+
+                paddleCtrl = paddleGo.AddComponent<PaddleController>();
+                paddleCtrl.EnsureSteppedMeshHierarchy();
+                var laserCtrl = paddleGo.AddComponent<PaddleLaserController>();
+                var beamMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_LaserHyperBeam.mat");
+                if (beamMat != null)
+                {
+                    var laserSo = new SerializedObject(laserCtrl);
+                    laserSo.FindProperty("hyperBeamMaterialAsset").objectReferenceValue = beamMat;
+                    laserSo.ApplyModifiedProperties();
+                }
             }
 
             // 8. Ball (Sphere) with Dual-Layer Trail

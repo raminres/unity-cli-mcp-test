@@ -22,6 +22,13 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float beamSurgeDuration = 0.65f; // Duration for beam to extend from paddle to arena ceiling
         [SerializeField] private Material hyperBeamMaterialAsset;
 
+        [Header("Modular Gun References")]
+        [SerializeField] private GameObject gunsRoot;
+        [SerializeField] private Transform muzzleLeft;
+        [SerializeField] private Transform muzzleRight;
+        [SerializeField] private GameObject laserGunRoot;
+        [SerializeField] private GameObject laserGunAperture;
+
         private PaddleController paddle;
         private bool isBlasterActive = false;
         private float blasterTimer = 0f;
@@ -45,9 +52,42 @@ namespace Arcade.BlockBreaker
         public float BeamSurgeDuration => beamSurgeDuration;
         public float CurrentBeamHeight => currentBeamHeight;
 
+        public GameObject GunsRoot => gunsRoot;
+        public Transform MuzzleLeft => muzzleLeft;
+        public Transform MuzzleRight => muzzleRight;
+        public GameObject LaserGunRoot => laserGunRoot;
+        public GameObject LaserGunAperture => laserGunAperture;
+
+        public void EnsureGunReferences()
+        {
+            if (paddle == null) paddle = GetComponent<PaddleController>();
+
+            if (gunsRoot == null)
+            {
+                gunsRoot = paddle != null && paddle.GunsRoot != null ? paddle.GunsRoot : transform.Find("guns")?.gameObject;
+            }
+            if (muzzleLeft == null && gunsRoot != null)
+            {
+                muzzleLeft = gunsRoot.transform.Find("Gun_Left/Muzzle_Left");
+            }
+            if (muzzleRight == null && gunsRoot != null)
+            {
+                muzzleRight = gunsRoot.transform.Find("Gun_Right/Muzzle_Right");
+            }
+            if (laserGunRoot == null)
+            {
+                laserGunRoot = paddle != null && paddle.LaserGunRoot != null ? paddle.LaserGunRoot : transform.Find("laser_gun")?.gameObject;
+            }
+            if (laserGunAperture == null && laserGunRoot != null)
+            {
+                laserGunAperture = laserGunRoot.transform.Find("Aperture")?.gameObject;
+            }
+        }
+
         private void Awake()
         {
             if (paddle == null) paddle = GetComponent<PaddleController>();
+            EnsureGunReferences();
             DeactivateAllWeapons();
         }
 
@@ -63,6 +103,7 @@ namespace Arcade.BlockBreaker
         private void Start()
         {
             if (paddle == null) paddle = GetComponent<PaddleController>();
+            EnsureGunReferences();
             if (ArcadeGameManager.Instance != null)
             {
                 ArcadeGameManager.Instance.OnStateChanged -= HandleGameStateChanged;
@@ -89,12 +130,21 @@ namespace Arcade.BlockBreaker
             isBlasterActive = true;
             blasterTimer = Mathf.Max(blasterTimer, duration);
             nextFireTime = 0f; // Fire immediately upon collection
+            EnsureGunReferences();
+            if (gunsRoot != null)
+            {
+                gunsRoot.SetActive(true);
+            }
         }
 
         public void DeactivateLaserBlaster()
         {
             isBlasterActive = false;
             blasterTimer = 0f;
+            if (gunsRoot != null)
+            {
+                gunsRoot.SetActive(false);
+            }
         }
 
         public void DeactivateHyperBeam()
@@ -106,6 +156,10 @@ namespace Arcade.BlockBreaker
             if (hyperBeamObject != null)
             {
                 hyperBeamObject.SetActive(false);
+            }
+            if (laserGunRoot != null)
+            {
+                laserGunRoot.SetActive(false);
             }
         }
 
@@ -121,6 +175,12 @@ namespace Arcade.BlockBreaker
             hyperBeamTimer = duration > 0f ? duration : hyperBeamDuration;
             beamSurgeProgress = 0f;
             currentBeamHeight = 0.5f;
+
+            EnsureGunReferences();
+            if (laserGunRoot != null)
+            {
+                laserGunRoot.SetActive(true);
+            }
 
             EnsureHyperBeamObject();
             UpdateHyperBeamPosition(currentBeamHeight);
@@ -197,12 +257,24 @@ namespace Arcade.BlockBreaker
 
         private void FireTwinBlasters()
         {
-            if (paddle == null) paddle = GetComponent<PaddleController>();
-            float halfWidth = paddle != null ? paddle.Width * 0.5f * mountSpacingRatio : 1.2f;
-            Vector3 center = transform.position;
+            EnsureGunReferences();
 
-            Vector3 leftSpawn = new Vector3(center.x - halfWidth, center.y + 0.45f, 0f);
-            Vector3 rightSpawn = new Vector3(center.x + halfWidth, center.y + 0.45f, 0f);
+            Vector3 leftSpawn;
+            Vector3 rightSpawn;
+
+            if (muzzleLeft != null && muzzleRight != null)
+            {
+                leftSpawn = muzzleLeft.position;
+                rightSpawn = muzzleRight.position;
+            }
+            else
+            {
+                if (paddle == null) paddle = GetComponent<PaddleController>();
+                float halfWidth = paddle != null ? paddle.Width * 0.5f * mountSpacingRatio : 1.2f;
+                Vector3 center = transform.position;
+                leftSpawn = new Vector3(center.x - halfWidth, center.y + 0.45f, 0f);
+                rightSpawn = new Vector3(center.x + halfWidth, center.y + 0.45f, 0f);
+            }
 
             LaserBolt.Spawn(leftSpawn);
             LaserBolt.Spawn(rightSpawn);
@@ -215,6 +287,15 @@ namespace Arcade.BlockBreaker
 
         private void EnsureHyperBeamObject()
         {
+            if (hyperBeamObject == null && laserGunRoot != null)
+            {
+                var childBeam = laserGunRoot.transform.Find("VFX_Railgun_HyperBeam");
+                if (childBeam != null)
+                {
+                    hyperBeamObject = childBeam.gameObject;
+                }
+            }
+
             if (hyperBeamObject != null)
             {
                 var filter = hyperBeamObject.GetComponent<MeshFilter>();
@@ -229,7 +310,8 @@ namespace Arcade.BlockBreaker
             {
                 hyperBeamObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 hyperBeamObject.name = "VFX_Railgun_HyperBeam";
-                hyperBeamObject.transform.SetParent(transform);
+                Transform parent = laserGunRoot != null ? laserGunRoot.transform : transform;
+                hyperBeamObject.transform.SetParent(parent, false);
 
                 // Disable default collider so ball doesn't bounce off beam mesh
                 var col = hyperBeamObject.GetComponent<Collider>();
