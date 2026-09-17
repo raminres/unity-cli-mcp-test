@@ -2553,7 +2553,7 @@ namespace Arcade.Tests
         public void BallTrail_Initialization_CreatesDualLayerRenderers()
         {
             var ballObj = new GameObject("TestBall");
-            var trail = ballObj.AddComponent<BallTrail>();
+            var trail = ballObj.AddComponent<BallController>();
             trail.EnsureTrailsCreated();
 
             Assert.IsNotNull(trail.OuterTrail, "Outer trail renderer must be created.");
@@ -2570,7 +2570,7 @@ namespace Arcade.Tests
         public void BallTrail_TaperingCurves_WidthTapersToZero()
         {
             var ballObj = new GameObject("TestBall");
-            var trail = ballObj.AddComponent<BallTrail>();
+            var trail = ballObj.AddComponent<BallController>();
             trail.EnsureTrailsCreated();
 
             AnimationCurve outerCurve = trail.OuterTrail.widthCurve;
@@ -2589,7 +2589,7 @@ namespace Arcade.Tests
         public void BallTrail_SetTrailColor_CalculatesDualLightnessLevelsCorrectly()
         {
             var ballObj = new GameObject("TestBall");
-            var trail = ballObj.AddComponent<BallTrail>();
+            var trail = ballObj.AddComponent<BallController>();
             Color testColor = new Color(0f, 0.8f, 1f, 1f);
             trail.SetTrailColor(testColor);
 

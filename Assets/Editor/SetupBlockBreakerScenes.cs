@@ -550,16 +550,10 @@ namespace Arcade.Editor
                 ballRb.collisionDetectionMode = CollisionDetectionMode.Continuous;
                 ballRb.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
                 
-                var ballTrail = ballGo.AddComponent<BallTrail>();
-                if (trailMat != null)
-                {
-                    ballTrail.Initialize(trailMat, new Color(0f, 0.95f, 1f, 1f));
-                }
                 ballCtrl = ballGo.AddComponent<BallController>();
 
                 var bSo = new SerializedObject(ballCtrl);
                 bSo.FindProperty("rb").objectReferenceValue = ballRb;
-                bSo.FindProperty("ballTrail").objectReferenceValue = ballTrail;
                 bSo.ApplyModifiedProperties();
             }
 

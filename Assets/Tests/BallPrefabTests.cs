@@ -39,15 +39,14 @@ namespace Arcade.Tests
             Assert.IsTrue((rb.constraints & RigidbodyConstraints.FreezePositionZ) != 0, "Must freeze position Z.");
             Assert.IsTrue((rb.constraints & RigidbodyConstraints.FreezeRotation) != 0, "Must freeze rotation.");
 
-            // BallTrail & BallController
-            var trail = go.GetComponent<BallTrail>();
-            Assert.IsNotNull(trail, "Root must have BallTrail component.");
-
+            // BallController with modular & trail wiring
             var ctrl = go.GetComponent<BallController>();
             Assert.IsNotNull(ctrl, "Root must have BallController component.");
             Assert.IsNotNull(ctrl.ModelChild, "BallController.ModelChild must be linked.");
             Assert.IsNotNull(ctrl.TrailChild, "BallController.TrailChild must be linked.");
             Assert.IsNotNull(ctrl.VfxChild, "BallController.VfxChild must be linked.");
+            Assert.IsNotNull(ctrl.OuterTrail, "BallController.OuterTrail must be linked.");
+            Assert.IsNotNull(ctrl.InnerTrail, "BallController.InnerTrail must be linked.");
         }
 
         [Test]

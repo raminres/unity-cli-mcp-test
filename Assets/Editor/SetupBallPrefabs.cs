@@ -90,23 +90,23 @@ namespace Arcade.Editor
             vfxGo.transform.localScale = Vector3.one;
             vfxGo.SetActive(false);
 
-            // 5. Setup BallTrail on Root
-            var ballTrail = rootGo.AddComponent<BallTrail>();
-            var trailSo = new SerializedObject(ballTrail);
-            if (matTrail != null) trailSo.FindProperty("trailMaterial").objectReferenceValue = matTrail;
-            trailSo.FindProperty("outerTrail").objectReferenceValue = outerTr;
-            trailSo.FindProperty("innerTrail").objectReferenceValue = innerTr;
-            trailSo.ApplyModifiedProperties();
-            ballTrail.EnsureTrailsCreated();
+            if (matTrail != null)
+            {
+                outerTr.sharedMaterial = matTrail;
+                innerTr.sharedMaterial = matTrail;
+            }
+            ConfigureTrailRenderer(outerTr, 0.22f, 0.55f);
+            ConfigureTrailRenderer(innerTr, 0.16f, 0.25f);
 
-            // 6. Setup BallController on Root
+            // 5. Setup BallController on Root
             var ballCtrl = rootGo.AddComponent<BallController>();
             var ballSo = new SerializedObject(ballCtrl);
             ballSo.FindProperty("rb").objectReferenceValue = rb;
-            ballSo.FindProperty("ballTrail").objectReferenceValue = ballTrail;
             ballSo.FindProperty("modelChild").objectReferenceValue = modelGo;
             ballSo.FindProperty("trailChild").objectReferenceValue = trailGo;
             ballSo.FindProperty("vfxChild").objectReferenceValue = vfxGo;
+            ballSo.FindProperty("outerTrail").objectReferenceValue = outerTr;
+            ballSo.FindProperty("innerTrail").objectReferenceValue = innerTr;
             ballSo.ApplyModifiedProperties();
 
             // Save Prefab
@@ -116,6 +116,21 @@ namespace Arcade.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("<color=green>Standard Ball prefab (PF_Ball_Standard) successfully generated at " + BALL_PREFAB_PATH + "!</color>");
+        }
+
+        private static void ConfigureTrailRenderer(TrailRenderer tr, float time, float startWidth)
+        {
+            tr.time = time;
+            tr.minVertexDistance = 0.05f;
+            tr.numCornerVertices = 4;
+            tr.numCapVertices = 4;
+            tr.alignment = LineAlignment.View;
+            tr.generateLightingData = false;
+            tr.shadowCastingMode = ShadowCastingMode.Off;
+            tr.receiveShadows = false;
+            tr.autodestruct = false;
+            tr.emitting = false;
+            tr.widthCurve = new AnimationCurve(new Keyframe(0f, startWidth, 0f, -startWidth * 1.5f), new Keyframe(1f, 0f, 0f, 0f));
         }
     }
 }

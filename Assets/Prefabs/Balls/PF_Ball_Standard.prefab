@@ -202,8 +202,8 @@ TrailRenderer:
       m_RotationOrder: 4
     colorGradient:
       serializedVersion: 2
-      key0: {r: 0, g: 0.95, b: 1, a: 0.4}
-      key1: {r: 0, g: 0.95, b: 1, a: 0}
+      key0: {r: 1, g: 1, b: 1, a: 1}
+      key1: {r: 1, g: 1, b: 1, a: 1}
       key2: {r: 0, g: 0, b: 0, a: 0}
       key3: {r: 0, g: 0, b: 0, a: 0}
       key4: {r: 0, g: 0, b: 0, a: 0}
@@ -386,8 +386,8 @@ TrailRenderer:
       m_RotationOrder: 4
     colorGradient:
       serializedVersion: 2
-      key0: {r: 0.65, g: 0.9825, b: 1, a: 0.85}
-      key1: {r: 0, g: 0.95, b: 1, a: 0}
+      key0: {r: 1, g: 1, b: 1, a: 1}
+      key1: {r: 1, g: 1, b: 1, a: 1}
       key2: {r: 0, g: 0, b: 0, a: 0}
       key3: {r: 0, g: 0, b: 0, a: 0}
       key4: {r: 0, g: 0, b: 0, a: 0}
@@ -436,7 +436,6 @@ GameObject:
   - component: {fileID: 2798616286514412987}
   - component: {fileID: 1879473359654685989}
   - component: {fileID: 2033227606406296100}
-  - component: {fileID: 8692806980000696816}
   - component: {fileID: 7505005970692223064}
   m_Layer: 0
   m_Name: PF_Ball_Standard
@@ -511,29 +510,6 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 120
   m_CollisionDetection: 1
---- !u!114 &8692806980000696816
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7580956640486165205}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8fd85b1470d29e44b8c345d1d82dc0a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Arcade.Gameplay::Arcade.BlockBreaker.BallTrail
-  trailMaterial: {fileID: 2100000, guid: f08c16f0d9a857e4da53748b03d3c935, type: 2}
-  baseColor: {r: 0, g: 0.95, b: 1, a: 1}
-  outerStartWidth: 0.55
-  innerStartWidth: 0.25
-  outerDuration: 0.22
-  innerDuration: 0.16
-  outerStartAlpha: 0.4
-  innerStartAlpha: 0.85
-  innerLightnessBlend: 0.65
-  outerTrail: {fileID: 8775480354748853578}
-  innerTrail: {fileID: 5560774656402366603}
 --- !u!114 &7505005970692223064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -553,11 +529,12 @@ MonoBehaviour:
   maxDeflectionAngleDegrees: 60
   paddle: {fileID: 0}
   rb: {fileID: 2033227606406296100}
-  ballTrail: {fileID: 8692806980000696816}
   primaryBallColor: {r: 0, g: 0.95, b: 1, a: 1}
   modelChild: {fileID: 2947404299712274877}
   trailChild: {fileID: 6004793039468928296}
   vfxChild: {fileID: 8320773101051886243}
+  outerTrail: {fileID: 8775480354748853578}
+  innerTrail: {fileID: 5560774656402366603}
   speedRampInterval: 10
   speedRampStepMultiplier: 0.08
   minVerticalAngleDeg: 20
