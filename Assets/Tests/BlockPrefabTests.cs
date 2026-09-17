@@ -28,16 +28,45 @@ namespace Arcade.Tests
         }
 
         [Test]
-        public void BlockPrefab_Base_HasRequiredComponents()
+        public void BlockPrefab_HasModularChildHierarchy()
         {
-            var go = AssetDatabase.LoadAssetAtPath<GameObject>(BasePrefabPath);
-            Assert.IsNotNull(go.GetComponent<BoxCollider>(), "Base block must have a BoxCollider.");
-            Assert.IsNotNull(go.GetComponent<MeshFilter>(), "Base block must have a MeshFilter.");
-            Assert.IsNotNull(go.GetComponent<MeshRenderer>(), "Base block must have a MeshRenderer.");
+            string[] prefabPaths = { BasePrefabPath, RedPrefabPath, GreenPrefabPath, BluePrefabPath, BombPrefabPath, GlassPrefabPath };
 
-            var block = go.GetComponent<Block>();
-            Assert.IsNotNull(block, "Base block must have a Block component.");
-            Assert.AreEqual(1, block.HitPoints, "Base block default hitpoints should be 1.");
+            foreach (var path in prefabPaths)
+            {
+                var root = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                Assert.IsNotNull(root, $"Prefab at {path} should load.");
+
+                // Root should have BoxCollider & Block component
+                Assert.IsNotNull(root.GetComponent<BoxCollider>(), $"{path} root must have BoxCollider.");
+                var block = root.GetComponent<Block>();
+                Assert.IsNotNull(block, $"{path} root must have Block component.");
+
+                // 4 Modular Child Objects
+                var brick = root.transform.Find("brick");
+                Assert.IsNotNull(brick, $"{path} must have child 'brick' (3D model).");
+                Assert.IsNotNull(brick.GetComponent<MeshFilter>(), $"{path} child 'brick' must have MeshFilter.");
+                Assert.IsNotNull(brick.GetComponent<MeshRenderer>(), $"{path} child 'brick' must have MeshRenderer.");
+
+                var frost = root.transform.Find("brick frost");
+                Assert.IsNotNull(frost, $"{path} must have child 'brick frost' (3D model).");
+                Assert.IsNotNull(frost.GetComponent<MeshFilter>(), $"{path} child 'brick frost' must have MeshFilter.");
+                Assert.IsNotNull(frost.GetComponent<MeshRenderer>(), $"{path} child 'brick frost' must have MeshRenderer.");
+
+                var special = root.transform.Find("brick special");
+                Assert.IsNotNull(special, $"{path} must have child 'brick special' (UI/sprite element).");
+                Assert.IsNotNull(special.GetComponent<PanelRenderer>(), $"{path} child 'brick special' must have PanelRenderer.");
+                Assert.IsNotNull(special.GetComponent<BlockBadge>(), $"{path} child 'brick special' must have BlockBadge.");
+
+                var vfx = root.transform.Find("brick vfx");
+                Assert.IsNotNull(vfx, $"{path} must have child 'brick vfx' (VFX anchor).");
+
+                // Modular property binding
+                Assert.AreEqual(brick.gameObject, block.BrickModel, $"{path} block.BrickModel must point to 'brick'.");
+                Assert.AreEqual(frost.gameObject, block.BrickFrost, $"{path} block.BrickFrost must point to 'brick frost'.");
+                Assert.AreEqual(special.gameObject, block.BrickSpecial, $"{path} block.BrickSpecial must point to 'brick special'.");
+                Assert.AreEqual(vfx.gameObject, block.BrickVfx, $"{path} block.BrickVfx must point to 'brick vfx'.");
+            }
         }
 
         [Test]
@@ -47,45 +76,43 @@ namespace Arcade.Tests
             var redBlock = redGo.GetComponent<Block>();
             Assert.AreEqual(BlockColorTier.Red, redBlock.Tier);
             Assert.AreEqual(10, redBlock.Points);
-            Assert.IsTrue(redGo.GetComponent<MeshRenderer>().sharedMaterial.name.Contains("MI_Block_Red"));
+            Assert.IsTrue(redGo.transform.Find("brick").GetComponent<MeshRenderer>().sharedMaterial.name.Contains("MI_Block_Red"));
             Assert.IsTrue(PrefabUtility.IsPartOfVariantPrefab(redGo), "PF_Block_Red must be a Prefab Variant.");
 
             var greenGo = AssetDatabase.LoadAssetAtPath<GameObject>(GreenPrefabPath);
             var greenBlock = greenGo.GetComponent<Block>();
             Assert.AreEqual(BlockColorTier.Green, greenBlock.Tier);
             Assert.AreEqual(20, greenBlock.Points);
-            Assert.IsTrue(greenGo.GetComponent<MeshRenderer>().sharedMaterial.name.Contains("MI_Block_Green"));
+            Assert.IsTrue(greenGo.transform.Find("brick").GetComponent<MeshRenderer>().sharedMaterial.name.Contains("MI_Block_Green"));
             Assert.IsTrue(PrefabUtility.IsPartOfVariantPrefab(greenGo), "PF_Block_Green must be a Prefab Variant.");
 
             var blueGo = AssetDatabase.LoadAssetAtPath<GameObject>(BluePrefabPath);
             var blueBlock = blueGo.GetComponent<Block>();
             Assert.AreEqual(BlockColorTier.Blue, blueBlock.Tier);
             Assert.AreEqual(30, blueBlock.Points);
-            Assert.IsTrue(blueGo.GetComponent<MeshRenderer>().sharedMaterial.name.Contains("MI_Block_Blue"));
+            Assert.IsTrue(blueGo.transform.Find("brick").GetComponent<MeshRenderer>().sharedMaterial.name.Contains("MI_Block_Blue"));
             Assert.IsTrue(PrefabUtility.IsPartOfVariantPrefab(blueGo), "PF_Block_Blue must be a Prefab Variant.");
         }
 
         [Test]
-        public void BlockPrefab_Bomb_HasBadgeAndBombSpecialType()
+        public void BlockPrefab_Bomb_ConfiguredCorrectly()
         {
             var bombGo = AssetDatabase.LoadAssetAtPath<GameObject>(BombPrefabPath);
             var bombBlock = bombGo.GetComponent<Block>();
             Assert.AreEqual(BlockSpecialType.Bomb, bombBlock.SpecialType);
             Assert.IsTrue(PrefabUtility.IsPartOfVariantPrefab(bombGo), "PF_Block_Bomb must be a Prefab Variant.");
 
-            var badgeTransform = bombGo.transform.Find("UI_Badge");
-            Assert.IsNotNull(badgeTransform, "PF_Block_Bomb must have a UI_Badge child GameObject.");
+            var specialTransform = bombGo.transform.Find("brick special");
+            Assert.IsNotNull(specialTransform, "PF_Block_Bomb must have a 'brick special' child.");
+            Assert.IsTrue(specialTransform.gameObject.activeSelf, "'brick special' must be active on PF_Block_Bomb.");
 
-            var badge = badgeTransform.GetComponent<BlockBadge>();
-            Assert.IsNotNull(badge, "UI_Badge must have a BlockBadge component.");
+            var badge = specialTransform.GetComponent<BlockBadge>();
+            Assert.IsNotNull(badge, "'brick special' must have a BlockBadge component.");
             Assert.AreEqual(BlockSpecialType.Bomb, badge.SpecialType);
-
-            var panelRenderer = badgeTransform.GetComponent<PanelRenderer>();
-            Assert.IsNotNull(panelRenderer, "UI_Badge must have a PanelRenderer component.");
         }
 
         [Test]
-        public void BlockPrefab_Glass_HasGlassShellAndProperties()
+        public void BlockPrefab_Glass_ConfiguredCorrectly()
         {
             var glassGo = AssetDatabase.LoadAssetAtPath<GameObject>(GlassPrefabPath);
             var glassBlock = glassGo.GetComponent<Block>();
@@ -94,15 +121,16 @@ namespace Arcade.Tests
             Assert.AreEqual(2, glassBlock.ScoreMultiplier, "Glass block must have 2x multiplier.");
             Assert.IsTrue(PrefabUtility.IsPartOfVariantPrefab(glassGo), "PF_Block_Glass must be a Prefab Variant.");
 
-            var shellTransform = glassGo.transform.Find("Glass_Shell");
-            Assert.IsNotNull(shellTransform, "PF_Block_Glass must have a Glass_Shell child GameObject.");
+            var frostTransform = glassGo.transform.Find("brick frost");
+            Assert.IsNotNull(frostTransform, "PF_Block_Glass must have a 'brick frost' child GameObject.");
+            Assert.IsTrue(frostTransform.gameObject.activeSelf, "'brick frost' must be active on PF_Block_Glass.");
 
-            var shellRenderer = shellTransform.GetComponent<MeshRenderer>();
-            Assert.IsNotNull(shellRenderer, "Glass_Shell must have a MeshRenderer.");
-            Assert.IsTrue(shellRenderer.sharedMaterial.name.Contains("MI_Block_Glass"));
+            var frostRenderer = frostTransform.GetComponent<MeshRenderer>();
+            Assert.IsNotNull(frostRenderer, "'brick frost' must have a MeshRenderer.");
+            Assert.IsTrue(frostRenderer.sharedMaterial.name.Contains("MI_Block_Glass"));
 
-            Assert.IsNull(shellTransform.GetComponent<Collider>(), "Glass_Shell should not have its own collider (root has collider).");
-            Assert.AreEqual(shellTransform.gameObject, glassBlock.GlassShell, "glassBlock.GlassShell must reference the Glass_Shell child.");
+            Assert.IsNull(frostTransform.GetComponent<Collider>(), "'brick frost' should not have its own collider (root has collider).");
+            Assert.AreEqual(frostTransform.gameObject, glassBlock.GlassShell, "glassBlock.GlassShell must reference the 'brick frost' child.");
         }
     }
 }

@@ -28,6 +28,10 @@ PrefabInstance:
       propertyPath: particleColor.r
       value: 0.15
       objectReference: {fileID: 0}
+    - target: {fileID: 2874734244421668917, guid: ed1d569fdd5f9f1459a3ff3dcecd53b1, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: a1c7a04e981c8004d9ace0f4051923b8, type: 2}
     - target: {fileID: 2971545234244067410, guid: ed1d569fdd5f9f1459a3ff3dcecd53b1, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -68,10 +72,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3159686473035888717, guid: ed1d569fdd5f9f1459a3ff3dcecd53b1, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: a1c7a04e981c8004d9ace0f4051923b8, type: 2}
     - target: {fileID: 7792085152627540214, guid: ed1d569fdd5f9f1459a3ff3dcecd53b1, type: 3}
       propertyPath: m_Name
       value: PF_Block_Blue

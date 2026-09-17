@@ -31,6 +31,12 @@ namespace Arcade.BlockBreaker
         [SerializeField] private MeshRenderer meshRenderer;
         [SerializeField] private GameObject glassShell;
 
+        [Header("Modular Child References")]
+        [SerializeField] private GameObject brickModel;
+        [SerializeField] private GameObject brickFrost;
+        [SerializeField] private GameObject brickSpecial;
+        [SerializeField] private GameObject brickVfx;
+
         private bool isDestroyed = false;
         private bool isFrozen = false;
         private int requiredDefrostHits = 0;
@@ -47,14 +53,60 @@ namespace Arcade.BlockBreaker
         public int RequiredDefrostHits => requiredDefrostHits;
         public GameObject GlassShell => glassShell;
 
+        public GameObject BrickModel => brickModel;
+        public GameObject BrickFrost => brickFrost;
+        public GameObject BrickSpecial => brickSpecial;
+        public GameObject BrickVfx => brickVfx;
+
         private void Awake()
         {
-            if (meshRenderer == null) meshRenderer = GetComponent<MeshRenderer>();
+            ResolveModularChildren();
+        }
+
+        public void ResolveModularChildren()
+        {
+            if (brickModel == null)
+            {
+                var t = transform.Find("brick");
+                if (t != null) brickModel = t.gameObject;
+            }
+            if (brickFrost == null)
+            {
+                var t = transform.Find("brick frost");
+                if (t != null) brickFrost = t.gameObject;
+            }
+            if (brickSpecial == null)
+            {
+                var t = transform.Find("brick special");
+                if (t != null) brickSpecial = t.gameObject;
+            }
+            if (brickVfx == null)
+            {
+                var t = transform.Find("brick vfx");
+                if (t != null) brickVfx = t.gameObject;
+            }
+
+            if (meshRenderer == null && brickModel != null)
+            {
+                meshRenderer = brickModel.GetComponent<MeshRenderer>();
+            }
+            if (meshRenderer == null)
+            {
+                meshRenderer = GetComponent<MeshRenderer>() ?? GetComponentInChildren<MeshRenderer>();
+            }
+            if (glassShell == null && brickFrost != null && specialType == BlockSpecialType.GlassEnclosed)
+            {
+                glassShell = brickFrost;
+            }
         }
 
         public void SetGlassShell(GameObject shell)
         {
             glassShell = shell;
+            if (brickFrost == null && shell != null && shell.name == "brick frost")
+            {
+                brickFrost = shell;
+            }
         }
 
         public void Freeze(int defrostHits = 1)
@@ -63,7 +115,11 @@ namespace Arcade.BlockBreaker
             isFrozen = true;
             requiredDefrostHits = defrostHits;
 
-            if (meshRenderer != null)
+            if (brickFrost != null)
+            {
+                brickFrost.SetActive(true);
+            }
+            else if (meshRenderer != null)
             {
                 if (originalMaterial == null) originalMaterial = meshRenderer.sharedMaterial;
                 var propBlock = new MaterialPropertyBlock();
@@ -78,25 +134,43 @@ namespace Arcade.BlockBreaker
         {
             isFrozen = false;
             requiredDefrostHits = 0;
-            if (meshRenderer != null)
+
+            if (brickFrost != null)
+            {
+                brickFrost.SetActive(false);
+            }
+            else if (meshRenderer != null)
             {
                 meshRenderer.SetPropertyBlock(null);
                 if (originalMaterial != null) meshRenderer.sharedMaterial = originalMaterial;
             }
 
-            // Remove badge icon so the frozen icon disappears on the first hit
-            var badge = GetComponentInChildren<BlockBadge>();
-            if (badge != null)
+            // Remove or deactivate badge icon so the frozen icon disappears on the first hit
+            if (brickSpecial != null)
             {
-                if (Application.isPlaying)
-                    Destroy(badge.gameObject);
-                else
-                    DestroyImmediate(badge.gameObject);
+                var badge = brickSpecial.GetComponent<BlockBadge>();
+                if (badge != null && badge.SpecialType == BlockSpecialType.BrickFreezer)
+                {
+                    brickSpecial.SetActive(false);
+                }
+            }
+            else
+            {
+                var badge = GetComponentInChildren<BlockBadge>();
+                if (badge != null)
+                {
+                    if (Application.isPlaying)
+                        Destroy(badge.gameObject);
+                    else
+                        DestroyImmediate(badge.gameObject);
+                }
             }
         }
 
         public void Initialize(BlockColorTier tier, Material material, Color vfxColor, BlockSpecialType special = BlockSpecialType.Normal)
         {
+            ResolveModularChildren();
+
             colorTier = tier;
             particleColor = vfxColor;
             specialType = special;
@@ -189,12 +263,24 @@ namespace Arcade.BlockBreaker
         {
             if (glassShell != null)
             {
-                if (Application.isPlaying)
-                    Destroy(glassShell);
+                if (glassShell == brickFrost)
+                {
+                    brickFrost.SetActive(false);
+                    glassShell = null;
+                }
                 else
-                    DestroyImmediate(glassShell);
+                {
+                    if (Application.isPlaying)
+                        Destroy(glassShell);
+                    else
+                        DestroyImmediate(glassShell);
 
-                glassShell = null;
+                    glassShell = null;
+                }
+            }
+            else if (brickFrost != null && brickFrost.activeSelf)
+            {
+                brickFrost.SetActive(false);
             }
 
             if (ArcadeAudioManager.Instance != null)
