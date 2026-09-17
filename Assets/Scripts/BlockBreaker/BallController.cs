@@ -20,8 +20,45 @@ namespace Arcade.BlockBreaker
         [Header("References")]
         [SerializeField] private PaddleController paddle;
         [SerializeField] private Rigidbody rb;
-        [SerializeField] private BallTrail ballTrail;
         [SerializeField] private Color primaryBallColor = new Color(0f, 0.95f, 1f, 1f); // Electric Cyan
+
+        [Header("Modular Prefab Hierarchy")]
+        [SerializeField] private GameObject modelChild;
+        [SerializeField] private GameObject trailChild;
+        [SerializeField] private GameObject vfxChild;
+
+        [Header("Trail Settings")]
+        [SerializeField] private TrailRenderer outerTrail;
+        [SerializeField] private TrailRenderer innerTrail;
+        private Color currentTrailColor = new Color(0f, 0.95f, 1f, 1f);
+
+        public GameObject ModelChild => modelChild;
+        public GameObject TrailChild => trailChild;
+        public GameObject VfxChild => vfxChild;
+        public TrailRenderer OuterTrail
+        {
+            get
+            {
+                if (outerTrail == null) EnsureTrails();
+                return outerTrail;
+            }
+        }
+        public TrailRenderer InnerTrail
+        {
+            get
+            {
+                if (innerTrail == null) EnsureTrails();
+                return innerTrail;
+            }
+        }
+        public Color TrailColor => currentTrailColor;
+        public Color BaseColor => currentTrailColor;
+        public Color InnerCoreColor => Color.Lerp(currentTrailColor, Color.white, 0.65f);
+        public float OuterStartWidth => 0.55f;
+        public float InnerStartWidth => 0.25f;
+        public float OuterDuration => 0.22f;
+        public float InnerDuration => 0.16f;
+        public BallController Trail => this;
 
         [Header("Dynamic Volley Pacing")]
         [SerializeField] private float speedRampInterval = 10f; // Seconds between speed boosts during volley
@@ -142,7 +179,6 @@ namespace Arcade.BlockBreaker
             return 5;
         }
 
-        public BallTrail Trail => ballTrail != null ? ballTrail : (ballTrail = GetComponent<BallTrail>() ?? gameObject.AddComponent<BallTrail>());
         public bool IsPrimaryBall
         {
             get => isPrimaryBall;
@@ -160,17 +196,97 @@ namespace Arcade.BlockBreaker
 
             currentSpeed = baseSpeed;
 
-            if (ballTrail == null)
-            {
-                ballTrail = GetComponent<BallTrail>() ?? gameObject.AddComponent<BallTrail>();
-            }
-
-            ballRenderer = GetComponent<Renderer>();
+            EnsureModularChildren();
+            EnsureTrails();
+            SetEmitting(false);
+            ResolveRenderer();
             propBlock = new MaterialPropertyBlock();
 
             if (isPrimaryBall)
             {
                 SetTrailColor(primaryBallColor);
+            }
+        }
+
+        public void EnsureModularChildren()
+        {
+            if (modelChild == null)
+            {
+                Transform m = transform.Find("model");
+                if (m != null) modelChild = m.gameObject;
+            }
+            if (trailChild == null)
+            {
+                Transform t = transform.Find("trail");
+                if (t != null) trailChild = t.gameObject;
+            }
+            if (vfxChild == null)
+            {
+                Transform v = transform.Find("vfx");
+                if (v != null) vfxChild = v.gameObject;
+            }
+        }
+
+        public void EnsureTrailsCreated() => EnsureTrails();
+
+        public void EnsureTrails()
+        {
+            EnsureModularChildren();
+            if (outerTrail == null)
+            {
+                Transform ot = transform.Find("trail/Trail_Outer") ?? transform.Find("Trail_Outer");
+                if (ot != null) outerTrail = ot.GetComponent<TrailRenderer>();
+                if (outerTrail == null)
+                {
+                    Transform parent = trailChild != null ? trailChild.transform : transform;
+                    GameObject outerObj = new GameObject("Trail_Outer");
+                    outerObj.transform.SetParent(parent, false);
+                    outerObj.transform.localPosition = Vector3.zero;
+                    outerTrail = outerObj.AddComponent<TrailRenderer>();
+                    ConfigureDefaultTrail(outerTrail, OuterDuration, OuterStartWidth);
+                }
+            }
+            if (innerTrail == null)
+            {
+                Transform it = transform.Find("trail/Trail_Inner") ?? transform.Find("Trail_Inner");
+                if (it != null) innerTrail = it.GetComponent<TrailRenderer>();
+                if (innerTrail == null)
+                {
+                    Transform parent = trailChild != null ? trailChild.transform : transform;
+                    GameObject innerObj = new GameObject("Trail_Inner");
+                    innerObj.transform.SetParent(parent, false);
+                    innerObj.transform.localPosition = Vector3.zero;
+                    innerTrail = innerObj.AddComponent<TrailRenderer>();
+                    ConfigureDefaultTrail(innerTrail, InnerDuration, InnerStartWidth);
+                }
+            }
+        }
+
+        private static void ConfigureDefaultTrail(TrailRenderer tr, float duration, float startWidth)
+        {
+            if (tr == null) return;
+            tr.time = duration;
+            tr.minVertexDistance = 0.05f;
+            tr.numCornerVertices = 4;
+            tr.numCapVertices = 4;
+            tr.alignment = LineAlignment.View;
+            tr.generateLightingData = false;
+            tr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            tr.receiveShadows = false;
+            tr.autodestruct = false;
+            tr.emitting = false;
+            tr.widthCurve = new AnimationCurve(new Keyframe(0f, startWidth, 0f, -startWidth * 1.5f), new Keyframe(1f, 0f, 0f, 0f));
+        }
+
+        private void ResolveRenderer()
+        {
+            if (ballRenderer == null && modelChild != null)
+            {
+                ballRenderer = modelChild.GetComponent<Renderer>();
+            }
+            if (ballRenderer == null)
+            {
+                ballRenderer = GetComponent<Renderer>() ?? GetComponentInChildren<Renderer>();
             }
         }
 
@@ -359,16 +475,53 @@ namespace Arcade.BlockBreaker
 
         public void SetTrailColor(Color color)
         {
-            if (Trail != null)
-            {
-                Trail.SetTrailColor(color);
-            }
+            currentTrailColor = color;
+            UpdateTrailGradients(color);
             ApplyBallColor(color);
+        }
+
+        private void UpdateTrailGradients(Color color)
+        {
+            if (outerTrail == null || innerTrail == null) EnsureTrails();
+
+            if (outerTrail != null)
+            {
+                Gradient outerGrad = new Gradient();
+                outerGrad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(color, 0f), new GradientColorKey(color, 1f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(0.40f, 0f), new GradientAlphaKey(0f, 1f) }
+                );
+                outerTrail.colorGradient = outerGrad;
+            }
+
+            if (innerTrail != null)
+            {
+                Color innerColor = Color.Lerp(color, Color.white, 0.65f);
+                Gradient innerGrad = new Gradient();
+                innerGrad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(innerColor, 0f), new GradientColorKey(color, 1f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(0.85f, 0f), new GradientAlphaKey(0f, 1f) }
+                );
+                innerTrail.colorGradient = innerGrad;
+            }
+        }
+
+        public void SetEmitting(bool emitting)
+        {
+            if (outerTrail == null || innerTrail == null) EnsureTrails();
+            if (outerTrail != null) outerTrail.emitting = emitting;
+            if (innerTrail != null) innerTrail.emitting = emitting;
+        }
+
+        public void Clear()
+        {
+            if (outerTrail != null) outerTrail.Clear();
+            if (innerTrail != null) innerTrail.Clear();
         }
 
         private void ApplyBallColor(Color color)
         {
-            if (ballRenderer == null) ballRenderer = GetComponent<Renderer>();
+            if (ballRenderer == null) ResolveRenderer();
             if (ballRenderer != null)
             {
                 if (propBlock == null) propBlock = new MaterialPropertyBlock();
@@ -399,25 +552,22 @@ namespace Arcade.BlockBreaker
                 transform.position = new Vector3(paddlePos.x, paddlePos.y + launchYOffset, 0f);
             }
 
-            if (Trail != null)
-            {
-                Trail.SetEmitting(false);
-                Trail.Clear();
-            }
+            SetEmitting(false);
+            Clear();
         }
 
         public void SetBallActive(bool active)
         {
-            var rend = GetComponent<Renderer>();
-            if (rend != null) rend.enabled = active;
+            if (ballRenderer == null) ResolveRenderer();
+            if (ballRenderer != null) ballRenderer.enabled = active;
 
             var col = GetComponent<Collider>();
             if (col != null) col.enabled = active;
 
-            if (Trail != null && !active)
+            if (!active)
             {
-                Trail.SetEmitting(false);
-                Trail.Clear();
+                SetEmitting(false);
+                Clear();
             }
         }
 
@@ -453,11 +603,8 @@ namespace Arcade.BlockBreaker
             currentVolleyStreak = 0;
             currentSpeed = baseSpeed;
 
-            if (Trail != null)
-            {
-                Trail.Clear();
-                Trail.SetEmitting(true);
-            }
+            Clear();
+            SetEmitting(true);
 
             // Launch upwards with slight random angular bias (+- 15 degrees off vertical)
             float randomAngleOffset = UnityEngine.Random.Range(-15f, 15f);
@@ -487,11 +634,8 @@ namespace Arcade.BlockBreaker
             currentVolleyStreak = 0;
             currentSpeed = speed > 0f ? speed : baseSpeed;
 
-            if (Trail != null)
-            {
-                Trail.Clear();
-                Trail.SetEmitting(true);
-            }
+            Clear();
+            SetEmitting(true);
 
             if (rb != null)
             {
@@ -517,9 +661,9 @@ namespace Arcade.BlockBreaker
                 {
                     Launch();
                 }
-                else if (ballTrail != null)
+                else
                 {
-                    ballTrail.SetEmitting(true);
+                    SetEmitting(true);
                 }
             }
             else if (state == GameState.BallLost || state == GameState.ReadyToLaunch)
@@ -538,10 +682,7 @@ namespace Arcade.BlockBreaker
             }
             else if (state == GameState.Paused)
             {
-                if (ballTrail != null)
-                {
-                    ballTrail.SetEmitting(false);
-                }
+                SetEmitting(false);
             }
         }
 

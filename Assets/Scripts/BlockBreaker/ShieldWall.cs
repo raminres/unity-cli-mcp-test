@@ -50,6 +50,11 @@ namespace Arcade.BlockBreaker
         [SerializeField] private MeshRenderer meshRenderer;
         [SerializeField] private BoxCollider boxCollider;
 
+        [Header("Modular Sockets")]
+        [SerializeField] private GameObject modelChild;
+        [SerializeField] private GameObject vfxChild;
+        [SerializeField] private ParticleSystem shieldVfx;
+
         private Coroutine activeTransitionCoroutine;
         private Coroutine hitPulseCoroutine;
         private MaterialPropertyBlock propertyBlock;
@@ -89,12 +94,45 @@ namespace Arcade.BlockBreaker
         public bool IsWarningActive => isWarningActive;
         public float TimeRemaining => timeRemaining;
         public BoxCollider BoxCollider => boxCollider != null ? boxCollider : (boxCollider = GetComponent<BoxCollider>());
-        public MeshRenderer MeshRenderer => meshRenderer != null ? meshRenderer : (meshRenderer = GetComponent<MeshRenderer>());
+        public MeshRenderer MeshRenderer => meshRenderer != null ? meshRenderer : (meshRenderer = GetComponent<MeshRenderer>() ?? GetComponentInChildren<MeshRenderer>());
+        public GameObject ModelChild => modelChild;
+        public GameObject VfxChild => vfxChild;
+        public ParticleSystem ShieldVfx => shieldVfx;
 
         private void Awake()
         {
             EnsureComponents();
             InitializeCurves();
+        }
+
+        public void ResolveModularChildren()
+        {
+            if (modelChild == null)
+            {
+                var t = transform.Find("model");
+                if (t != null) modelChild = t.gameObject;
+            }
+            if (vfxChild == null)
+            {
+                var t = transform.Find("vfx");
+                if (t != null) vfxChild = t.gameObject;
+            }
+            if (shieldVfx == null && vfxChild != null)
+            {
+                shieldVfx = vfxChild.GetComponent<ParticleSystem>() ?? vfxChild.GetComponentInChildren<ParticleSystem>();
+            }
+
+            if (meshRenderer == null)
+            {
+                if (modelChild != null)
+                {
+                    meshRenderer = modelChild.GetComponent<MeshRenderer>();
+                }
+                if (meshRenderer == null)
+                {
+                    meshRenderer = GetComponent<MeshRenderer>() ?? GetComponentInChildren<MeshRenderer>();
+                }
+            }
         }
 
         public void EnsureComponents()
@@ -107,17 +145,15 @@ namespace Arcade.BlockBreaker
                 boxCollider.center = Vector3.zero;
             }
 
-            if (meshRenderer == null) meshRenderer = GetComponent<MeshRenderer>();
+            ResolveModularChildren();
+
+            // Fallback for bare test GameObjects instantiated without prefabs:
             if (meshRenderer == null)
             {
                 var filter = GetComponent<MeshFilter>();
                 if (filter == null)
                 {
                     filter = gameObject.AddComponent<MeshFilter>();
-                    var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    filter.sharedMesh = cube.GetComponent<MeshFilter>().sharedMesh;
-                    if (Application.isPlaying) Destroy(cube);
-                    else DestroyImmediate(cube);
                 }
                 meshRenderer = gameObject.AddComponent<MeshRenderer>();
             }
@@ -129,19 +165,13 @@ namespace Arcade.BlockBreaker
 
         public void EnsureMaterial()
         {
-            if (meshRenderer == null) meshRenderer = GetComponent<MeshRenderer>();
             if (meshRenderer == null)
             {
-                var filter = GetComponent<MeshFilter>();
-                if (filter == null)
+                ResolveModularChildren();
+                if (meshRenderer == null)
                 {
-                    filter = gameObject.AddComponent<MeshFilter>();
-                    var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    filter.sharedMesh = cube.GetComponent<MeshFilter>().sharedMesh;
-                    if (Application.isPlaying) Destroy(cube);
-                    else DestroyImmediate(cube);
+                    meshRenderer = GetComponent<MeshRenderer>() ?? gameObject.AddComponent<MeshRenderer>();
                 }
-                meshRenderer = gameObject.AddComponent<MeshRenderer>();
             }
 
             if (shieldMaterial == null)
@@ -242,6 +272,9 @@ namespace Arcade.BlockBreaker
                 gameObject.SetActive(true);
             }
 
+            if (vfxChild != null) vfxChild.SetActive(true);
+            if (shieldVfx != null) shieldVfx.Play();
+
             if (activeTransitionCoroutine != null)
             {
                 StopCoroutine(activeTransitionCoroutine);
@@ -288,6 +321,8 @@ namespace Arcade.BlockBreaker
         /// </summary>
         public void Deactivate(bool immediate = false)
         {
+            if (shieldVfx != null) shieldVfx.Stop();
+
             if (activeTransitionCoroutine != null)
             {
                 StopCoroutine(activeTransitionCoroutine);
@@ -296,6 +331,7 @@ namespace Arcade.BlockBreaker
 
             if (immediate || !gameObject.activeInHierarchy || appearDuration <= 0f || !Application.isPlaying)
             {
+                if (vfxChild != null) vfxChild.SetActive(false);
                 transform.localScale = Vector3.zero;
                 gameObject.SetActive(false);
                 return;
@@ -324,6 +360,7 @@ namespace Arcade.BlockBreaker
                 yield return null;
             }
 
+            if (vfxChild != null) vfxChild.SetActive(false);
             transform.localScale = Vector3.zero;
             gameObject.SetActive(false);
             activeTransitionCoroutine = null;
@@ -344,6 +381,8 @@ namespace Arcade.BlockBreaker
         public void PulseOnHit()
         {
             if (!gameObject.activeInHierarchy || !Application.isPlaying) return;
+
+            if (shieldVfx != null) shieldVfx.Emit(12);
 
             if (hitPulseCoroutine != null)
             {

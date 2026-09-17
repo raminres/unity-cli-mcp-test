@@ -25,6 +25,14 @@ namespace Arcade.BlockBreaker
         [SerializeField] private Transform stepMid;
         [SerializeField] private Transform stepBottom;
 
+        [Header("Modular Sockets")]
+        [SerializeField] private GameObject visualsRoot;
+        [SerializeField] private GameObject gunsRoot;
+        [SerializeField] private GameObject laserGunRoot;
+        [SerializeField] private GameObject frostRoot;
+        [SerializeField] private GameObject vfxRoot;
+        [SerializeField] private Transform dockPoint;
+
         [Header("References")]
         [SerializeField] private Rigidbody rb;
         [SerializeField] private BoxCollider rootCollider;
@@ -54,6 +62,13 @@ namespace Arcade.BlockBreaker
         public Transform StepMid => stepMid;
         public Transform StepBottom => stepBottom;
 
+        public GameObject VisualsRoot => visualsRoot;
+        public GameObject GunsRoot => gunsRoot;
+        public GameObject LaserGunRoot => laserGunRoot;
+        public GameObject FrostRoot => frostRoot;
+        public GameObject VfxRoot => vfxRoot;
+        public Transform DockPoint => dockPoint;
+
         public void SetVelocityXForTesting(float velX) => currentVelocityX = velX;
 
         public void SetSlowed(bool slowed) => isSlowed = slowed;
@@ -61,6 +76,11 @@ namespace Arcade.BlockBreaker
         public void SetFrozen(bool frozen)
         {
             isFrozen = frozen;
+            if (frostRoot != null)
+            {
+                frostRoot.SetActive(frozen);
+            }
+
             if (frozen)
             {
                 frozenAnchorX = transform.position.x;
@@ -95,12 +115,32 @@ namespace Arcade.BlockBreaker
         /// Tier 1: Top Strike Deck (100% width, H = 0.24, Y = +0.38).
         /// Tier 2: Mid Chassis (72% width, H = 0.20, Y = +0.16).
         /// Tier 3: Bottom Keel (44% width, H = 0.16, Y = -0.02).
+        /// Also discovers modular sockets (visuals, guns, laser_gun, frost, vfx, dock_point).
         /// </summary>
         public void EnsureSteppedMeshHierarchy()
         {
-            if (stepTop == null) stepTop = transform.Find("Step_Top");
-            if (stepMid == null) stepMid = transform.Find("Step_Mid");
-            if (stepBottom == null) stepBottom = transform.Find("Step_Bottom");
+            if (visualsRoot == null) visualsRoot = transform.Find("visuals")?.gameObject;
+            if (gunsRoot == null) gunsRoot = transform.Find("guns")?.gameObject;
+            if (laserGunRoot == null) laserGunRoot = transform.Find("laser_gun")?.gameObject;
+            if (frostRoot == null) frostRoot = transform.Find("frost")?.gameObject;
+            if (vfxRoot == null) vfxRoot = transform.Find("vfx")?.gameObject;
+            if (dockPoint == null) dockPoint = transform.Find("dock_point");
+
+            if (stepTop == null)
+            {
+                stepTop = visualsRoot != null ? visualsRoot.transform.Find("deck") : null;
+                if (stepTop == null) stepTop = transform.Find("Step_Top");
+            }
+            if (stepMid == null)
+            {
+                stepMid = visualsRoot != null ? visualsRoot.transform.Find("chassis") : null;
+                if (stepMid == null) stepMid = transform.Find("Step_Mid");
+            }
+            if (stepBottom == null)
+            {
+                stepBottom = visualsRoot != null ? visualsRoot.transform.Find("keel") : null;
+                if (stepBottom == null) stepBottom = transform.Find("Step_Bottom");
+            }
 
             // Remove legacy root mesh renderer if single-cube legacy model is attached
             var rootRenderer = GetComponent<MeshRenderer>();

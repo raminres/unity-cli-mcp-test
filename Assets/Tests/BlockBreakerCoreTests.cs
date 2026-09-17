@@ -3,6 +3,7 @@ using Arcade.BlockBreaker;
 using Arcade.Core;
 using Arcade.UI;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -2553,7 +2554,7 @@ namespace Arcade.Tests
         public void BallTrail_Initialization_CreatesDualLayerRenderers()
         {
             var ballObj = new GameObject("TestBall");
-            var trail = ballObj.AddComponent<BallTrail>();
+            var trail = ballObj.AddComponent<BallController>();
             trail.EnsureTrailsCreated();
 
             Assert.IsNotNull(trail.OuterTrail, "Outer trail renderer must be created.");
@@ -2570,7 +2571,7 @@ namespace Arcade.Tests
         public void BallTrail_TaperingCurves_WidthTapersToZero()
         {
             var ballObj = new GameObject("TestBall");
-            var trail = ballObj.AddComponent<BallTrail>();
+            var trail = ballObj.AddComponent<BallController>();
             trail.EnsureTrailsCreated();
 
             AnimationCurve outerCurve = trail.OuterTrail.widthCurve;
@@ -2589,7 +2590,7 @@ namespace Arcade.Tests
         public void BallTrail_SetTrailColor_CalculatesDualLightnessLevelsCorrectly()
         {
             var ballObj = new GameObject("TestBall");
-            var trail = ballObj.AddComponent<BallTrail>();
+            var trail = ballObj.AddComponent<BallController>();
             Color testColor = new Color(0f, 0.8f, 1f, 1f);
             trail.SetTrailColor(testColor);
 
@@ -3435,15 +3436,18 @@ namespace Arcade.Tests
             Assert.IsNull(cap.GetComponent<MeshRenderer>(), "Root capsule container must not have MeshRenderer.");
             Assert.IsNull(cap.GetComponent<SpriteRenderer>(), "Root capsule container must not have SpriteRenderer.");
 
-            // 2. Exactly 2 children: Visual_Capsule and Icon_Billboard
-            Assert.AreEqual(2, cap.transform.childCount, "Powerup capsule must have exactly 2 children (1 visual mesh child, 1 billboard sprite child).");
+            // 2. Exactly 3 children: Visual_Capsule, Icon_Billboard, and Falling_Vfx
+            Assert.AreEqual(3, cap.transform.childCount, "Powerup capsule must have exactly 3 children (1 visual mesh child, 1 billboard sprite child, 1 particle vfx child).");
 
             var visual = cap.VisualCapsuleTransform;
             var icon = cap.IconTransform;
+            var vfx = cap.FallingVfxTransform;
             Assert.IsNotNull(visual, "Visual_Capsule child must exist.");
             Assert.IsNotNull(icon, "Icon_Billboard child must exist.");
+            Assert.IsNotNull(vfx, "Falling_Vfx child must exist.");
             Assert.AreEqual("Visual_Capsule", visual.name);
             Assert.AreEqual("Icon_Billboard", icon.name);
+            Assert.AreEqual("Falling_Vfx", vfx.name);
 
             // 3. Visual_Capsule has 1 mesh, 0 sprites, 0 colliders
             var visualMesh = visual.GetComponent<MeshRenderer>();
@@ -4298,11 +4302,16 @@ namespace Arcade.Tests
             Assert.IsTrue(System.IO.File.Exists(scenePath), "Gameplay scene file must exist.");
 
             string sceneYaml = System.IO.File.ReadAllText(scenePath);
-            Assert.IsTrue(sceneYaml.Contains("m_Name: Chamfer_TopLeft"), "Chamfer_TopLeft must be serialized in scene asset.");
-            Assert.IsTrue(sceneYaml.Contains("m_Name: Chamfer_TopRight"), "Chamfer_TopRight must be serialized in scene asset.");
-            Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 17.4, y: 0.5, z: 2}"), "TopWall must be shortened to 17.4 in scene asset.");
-            Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 0.5, y: 30.2, z: 2}"), "Side walls must be shortened to 30.2 in scene asset.");
-            Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 2.5, y: 0.5, z: 2}"), "Chamfer boxes must be 2.5 length in scene asset.");
+            bool hasPrefabWalls = sceneYaml.Contains("d541049f8b96cc942b253244a356c122") || sceneYaml.Contains("PF_Walls");
+            Assert.IsTrue(hasPrefabWalls, "LV_BlockBreaker scene must serialize PF_Walls prefab instance.");
+
+            var wallsPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Arena/PF_Walls.prefab");
+            Assert.IsNotNull(wallsPrefab, "PF_Walls prefab must exist.");
+            var arenaWalls = wallsPrefab.GetComponent<ArenaWalls>();
+            Assert.IsNotNull(arenaWalls, "PF_Walls must have ArenaWalls component.");
+            Assert.AreEqual(17.4f, arenaWalls.TopCollider.size.x, 0.05f);
+            Assert.AreEqual(30.2f, arenaWalls.SideLeftCollider.size.y, 0.05f);
+            Assert.AreEqual(2.5f, arenaWalls.ChamferLeftCollider.size.x, 0.05f);
         }
 
         #endregion

@@ -266,20 +266,39 @@ namespace Arcade.Editor
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             scene.name = "LV_BlockBreaker_MainMenu";
 
-            // 1. Camera
+            // 1. Perspective Camera with narrow FOV matching gameplay
             var camGo = new GameObject("Main Camera");
             camGo.tag = "MainCamera";
             var cam = camGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.047f, 0.051f, 0.086f, 1f); // #0c0d16
-            cam.transform.position = new Vector3(0f, 0f, -10f);
+            cam.fieldOfView = 38f;
+            cam.transform.position = new Vector3(0f, 6.0f, -32f);
+            cam.transform.rotation = Quaternion.identity;
             camGo.AddComponent<AudioListener>();
+            camGo.AddComponent<ResponsiveCameraController>();
 
-            // 2. Audio Manager (Persistent)
+            // 2. Post-Processing Volume with Bloom
+            var volGo = new GameObject("Global Volume");
+            var vol = volGo.AddComponent<Volume>();
+            vol.isGlobal = true;
+            var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>("Assets/Settings/SampleSceneProfile.asset");
+            if (profile != null)
+            {
+                vol.sharedProfile = profile;
+                if (profile.TryGet<Bloom>(out var bloom))
+                {
+                    bloom.intensity.value = 1.3f;
+                    bloom.threshold.value = 0.85f;
+                    bloom.scatter.value = 0.7f;
+                }
+            }
+
+            // 3. Audio Manager (Persistent)
             var audioGo = new GameObject("AudioManager");
             ConfigureAudioManager(audioGo);
 
-            // 3. UI Panel Renderer & Manager
+            // 4. UI Panel Renderer & Manager
             var uiGo = new GameObject("UI_MainMenu");
             var panelRenderer = uiGo.AddComponent<PanelRenderer>();
             var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/MainMenuUI.uxml");
@@ -298,16 +317,12 @@ namespace Arcade.Editor
             menuSo.ApplyModifiedProperties();
             uiGo.AddComponent<SafeAreaController>();
 
-            // 4. Background Cosmic Gradient Quad
-            var bgGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            // 5. Background Cosmic Gradient Quad (PF_Background prefab)
+            var bgPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Arena/PF_Background.prefab");
+            GameObject bgGo = (GameObject)PrefabUtility.InstantiatePrefab(bgPrefab);
             bgGo.name = "Background_Plane";
-            bgGo.transform.position = new Vector3(0f, 0f, 5.0f);
+            bgGo.transform.position = new Vector3(0f, 8.5f, 6.0f);
             bgGo.transform.localScale = new Vector3(40f, 80f, 1f);
-            Object.DestroyImmediate(bgGo.GetComponent<Collider>());
-            var bgMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Background_Gradient.mat");
-            if (bgMat != null) bgGo.GetComponent<MeshRenderer>().sharedMaterial = bgMat;
-            var bgCtrl = bgGo.AddComponent<LevelBackgroundController>();
-            ConfigureBackgroundTextures(bgCtrl);
 
             // Save scene
             var path = "Assets/Scenes/LV_BlockBreaker_MainMenu.unity";
@@ -365,39 +380,14 @@ namespace Arcade.Editor
                 }
             }
 
-            // 4. Background Cosmic Gradient Quad
-            var bgGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            // 4. Background Cosmic Gradient Quad (PF_Background prefab)
+            var bgPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Arena/PF_Background.prefab");
+            GameObject bgGo = (GameObject)PrefabUtility.InstantiatePrefab(bgPrefab);
             bgGo.name = "Background_Plane";
             bgGo.transform.position = new Vector3(0f, 8.5f, 6.0f);
             bgGo.transform.localScale = new Vector3(40f, 80f, 1f);
-            Object.DestroyImmediate(bgGo.GetComponent<Collider>());
-            var bgMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Background_Gradient.mat");
-            if (bgMat != null) bgGo.GetComponent<MeshRenderer>().sharedMaterial = bgMat;
-            var bgCtrl = bgGo.AddComponent<LevelBackgroundController>();
-            ConfigureBackgroundTextures(bgCtrl);
-
-            // 5. PhysicMaterial for bouncy, frictionless ball bounces
-            var bounceMat = AssetDatabase.LoadAssetAtPath<PhysicsMaterial>("Assets/Materials/BlockBreaker/PM_ArcadeBounce.physicMaterial");
-            if (bounceMat == null)
-            {
-                bounceMat = new PhysicsMaterial("PM_ArcadeBounce")
-                {
-                    bounciness = 1.0f,
-                    dynamicFriction = 0f,
-                    staticFriction = 0f,
-                    frictionCombine = PhysicsMaterialCombine.Minimum,
-                    bounceCombine = PhysicsMaterialCombine.Maximum
-                };
-                AssetDatabase.CreateAsset(bounceMat, "Assets/Materials/BlockBreaker/PM_ArcadeBounce.physicMaterial");
-            }
 
             // 5. Materials
-            var borderMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Playfield_Border.mat");
-            var paddleDeckMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Paddle_Deck.mat");
-            var paddleMidMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Paddle.mat");
-            var paddleCoreMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Paddle_Core.mat");
-            var ballMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Ball.mat");
-            var trailMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_BallTrail.mat");
             var redMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Red.mat");
             var greenMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Green.mat");
             var blueMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Blue.mat");
@@ -405,151 +395,40 @@ namespace Arcade.Editor
             var debrisMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Debris.mat");
             var burstMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_VFX_Burst.mat");
 
-            // 6. Playfield Boundaries
-            var boundariesRoot = new GameObject("Boundaries");
+            // 6. Playfield Boundaries (PF_Walls prefab)
+            var wallsPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Arena/PF_Walls.prefab");
+            GameObject boundariesRoot = (GameObject)PrefabUtility.InstantiatePrefab(wallsPrefab);
+            boundariesRoot.name = "Boundaries";
+            boundariesRoot.transform.position = Vector3.zero;
 
-            // Left Wall (shortened to 30.2 to join continuous 45° corner chamfer)
-            var leftWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            leftWall.name = "LeftWall";
-            leftWall.transform.SetParent(boundariesRoot.transform);
-            leftWall.transform.position = new Vector3(-10.25f, 7.60f, 0f);
-            leftWall.transform.localScale = new Vector3(0.5f, 30.2f, 2f);
-            if (borderMat != null) leftWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
-            leftWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
-
-            // Right Wall (shortened to 30.2 to join continuous 45° corner chamfer)
-            var rightWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            rightWall.name = "RightWall";
-            rightWall.transform.SetParent(boundariesRoot.transform);
-            rightWall.transform.position = new Vector3(10.25f, 7.60f, 0f);
-            rightWall.transform.localScale = new Vector3(0.5f, 30.2f, 2f);
-            if (borderMat != null) rightWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
-            rightWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
-
-            // Top Wall (shortened to 17.4 to join continuous 45° corner chamfers)
-            var topWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            topWall.name = "TopWall";
-            topWall.transform.SetParent(boundariesRoot.transform);
-            topWall.transform.position = new Vector3(0f, 24.25f, 0f);
-            topWall.transform.localScale = new Vector3(17.4f, 0.5f, 2f);
-            if (borderMat != null) topWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
-            topWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
-
-            // Top-Left 45° Corner Chamfer (redirects vertical balls diagonally into playfield, continuous perimeter)
-            var chamferTopLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            chamferTopLeft.name = "Chamfer_TopLeft";
-            chamferTopLeft.transform.SetParent(boundariesRoot.transform);
-            chamferTopLeft.transform.position = new Vector3(-9.40f, 23.40f, 0f);
-            chamferTopLeft.transform.rotation = Quaternion.Euler(0f, 0f, 45f);
-            chamferTopLeft.transform.localScale = new Vector3(2.5f, 0.5f, 2f);
-            if (borderMat != null) chamferTopLeft.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
-            chamferTopLeft.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
-
-            // Top-Right 45° Corner Chamfer (redirects vertical balls diagonally into playfield, continuous perimeter)
-            var chamferTopRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            chamferTopRight.name = "Chamfer_TopRight";
-            chamferTopRight.transform.SetParent(boundariesRoot.transform);
-            chamferTopRight.transform.position = new Vector3(9.40f, 23.40f, 0f);
-            chamferTopRight.transform.rotation = Quaternion.Euler(0f, 0f, -45f);
-            chamferTopRight.transform.localScale = new Vector3(2.5f, 0.5f, 2f);
-            if (borderMat != null) chamferTopRight.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
-            chamferTopRight.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
-
-            // Bottom Kill Zone Trigger
-            var killZone = new GameObject("KillZone");
-            killZone.tag = "KillZone";
-            killZone.AddComponent<KillZone>();
-            killZone.transform.SetParent(boundariesRoot.transform);
-            killZone.transform.position = new Vector3(0f, -9.0f, 0f);
-            var killCol = killZone.AddComponent<BoxCollider>();
-            killCol.size = new Vector3(24f, 2.0f, 4f);
-            killCol.isTrigger = true;
-
-            // Bottom Physical Shield Wall (Energy Barrier for Shield powerup)
-            var shieldWallGo = new GameObject("ShieldWall");
+            // Bottom Physical Shield Wall (PF_ShieldWall prefab)
+            var shieldPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Arena/PF_ShieldWall.prefab");
+            GameObject shieldWallGo = (GameObject)PrefabUtility.InstantiatePrefab(shieldPrefab);
+            shieldWallGo.name = "ShieldWall";
             shieldWallGo.transform.SetParent(boundariesRoot.transform);
             shieldWallGo.transform.position = new Vector3(0f, -7.6f, 0f);
             shieldWallGo.transform.localScale = Vector3.zero;
-            shieldWallGo.AddComponent<ShieldWall>();
+            var shieldWall = shieldWallGo.GetComponent<ShieldWall>();
             shieldWallGo.SetActive(false);
 
-            // 7. Paddle Platform (Inverted Stepped Pyramid / Trapezoid)
-            var paddleGo = new GameObject("Paddle");
+            // 7. Paddle Platform (PF_Paddle prefab)
+            var paddlePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Paddle/PF_Paddle.prefab");
+            GameObject paddleGo = (GameObject)PrefabUtility.InstantiatePrefab(paddlePrefab);
+            paddleGo.name = "Paddle";
             paddleGo.transform.position = new Vector3(0f, -6.5f, 0f);
-            paddleGo.transform.localScale = new Vector3(5.0f, 1.0f, 1.0f);
-
-            var paddleCol = paddleGo.AddComponent<BoxCollider>();
-            paddleCol.center = new Vector3(0f, 0.38f, 0f);
-            paddleCol.size = new Vector3(1.0f, 0.24f, 2.8f);
-            paddleCol.sharedMaterial = bounceMat;
-
-            var paddleRb = paddleGo.AddComponent<Rigidbody>();
-            paddleRb.isKinematic = true;
-            paddleRb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-
-            // Tier 1: Top Strike Deck (100% width, H = 0.24, Z = 1.0)
-            var stepTopGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            stepTopGo.name = "Step_Top";
-            stepTopGo.transform.SetParent(paddleGo.transform, false);
-            stepTopGo.transform.localPosition = new Vector3(0f, 0.38f, 0f);
-            stepTopGo.transform.localScale = new Vector3(1.0f, 0.24f, 1.0f);
-            if (paddleDeckMat != null) stepTopGo.GetComponent<MeshRenderer>().sharedMaterial = paddleDeckMat;
-            Object.DestroyImmediate(stepTopGo.GetComponent<Collider>());
-
-            // Tier 2: Mid Chassis (72% width, H = 0.20, Z = 0.88)
-            var stepMidGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            stepMidGo.name = "Step_Mid";
-            stepMidGo.transform.SetParent(paddleGo.transform, false);
-            stepMidGo.transform.localPosition = new Vector3(0f, 0.16f, 0f);
-            stepMidGo.transform.localScale = new Vector3(0.72f, 0.20f, 0.88f);
-            if (paddleMidMat != null) stepMidGo.GetComponent<MeshRenderer>().sharedMaterial = paddleMidMat;
-            Object.DestroyImmediate(stepMidGo.GetComponent<Collider>());
-
-            // Tier 3: Bottom Keel / Thrusters (44% width, H = 0.16, Z = 0.72)
-            var stepBottomGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            stepBottomGo.name = "Step_Bottom";
-            stepBottomGo.transform.SetParent(paddleGo.transform, false);
-            stepBottomGo.transform.localPosition = new Vector3(0f, -0.02f, 0f);
-            stepBottomGo.transform.localScale = new Vector3(0.44f, 0.16f, 0.72f);
-            if (paddleCoreMat != null) stepBottomGo.GetComponent<MeshRenderer>().sharedMaterial = paddleCoreMat;
-            Object.DestroyImmediate(stepBottomGo.GetComponent<Collider>());
-
-            var paddleCtrl = paddleGo.AddComponent<PaddleController>();
+            PaddleController paddleCtrl = paddleGo.GetComponent<PaddleController>();
             paddleCtrl.EnsureSteppedMeshHierarchy();
-            var laserCtrl = paddleGo.AddComponent<PaddleLaserController>();
-            var beamMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_LaserHyperBeam.mat");
-            if (beamMat != null)
-            {
-                var laserSo = new SerializedObject(laserCtrl);
-                laserSo.FindProperty("hyperBeamMaterialAsset").objectReferenceValue = beamMat;
-                laserSo.ApplyModifiedProperties();
-            }
 
-            // 8. Ball (Sphere) with Dual-Layer Trail
-            var ballGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            // 8. Ball (PF_Ball_Standard prefab)
+            var ballPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Balls/PF_Ball_Standard.prefab");
+            GameObject ballGo = (GameObject)PrefabUtility.InstantiatePrefab(ballPrefab);
             ballGo.name = "Ball";
             ballGo.transform.position = new Vector3(0f, -5.65f, 0f);
-            ballGo.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
-            if (ballMat != null) ballGo.GetComponent<MeshRenderer>().sharedMaterial = ballMat;
-            var ballCol = ballGo.GetComponent<SphereCollider>();
-            ballCol.sharedMaterial = bounceMat;
-            var ballRb = ballGo.AddComponent<Rigidbody>();
-            ballRb.useGravity = false;
-            ballRb.collisionDetectionMode = CollisionDetectionMode.Continuous;
-            ballRb.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
-            
-            var ballTrail = ballGo.AddComponent<BallTrail>();
-            if (trailMat != null)
-            {
-                ballTrail.Initialize(trailMat, new Color(0f, 0.95f, 1f, 1f));
-            }
-            var ballCtrl = ballGo.AddComponent<BallController>();
+            BallController ballCtrl = ballGo.GetComponent<BallController>();
 
-            // Wire BallController to Paddle and BallTrail
+            // Wire BallController to Paddle
             var ballSo = new SerializedObject(ballCtrl);
             ballSo.FindProperty("paddle").objectReferenceValue = paddleCtrl;
-            ballSo.FindProperty("rb").objectReferenceValue = ballRb;
-            ballSo.FindProperty("ballTrail").objectReferenceValue = ballTrail;
             ballSo.ApplyModifiedProperties();
 
             // 9. Audio Manager (Fallback if entering gameplay directly)
@@ -559,6 +438,7 @@ namespace Arcade.Editor
             // 10. Game Coordinators
             var gmGo = new GameObject("GameManager");
             var gm = gmGo.AddComponent<ArcadeGameManager>();
+            gm.RegisterShieldWall(shieldWall);
             var capsuleMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Powerup_Capsule.mat");
             if (capsuleMat != null)
             {
@@ -582,6 +462,17 @@ namespace Arcade.Editor
             levelSo.FindProperty("matBlueBlock").objectReferenceValue = blueMat;
             var glassMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Glass.mat");
             if (glassMat != null) levelSo.FindProperty("matGlass").objectReferenceValue = glassMat;
+
+            var pRed = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Blocks/PF_Block_Red.prefab");
+            var pGreen = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Blocks/PF_Block_Green.prefab");
+            var pBlue = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Blocks/PF_Block_Blue.prefab");
+            var pBomb = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Blocks/PF_Block_Bomb.prefab");
+            var pGlass = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Blocks/PF_Block_Glass.prefab");
+            if (pRed != null) levelSo.FindProperty("prefabRedBlock").objectReferenceValue = pRed;
+            if (pGreen != null) levelSo.FindProperty("prefabGreenBlock").objectReferenceValue = pGreen;
+            if (pBlue != null) levelSo.FindProperty("prefabBlueBlock").objectReferenceValue = pBlue;
+            if (pBomb != null) levelSo.FindProperty("prefabBombBlock").objectReferenceValue = pBomb;
+            if (pGlass != null) levelSo.FindProperty("prefabGlassBlock").objectReferenceValue = pGlass;
 
             var presetsProp = levelSo.FindProperty("levelPresets");
             presetsProp.arraySize = 15;

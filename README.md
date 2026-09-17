@@ -2,7 +2,7 @@
 
 [![Unity Version](https://img.shields.io/badge/Unity-6%20(6000.6.0f1)-black.svg?style=flat&logo=unity)](https://unity.com/)
 [![Render Pipeline](https://img.shields.io/badge/Render%20Pipeline-URP-blue.svg)](https://unity.com/srp/universal-render-pipeline)
-[![Automated Tests](https://img.shields.io/badge/Tests-215%2F215%20Passing%20(100%25)-brightgreen.svg)]()
+[![Automated Tests](https://img.shields.io/badge/Tests-251%2F251%20Passing%20(100%25)-brightgreen.svg)]()
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%20(Swift)%20%7C%20WebGPU%20%7C%20PC-purple.svg)]()
 [![Git LFS](https://img.shields.io/badge/Git-LFS%20Enabled-orange.svg)](https://git-lfs.github.com/)
 [![AI Integration](https://img.shields.io/badge/AI%20Assistant-Google%20Antigravity-green.svg)]()
@@ -72,8 +72,14 @@ The campaign features 15 ScriptableObject levels (`SO_Level_01` through `SO_Leve
 ## 🏗️ Technical Architecture & Environment
 
 - **Unity**: `6000.6.0f1` (Universal Render Pipeline `URP 17.6.0`)
-- **Start Scene**: `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0)
+- **Start Scene**: `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0, transparent UI Toolkit overlay over 3D cosmic background, matched $38^\circ$ FOV and camera distance)
 - **Gameplay Scene**: `Assets/Scenes/LV_BlockBreaker.unity` (Build Index 1)
+- **Modular Prefab Architecture**: 100% prefab-driven (`Assets/Prefabs/`), eliminating all runtime procedural primitives (`GameObject.CreatePrimitive`):
+  - `Arena/`: `PF_Walls` (side/top walls, 45° chamfers, kill zone), `PF_Background` (cosmic gradient quad + `LevelBackgroundController`), `PF_ShieldWall` (decoupled physics, visual model, electric cyan particle barrier).
+  - `Paddle/`: `PF_Paddle` (3-tier stepped hierarchy, twin blaster cannons, laser railgun aperture, frost shell, hit sparks).
+  - `Balls/`: `PF_Ball_Standard` (decoupled visual sphere, TrailRenderer, and BallController).
+  - `Blocks/`: `PF_Block_Base`, `PF_Block_Red`, `PF_Block_Green`, `PF_Block_Blue`, `PF_Block_Bomb`, `PF_Block_Glass` (4 modular child sockets: `brick`, `brick frost`, `brick special`, `brick vfx`).
+  - `Powerups/`: `PF_Drop_Powerup` (cyan capsule), `PF_Drop_Hazard` (crimson diamond).
 - **UI Toolkit**: Native Unity 6 `PanelRenderer` with `SafeAreaController` handling iPhone notches and Dynamic Island insets.
 - **Rendering & VFX**: Zero-allocation `MaterialPropertyBlock` pooling under `_Pool_VFX` with frame-0 shader prewarming for stutter-free execution on Apple Metal, DX12, Vulkan, and WebGPU.
 - **Audio Engine**: `ArcadeAudioManager.cs` with custom SFX and automatic procedural synthesizer fallback.
@@ -82,7 +88,7 @@ The campaign features 15 ScriptableObject levels (`SO_Level_01` through `SO_Leve
 
 ## 🧪 Automated Testing
 
-The project includes **215 automated NUnit EditMode tests** covering physics deflection math, boundary clamps, powerup & hazard lifecycles, diamond falling geometries, shield wall mechanics, anti-trap passthrough, and UI bindings:
+The project includes **251 automated NUnit EditMode tests** covering physics deflection math, boundary clamps, powerup & hazard lifecycles, diamond falling geometries, shield wall mechanics, modular prefab hierarchies, anti-trap passthrough, and UI bindings:
 
 ```bash
 unity cmd run_tests --mode editor

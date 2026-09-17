@@ -10,7 +10,7 @@ High-density technical context and architectural rules for BlockBreaker.
 - **Scenes**:
   1. `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0, Start Scene configured via [PlayModeSceneSetup.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/PlayModeSceneSetup.cs))
   2. `Assets/Scenes/LV_BlockBreaker.unity` (Build Index 1, Primary Gameplay)
-- **Repository**: `https://github.com/raminres/unity-cli-mcp-test.git` (Active Branch: `feature/powerdowns-and-hazard-system`, Git LFS enabled)
+- **Repository**: `https://github.com/raminres/unity-cli-mcp-test.git` (Active Branch: `feature/brick-prefabs`, Git LFS enabled)
 
 ---
 
@@ -68,10 +68,10 @@ High-density technical context and architectural rules for BlockBreaker.
     - Expander ($+10\%$ compounding, max $12.0\text{u}$, spring overshoot), Extra Heart ($+1$ life), Shield (physical wall), Multi-Ball (+2 balls at $\pm 35^\circ$), Multipliers (2X–5X), Laser Blaster (twin cannons, $34\text{ u/s}$, 10s).
   - **Powerdowns / Hazards (Crimson `#ff1744`)**: Faceted 3D diamond (`PrimitiveType.Cube` rotated $45^\circ$, scale $0.72$). Top HUD shows crimson badge and countdown timer.
     - Paddle Shortener ($-18\%$, min $2.4\text{u}$, 10s), Paddle Slower (input drag, 8s), Brick Freezer (encases up to 5 bricks; absorbs 1 defrost hit before break), Ball Shrinker ($60\%$ radius, 10s), Ball Slower ($9.5\text{ u/s}$, 8s), Paddle Freezer ($1.2\text{s}$ immobilization with sinusoidal tremor `Mathf.Sin(Time.time * 45f) * 0.07f`).
-- **Physical Shield Wall ([ShieldWall.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/ShieldWall.cs))**:
-  - Deployed at $Y = -7.6\text{f}$ for 10s on shield pickup.
-  - Smooth tween scale overshoot animation ($0 \to 1.08 \to 1.0$) with exposed parameters.
-  - Physical collision reflection $\ge 35^\circ$ keeps balls live without life loss.
+- **Physical Shield Wall ([ShieldWall.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/ShieldWall.cs), `PF_ShieldWall.prefab`)**:
+  - Modular prefab: Root `BoxCollider` (`size = (1,1,1)`, `center = (0,0,0)`), Child 1 `model` (`MI_ShieldWall.mat`, zero collider), Child 2 `vfx` (`ParticleSystem` cyan energy barrier).
+  - Deployed at $Y = -7.6\text{f}$ for 10s on shield pickup with smooth tween scale overshoot ($0 \to 1.08 \to 1.0$).
+  - Physical collision reflection $\ge 35^\circ$ keeps balls live without life loss; impacts trigger `shieldVfx.Emit(12)` particle pulse.
   - Anti-trap one-way upward passthrough: balls moving upward beneath paddle/shield pass freely through collider.
 - **Environmental**: Bomb Bricks ($2.5\text{u}$ radius cascade), Glass Shells (2 hits: shatter shell, break brick for $2\times$).
 
@@ -89,9 +89,22 @@ High-density technical context and architectural rules for BlockBreaker.
 ## 6. Graphics, UI & Systems Architecture
 - **VFX System ([BlockVFXManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockVFXManager.cs))**: Pooled bursts under `_Pool_VFX` ($Y = -500\text{f}$). Zero-allocation `MaterialPropertyBlock` tinting. Frame-0 prewarming in `Start()` compiles PSOs upfront on Metal/Vulkan/DX12/WebGPU.
 - **Background**: Quad at $Z = 6.0\text{f}$ ($40 \times 80$) with `Universal Render Pipeline/Unlit` cosmic gradients ([LevelBackgroundController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelBackgroundController.cs)).
-- **UI Toolkit**: Unity 6 `PanelRenderer` on `UI_HUD` and `UI_MainMenu`. `EnsureInitialized()` for frame-0 binding. Insets handled by [SafeAreaController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/SafeAreaController.cs). Sprites managed via `SO_PowerupIcons.asset`.
+- **UI Toolkit**: Unity 6 `PanelRenderer` on `UI_HUD` and `UI_MainMenu`.
+  - `UI_MainMenu`: Transparent `.root-container` reveals the 3D scene's `PF_Background` plane. Camera matched to $38^\circ$ FOV at $Z = -32\text{f}$ with `ResponsiveCameraController` and Global Volume Bloom.
+  - Insets handled by [SafeAreaController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/SafeAreaController.cs). Sprites managed via `SO_PowerupIcons.asset`.
 - **Audio Engine ([ArcadeAudioManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/Audio/ArcadeAudioManager.cs))**: Custom clips with procedural audio synthesis fallback.
-- **Automated Tests ([BlockBreakerCoreTests.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Tests/BlockBreakerCoreTests.cs))**: 215 EditMode tests. Run via Unity CLI:
+
+---
+
+## 7. Modular Prefab Suite & Runtime Architecture
+- **Complete Prefab Suite (`Assets/Prefabs/`)**:
+  - `Arena/`: `PF_Walls` (left/right/top walls, 45° chamfers, kill zone), `PF_Background` (quad mesh + `LevelBackgroundController`), `PF_ShieldWall` (decoupled physics, visual model, electric energy barrier).
+  - `Paddle/`: `PF_Paddle` (deck, chassis, keel, blaster cannons, laser aperture, frost shell, hit sparks).
+  - `Balls/`: `PF_Ball_Standard` (decoupled sphere mesh, TrailRenderer, BallController).
+  - `Blocks/`: `PF_Block_Base`, `PF_Block_Red`, `PF_Block_Green`, `PF_Block_Blue`, `PF_Block_Bomb`, `PF_Block_Glass` (4 child sockets: `brick`, `brick frost`, `brick special`, `brick vfx`).
+  - `Powerups/`: `PF_Drop_Powerup` (cyan capsule), `PF_Drop_Hazard` (crimson diamond).
+- **Zero Runtime Primitives**: All legacy procedural cube/quad fallbacks (`GameObject.CreatePrimitive`) removed from runtime and scene setups.
+- **Automated Tests**: 251 EditMode tests passing across core physics, prefabs, boundaries, powerups, hazards, and UI:
   ```bash
   unity cmd run_tests --mode editor
   ```

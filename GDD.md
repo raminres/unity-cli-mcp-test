@@ -89,10 +89,11 @@ Drops fall at $4.5\text{ u/s}$ with distinct 3D tumbling meshes and emissive col
 - **Ball Slower**: Reduces ball speed to $9.5\text{ u/s}$ (8s).
 - **Paddle Freezer**: Immobilizes paddle for $1.2\text{s}$. Input triggers a visible tremor animation (`Mathf.Sin(Time.time * 45f) * 0.07f`).
 
-### 4.3 Physical Shield Wall (`ShieldWall.cs`)
+### 4.3 Physical Shield Wall (`ShieldWall.cs`, `PF_ShieldWall.prefab`)
+- Modular prefab consisting of a root `BoxCollider` (`size = (1, 1, 1)` with `PM_ArcadeBounce.physicMaterial`), visual `model` child, and `vfx` child (`ParticleSystem` cyan energy barrier).
 - Deployed at arena bottom ($Y = -7.6\text{f}$) for 10s upon collecting a Shield drop.
 - **Entrance Animation**: Smooth tween scale overshoot ($0 \to 1.08 \to 1.0$) with configurable parameters.
-- **Physical Collision**: Bounces balls upward ($\ge 35^\circ$) to keep them in play without docking or life penalty.
+- **Physical Collision & VFX**: Bounces balls upward ($\ge 35^\circ$) to keep them in play without docking or life penalty; impacts trigger `shieldVfx.Emit(12)` particle bursts.
 - **Anti-Trap One-Way Passthrough**: If a ball falls beneath the paddle and shield, upward trajectory passes through the shield collider cleanly without trapping.
 
 ### 4.4 Environmental Blocks
@@ -130,7 +131,8 @@ Dense layouts (11–14 columns, $13.75\text{u}–17.5\text{u}$ span) with side b
 ## 6. Technical Architecture & UI
 
 - **Arena & Camera**: Perspective camera at $38^\circ$ FOV with dynamic distance scaling (`ResponsiveCameraController`) for 16:9, 9:16, and 9:19.5 visibility. Arena walls: Top $Y = 24.25$, Sides $X = \pm 10.25$, Kill Zone $Y = -9.0$.
-- **UI Toolkit**: Unity 6 `PanelRenderer` HUD. Sprites bound via `SO_PowerupIcons.asset`. Inset management via `SafeAreaController.cs`.
+- **Modular Prefab Architecture**: 100% prefab-driven (`Assets/Prefabs/` for `Arena/`, `Paddle/`, `Balls/`, `Blocks/`, `Powerups/`), eliminating runtime procedural primitives (`GameObject.CreatePrimitive`).
+- **UI Toolkit**: Unity 6 `PanelRenderer` HUD and Main Menu. Main Menu features transparent root container with unified camera framing ($Z = -32\text{f}$) and Bloom. Sprites bound via `SO_PowerupIcons.asset`. Inset management via `SafeAreaController.cs`.
 - **Audio Engine**: `ArcadeAudioManager.cs` with custom clips (`AU_`) and procedural synthesizer fallback.
 - **Controls**: Desktop (mouse 1:1 or A/D / Arrow keys, Space launch), Mobile (touch drag paddle, tap launch).
-- **Tests**: 215 EditMode unit and integration tests via `unity cmd run_tests --mode editor`.
+- **Tests**: 251 EditMode unit and integration tests via `unity cmd run_tests --mode editor`.
