@@ -429,65 +429,76 @@ namespace Arcade.Editor
             var debrisMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_Block_Debris.mat");
             var burstMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/BlockBreaker/MI_VFX_Burst.mat");
 
-            // 6. Playfield Boundaries
-            var boundariesRoot = new GameObject("Boundaries");
+            // 6. Playfield Boundaries (PF_Walls prefab with procedural fallback)
+            GameObject boundariesRoot;
+            var wallsPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Arena/PF_Walls.prefab");
+            if (wallsPrefab != null)
+            {
+                boundariesRoot = (GameObject)PrefabUtility.InstantiatePrefab(wallsPrefab);
+                boundariesRoot.name = "Boundaries";
+                boundariesRoot.transform.position = Vector3.zero;
+            }
+            else
+            {
+                boundariesRoot = new GameObject("Boundaries");
 
-            // Left Wall (shortened to 30.2 to join continuous 45° corner chamfer)
-            var leftWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            leftWall.name = "LeftWall";
-            leftWall.transform.SetParent(boundariesRoot.transform);
-            leftWall.transform.position = new Vector3(-10.25f, 7.60f, 0f);
-            leftWall.transform.localScale = new Vector3(0.5f, 30.2f, 2f);
-            if (borderMat != null) leftWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
-            leftWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+                // Left Wall (shortened to 30.2 to join continuous 45° corner chamfer)
+                var leftWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                leftWall.name = "LeftWall";
+                leftWall.transform.SetParent(boundariesRoot.transform);
+                leftWall.transform.position = new Vector3(-10.25f, 7.60f, 0f);
+                leftWall.transform.localScale = new Vector3(0.5f, 30.2f, 2f);
+                if (borderMat != null) leftWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
+                leftWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
-            // Right Wall (shortened to 30.2 to join continuous 45° corner chamfer)
-            var rightWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            rightWall.name = "RightWall";
-            rightWall.transform.SetParent(boundariesRoot.transform);
-            rightWall.transform.position = new Vector3(10.25f, 7.60f, 0f);
-            rightWall.transform.localScale = new Vector3(0.5f, 30.2f, 2f);
-            if (borderMat != null) rightWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
-            rightWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+                // Right Wall (shortened to 30.2 to join continuous 45° corner chamfer)
+                var rightWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                rightWall.name = "RightWall";
+                rightWall.transform.SetParent(boundariesRoot.transform);
+                rightWall.transform.position = new Vector3(10.25f, 7.60f, 0f);
+                rightWall.transform.localScale = new Vector3(0.5f, 30.2f, 2f);
+                if (borderMat != null) rightWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
+                rightWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
-            // Top Wall (shortened to 17.4 to join continuous 45° corner chamfers)
-            var topWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            topWall.name = "TopWall";
-            topWall.transform.SetParent(boundariesRoot.transform);
-            topWall.transform.position = new Vector3(0f, 24.25f, 0f);
-            topWall.transform.localScale = new Vector3(17.4f, 0.5f, 2f);
-            if (borderMat != null) topWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
-            topWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+                // Top Wall (shortened to 17.4 to join continuous 45° corner chamfers)
+                var topWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                topWall.name = "TopWall";
+                topWall.transform.SetParent(boundariesRoot.transform);
+                topWall.transform.position = new Vector3(0f, 24.25f, 0f);
+                topWall.transform.localScale = new Vector3(17.4f, 0.5f, 2f);
+                if (borderMat != null) topWall.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
+                topWall.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
-            // Top-Left 45° Corner Chamfer (redirects vertical balls diagonally into playfield, continuous perimeter)
-            var chamferTopLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            chamferTopLeft.name = "Chamfer_TopLeft";
-            chamferTopLeft.transform.SetParent(boundariesRoot.transform);
-            chamferTopLeft.transform.position = new Vector3(-9.40f, 23.40f, 0f);
-            chamferTopLeft.transform.rotation = Quaternion.Euler(0f, 0f, 45f);
-            chamferTopLeft.transform.localScale = new Vector3(2.5f, 0.5f, 2f);
-            if (borderMat != null) chamferTopLeft.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
-            chamferTopLeft.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+                // Top-Left 45° Corner Chamfer (redirects vertical balls diagonally into playfield, continuous perimeter)
+                var chamferTopLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                chamferTopLeft.name = "Chamfer_TopLeft";
+                chamferTopLeft.transform.SetParent(boundariesRoot.transform);
+                chamferTopLeft.transform.position = new Vector3(-9.40f, 23.40f, 0f);
+                chamferTopLeft.transform.rotation = Quaternion.Euler(0f, 0f, 45f);
+                chamferTopLeft.transform.localScale = new Vector3(2.5f, 0.5f, 2f);
+                if (borderMat != null) chamferTopLeft.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
+                chamferTopLeft.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
-            // Top-Right 45° Corner Chamfer (redirects vertical balls diagonally into playfield, continuous perimeter)
-            var chamferTopRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            chamferTopRight.name = "Chamfer_TopRight";
-            chamferTopRight.transform.SetParent(boundariesRoot.transform);
-            chamferTopRight.transform.position = new Vector3(9.40f, 23.40f, 0f);
-            chamferTopRight.transform.rotation = Quaternion.Euler(0f, 0f, -45f);
-            chamferTopRight.transform.localScale = new Vector3(2.5f, 0.5f, 2f);
-            if (borderMat != null) chamferTopRight.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
-            chamferTopRight.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
+                // Top-Right 45° Corner Chamfer (redirects vertical balls diagonally into playfield, continuous perimeter)
+                var chamferTopRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                chamferTopRight.name = "Chamfer_TopRight";
+                chamferTopRight.transform.SetParent(boundariesRoot.transform);
+                chamferTopRight.transform.position = new Vector3(9.40f, 23.40f, 0f);
+                chamferTopRight.transform.rotation = Quaternion.Euler(0f, 0f, -45f);
+                chamferTopRight.transform.localScale = new Vector3(2.5f, 0.5f, 2f);
+                if (borderMat != null) chamferTopRight.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
+                chamferTopRight.GetComponent<BoxCollider>().sharedMaterial = bounceMat;
 
-            // Bottom Kill Zone Trigger
-            var killZone = new GameObject("KillZone");
-            killZone.tag = "KillZone";
-            killZone.AddComponent<KillZone>();
-            killZone.transform.SetParent(boundariesRoot.transform);
-            killZone.transform.position = new Vector3(0f, -9.0f, 0f);
-            var killCol = killZone.AddComponent<BoxCollider>();
-            killCol.size = new Vector3(24f, 2.0f, 4f);
-            killCol.isTrigger = true;
+                // Bottom Kill Zone Trigger
+                var killZone = new GameObject("KillZone");
+                killZone.tag = "KillZone";
+                killZone.AddComponent<KillZone>();
+                killZone.transform.SetParent(boundariesRoot.transform);
+                killZone.transform.position = new Vector3(0f, -9.0f, 0f);
+                var killCol = killZone.AddComponent<BoxCollider>();
+                killCol.size = new Vector3(24f, 2.0f, 4f);
+                killCol.isTrigger = true;
+            }
 
             // Bottom Physical Shield Wall (Energy Barrier for Shield powerup)
             var shieldWallGo = new GameObject("ShieldWall");

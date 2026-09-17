@@ -172,7 +172,7 @@ namespace Arcade.Core
             shieldWall = FindAnyObjectByType<BlockBreaker.ShieldWall>(FindObjectsInactive.Include);
             if (shieldWall == null)
             {
-                var boundaries = GameObject.Find("Boundaries") ?? GameObject.Find("ArenaBoundaries");
+                var boundaries = GameObject.Find("Boundaries") ?? GameObject.Find("ArenaBoundaries") ?? GameObject.Find("PF_Walls");
                 var wallGo = new GameObject("ShieldWall");
                 if (boundaries != null) wallGo.transform.SetParent(boundaries.transform);
                 shieldWall = wallGo.AddComponent<BlockBreaker.ShieldWall>();

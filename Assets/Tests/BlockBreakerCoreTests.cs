@@ -3,6 +3,7 @@ using Arcade.BlockBreaker;
 using Arcade.Core;
 using Arcade.UI;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -4301,11 +4302,25 @@ namespace Arcade.Tests
             Assert.IsTrue(System.IO.File.Exists(scenePath), "Gameplay scene file must exist.");
 
             string sceneYaml = System.IO.File.ReadAllText(scenePath);
-            Assert.IsTrue(sceneYaml.Contains("m_Name: Chamfer_TopLeft"), "Chamfer_TopLeft must be serialized in scene asset.");
-            Assert.IsTrue(sceneYaml.Contains("m_Name: Chamfer_TopRight"), "Chamfer_TopRight must be serialized in scene asset.");
-            Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 17.4, y: 0.5, z: 2}"), "TopWall must be shortened to 17.4 in scene asset.");
-            Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 0.5, y: 30.2, z: 2}"), "Side walls must be shortened to 30.2 in scene asset.");
-            Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 2.5, y: 0.5, z: 2}"), "Chamfer boxes must be 2.5 length in scene asset.");
+            bool hasPrefabWalls = sceneYaml.Contains("d541049f8b96cc942b253244a356c122") || sceneYaml.Contains("PF_Walls");
+            if (hasPrefabWalls)
+            {
+                var wallsPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Arena/PF_Walls.prefab");
+                Assert.IsNotNull(wallsPrefab, "PF_Walls prefab must exist.");
+                var arenaWalls = wallsPrefab.GetComponent<ArenaWalls>();
+                Assert.IsNotNull(arenaWalls, "PF_Walls must have ArenaWalls component.");
+                Assert.AreEqual(17.4f, arenaWalls.TopCollider.size.x, 0.05f);
+                Assert.AreEqual(30.2f, arenaWalls.SideLeftCollider.size.y, 0.05f);
+                Assert.AreEqual(2.5f, arenaWalls.ChamferLeftCollider.size.x, 0.05f);
+            }
+            else
+            {
+                Assert.IsTrue(sceneYaml.Contains("m_Name: Chamfer_TopLeft"), "Chamfer_TopLeft must be serialized in scene asset.");
+                Assert.IsTrue(sceneYaml.Contains("m_Name: Chamfer_TopRight"), "Chamfer_TopRight must be serialized in scene asset.");
+                Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 17.4, y: 0.5, z: 2}"), "TopWall must be shortened to 17.4 in scene asset.");
+                Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 0.5, y: 30.2, z: 2}"), "Side walls must be shortened to 30.2 in scene asset.");
+                Assert.IsTrue(sceneYaml.Contains("m_LocalScale: {x: 2.5, y: 0.5, z: 2}"), "Chamfer boxes must be 2.5 length in scene asset.");
+            }
         }
 
         #endregion
