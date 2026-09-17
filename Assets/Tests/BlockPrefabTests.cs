@@ -132,5 +132,90 @@ namespace Arcade.Tests
             Assert.IsNull(frostTransform.GetComponent<Collider>(), "'brick frost' should not have its own collider (root has collider).");
             Assert.AreEqual(frostTransform.gameObject, glassBlock.GlassShell, "glassBlock.GlassShell must reference the 'brick frost' child.");
         }
+
+        [Test]
+        public void LevelGenerator_GeneratesBlocksFromModularPrefabs()
+        {
+            var genGo = new GameObject("TestLevelGen");
+            var gen = genGo.AddComponent<LevelGenerator>();
+
+            var pRed = AssetDatabase.LoadAssetAtPath<GameObject>(RedPrefabPath);
+            var pGreen = AssetDatabase.LoadAssetAtPath<GameObject>(GreenPrefabPath);
+            var pBlue = AssetDatabase.LoadAssetAtPath<GameObject>(BluePrefabPath);
+            var pBomb = AssetDatabase.LoadAssetAtPath<GameObject>(BombPrefabPath);
+            var pGlass = AssetDatabase.LoadAssetAtPath<GameObject>(GlassPrefabPath);
+            gen.SetBlockPrefabs(pRed, pGreen, pBlue, pBomb, pGlass);
+
+            var config = ScriptableObject.CreateInstance<LevelConfiguration>();
+            config.SetColumns(4);
+            config.SetRowsPerTier(1);
+            config.SetPaddleExpanderCount(0);
+            config.SetMultiplier2xCount(0);
+            config.SetBombCount(1);
+            config.SetGlassEnclosedCount(1);
+
+            gen.LoadLevel(config);
+
+            var container = genGo.transform.Find("BlocksContainer");
+            Assert.IsNotNull(container, "BlocksContainer must be created.");
+            Assert.AreEqual(config.TotalBlocks, container.childCount, "Container must match config.TotalBlocks.");
+
+            bool foundBomb = false;
+            bool foundGlass = false;
+
+            for (int i = 0; i < container.childCount; i++)
+            {
+                var blockObj = container.GetChild(i).gameObject;
+                var block = blockObj.GetComponent<Block>();
+                Assert.IsNotNull(block, "Each block object must have a Block component.");
+
+                // Check modular child hierarchy exists on every block
+                Assert.IsNotNull(block.BrickModel, "Every instantiated block must have modular BrickModel resolved.");
+                Assert.IsNotNull(block.BrickFrost, "Every instantiated block must have modular BrickFrost resolved.");
+                Assert.IsNotNull(block.BrickSpecial, "Every instantiated block must have modular BrickSpecial resolved.");
+                Assert.IsNotNull(block.BrickVfx, "Every instantiated block must have modular BrickVfx resolved.");
+
+                if (block.SpecialType == BlockSpecialType.Bomb)
+                {
+                    foundBomb = true;
+                    Assert.IsTrue(block.BrickSpecial.activeSelf, "Bomb block must have active BrickSpecial.");
+                }
+                else if (block.SpecialType == BlockSpecialType.GlassEnclosed)
+                {
+                    foundGlass = true;
+                    Assert.IsTrue(block.BrickFrost.activeSelf, "Glass block must have active BrickFrost.");
+                }
+            }
+
+            Assert.IsTrue(foundBomb, "Bomb block must have been spawned from prefab.");
+            Assert.IsTrue(foundGlass, "Glass block must have been spawned from prefab.");
+
+            Object.DestroyImmediate(config);
+            Object.DestroyImmediate(genGo);
+        }
+
+        [Test]
+        public void LevelGenerator_EnsureCornerChamfers_PreservesArenaWalls()
+        {
+            var wallsPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Arena/PF_Walls.prefab");
+            Assert.IsNotNull(wallsPrefab, "PF_Walls prefab must exist.");
+
+            var wallsGo = Object.Instantiate(wallsPrefab);
+            wallsGo.name = "Boundaries";
+
+            int initialChildCount = wallsGo.transform.childCount;
+
+            var genGo = new GameObject("TestLevelGen");
+            var gen = genGo.AddComponent<LevelGenerator>();
+
+            gen.EnsureCornerChamfers();
+
+            Assert.AreEqual(initialChildCount, wallsGo.transform.childCount, "EnsureCornerChamfers must not add procedural cubes to PF_Walls.");
+            Assert.IsNull(wallsGo.transform.Find("Chamfer_TopLeft"), "No procedural Chamfer_TopLeft should be created on PF_Walls.");
+            Assert.IsNull(wallsGo.transform.Find("Chamfer_TopRight"), "No procedural Chamfer_TopRight should be created on PF_Walls.");
+
+            Object.DestroyImmediate(wallsGo);
+            Object.DestroyImmediate(genGo);
+        }
     }
 }

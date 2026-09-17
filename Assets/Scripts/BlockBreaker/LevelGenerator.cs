@@ -25,7 +25,14 @@ namespace Arcade.BlockBreaker
         [SerializeField] private float verticalSpacing = 1.3f;
         [SerializeField] private float startCenterY = 15.5f;
 
-        [Header("Materials")]
+        [Header("Block Prefabs")]
+        [SerializeField] private GameObject prefabRedBlock;
+        [SerializeField] private GameObject prefabGreenBlock;
+        [SerializeField] private GameObject prefabBlueBlock;
+        [SerializeField] private GameObject prefabBombBlock;
+        [SerializeField] private GameObject prefabGlassBlock;
+
+        [Header("Materials (Fallback)")]
         [SerializeField] private Material matRedBlock;
         [SerializeField] private Material matGreenBlock;
         [SerializeField] private Material matBlueBlock;
@@ -54,6 +61,46 @@ namespace Arcade.BlockBreaker
         public LevelConfiguration[] LevelPresets => levelPresets;
         public int TotalLevels => levelPresets != null && levelPresets.Length > 0 ? levelPresets.Length : 1;
         public Transform BlocksContainer => blocksContainer;
+
+        public GameObject PrefabRedBlock => prefabRedBlock;
+        public GameObject PrefabGreenBlock => prefabGreenBlock;
+        public GameObject PrefabBlueBlock => prefabBlueBlock;
+        public GameObject PrefabBombBlock => prefabBombBlock;
+        public GameObject PrefabGlassBlock => prefabGlassBlock;
+
+        public void SetBlockPrefabs(GameObject red, GameObject green, GameObject blue, GameObject bomb, GameObject glass)
+        {
+            prefabRedBlock = red;
+            prefabGreenBlock = green;
+            prefabBlueBlock = blue;
+            prefabBombBlock = bomb;
+            prefabGlassBlock = glass;
+        }
+
+        public void EnsurePrefabReferences()
+        {
+#if UNITY_EDITOR
+            if (prefabRedBlock == null) prefabRedBlock = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Blocks/PF_Block_Red.prefab");
+            if (prefabGreenBlock == null) prefabGreenBlock = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Blocks/PF_Block_Green.prefab");
+            if (prefabBlueBlock == null) prefabBlueBlock = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Blocks/PF_Block_Blue.prefab");
+            if (prefabBombBlock == null) prefabBombBlock = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Blocks/PF_Block_Bomb.prefab");
+            if (prefabGlassBlock == null) prefabGlassBlock = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Blocks/PF_Block_Glass.prefab");
+#endif
+        }
+
+        public GameObject GetPrefabForBlock(BlockColorTier tier, BlockSpecialType special)
+        {
+            EnsurePrefabReferences();
+            if (special == BlockSpecialType.Bomb && prefabBombBlock != null) return prefabBombBlock;
+            if (special == BlockSpecialType.GlassEnclosed && prefabGlassBlock != null) return prefabGlassBlock;
+
+            return tier switch
+            {
+                BlockColorTier.Blue => prefabBlueBlock,
+                BlockColorTier.Green => prefabGreenBlock,
+                _ => prefabRedBlock
+            };
+        }
 
         private void Awake()
         {
@@ -288,24 +335,64 @@ namespace Arcade.BlockBreaker
                     float x = startX + (c * spacingX);
                     Vector3 blockPos = new Vector3(x, y, 0f);
 
-                    GameObject blockObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    blockObj.name = $"Block_{tier}_{r}_{c}";
-                    blockObj.transform.SetParent(blocksContainer);
-                    blockObj.transform.position = blockPos;
-                    blockObj.transform.localScale = Vector3.one * size;
-
                     BlockSpecialType special = specialMap.TryGetValue(blockIndex, out var sType) ? sType : BlockSpecialType.Normal;
 
-                    Block blockComp = blockObj.AddComponent<Block>();
+                    GameObject prefab = GetPrefabForBlock(tier, special);
+                    GameObject blockObj;
+                    if (prefab != null)
+                    {
+                        blockObj = Instantiate(prefab, blockPos, Quaternion.identity, blocksContainer);
+                    }
+                    else
+                    {
+                        blockObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        blockObj.transform.SetParent(blocksContainer);
+                        blockObj.transform.position = blockPos;
+                    }
+
+                    blockObj.name = $"Block_{tier}_{r}_{c}";
+                    blockObj.transform.localScale = Vector3.one * size;
+
+                    Block blockComp = blockObj.GetComponent<Block>();
+                    if (blockComp == null)
+                    {
+                        blockComp = blockObj.AddComponent<Block>();
+                    }
                     blockComp.Initialize(tier, mat, vfxColor, special);
 
                     if (special == BlockSpecialType.GlassEnclosed)
                     {
-                        CreateGlassShellForBlock(blockObj, blockComp);
+                        if (blockComp.BrickFrost != null)
+                        {
+                            blockComp.BrickFrost.SetActive(true);
+                            blockComp.SetGlassShell(blockComp.BrickFrost);
+                        }
+                        else
+                        {
+                            CreateGlassShellForBlock(blockObj, blockComp);
+                        }
                     }
-                    else if (special != BlockSpecialType.Normal && badgePanelSettings != null && badgeVisualTreeAsset != null)
+                    else if (special != BlockSpecialType.Normal)
                     {
-                        CreateBadgeForBlock(blockObj, special);
+                        if (blockComp.BrickSpecial != null)
+                        {
+                            blockComp.BrickSpecial.SetActive(true);
+                            var badge = blockComp.BrickSpecial.GetComponent<BlockBadge>();
+                            if (badge != null)
+                            {
+                                Sprite badgeSprite = iconSet != null ? iconSet.GetSprite(special) : null;
+                                badge.Setup(special, badgePanelSettings, badgeVisualTreeAsset, badgeSprite);
+                            }
+                        }
+                        else if (badgePanelSettings != null && badgeVisualTreeAsset != null)
+                        {
+                            CreateBadgeForBlock(blockObj, special);
+                        }
+                    }
+                    else
+                    {
+                        if (blockComp.BrickSpecial != null) blockComp.BrickSpecial.SetActive(false);
+                        if (blockComp.BrickFrost != null) blockComp.BrickFrost.SetActive(false);
                     }
 
                     blockIndex++;
@@ -523,7 +610,7 @@ namespace Arcade.BlockBreaker
         public void EnsureCornerChamfers()
         {
             var boundariesRoot = GameObject.Find("Boundaries") ?? GameObject.Find("ArenaBoundaries");
-            if (boundariesRoot == null) return;
+            if (boundariesRoot == null || boundariesRoot.GetComponent<ArenaWalls>() != null) return;
 
             Transform topWall = boundariesRoot.transform.Find("TopWall");
             Material borderMat = null;
