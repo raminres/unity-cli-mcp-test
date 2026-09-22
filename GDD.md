@@ -1,6 +1,6 @@
 # BlockBreaker: Game Design Document (GDD)
 
-**Version**: 4.1  
+**Version**: 4.2  
 **Project**: BlockBreaker (`com.RaminRasulzade.BlockBreaker`)  
 **Engine**: Unity 6 (`6000.6.0f1`), Universal Render Pipeline (`URP 17.6.0`)  
 
@@ -132,7 +132,15 @@ Dense layouts (11–14 columns, $13.75\text{u}–17.5\text{u}$ span) with side b
 
 - **Arena & Camera**: Perspective camera at $38^\circ$ FOV with dynamic distance scaling (`ResponsiveCameraController`) for 16:9, 9:16, and 9:19.5 visibility. Arena walls: Top $Y = 24.25$, Sides $X = \pm 10.25$, Kill Zone $Y = -9.0$.
 - **Modular Prefab Architecture**: 100% prefab-driven (`Assets/Prefabs/` for `Arena/`, `Paddle/`, `Balls/`, `Blocks/`, `Powerups/`), eliminating runtime procedural primitives (`GameObject.CreatePrimitive`).
-- **UI Toolkit**: Unity 6 `PanelRenderer` HUD and Main Menu. Main Menu features transparent root container with unified camera framing ($Z = -32\text{f}$) and Bloom. Sprites bound via `SO_PowerupIcons.asset`. Inset management via `SafeAreaController.cs`.
+- **UI Toolkit & Screen Harmonization**:
+  - Unity 6 `PanelRenderer` HUD and Main Menu scaled to mobile portrait resolution (`1170x2532`).
+  - **Menu Parity**: In-Game Pause Menu sub-screens (How to Play, Credits, Level Select, Options) match Main Menu in layout structure, fonts, button styling, and responsive proportions.
+  - **Custom Animated Mute Toggles**: Both Main Menu and In-Game Pause Options panels feature custom checkmark toggles for SFX and Music sliders (`68px × 68px`). Toggles dynamically switch between speaker/mute icons with glowing cyan (`#21d4fd`) and crimson (`#ff3b56`) tints.
+  - Main Menu features transparent root container with unified camera framing ($Z = -32\text{f}$) and Bloom. Sprites bound via `SO_PowerupIcons.asset`. Inset management via `SafeAreaController.cs`.
+- **Unity Localization Tables (`com.unity.localization` 1.5.13)**:
+  - Table-based multi-language architecture under `Assets/Localization/Tables/` (`ArcadeTable.asset`) containing English (`en`) and Turkish (`tr`) locales.
+  - Translations can be modified directly within the Unity Editor's Localization Tables window or inspector without code changes.
+  - Dynamic runtime lookup through `LocalizationManager.cs` with synchronous fallback dictionary for offline/unit test resilience.
 - **Audio Engine**: `ArcadeAudioManager.cs` with custom clips (`AU_`) and procedural synthesizer fallback.
 - **Controls**: Desktop (mouse 1:1 or A/D / Arrow keys, Space launch), Mobile (touch drag paddle, tap launch).
-- **Tests**: 251 EditMode unit and integration tests via `unity cmd run_tests --mode editor`.
+- **Tests**: 263 EditMode unit and integration tests via `unity cmd run_tests --mode editor`.

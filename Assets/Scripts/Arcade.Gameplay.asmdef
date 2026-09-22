@@ -3,6 +3,7 @@
     "rootNamespace": "Arcade",
     "references": [
         "Unity.InputSystem",
+        "Unity.Localization",
         "UnityEngine.UI",
         "UnityEngine.UIElementsModule",
         "UnityEngine.VFXModule"

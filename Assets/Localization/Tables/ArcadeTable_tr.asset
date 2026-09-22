@@ -1,0 +1,215 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: ArcadeTable_tr
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: tr
+  m_SharedData: {fileID: 11400000, guid: fb95a00bb9770e5499691ead48bfe709, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 963006464
+    m_Localized: "YEN\u0130 OYUN BA\u015ELAT"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338112
+    m_Localized: "B\xD6L\xDCM SE\xC7"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338113
+    m_Localized: DEVAM ET
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338114
+    m_Localized: "EN Y\xDCKSEK SKORLAR"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338115
+    m_Localized: NASIL OYNANIR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338116
+    m_Localized: AYARLAR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338117
+    m_Localized: YAPIMCILAR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338118
+    m_Localized: "3D RETRO-MODERN ATAR\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338119
+    m_Localized: "B\xD6L\xDCM SE\xC7"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338120
+    m_Localized: "Meydan okuman\u0131 se\xE7"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338121
+    m_Localized: "B\xD6L\xDCM\xDC OYNA"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338122
+    m_Localized: "K\u0130L\u0130TL\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338123
+    m_Localized: "EN \u0130Y\u0130 S\xDCRE"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338124
+    m_Localized: ZORLUK
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338125
+    m_Localized: KOLAY
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338126
+    m_Localized: ORTA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338127
+    m_Localized: ZOR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338128
+    m_Localized: "GER\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338129
+    m_Localized: DEVAM ET
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338130
+    m_Localized: "YEN\u0130DEN BA\u015ELAT"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338131
+    m_Localized: "ANA MEN\xDC"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338132
+    m_Localized: "SONRAK\u0130 B\xD6L\xDCM"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338133
+    m_Localized: SKORLARI SIFIRLA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338134
+    m_Localized: "UYGULA VE YEN\u0130DEN BA\u015ELAT"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338135
+    m_Localized: AYARLAR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338136
+    m_Localized: Dil
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338137
+    m_Localized: Ses Efektleri
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338138
+    m_Localized: Sesi Kapat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338139
+    m_Localized: "M\xFCzik Sesi"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338140
+    m_Localized: "M\xFCzi\u011Fi Kapat"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338141
+    m_Localized: "Hedef Kare H\u0131z\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338142
+    m_Localized: SKOR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338143
+    m_Localized: "FIRLATMAK \u0130\xC7\u0130N DOKUN"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338144
+    m_Localized: DURAKLATILDI
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338145
+    m_Localized: "B\xD6L\xDCM GE\xC7\u0130LD\u0130!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338146
+    m_Localized: "OYUN B\u0130TT\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338147
+    m_Localized: YAPIMCILAR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338148
+    m_Localized: "Geli\u015Ftirici: Ramin Rasulzade"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338149
+    m_Localized: "Unity 6000.6 (URP) \u2022 Apple Metal \u2022 WebGPU"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338150
+    m_Localized: NASIL OYNANIR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338151
+    m_Localized: 1. KONTROLLER VE FIRLATMA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338152
+    m_Localized: "\u2022 Raketi y\xF6nlendirmek i\xE7in parma\u011F\u0131n\u0131z\u0131 veya fareyi yatay kayd\u0131r\u0131n.\n\u2022 Klavye: A/D veya Sol/Sa\u011F oklar.\n\u2022 Topu f\u0131rlatmak i\xE7in ekrana dokunun veya Bo\u015Fluk tu\u015Funa bas\u0131n."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338153
+    m_Localized: "2. D\u0130NAM\u0130K RAKET SEKMES\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338154
+    m_Localized: "\u2022 Sekme a\xE7\u0131s\u0131 temas noktas\u0131na g\xF6re hesaplan\u0131r! Merkez dikey (90\xB0), kenarlar keskin a\xE7\u0131lar (30\xB0) \xFCretir."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338155
+    m_Localized: 3. PUANLAMA VE CAM BLOKLAR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338156
+    m_Localized: "\u2022 K\u0131rm\u0131z\u0131 = 10 puan \u2022 Ye\u015Fil = 20 puan \u2022 Mavi = 30 puan.\n\u2022 Cam Bloklar 2 vuru\u015F gerektirir: 1. vuru\u015F kabu\u011Fu k\u0131rar, 2. vuru\u015F blo\u011Fu k\u0131r\u0131p 2 kat puan verir!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338157
+    m_Localized: "4. G\xDC\xC7LEND\u0130RMELER VE TEHL\u0130KELER"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338158
+    m_Localized: "\u2022 Geni\u015Fletici: Raketi b\xFCy\xFCt\xFCr.\n\u2022 \xC7arpanlar: 2X-5X bonus puan.\n\u2022 Kalkan: Koruyucu kinetik bariyer.\n\u2022 \xC7oklu Top: 3 top ayn\u0131 anda sahada!\n\u2022 Lazer: Blok s\u0131ralar\u0131n\u0131 delen ikiz toplar!\n\u2022 Bomba: Etraf\u0131ndaki kom\u015Fu bloklar\u0131 patlat\u0131r!"
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

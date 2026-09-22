@@ -1,193 +1,211 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="MainMenuUI.uss" />
+    <Style src="project://database/Assets/UI/MainMenuUI.uss?fileID=7433441132597879392&amp;guid=664803290e315de47bace9a2157cd1db&amp;type=3#MainMenuUI"/>
     <ui:VisualElement name="root-container" class="root-container">
-        <!-- Title Section -->
-        <ui:VisualElement name="header-container" class="header-container">
-            <ui:Label text="BLOCK" class="game-title title-highlight" />
-            <ui:Label text="BREAKER" class="game-title title-main" />
-            <ui:Label text="3D ARCADE RETRO-MODERN" class="subtitle" />
-        </ui:VisualElement>
-
-        <!-- Main Buttons Container -->
-        <ui:VisualElement name="menu-card" class="menu-card">
-            <ui:Button name="btn-new-game" text="START NEW GAME" class="arcade-button primary-btn" />
-            <ui:Button name="btn-level-select" text="SELECT LEVEL" class="arcade-button secondary-btn" />
-            <ui:Button name="btn-continue" text="CONTINUE" class="arcade-button default-btn" />
-            <ui:Button name="btn-highscores" text="HIGH SCORES" class="arcade-button default-btn" />
-            <ui:Button name="btn-how-to-play" text="HOW TO PLAY" class="arcade-button default-btn" />
-            <ui:Button name="btn-options" text="OPTIONS" class="arcade-button default-btn" />
-            <ui:Button name="btn-credits" text="CREDITS" class="arcade-button default-btn" />
-        </ui:VisualElement>
-
-        <!-- Level Select Modal (Hidden by default) -->
-        <ui:VisualElement name="level-modal" class="modal-backdrop modal-hidden">
-            <ui:VisualElement class="modal-card modal-card-wide">
-                <ui:Label text="SELECT LEVEL" class="modal-title" />
-
-                <!-- Level Tabs ScrollView -->
-                <ui:ScrollView class="level-tabs-scroll-view">
-                    <ui:VisualElement name="menu-level-tabs-container" class="level-tabs-container" />
-                </ui:ScrollView>
-
-                <ui:Label name="menu-level-name" text="Level 1: Classic Inverted" class="level-name-display" />
-                <ui:Label name="menu-level-desc" text="Classic 3-tier block setup with Red on bottom, Green in middle, and Blue on top. Features random x2 multiplier and paddle expander blocks." class="level-desc-display" />
-
-                <ui:VisualElement class="level-stats-pod">
-                    <ui:Label name="menu-level-stars" text="★★★" class="level-stars-display" />
-                    <ui:Label name="menu-level-best-time" text="BEST TIME: --:--" class="level-time-display" />
-                </ui:VisualElement>
-
-                <ui:Button name="btn-start-selected-level" text="PLAY LEVEL" class="arcade-button primary-btn modal-action-btn" />
-                <ui:Button name="btn-close-level-modal" text="BACK" class="arcade-button default-btn modal-close-btn" />
+        <ui:VisualElement name="main-menu-content" class="main-menu-content">
+            <ui:VisualElement name="header-container" class="header-container">
+                <ui:Label text="BLOCK" class="game-title title-highlight"/>
+                <ui:Label text="BREAKER" class="game-title title-main"/>
+                <ui:Label text="3D ARCADE RETRO-MODERN" class="subtitle"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="menu-card" class="menu-card">
+                <ui:Button name="btn-new-game" text="START NEW GAME" class="arcade-button primary-btn"/>
+                <ui:Button name="btn-level-select" text="SELECT LEVEL" class="arcade-button secondary-btn"/>
+                <ui:Button name="btn-continue" text="CONTINUE" class="arcade-button default-btn"/>
+                <ui:Button name="btn-highscores" text="HIGH SCORES" class="arcade-button default-btn"/>
+                <ui:Button name="btn-how-to-play" text="HOW TO PLAY" class="arcade-button default-btn"/>
+                <ui:Button name="btn-options" text="OPTIONS" class="arcade-button default-btn"/>
+                <ui:Button name="btn-credits" text="CREDITS" class="arcade-button default-btn"/>
             </ui:VisualElement>
         </ui:VisualElement>
-
-        <!-- High Scores Modal (Top 10 Leaderboard) -->
+        <ui:VisualElement name="level-modal" class="modal-backdrop modal-hidden">
+            <ui:VisualElement name="VisualElement" class="modal-card level-modal-card">
+                <ui:Label name="modal-title-select-level" text="SELECT LEVEL" class="modal-title level-modal-title"/>
+                <ui:Label name="modal-sub-select-level" text="Choose your next challenge" class="level-modal-subtitle"/>
+                <ui:VisualElement class="cyan-pill-divider"/>
+                <ui:ScrollView name="level-grid-scroll-view" class="level-grid-scroll-view">
+                    <ui:VisualElement name="menu-level-tabs-container" class="level-grid-container"/>
+                </ui:ScrollView>
+                <ui:VisualElement class="level-preview-card">
+                    <ui:VisualElement name="level-preview-thumb" class="level-preview-thumb"/>
+                    <ui:VisualElement class="preview-details">
+                        <ui:Label name="menu-level-tag" text="LEVEL 1" class="preview-level-tag"/>
+                        <ui:Label name="menu-level-name" text="Level 1: Classic Inverted" class="preview-level-name" style="font-size: 32px;"/>
+                        <ui:Label name="menu-level-desc" text="Classic 3-tier block setup with Red on bottom, Green in middle, and Blue on top." class="preview-level-desc"/>
+                        <ui:VisualElement class="preview-chips-row">
+                            <ui:VisualElement class="preview-chip chip-diff">
+                                <ui:Label name="menu-level-diff" text="EASY" class="chip-val val-diff"/>
+                                <ui:Label name="label-diff-subtitle" text="DIFFICULTY" class="chip-label"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="preview-chip chip-stars">
+                                <ui:Label name="menu-level-stars" text="★★★" class="chip-val val-stars"/>
+                                <ui:Label name="label-stars-subtitle" text="STARS" class="chip-label"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="preview-chip chip-time">
+                                <ui:Label name="menu-level-best-time" text="BEST TIME: --:--" class="chip-val val-time"/>
+                                <ui:Label name="label-time-subtitle" text="BEST TIME" class="chip-label"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Button name="btn-start-selected-level" text="PLAY LEVEL" class="arcade-button primary-btn level-play-action-btn"/>
+                <ui:Button name="btn-close-level-modal" text="BACK" class="arcade-button default-btn modal-close-btn"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
         <ui:VisualElement name="highscores-modal" class="modal-backdrop modal-hidden">
             <ui:VisualElement class="modal-card modal-card-wide leaderboard-card">
-                <ui:Label text="HIGH SCORES" class="modal-title" />
+                <ui:Label text="HIGH SCORES" class="modal-title"/>
                 <ui:VisualElement class="leaderboard-table">
-                    <!-- Row 1: Gold -->
                     <ui:VisualElement class="score-row row-gold">
                         <ui:VisualElement class="rank-badge-pod">
-                            <ui:VisualElement class="medal-icon icon-gold" />
-                            <ui:Label text="1st" class="rank-label label-gold" />
+                            <ui:VisualElement class="medal-icon icon-gold"/>
+                            <ui:Label text="1st" class="rank-label label-gold"/>
                         </ui:VisualElement>
-                        <ui:Label name="score-val-0" text="---" class="score-row-value val-gold" />
-                        <ui:Label name="score-date-0" text="---" class="score-row-date" />
+                        <ui:Label name="score-val-0" text="---" class="score-row-value val-gold"/>
+                        <ui:Label name="score-date-0" text="---" class="score-row-date"/>
                     </ui:VisualElement>
-
-                    <!-- Row 2: Silver -->
                     <ui:VisualElement class="score-row row-silver">
                         <ui:VisualElement class="rank-badge-pod">
-                            <ui:VisualElement class="medal-icon icon-silver" />
-                            <ui:Label text="2nd" class="rank-label label-silver" />
+                            <ui:VisualElement class="medal-icon icon-silver"/>
+                            <ui:Label text="2nd" class="rank-label label-silver"/>
                         </ui:VisualElement>
-                        <ui:Label name="score-val-1" text="---" class="score-row-value val-silver" />
-                        <ui:Label name="score-date-1" text="---" class="score-row-date" />
+                        <ui:Label name="score-val-1" text="---" class="score-row-value val-silver"/>
+                        <ui:Label name="score-date-1" text="---" class="score-row-date"/>
                     </ui:VisualElement>
-
-                    <!-- Row 3: Bronze -->
                     <ui:VisualElement class="score-row row-bronze">
                         <ui:VisualElement class="rank-badge-pod">
-                            <ui:VisualElement class="medal-icon icon-bronze" />
-                            <ui:Label text="3rd" class="rank-label label-bronze" />
+                            <ui:VisualElement class="medal-icon icon-bronze"/>
+                            <ui:Label text="3rd" class="rank-label label-bronze"/>
                         </ui:VisualElement>
-                        <ui:Label name="score-val-2" text="---" class="score-row-value val-bronze" />
-                        <ui:Label name="score-date-2" text="---" class="score-row-date" />
-                    </ui:VisualElement>
-
-                    <!-- Rows 4 to 10 -->
-                    <ui:VisualElement class="score-row">
-                        <ui:Label text="#4" class="rank-num-label" />
-                        <ui:Label name="score-val-3" text="---" class="score-row-value" />
-                        <ui:Label name="score-date-3" text="---" class="score-row-date" />
+                        <ui:Label name="score-val-2" text="---" class="score-row-value val-bronze"/>
+                        <ui:Label name="score-date-2" text="---" class="score-row-date"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="score-row">
-                        <ui:Label text="#5" class="rank-num-label" />
-                        <ui:Label name="score-val-4" text="---" class="score-row-value" />
-                        <ui:Label name="score-date-4" text="---" class="score-row-date" />
+                        <ui:Label text="#4" class="rank-num-label"/>
+                        <ui:Label name="score-val-3" text="---" class="score-row-value"/>
+                        <ui:Label name="score-date-3" text="---" class="score-row-date"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="score-row">
-                        <ui:Label text="#6" class="rank-num-label" />
-                        <ui:Label name="score-val-5" text="---" class="score-row-value" />
-                        <ui:Label name="score-date-5" text="---" class="score-row-date" />
+                        <ui:Label text="#5" class="rank-num-label"/>
+                        <ui:Label name="score-val-4" text="---" class="score-row-value"/>
+                        <ui:Label name="score-date-4" text="---" class="score-row-date"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="score-row">
-                        <ui:Label text="#7" class="rank-num-label" />
-                        <ui:Label name="score-val-6" text="---" class="score-row-value" />
-                        <ui:Label name="score-date-6" text="---" class="score-row-date" />
+                        <ui:Label text="#6" class="rank-num-label"/>
+                        <ui:Label name="score-val-5" text="---" class="score-row-value"/>
+                        <ui:Label name="score-date-5" text="---" class="score-row-date"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="score-row">
-                        <ui:Label text="#8" class="rank-num-label" />
-                        <ui:Label name="score-val-7" text="---" class="score-row-value" />
-                        <ui:Label name="score-date-7" text="---" class="score-row-date" />
+                        <ui:Label text="#7" class="rank-num-label"/>
+                        <ui:Label name="score-val-6" text="---" class="score-row-value"/>
+                        <ui:Label name="score-date-6" text="---" class="score-row-date"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="score-row">
-                        <ui:Label text="#9" class="rank-num-label" />
-                        <ui:Label name="score-val-8" text="---" class="score-row-value" />
-                        <ui:Label name="score-date-8" text="---" class="score-row-date" />
+                        <ui:Label text="#8" class="rank-num-label"/>
+                        <ui:Label name="score-val-7" text="---" class="score-row-value"/>
+                        <ui:Label name="score-date-7" text="---" class="score-row-date"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="score-row">
-                        <ui:Label text="#10" class="rank-num-label" />
-                        <ui:Label name="score-val-9" text="---" class="score-row-value" />
-                        <ui:Label name="score-date-9" text="---" class="score-row-date" />
+                        <ui:Label text="#9" class="rank-num-label"/>
+                        <ui:Label name="score-val-8" text="---" class="score-row-value"/>
+                        <ui:Label name="score-date-8" text="---" class="score-row-date"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="score-row">
+                        <ui:Label text="#10" class="rank-num-label"/>
+                        <ui:Label name="score-val-9" text="---" class="score-row-value"/>
+                        <ui:Label name="score-date-9" text="---" class="score-row-date"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
-
-                <ui:Button name="btn-reset-highscores" text="RESET SCORES" class="arcade-button warning-btn modal-action-btn" />
-                <ui:Button name="btn-close-highscores" text="BACK" class="arcade-button default-btn modal-close-btn" />
+                <ui:Button name="btn-reset-highscores" text="RESET SCORES" class="arcade-button warning-btn modal-action-btn" style="width: 85%; align-self: center;"/>
+                <ui:Button name="btn-close-highscores" text="BACK" class="arcade-button default-btn modal-close-btn" style="width: 85%; align-self: center;"/>
             </ui:VisualElement>
         </ui:VisualElement>
-
-        <!-- How To Play Modal -->
         <ui:VisualElement name="how-to-play-modal" class="modal-backdrop modal-hidden">
             <ui:VisualElement class="modal-card modal-card-wide how-to-play-card">
-                <ui:Label text="HOW TO PLAY" class="modal-title" />
+                <ui:Label text="HOW TO PLAY" class="modal-title"/>
                 <ui:ScrollView class="guide-scroll">
                     <ui:VisualElement class="guide-card">
-                        <ui:Label text="1. CONTROLS &amp; LAUNCH" class="guide-heading" />
-                        <ui:Label text="• Drag touch or mouse horizontally to guide the paddle.&#10;• Keyboard: A/D or Left/Right arrows.&#10;• Tap screen, click, or press Up/Space to launch." class="guide-text" />
+                        <ui:Label text="1. CONTROLS &amp; LAUNCH" class="guide-heading"/>
+                        <ui:Label text="• Drag touch or mouse horizontally to guide the paddle.&#10;• Keyboard: A/D or Left/Right arrows.&#10;• Tap screen, click, or press Up/Space to launch." class="guide-text"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="guide-card">
-                        <ui:Label text="2. DYNAMIC PADDLE DEFLECTION" class="guide-heading" />
-                        <ui:Label text="• Rebounds calculate angle from hit offset! Center bounces vertical (90°); outer edges yield sharp angles (30°) for surgical precision." class="guide-text" />
+                        <ui:Label text="2. DYNAMIC PADDLE DEFLECTION" class="guide-heading"/>
+                        <ui:Label text="• Rebounds calculate angle from hit offset! Center bounces vertical (90°); outer edges yield sharp angles (30°) for surgical precision." class="guide-text"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="guide-card">
-                        <ui:Label text="3. SCORING &amp; GLASS BRICKS" class="guide-heading" />
-                        <ui:Label text="• Red = 10 pts • Green = 20 pts • Blue = 30 pts.&#10;• Glass Bricks require 2 hits: Hit 1 shatters the protective shell; Hit 2 breaks the brick for 2x points!" class="guide-text" />
+                        <ui:Label text="3. SCORING &amp; GLASS BRICKS" class="guide-heading"/>
+                        <ui:Label text="• Red = 10 pts • Green = 20 pts • Blue = 30 pts.&#10;• Glass Bricks require 2 hits: Hit 1 shatters the protective shell; Hit 2 breaks the brick for 2x points!" class="guide-text"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="guide-card">
-                        <ui:Label text="4. POWERUPS &amp; HAZARDS" class="guide-heading" />
-                        <ui:Label text="• Expander: Widens paddle by +10%.&#10;• Multipliers: 2X, 3X, 4X, 5X bonus points per block.&#10;• Shield: Kinetic barrier protects for 10s.&#10;• Multi-Ball: 3 balls! Extra balls don't lose lives.&#10;• Laser Blaster: Twin cannons pierce brick rows!&#10;• Bombs: Radial detonation explodes neighbors!&#10;• Extra Heart: Grants +1 life (up to 5 max).&#10;• Clutch Countdown: When 1 brick remains, 12s timer yields up to 10X score or Railgun vaporizes it!" class="guide-text" />
+                        <ui:Label text="4. POWERUPS &amp; HAZARDS" class="guide-heading"/>
+                        <ui:Label text="• Expander: Widens paddle by +10%.&#10;• Multipliers: 2X, 3X, 4X, 5X bonus points per block.&#10;• Shield: Kinetic barrier protects for 10s.&#10;• Multi-Ball: 3 balls! Extra balls don&apos;t lose lives.&#10;• Laser Blaster: Twin cannons pierce brick rows!&#10;• Bombs: Radial detonation explodes neighbors!&#10;• Extra Heart: Grants +1 life (up to 5 max).&#10;• Clutch Countdown: When 1 brick remains, 12s timer yields up to 10X score or Railgun vaporizes it!" class="guide-text"/>
                     </ui:VisualElement>
                 </ui:ScrollView>
-                <ui:Button name="btn-close-how-to-play" text="BACK" class="arcade-button primary-btn modal-close-btn" />
+                <ui:Button name="btn-close-how-to-play" text="BACK" class="arcade-button primary-btn modal-close-btn"/>
             </ui:VisualElement>
         </ui:VisualElement>
-
-        <!-- Options Modal (Hidden by default) -->
         <ui:VisualElement name="options-modal" class="modal-backdrop modal-hidden">
             <ui:VisualElement class="modal-card">
-                <ui:Label text="SETTINGS" class="modal-title" />
-                
+                <ui:Label name="modal-title-settings" text="SETTINGS" class="modal-title"/>
                 <ui:VisualElement class="setting-row">
-                    <ui:Label text="SFX Volume" class="setting-label" />
-                    <ui:Slider name="slider-volume" low-value="0" high-value="1" value="0.8" class="setting-slider" />
+                    <ui:Label name="label-setting-lang" text="Language" class="setting-label"/>
+                    <ui:VisualElement class="setting-lang-group">
+                        <ui:Button name="btn-lang-en" class="lang-btn lang-btn-active">
+                            <ui:VisualElement picking-mode="Ignore" class="flag-icon flag-gb"/>
+                        </ui:Button>
+                        <ui:Button name="btn-lang-tr" class="lang-btn">
+                            <ui:VisualElement picking-mode="Ignore" class="flag-icon flag-tr"/>
+                        </ui:Button>
+                    </ui:VisualElement>
                 </ui:VisualElement>
-
                 <ui:VisualElement class="setting-row">
-                    <ui:Label text="Mute SFX" class="setting-label" />
-                    <ui:Toggle name="toggle-mute" class="setting-toggle" />
+                    <ui:Label name="label-setting-sfx" text="SFX Volume" class="setting-label"/>
+                    <ui:Slider name="slider-volume" low-value="0" high-value="1" value="0.8" class="setting-slider"/>
                 </ui:VisualElement>
-
                 <ui:VisualElement class="setting-row">
-                    <ui:Label text="Target Frame Rate" class="setting-label" />
-                    <ui:Button name="btn-toggle-fps" text="60 FPS" class="fps-btn" />
+                    <ui:Label name="label-setting-sfx-mute" text="Mute SFX" class="setting-label"/>
+                    <ui:Toggle name="toggle-mute" class="setting-toggle"/>
                 </ui:VisualElement>
-
-                <ui:Button name="btn-close-options" text="BACK" class="arcade-button primary-btn modal-close-btn" />
+                <ui:VisualElement class="setting-row">
+                    <ui:Label name="label-setting-music" text="Music Volume" class="setting-label"/>
+                    <ui:Slider name="slider-music-volume" low-value="0" high-value="1" value="0.7" class="setting-slider"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="setting-row">
+                    <ui:Label name="label-setting-music-mute" text="Mute Music" class="setting-label"/>
+                    <ui:Toggle name="toggle-music-mute" class="setting-toggle"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="setting-row">
+                    <ui:Label name="label-setting-fps" text="Target Frame Rate" class="setting-label"/>
+                    <ui:Button name="btn-toggle-fps" text="60 FPS" class="fps-btn"/>
+                </ui:VisualElement>
+                <ui:Button name="btn-close-options" text="BACK" class="arcade-button primary-btn modal-close-btn"/>
             </ui:VisualElement>
         </ui:VisualElement>
-
-        <!-- Credits Modal (Hidden by default) -->
         <ui:VisualElement name="credits-modal" class="modal-backdrop modal-hidden">
             <ui:VisualElement class="modal-card modal-card-wide credits-card">
-                <ui:Label text="CREDITS" class="modal-title" />
-                <ui:Label text="BLOCK BREAKER" class="credit-highlight" />
-                <ui:Label text="Engineered with Unity MCP • Gemini • Antigravity" class="credit-body credit-bold" />
-                <ui:Label text="Developed by Ramin Rasulzade" class="credit-author" />
-
-                <!-- Interactive Clickable Links -->
+                <ui:Label name="modal-title-credits" text="CREDITS" class="modal-title"/>
+                <ui:Label text="BLOCK BREAKER" class="credit-highlight"/>
+                <ui:Label text="Engineered with Unity MCP • Gemini • Antigravity" class="credit-body credit-bold"/>
+                <ui:Label name="credit-author" text="Developed by Ramin Rasulzade" class="credit-author"/>
                 <ui:VisualElement class="credit-links-container">
-                    <ui:Button name="btn-credit-email" text="✉  ramin.rasulzade@gmail.com" class="credit-link-btn" />
-                    <ui:Button name="btn-credit-website" text="🌐  raminrasulzade.com" class="credit-link-btn" />
-                    <ui:Button name="btn-credit-linkedin" text="🔗  linkedin.com/in/ramin-rasulzade" class="credit-link-btn" />
-                    <ui:Button name="btn-credit-github" text="🐙  github.com/raminres" class="credit-link-btn" />
+                    <ui:Button name="btn-credit-email" class="credit-link-btn">
+                        <ui:VisualElement picking-mode="Ignore" class="credit-icon icon-mail"/>
+                        <ui:Label text="ramin.rasulzade@gmail.com" picking-mode="Ignore" class="credit-btn-text"/>
+                    </ui:Button>
+                    <ui:Button name="btn-credit-website" class="credit-link-btn">
+                        <ui:VisualElement picking-mode="Ignore" class="credit-icon icon-web"/>
+                        <ui:Label text="raminrasulzade.com" picking-mode="Ignore" class="credit-btn-text"/>
+                    </ui:Button>
+                    <ui:Button name="btn-credit-linkedin" class="credit-link-btn">
+                        <ui:VisualElement picking-mode="Ignore" class="credit-icon icon-linkedin"/>
+                        <ui:Label text="linkedin.com/in/ramin-rasulzade" picking-mode="Ignore" class="credit-btn-text"/>
+                    </ui:Button>
+                    <ui:Button name="btn-credit-github" class="credit-link-btn">
+                        <ui:VisualElement picking-mode="Ignore" class="credit-icon icon-github"/>
+                        <ui:Label text="github.com/raminres" picking-mode="Ignore" class="credit-btn-text"/>
+                    </ui:Button>
                 </ui:VisualElement>
-
-                <ui:Label text="Unity 6000.6 (URP) • Apple Metal • WebGPU" class="credit-footnote" />
-                <ui:Button name="btn-close-credits" text="BACK" class="arcade-button primary-btn modal-close-btn" />
+                <ui:Label name="credit-footnote" text="Unity 6000.6 (URP) • Apple Metal • WebGPU" class="credit-footnote"/>
+                <ui:Button name="btn-close-credits" text="BACK" class="arcade-button primary-btn modal-close-btn"/>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

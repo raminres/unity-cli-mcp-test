@@ -10,7 +10,7 @@ High-density technical context and architectural rules for BlockBreaker.
 - **Scenes**:
   1. `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0, Start Scene configured via [PlayModeSceneSetup.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/PlayModeSceneSetup.cs))
   2. `Assets/Scenes/LV_BlockBreaker.unity` (Build Index 1, Primary Gameplay)
-- **Repository**: `https://github.com/raminres/unity-cli-mcp-test.git` (Active Branch: `feature/brick-prefabs`, Git LFS enabled)
+- **Repository**: `https://github.com/raminres/unity-cli-mcp-test.git` (Active Branch: `feature/device-ui-improvements`, Git LFS enabled)
 
 ---
 
@@ -20,6 +20,7 @@ High-density technical context and architectural rules for BlockBreaker.
 - **Audio**: `AU_*` (e.g. `AU_Pop`, `AU_Break`, `AU_Powerup`, `AU_Powerup_Laser`, `AU_Powerup_Shield`, `AU_Life_Lost`, `AU_Level_Success`, `AU_Game_Over`, `AU_Bomb_Explosion`, `AU_Glass_Break`).
 - **ScriptableObjects**: `SO_*` (`Assets/Settings/Levels/SO_Level_*.asset`, `Assets/Settings/SO_PowerupIcons.asset`).
 - **Presets**: `PR_*` in `Assets/Presets/` managed by `PresetManager.asset` and [SetupAssetPresets.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupAssetPresets.cs).
+- **Localization**: Unity Localization Tables under `Assets/Localization/` (`Locales/en.asset`, `Locales/tr.asset`, `Tables/ArcadeTable.asset`).
 
 ---
 
@@ -89,9 +90,18 @@ High-density technical context and architectural rules for BlockBreaker.
 ## 6. Graphics, UI & Systems Architecture
 - **VFX System ([BlockVFXManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/BlockVFXManager.cs))**: Pooled bursts under `_Pool_VFX` ($Y = -500\text{f}$). Zero-allocation `MaterialPropertyBlock` tinting. Frame-0 prewarming in `Start()` compiles PSOs upfront on Metal/Vulkan/DX12/WebGPU.
 - **Background**: Quad at $Z = 6.0\text{f}$ ($40 \times 80$) with `Universal Render Pipeline/Unlit` cosmic gradients ([LevelBackgroundController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/BlockBreaker/LevelBackgroundController.cs)).
-- **UI Toolkit**: Unity 6 `PanelRenderer` on `UI_HUD` and `UI_MainMenu`.
+- **UI Toolkit & Screen Harmonization**:
+  - Unity 6 `PanelRenderer` on `UI_HUD` and `UI_MainMenu` scaled for iPhone portrait reference resolution (`1170x2532`).
+  - **Menu Parity**: Pause Menu sub-screens (How to Play, Credits, Level Select, and Options) share visual design, responsive layouts, and button hierarchies with Main Menu.
+  - **Custom Animated Mute Toggles**: Both Main Menu and In-Game Pause Options screens feature custom checkmark toggles for SFX and Music (`68px × 68px`). Toggles dynamically swap between speaker and mute icons, transitioning between cyan (`#21d4fd`) and crimson (`#ff3b56`) tints.
   - `UI_MainMenu`: Transparent `.root-container` reveals the 3D scene's `PF_Background` plane. Camera matched to $38^\circ$ FOV at $Z = -32\text{f}$ with `ResponsiveCameraController` and Global Volume Bloom.
   - Insets handled by [SafeAreaController.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/UI/SafeAreaController.cs). Sprites managed via `SO_PowerupIcons.asset`.
+- **Unity Localization Tables System**:
+  - Driven by `com.unity.localization` (`1.5.13`) under `Assets/Localization/`:
+    - Locales: English (`en`) and Turkish (`tr`).
+    - String Table Collection: `Tables/ArcadeTable.asset` (`ArcadeTable_en.asset`, `ArcadeTable_tr.asset`, `ArcadeTable Shared Data.asset`).
+    - Configured via [SetupLocalizationTables.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Editor/SetupLocalizationTables.cs) (`Tools > Arcade > Setup Localization Tables`).
+  - [LocalizationManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/Core/LocalizationManager.cs) queries active `StringTable` dynamically with instant fallback dictionary, allowing designers to edit translations directly in Unity's Localization Tables window without touching code.
 - **Audio Engine ([ArcadeAudioManager.cs](file:///c:/Users/ramin/Desktop/Repos/unity-cli-mcp-test/Assets/Scripts/Audio/ArcadeAudioManager.cs))**: Custom clips with procedural audio synthesis fallback.
 
 ---
@@ -104,7 +114,7 @@ High-density technical context and architectural rules for BlockBreaker.
   - `Blocks/`: `PF_Block_Base`, `PF_Block_Red`, `PF_Block_Green`, `PF_Block_Blue`, `PF_Block_Bomb`, `PF_Block_Glass` (4 child sockets: `brick`, `brick frost`, `brick special`, `brick vfx`).
   - `Powerups/`: `PF_Drop_Powerup` (cyan capsule), `PF_Drop_Hazard` (crimson diamond).
 - **Zero Runtime Primitives**: All legacy procedural cube/quad fallbacks (`GameObject.CreatePrimitive`) removed from runtime and scene setups.
-- **Automated Tests**: 251 EditMode tests passing across core physics, prefabs, boundaries, powerups, hazards, and UI:
+- **Automated Tests**: 263 EditMode tests passing across core physics, prefabs, boundaries, powerups, hazards, UI harmonization, and localization tables:
   ```bash
   unity cmd run_tests --mode editor
   ```

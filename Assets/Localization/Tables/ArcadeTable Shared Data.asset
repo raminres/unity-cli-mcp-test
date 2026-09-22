@@ -1,0 +1,220 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: ArcadeTable Shared Data
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.SharedTableData
+  m_TableCollectionName: ArcadeTable
+  m_TableCollectionNameGuidString: fb95a00bb9770e5499691ead48bfe709
+  m_Entries:
+  - m_Id: 963006464
+    m_Key: menu_start_new
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338112
+    m_Key: menu_select_level
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338113
+    m_Key: menu_continue
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338114
+    m_Key: menu_high_scores
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338115
+    m_Key: menu_how_to_play
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338116
+    m_Key: menu_options
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338117
+    m_Key: menu_credits
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338118
+    m_Key: menu_subtitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338119
+    m_Key: level_select_title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338120
+    m_Key: level_select_subtitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338121
+    m_Key: level_play_btn
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338122
+    m_Key: level_locked
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338123
+    m_Key: level_best_time
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338124
+    m_Key: level_difficulty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338125
+    m_Key: diff_easy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338126
+    m_Key: diff_medium
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338127
+    m_Key: diff_hard
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338128
+    m_Key: btn_back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338129
+    m_Key: btn_resume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338130
+    m_Key: btn_restart
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338131
+    m_Key: btn_main_menu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338132
+    m_Key: btn_next_level
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338133
+    m_Key: btn_reset_scores
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338134
+    m_Key: btn_apply_restart
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338135
+    m_Key: settings_title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338136
+    m_Key: settings_language
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338137
+    m_Key: settings_sfx_vol
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338138
+    m_Key: settings_sfx_mute
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338139
+    m_Key: settings_music_vol
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338140
+    m_Key: settings_music_mute
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338141
+    m_Key: settings_target_fps
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338142
+    m_Key: hud_score
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338143
+    m_Key: hud_tap_launch
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338144
+    m_Key: hud_paused
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338145
+    m_Key: hud_level_clear
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338146
+    m_Key: hud_game_over
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338147
+    m_Key: credits_title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338148
+    m_Key: credits_dev_by
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338149
+    m_Key: credits_footnote
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338150
+    m_Key: guide_title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338151
+    m_Key: guide_h1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338152
+    m_Key: guide_p1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338153
+    m_Key: guide_h2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338154
+    m_Key: guide_p2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338155
+    m_Key: guide_h3
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338156
+    m_Key: guide_p3
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338157
+    m_Key: guide_h4
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1013338158
+    m_Key: guide_p4
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 4858547784846409945
+  references:
+    version: 2
+    RefIds:
+    - rid: 4858547784846409945
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1790101190785

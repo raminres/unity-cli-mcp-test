@@ -2,29 +2,28 @@
     flex-grow: 1;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* Let gameplay clicks pass through background */
+    pointer-events: none;
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Inter.ttf?fileID=12800000&guid=c32a959b960d5234baae7b3519c3828a&type=3#FT_Inter");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Inter.ttf?fileID=12800000&guid=c32a959b960d5234baae7b3519c3828a&type=3#FT_Inter");
 }
 
-/* Top Floating Pods Container */
 .top-bar {
-    margin-top: 14px;
-    margin-left: 20px;
-    margin-right: 20px;
-    height: 60px;
+    margin-top: 24px;
+    margin-left: 0;
+    margin-right: 0;
+    height: 108px;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
     background-color: transparent;
     border-width: 0;
     padding: 0;
-    pointer-events: none; /* Let gameplay clicks pass through between pods */
+    pointer-events: none;
+    margin-bottom: 24px;
 }
 
-/* Base Floating Glass Pod */
 .hud-pod {
-    height: 56px;
+    height: 108px;
     flex-direction: row;
     align-items: center;
     background-color: rgba(14, 18, 30, 0.78);
@@ -33,16 +32,87 @@
     border-color: rgba(255, 255, 255, 0.12);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     pointer-events: auto;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
 }
 
-/* Left Pod: Lives */
 .lives-pod {
     padding-left: 12px;
     padding-right: 12px;
     justify-content: flex-start;
 }
 
-/* Center Pod: Score */
+.lives-compact-pod {
+    height: 108px;
+    padding-left: 14px;
+    padding-right: 16px;
+    justify-content: center;
+    align-items: center;
+    border-color: rgba(255, 59, 86, 0.35);
+    box-shadow: 0 0 14px rgba(255, 59, 86, 0.18);
+    transition-property: scale;
+    transition-duration: 0.12s;
+}
+
+.life-compact-heart {
+    width: 64px;
+    height: 64px;
+    margin-right: 6px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Heart_Fill.png?fileID=21300000&guid=5c78b93fab88e17459882a82ea8a4a6f&type=3#TX_Heart_Fill");
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: rgb(255, 59, 86);
+}
+
+.lives-compact-text {
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 42px;
+    -unity-font-style: bold;
+    color: rgb(255, 255, 255);
+    letter-spacing: 1.2px;
+    text-shadow: 0 0 8px rgba(255, 59, 86, 0.6);
+}
+
+.pause-pod {
+    width: 108px;
+    height: 108px;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    border-radius: 28px;
+    border-color: rgba(33, 212, 253, 0.3);
+    box-shadow: 0 0 12px rgba(33, 212, 253, 0.18);
+    transition-property: scale, border-color;
+    transition-duration: 0.15s;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+}
+
+.pause-pod:hover {
+    scale: 1.08 1.08;
+    border-color: rgb(33, 212, 253);
+}
+
+.pause-quick-btn {
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    border-width: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 28px;
+    margin: 0;
+    padding: 0;
+}
+
 .score-pod {
     padding-left: 24px;
     padding-right: 24px;
@@ -51,7 +121,7 @@
     border-color: rgba(33, 212, 253, 0.3);
     box-shadow: 0 0 12px rgba(33, 212, 253, 0.18);
     transition-property: scale;
-    transition-duration: 0.10s;
+    transition-duration: 0.1s;
     transition-timing-function: ease-out-back;
 }
 
@@ -62,9 +132,9 @@
 .score-main {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 23px;
+    font-size: 46px;
     -unity-font-style: bold;
-    color: #21d4fd;
+    color: rgb(33, 212, 253);
     letter-spacing: 1.2px;
     margin: 0;
     text-shadow: 0 0 10px rgba(33, 212, 253, 0.55);
@@ -72,12 +142,11 @@
 
 .score-sub {
     font-size: 14.5px;
-    color: #94a3b8;
+    color: rgb(148, 163, 184);
     letter-spacing: 0.5px;
     margin: 0;
 }
 
-/* Lives Heart Icons */
 .lives-container {
     flex-direction: row;
     align-items: center;
@@ -98,14 +167,14 @@
 
 .pip-active {
     background-image: url("project://database/Assets/UI/Icons/TX_Heart_Fill.png?fileID=21300000&guid=5c78b93fab88e17459882a82ea8a4a6f&type=3#TX_Heart_Fill");
-    -unity-background-image-tint-color: #ff3b56;
+    -unity-background-image-tint-color: rgb(255, 59, 86);
     opacity: 1;
     scale: 1 1;
 }
 
 .pip-lost {
     background-image: url("project://database/Assets/UI/Icons/TX_Heart_Empty.png?fileID=21300000&guid=c9c893b5713e23449815fbcff6eb5834&type=3#TX_Heart_Empty");
-    -unity-background-image-tint-color: #ff3b56;
+    -unity-background-image-tint-color: rgb(255, 59, 86);
     opacity: 0.35;
     scale: 0.86 0.86;
 }
@@ -125,23 +194,23 @@
     width: 46px;
     height: 46px;
     background-image: url("project://database/Assets/UI/Icons/TX_Heart_Fill.png?fileID=21300000&guid=5c78b93fab88e17459882a82ea8a4a6f&type=3#TX_Heart_Fill");
-    -unity-background-image-tint-color: #ff2a6d;
+    -unity-background-image-tint-color: rgb(255, 42, 109);
     -unity-background-scale-mode: scale-to-fit;
 }
 
-/* Active Powerup Indicators */
 .powerup-status-container {
-    margin-top: 12px;
-    margin-left: 20px;
-    margin-right: 20px;
+    margin-top: 16px;
+    margin-left: 16px;
+    margin-right: 16px;
     flex-direction: row;
     justify-content: center;
     align-items: center;
     pointer-events: none;
+    margin-bottom: 16px;
 }
 
 .powerup-badge {
-    height: 48px;
+    height: 108px;
     flex-direction: row;
     align-items: center;
     padding: 0 18px;
@@ -152,186 +221,193 @@
     transition-property: scale, opacity, translate;
     transition-duration: 0.25s, 0.25s, 0.25s;
     transition-timing-function: ease-out-back;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
 }
 
 .shield-badge {
-    border-color: #00f2fe;
+    border-color: rgb(0, 242, 254);
     box-shadow: 0 0 12px rgba(0, 242, 254, 0.65);
 }
 
 .multiball-badge {
-    border-color: #e056fd;
+    border-color: rgb(224, 86, 253);
     box-shadow: 0 0 12px rgba(224, 86, 253, 0.65);
 }
 
 .paddle-badge {
-    border-color: #00e5ff;
+    border-color: rgb(0, 229, 255);
     box-shadow: 0 0 12px rgba(0, 229, 255, 0.65);
 }
 
 .multiplier-badge {
-    border-color: #ffd700;
+    border-color: rgb(255, 215, 0);
     box-shadow: 0 0 12px rgba(255, 215, 0, 0.65);
 }
 
 .mult-tier-2x {
-    border-color: #ffd700;
+    border-color: rgb(255, 215, 0);
     box-shadow: 0 0 12px rgba(255, 215, 0, 0.75);
 }
 
 .mult-tier-3x {
-    border-color: #ff8c00;
+    border-color: rgb(255, 140, 0);
     box-shadow: 0 0 12px rgba(255, 140, 0, 0.75);
 }
 
 .mult-tier-4x {
-    border-color: #ff1744;
+    border-color: rgb(255, 23, 68);
     box-shadow: 0 0 14px rgba(255, 23, 68, 0.85);
 }
 
 .mult-tier-5x {
-    border-color: #d500f9;
+    border-color: rgb(213, 0, 249);
     box-shadow: 0 0 14px rgba(213, 0, 249, 0.9);
 }
 
 .laser-badge {
-    border-color: #ff2a47;
+    border-color: rgb(255, 42, 71);
     box-shadow: 0 0 14px rgba(255, 42, 71, 0.85);
 }
 
 .clutch-badge {
-    border-color: #ff007f;
+    border-color: rgb(255, 0, 127);
     box-shadow: 0 0 16px rgba(255, 0, 127, 0.9);
 }
 
 .powerup-status-icon {
-    width: 30px;
-    height: 30px;
+    width: 64px;
+    height: 64px;
     margin-right: 9px;
     -unity-background-scale-mode: scale-to-fit;
 }
 
 .icon-shield {
-    -unity-background-image-tint-color: #00f2fe;
+    -unity-background-image-tint-color: rgb(0, 242, 254);
 }
 
 .icon-multiball {
-    -unity-background-image-tint-color: #e056fd;
+    -unity-background-image-tint-color: rgb(224, 86, 253);
 }
 
 .icon-paddle-expand {
-    -unity-background-image-tint-color: #00e5ff;
+    -unity-background-image-tint-color: rgb(0, 229, 255);
 }
 
 .icon-multiplier {
-    -unity-background-image-tint-color: #ffd700;
+    -unity-background-image-tint-color: rgb(255, 215, 0);
 }
 
 .mult-tier-2x .icon-multiplier {
-    -unity-background-image-tint-color: #ffd700;
+    -unity-background-image-tint-color: rgb(255, 215, 0);
 }
 
 .mult-tier-3x .icon-multiplier {
-    -unity-background-image-tint-color: #ff8c00;
+    -unity-background-image-tint-color: rgb(255, 140, 0);
 }
 
 .mult-tier-4x .icon-multiplier {
-    -unity-background-image-tint-color: #ff1744;
+    -unity-background-image-tint-color: rgb(255, 23, 68);
 }
 
 .mult-tier-5x .icon-multiplier {
-    -unity-background-image-tint-color: #d500f9;
+    -unity-background-image-tint-color: rgb(213, 0, 249);
 }
 
 .icon-laser {
-    -unity-background-image-tint-color: #ff2a47;
+    -unity-background-image-tint-color: rgb(255, 42, 71);
 }
 
 .powerup-timer-label {
-    font-size: 18px;
+    font-size: 32px;
     -unity-font-style: bold;
-    color: #ffffff;
+    color: rgb(255, 255, 255);
     letter-spacing: 1px;
 }
 
 .multiplier-val-text {
-    font-size: 18px;
+    font-size: 32px;
     -unity-font-style: bold;
     margin-right: 5px;
 }
 
 .clutch-val-text {
-    font-size: 18px;
+    font-size: 36px;
     -unity-font-style: bold;
     margin-right: 5px;
-    color: #ff007f;
+    color: rgb(255, 0, 127);
     text-shadow: 0 0 10px rgba(255, 0, 127, 0.9);
 }
 
 .shield-badge .powerup-timer-label {
-    color: #00f2fe;
+    color: rgb(0, 242, 254);
     text-shadow: 0 0 8px rgba(0, 242, 254, 0.8);
 }
 
 .multiball-badge .powerup-timer-label {
-    color: #e056fd;
+    color: rgb(224, 86, 253);
     text-shadow: 0 0 8px rgba(224, 86, 253, 0.8);
 }
 
 .paddle-badge .powerup-timer-label {
-    color: #00e5ff;
+    color: rgb(0, 229, 255);
     text-shadow: 0 0 8px rgba(0, 229, 255, 0.8);
 }
 
 .laser-badge .powerup-timer-label {
-    color: #ff2a47;
+    color: rgb(255, 42, 71);
     text-shadow: 0 0 8px rgba(255, 42, 71, 0.85);
 }
 
 .clutch-badge .powerup-timer-label {
-    color: #ffffff;
+    color: rgb(255, 255, 255);
     text-shadow: 0 0 8px rgba(255, 0, 127, 0.85);
 }
 
 .mult-tier-2x .multiplier-val-text,
 .mult-tier-2x .powerup-timer-label {
-    color: #ffd700;
+    color: rgb(255, 215, 0);
     text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
 }
 
 .mult-tier-3x .multiplier-val-text,
 .mult-tier-3x .powerup-timer-label {
-    color: #ff8c00;
+    color: rgb(255, 140, 0);
     text-shadow: 0 0 8px rgba(255, 140, 0, 0.8);
 }
 
 .mult-tier-4x .multiplier-val-text,
 .mult-tier-4x .powerup-timer-label {
-    color: #ff1744;
+    color: rgb(255, 23, 68);
     text-shadow: 0 0 8px rgba(255, 23, 68, 0.8);
 }
 
 .mult-tier-5x .multiplier-val-text,
 .mult-tier-5x .powerup-timer-label {
-    color: #d500f9;
+    color: rgb(213, 0, 249);
     text-shadow: 0 0 8px rgba(213, 0, 249, 0.8);
 }
 
-/* Hazard / Powerdown Badges */
 .powerdown-badge {
-    border-color: #ff1744;
+    border-color: rgb(255, 23, 68);
     box-shadow: 0 0 14px rgba(255, 23, 68, 0.95);
     background-color: rgba(30, 10, 14, 0.92);
 }
 
 .powerdown-badge .powerup-timer-label,
 .powerdown-timer-label {
-    color: #ff1744;
+    color: rgb(255, 23, 68);
     text-shadow: 0 0 10px rgba(255, 23, 68, 0.95);
 }
 
 .powerdown-badge .powerup-status-icon {
-    -unity-background-image-tint-color: #ff1744;
+    -unity-background-image-tint-color: rgb(255, 23, 68);
 }
 
 .icon-paddle-shrink {
@@ -355,23 +431,23 @@
 }
 
 .paddle-shrink-badge {
-    border-color: #ff1744;
+    border-color: rgb(255, 23, 68);
 }
 
 .paddle-slow-badge {
-    border-color: #ff3860;
+    border-color: rgb(255, 56, 96);
 }
 
 .ball-shrink-badge {
-    border-color: #ff1744;
+    border-color: rgb(255, 23, 68);
 }
 
 .ball-slow-badge {
-    border-color: #ff3860;
+    border-color: rgb(255, 56, 96);
 }
 
 .paddle-freeze-badge {
-    border-color: #ff1744;
+    border-color: rgb(255, 23, 68);
     box-shadow: 0 0 16px rgba(255, 23, 68, 0.95);
 }
 
@@ -381,7 +457,6 @@
     scale: 0.8 0.8;
 }
 
-/* Quick Control Buttons Pod */
 .quick-controls {
     flex-direction: row;
     align-items: center;
@@ -395,22 +470,28 @@
 }
 
 .quick-btn {
-    width: 44px;
-    height: 44px;
-    margin-left: 4px;
-    margin-right: 4px;
+    width: 100%;
+    height: 100%;
+    margin-left: 0;
+    margin-right: 0;
     border-radius: 22px;
     border-width: 1.5px;
     border-color: rgba(255, 255, 255, 0.14);
-    background-color: rgba(255, 255, 255, 0.06);
-    color: #e2e8f0;
+    color: rgb(226, 232, 240);
     font-size: 20px;
     align-items: center;
     justify-content: center;
     scale: 1 1;
-    transition-property: scale, background-color, border-color, translate;
-    transition-duration: 0.25s, 0.15s, 0.15s, 0.25s;
-    transition-timing-function: ease-out-back;
+    margin-top: 0;
+    margin-bottom: 0;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
 .quick-btn:hover {
@@ -430,27 +511,26 @@
     transition-timing-function: ease-in-out;
 }
 
-/* Quick Control Icons */
 .quick-btn-icon {
-    width: 24px;
-    height: 24px;
+    width: 64px;
+    height: 64px;
     -unity-background-scale-mode: scale-to-fit;
-    -unity-background-image-tint-color: #e2e8f0;
+    -unity-background-image-tint-color: rgb(226, 232, 240);
     transition-property: rotate, scale, -unity-background-image-tint-color;
     transition-duration: 0.5s, 0.2s, 0.2s;
     transition-timing-function: ease-out-back;
 }
 
 .quick-btn:hover .quick-btn-icon {
-    -unity-background-image-tint-color: #21d4fd;
+    -unity-background-image-tint-color: rgb(33, 212, 253);
 }
 
 .quick-btn:hover .icon-volume-up {
-    -unity-background-image-tint-color: #ff6e82;
+    -unity-background-image-tint-color: rgb(255, 110, 130);
 }
 
 .quick-btn:hover .icon-play {
-    -unity-background-image-tint-color: #6ef5b2;
+    -unity-background-image-tint-color: rgb(110, 245, 178);
 }
 
 .icon-level-settings {
@@ -463,7 +543,7 @@
 
 .icon-volume-up {
     background-image: url("project://database/Assets/UI/Icons/TX_Volume_Up.png?fileID=21300000&guid=9b70a43178d3e484aaa75e906b4ade94&type=3#TX_Volume_Up");
-    -unity-background-image-tint-color: #ff3b56;
+    -unity-background-image-tint-color: rgb(255, 59, 86);
 }
 
 .icon-settings {
@@ -476,37 +556,77 @@
 
 .icon-play {
     background-image: url("project://database/Assets/UI/Icons/TX_Play.png?fileID=21300000&guid=dd600ea38ce338d4394fa625707eaee8&type=3#TX_Play");
-    -unity-background-image-tint-color: #26e885;
+    -unity-background-image-tint-color: rgb(38, 232, 133);
 }
 
-/* Launch Banner */
 .launch-banner {
     position: absolute;
-    bottom: 130px;
+    bottom: 22%;
     align-self: center;
-    background-color: rgba(33, 212, 253, 0.15);
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(14, 20, 36, 0.88);
     border-width: 1.5px;
-    border-color: rgba(33, 212, 253, 0.45);
-    border-radius: 20px;
-    padding: 14px 32px;
+    border-color: rgba(33, 212, 253, 0.55);
+    border-radius: 24px;
+    padding: 10px 22px;
+    box-shadow: 0 0 16px rgba(33, 212, 253, 0.25);
     pointer-events: none;
+    transition-property: scale, opacity;
+    transition-duration: 0.25s;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
 .launch-banner-hidden {
     display: none;
+    opacity: 0;
+    scale: 0.8 0.8;
+}
+
+.launch-arrow-left {
+    width: 64px;
+    height: 64px;
+    margin-right: 8px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Icon_Arrow_Left.png?fileID=21300000&guid=a8825fa6e09212041956a6ff878e0074&type=3#TX_Icon_Arrow_Left");
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: rgb(33, 212, 253);
+}
+
+.launch-finger-icon {
+    width: 64px;
+    height: 64px;
+    margin-right: 8px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Icon_Finger.png?fileID=21300000&guid=c1e43c38002c30947a94159bae08bf2b&type=3#TX_Icon_Finger");
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+}
+
+.launch-arrow-right {
+    width: 64px;
+    height: 64px;
+    margin-right: 12px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Icon_Arrow_Right.png?fileID=21300000&guid=790e375755a510b4aa7f9e846be910c8&type=3#TX_Icon_Arrow_Right");
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: rgb(33, 212, 253);
 }
 
 .launch-text {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 18px;
+    font-size: 32px;
     -unity-font-style: bold;
-    color: #ffffff;
-    letter-spacing: 2px;
+    color: rgb(33, 212, 253);
+    letter-spacing: 1.5px;
     text-shadow: 0 0 10px rgba(33, 212, 253, 0.8);
 }
 
-/* Level Clear Center Banner */
 .level-clear-banner {
     position: absolute;
     top: 36%;
@@ -535,9 +655,9 @@
 .level-clear-banner-text {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 32px;
+    font-size: 64px;
     -unity-font-style: bold;
-    color: #ffd700;
+    color: rgb(255, 215, 0);
     letter-spacing: 3px;
     -unity-text-align: middle-center;
     text-shadow: 0 0 16px rgba(255, 215, 0, 0.9);
@@ -547,23 +667,118 @@
 .level-clear-banner-subtext {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 15px;
+    font-size: 32px;
     -unity-font-style: bold;
-    color: #00f2fe;
+    color: rgb(0, 242, 254);
     letter-spacing: 2.5px;
     -unity-text-align: middle-center;
     text-shadow: 0 0 10px rgba(0, 242, 254, 0.8);
 }
 
-/* Modals */
 .modal-backdrop {
     position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(8, 10, 18, 0.85);
+    background-color: rgba(6, 9, 20, 0.88);
     align-items: center;
     justify-content: center;
     pointer-events: auto;
+}
+
+.setting-lang-group {
+    flex-direction: row;
+    align-items: center;
+}
+
+.lang-btn {
+    width: 68px;
+    height: 38px;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.15);
+    color: rgb(148, 163, 184);
+    font-size: 14px;
+    -unity-font-style: bold;
+    margin-left: 8px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding-left: 6px;
+    padding-right: 6px;
+    transition-property: background-color, border-color, color, scale;
+    transition-duration: 0.15s;
+}
+
+.lang-btn:hover {
+    scale: 1.05 1.05;
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.lang-btn-active {
+    background-color: rgb(33, 212, 253);
+    border-color: rgb(110, 227, 255);
+    color: rgb(8, 10, 20);
+}
+
+.flag-icon {
+    width: 20px;
+    height: 14px;
+    margin-right: 5px;
+    border-radius: 2px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.flag-gb {
+    background-image: url("project://database/Assets/UI/Icons/TX_Flag_GB.png?fileID=21300000&guid=edb8ea2efda138f478df74c1eb804bca&type=3#TX_Flag_GB");
+}
+
+.flag-tr {
+    background-image: url("project://database/Assets/UI/Icons/TX_Flag_TR.png?fileID=21300000&guid=fb59304eb0b2d6847ad8f39291a43817&type=3#TX_Flag_TR");
+}
+
+.lang-btn-text {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: inherit;
+    margin: 0;
+    padding: 0;
+}
+
+.unity-scroller #unity-low-button,
+.unity-scroller #unity-high-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.unity-scroller--vertical {
+    width: 8px;
+    margin-right: 2px;
+}
+
+.unity-scroller--vertical .unity-base-slider__tracker {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-width: 0;
+    border-radius: 4px;
+    width: 6px;
+}
+
+.unity-scroller--vertical .unity-base-slider__dragger {
+    background-color: rgba(33, 212, 253, 0.55);
+    border-width: 0;
+    border-radius: 4px;
+    width: 6px;
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+
+.unity-scroller--vertical .unity-base-slider__dragger:hover {
+    background-color: rgb(33, 212, 253);
 }
 
 .modal-hidden {
@@ -571,13 +786,21 @@
 }
 
 .modal-card {
-    width: 420px;
-    background-color: #171c2c;
+    width: 840px;
+    background-color: rgb(23, 28, 44);
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.15);
     border-radius: 28px;
     padding: 32px 28px;
     align-items: stretch;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
 }
 
 .victory-card {
@@ -591,46 +814,49 @@
 .modal-title {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 32px;
+    font-size: 54px;
     -unity-font-style: bold;
-    color: #ffffff;
+    color: rgb(255, 255, 255);
     letter-spacing: 2px;
     align-self: center;
     margin-bottom: 16px;
+    margin-top: 16px;
+    margin-right: 16px;
+    margin-left: 16px;
 }
 
 .victory-title {
-    color: #26e885;
+    color: rgb(38, 232, 133);
     text-shadow: 0 0 15px rgba(38, 232, 133, 0.6);
 }
 
 .gameover-title {
-    color: #ff3b56;
+    color: rgb(255, 59, 86);
     text-shadow: 0 0 15px rgba(255, 59, 86, 0.6);
 }
 
 .modal-score {
-    font-size: 23px;
+    font-size: 48px;
     -unity-font-style: bold;
-    color: #21d4fd;
+    color: rgb(33, 212, 253);
     align-self: center;
     margin-bottom: 5px;
 }
 
 .modal-subscore {
-    font-size: 16px;
-    color: #94a3b8;
+    font-size: 32px;
+    color: rgb(148, 163, 184);
     align-self: center;
     margin-bottom: 22px;
 }
 
-/* Bouncy Modal Arcade Buttons */
-.arcade-btn {
-    height: 62px;
+.arcade-btn,
+.arcade-button {
+    height: 128px;
     border-radius: 18px;
     border-width: 1.5px;
-    margin-top: 14px;
-    font-size: 20px;
+    margin-top: 16px;
+    font-size: 32px;
     -unity-font-style: bold;
     letter-spacing: 1.5px;
     align-items: center;
@@ -639,66 +865,88 @@
     transition-property: scale, background-color, border-color, translate;
     transition-duration: 0.25s, 0.15s, 0.15s, 0.25s;
     transition-timing-function: ease-out-back;
+    margin-right: 16px;
+    margin-bottom: 16px;
+    margin-left: 16px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
 }
 
-.arcade-btn:hover {
+.arcade-btn:hover,
+.arcade-button:hover {
     scale: 1.05 1.05;
     translate: 0 -2px;
     transition-duration: 0.22s;
     transition-timing-function: ease-out-back;
 }
 
-.arcade-btn:active {
+.arcade-btn:active,
+.arcade-button:active {
     scale: 0.92 0.92;
     translate: 0 3px;
     transition-duration: 0.08s;
     transition-timing-function: ease-in-out;
 }
 
-.btn-primary {
-    background-color: #ff3b56;
-    border-color: #ff6e82;
-    color: #ffffff;
+.btn-primary,
+.primary-btn {
+    background-color: rgb(255, 59, 86);
+    border-color: rgb(255, 110, 130);
+    color: rgb(255, 255, 255);
 }
 
-.btn-primary:hover {
-    background-color: #ff546c;
-    border-color: #ffffff;
+.btn-primary:hover,
+.primary-btn:hover {
+    background-color: rgb(255, 84, 108);
+    border-color: rgb(255, 255, 255);
 }
 
-.btn-primary:active {
-    background-color: #d81e3a;
-    border-color: #ff3b56;
+.btn-primary:active,
+.primary-btn:active {
+    background-color: rgb(216, 30, 58);
+    border-color: rgb(255, 59, 86);
 }
 
-.btn-secondary {
-    background-color: #26e885;
-    border-color: #6ef5b2;
-    color: #0c0d16;
+.btn-secondary,
+.secondary-btn {
+    background-color: rgb(38, 232, 133);
+    border-color: rgb(110, 245, 178);
+    color: rgb(12, 13, 22);
 }
 
-.btn-secondary:hover {
-    background-color: #4df7a1;
-    border-color: #ffffff;
+.btn-secondary:hover,
+.secondary-btn:hover {
+    background-color: rgb(77, 247, 161);
+    border-color: rgb(255, 255, 255);
 }
 
-.btn-secondary:active {
-    background-color: #17be67;
-    border-color: #26e885;
+.btn-secondary:active,
+.secondary-btn:active {
+    background-color: rgb(23, 190, 103);
+    border-color: rgb(38, 232, 133);
 }
 
-.btn-default {
+.btn-default,
+.default-btn {
     background-color: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.15);
-    color: #e2e8f0;
+    color: rgb(226, 232, 240);
 }
 
-.btn-default:hover {
+.btn-default:hover,
+.default-btn:hover {
     background-color: rgba(255, 255, 255, 0.18);
     border-color: rgba(255, 255, 255, 0.35);
 }
 
-.btn-default:active {
+.btn-default:active,
+.default-btn:active {
     background-color: rgba(255, 255, 255, 0.04);
 }
 
@@ -710,34 +958,110 @@
 }
 
 .setting-label {
-    font-size: 17px;
-    color: #cbd5e1;
+    font-size: 32px;
+    color: rgb(203, 213, 225);
 }
 
 .setting-slider {
-    width: 170px;
+    width: 210px;
+    height: 64px;
+}
+
+.setting-lang-group {
+    flex-direction: row;
+    align-items: center;
+}
+
+.lang-btn {
+    width: 68px;
+    height: 68px;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.15);
+    color: rgb(148, 163, 184);
+    font-size: 14px;
+    -unity-font-style: bold;
+    margin-left: 6px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+    transition-property: background-color, border-color, color, scale;
+    transition-duration: 0.15s;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 6px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+}
+
+.lang-btn:hover {
+    scale: 1.05 1.05;
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.lang-btn-active {
+    background-color: rgb(33, 212, 253);
+    border-color: rgb(110, 227, 255);
+    color: rgb(8, 10, 20);
+}
+
+.flag-icon {
+    width: 64px;
+    height: 64px;
+    margin-right: 0;
+    border-radius: 2px;
+    -unity-background-scale-mode: scale-to-fit;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+}
+
+.flag-gb {
+    background-image: url("project://database/Assets/UI/Icons/TX_Flag_GB.png?fileID=21300000&guid=edb8ea2efda138f478df74c1eb804bca&type=3#TX_Flag_GB");
+}
+
+.flag-tr {
+    background-image: url("project://database/Assets/UI/Icons/TX_Flag_TR.png?fileID=21300000&guid=fb59304eb0b2d6847ad8f39291a43817&type=3#TX_Flag_TR");
+}
+
+.lang-btn-text {
+    font-size: 0;
+    -unity-font-style: bold;
+    color: inherit;
+    margin: 0;
+    padding: 0;
 }
 
 .setting-toggle {
+    height: 102px;
     margin-right: 0;
     margin-top: 0;
     margin-bottom: 0;
+    justify-content: center;
 }
 
 .setting-toggle .unity-toggle__input {
     justify-content: flex-end;
+    align-items: center;
 }
 
 .setting-toggle .unity-toggle__checkmark {
-    width: 38px;
-    height: 38px;
-    border-radius: 11px;
-    border-width: 1.5px;
+    width: 68px;
+    height: 68px;
+    border-radius: 14px;
+    border-width: 2px;
     border-color: rgba(33, 212, 253, 0.45);
     background-color: rgba(33, 212, 253, 0.12);
     -unity-background-scale-mode: scale-to-fit;
     background-image: url("project://database/Assets/UI/Icons/TX_Volume_Up.png?fileID=21300000&guid=9b70a43178d3e484aaa75e906b4ade94&type=3#TX_Volume_Up");
-    -unity-background-image-tint-color: #21d4fd;
+    -unity-background-image-tint-color: rgb(33, 212, 253);
     scale: 1 1;
     transition-property: scale, background-color, border-color, -unity-background-image-tint-color;
     transition-duration: 0.2s, 0.15s, 0.15s, 0.2s;
@@ -747,7 +1071,7 @@
 .setting-toggle:hover .unity-toggle__checkmark,
 .setting-toggle > .unity-toggle__input:hover > .unity-toggle__checkmark {
     scale: 1.1 1.1;
-    border-color: #21d4fd;
+    border-color: rgb(33, 212, 253);
     background-color: rgba(33, 212, 253, 0.25);
 }
 
@@ -756,35 +1080,39 @@
     border-color: rgba(255, 59, 86, 0.55);
     background-color: rgba(255, 59, 86, 0.16);
     background-image: url("project://database/Assets/UI/Icons/TX_Volume_Mute.png?fileID=21300000&guid=19323d3393a6acb4c9810de7a485552e&type=3#TX_Volume_Mute");
-    -unity-background-image-tint-color: #ff3b56;
+    -unity-background-image-tint-color: rgb(255, 59, 86);
 }
 
 .setting-toggle:checked:hover .unity-toggle__checkmark,
 .setting-toggle > .unity-toggle__input:checked:hover > .unity-toggle__checkmark {
     scale: 1.1 1.1;
-    border-color: #ff546c;
+    border-color: rgb(255, 84, 108);
     background-color: rgba(255, 59, 86, 0.3);
-    -unity-background-image-tint-color: #ff6e82;
+    -unity-background-image-tint-color: rgb(255, 110, 130);
 }
 
 .fps-btn {
-    width: 110px;
-    height: 42px;
+    width: 160px;
+    height: 108px;
     border-radius: 12px;
-    background-color: #252e46;
+    background-color: rgb(37, 46, 70);
     border-color: rgba(255, 255, 255, 0.2);
-    color: #21d4fd;
+    color: rgb(33, 212, 253);
     -unity-font-style: bold;
-    font-size: 16px;
+    font-size: 24px;
     scale: 1 1;
     transition-property: scale, background-color;
     transition-duration: 0.2s;
     transition-timing-function: ease-out-back;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
 .fps-btn:hover {
     scale: 1.08 1.08;
-    background-color: #2e3a58;
+    background-color: rgb(46, 58, 88);
     transition-timing-function: ease-out-back;
 }
 
@@ -794,12 +1122,12 @@
 }
 
 .modal-close-btn {
-    margin-top: 18px;
+    margin-top: 16px;
+    margin-bottom: 0;
 }
 
-/* Level Settings Modal Extensions */
 .modal-card-wide {
-    width: 510px;
+    width: 840px;
 }
 
 .level-tabs-scroll-view {
@@ -829,7 +1157,7 @@
     border-width: 1.5px;
     border-color: rgba(255, 255, 255, 0.18);
     background-color: rgba(255, 255, 255, 0.08);
-    color: #cbd5e1;
+    color: rgb(203, 213, 225);
     font-size: 14px;
     -unity-font-style: bold;
     letter-spacing: 0.5px;
@@ -852,15 +1180,15 @@
 }
 
 .level-tab-active {
-    background-color: #21d4fd;
-    border-color: #21d4fd;
-    color: #0c0d16;
+    background-color: rgb(33, 212, 253);
+    border-color: rgb(33, 212, 253);
+    color: rgb(12, 13, 22);
 }
 
 .level-tab-active:hover {
-    background-color: #55ddfe;
-    border-color: #55ddfe;
-    color: #0c0d16;
+    background-color: rgb(85, 221, 254);
+    border-color: rgb(85, 221, 254);
+    color: rgb(12, 13, 22);
 }
 
 .level-name-display {
@@ -868,7 +1196,7 @@
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     font-size: 21px;
     -unity-font-style: bold;
-    color: #21d4fd;
+    color: rgb(33, 212, 253);
     align-self: center;
     margin-bottom: 5px;
     letter-spacing: 0.5px;
@@ -876,7 +1204,7 @@
 
 .level-desc-display {
     font-size: 14px;
-    color: #94a3b8;
+    color: rgb(148, 163, 184);
     align-self: center;
     margin-bottom: 16px;
     -unity-text-align: middle-center;
@@ -887,7 +1215,7 @@
     width: 74px;
     font-size: 16px;
     -unity-font-style: bold;
-    color: #21d4fd;
+    color: rgb(33, 212, 253);
     -unity-text-align: middle-right;
     margin-left: 8px;
 }
@@ -897,21 +1225,25 @@
 }
 
 .pause-card {
-    width: 460px;
+    width: 840px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
-/* Leaderboard & High Scores Modal */
 .leaderboard-card {
-    width: 530px;
+    width: 840px;
 }
 
 .leaderboard-table {
     margin-top: 6px;
     margin-bottom: 16px;
+    align-items: center;
 }
 
 .score-row {
-    height: 44px;
+    height: 100px;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
@@ -919,34 +1251,41 @@
     border-radius: 12px;
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.07);
-    margin-bottom: 5px;
+    margin-bottom: 6px;
     padding: 0 16px;
+    margin-top: 12px;
+    margin-right: 12px;
+    margin-left: 12px;
+    width: 85%;
 }
 
 .row-gold {
     background-color: rgba(255, 215, 0, 0.12);
     border-color: rgba(255, 215, 0, 0.45);
+    width: 100%;
 }
 
 .row-silver {
-    background-color: rgba(226, 232, 240, 0.10);
+    background-color: rgba(226, 232, 240, 0.1);
     border-color: rgba(226, 232, 240, 0.38);
+    width: 95%;
 }
 
 .row-bronze {
-    background-color: rgba(205, 127, 50, 0.10);
+    background-color: rgba(205, 127, 50, 0.1);
     border-color: rgba(205, 127, 50, 0.38);
+    width: 90%;
 }
 
 .rank-badge-pod {
     flex-direction: row;
     align-items: center;
-    width: 78px;
+    width: 160px;
 }
 
 .medal-icon {
-    width: 26px;
-    height: 26px;
+    width: 64px;
+    height: 64px;
     margin-right: 7px;
     -unity-background-scale-mode: scale-to-fit;
 }
@@ -964,56 +1303,56 @@
 }
 
 .rank-label {
-    font-size: 16px;
+    font-size: 32px;
     -unity-font-style: bold;
 }
 
 .label-gold {
-    color: #ffd700;
+    color: rgb(255, 215, 0);
 }
 
 .label-silver {
-    color: #e2e8f0;
+    color: rgb(226, 232, 240);
 }
 
 .label-bronze {
-    color: #cd7f32;
+    color: rgb(205, 127, 50);
 }
 
 .rank-num-label {
     width: 78px;
-    font-size: 15px;
+    font-size: 36px;
     -unity-font-style: bold;
-    color: #94a3b8;
+    color: rgb(148, 163, 184);
 }
 
 .score-row-value {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 18px;
+    font-size: 36px;
     -unity-font-style: bold;
-    color: #ffffff;
+    color: rgb(255, 255, 255);
     letter-spacing: 1px;
 }
 
 .val-gold {
-    color: #ffd700;
+    color: rgb(255, 215, 0);
     text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
 }
 
 .val-silver {
-    color: #e2e8f0;
+    color: rgb(226, 232, 240);
     text-shadow: 0 0 8px rgba(226, 232, 240, 0.6);
 }
 
 .val-bronze {
-    color: #cd7f32;
+    color: rgb(205, 127, 50);
     text-shadow: 0 0 8px rgba(205, 127, 50, 0.6);
 }
 
 .score-row-date {
-    font-size: 13px;
-    color: #64748b;
+    font-size: 26px;
+    color: rgb(100, 116, 139);
     width: 92px;
     -unity-text-align: middle-right;
 }
@@ -1021,95 +1360,114 @@
 .warning-btn {
     background-color: rgba(225, 29, 72, 0.18);
     border-color: rgba(244, 63, 94, 0.6);
-    color: #fb7185;
+    color: rgb(251, 113, 133);
 }
 
 .warning-btn:hover {
-    background-color: #e11d48;
-    border-color: #ffffff;
-    color: #ffffff;
+    background-color: rgb(225, 29, 72);
+    border-color: rgb(255, 255, 255);
+    color: rgb(255, 255, 255);
 }
 
 .warning-btn:active {
-    background-color: #be123c;
+    background-color: rgb(190, 18, 60);
 }
 
-/* How To Play Modal */
 .how-to-play-card {
-    width: 550px;
+    width: 840px;
     max-height: 660px;
 }
 
 .guide-scroll {
     max-height: 490px;
-    margin-bottom: 14px;
+    margin-bottom: 6px;
+    margin-top: 6px;
+    margin-right: 6px;
+    margin-left: 6px;
 }
 
 .guide-card {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.04);
     border-radius: 16px;
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.1);
     padding: 16px;
-    margin-bottom: 12px;
+    margin-bottom: 6px;
+    margin-top: 6px;
+    margin-right: 6px;
+    margin-left: 6px;
+    padding-top: 12px;
+    padding-right: 12px;
+    padding-bottom: 12px;
+    padding-left: 12px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
 .guide-heading {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 16px;
+    font-size: 32px;
     -unity-font-style: bold;
-    color: #21d4fd;
+    color: rgb(33, 212, 253);
     letter-spacing: 1px;
     margin-bottom: 7px;
 }
 
 .guide-text {
-    font-size: 14px;
-    color: #cbd5e1;
+    font-size: 28px;
+    color: rgb(203, 213, 225);
     white-space: normal;
 }
 
-/* Timer Pod */
 .timer-pod {
     flex-direction: row;
     align-items: center;
     padding: 0 16px;
-    height: 48px;
+    height: 108px;
     background-color: rgba(23, 28, 44, 0.75);
     border-radius: 24px;
     border-width: 1px;
     border-color: rgba(0, 242, 254, 0.35);
     box-shadow: 0 0 10px rgba(0, 242, 254, 0.25);
     margin-left: 10px;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
 .timer-icon {
-    width: 20px;
-    height: 20px;
-    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Speed.png?fileID=21300000&guid=e131922c07022c04fa24072387e3848b&type=3#TX_Powerup_Speed");
+    width: 64px;
+    height: 64px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Powerup_Speed.png?fileID=21300000&guid=c399fb261c30b494b95544161c031f6e&type=3#TX_Powerup_Speed");
     margin-right: 8px;
-    -unity-background-image-tint-color: #00f2fe;
+    -unity-background-image-tint-color: rgb(0, 242, 254);
 }
 
 .timer-main {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 16px;
+    font-size: 32px;
     -unity-font-style: bold;
-    color: #ffffff;
+    color: rgb(255, 255, 255);
     letter-spacing: 1px;
     text-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
 }
 
-/* Score Delta Pop */
 .score-delta {
     position: absolute;
     bottom: -22px;
     align-self: center;
     font-size: 14px;
     -unity-font-style: bold;
-    color: #ffd700;
+    color: rgb(255, 215, 0);
     text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
     transition-property: opacity, translate;
     transition-duration: 0.35s;
@@ -1125,14 +1483,13 @@
     translate: 0 -4px;
 }
 
-/* Flying Score Label Animation */
 .flying-score {
     position: absolute;
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     font-size: 15px;
     -unity-font-style: bold;
-    color: #ffd700;
+    color: rgb(255, 215, 0);
     text-shadow: 0 0 10px rgba(255, 215, 0, 0.9);
     padding: 3px 10px;
     border-radius: 12px;
@@ -1145,96 +1502,110 @@
 }
 
 .flying-score-normal {
-    color: #ffd700;
+    color: rgb(255, 215, 0);
     border-color: rgba(255, 215, 0, 0.65);
     text-shadow: 0 0 10px rgba(255, 215, 0, 0.9);
 }
 
 .flying-score-combo {
-    color: #00f2fe;
+    color: rgb(0, 242, 254);
     border-color: rgba(0, 242, 254, 0.75);
     text-shadow: 0 0 12px rgba(0, 242, 254, 0.95);
 }
 
 .flying-score-bomb {
-    color: #ff8400;
+    color: rgb(255, 132, 0);
     border-color: rgba(255, 132, 0, 0.85);
-    text-shadow: 0 0 14px rgba(255, 132, 0, 1);
+    text-shadow: 0 0 14px rgb(255, 132, 0);
 }
 
 .flying-score-clutch {
-    color: #ff2a6d;
+    color: rgb(255, 42, 109);
     border-color: rgba(255, 42, 109, 0.9);
-    text-shadow: 0 0 14px rgba(255, 42, 109, 1);
+    text-shadow: 0 0 14px rgb(255, 42, 109);
 }
 
-/* Combo Badge */
 .combo-badge {
     background-color: rgba(255, 42, 109, 0.2);
-    border-color: #ff2a6d;
+    border-color: rgb(255, 42, 109);
 }
 
 .combo-badge .icon-multiplier {
-    -unity-background-image-tint-color: #ff2a6d;
+    -unity-background-image-tint-color: rgb(255, 42, 109);
 }
 
 .combo-badge.mult-tier-2x .icon-multiplier {
-    -unity-background-image-tint-color: #ffd700;
+    -unity-background-image-tint-color: rgb(255, 215, 0);
 }
 
 .combo-badge.mult-tier-3x .icon-multiplier {
-    -unity-background-image-tint-color: #ff8c00;
+    -unity-background-image-tint-color: rgb(255, 140, 0);
 }
 
 .combo-badge.mult-tier-4x .icon-multiplier {
-    -unity-background-image-tint-color: #ff1744;
+    -unity-background-image-tint-color: rgb(255, 23, 68);
 }
 
 .combo-badge.mult-tier-5x .icon-multiplier {
-    -unity-background-image-tint-color: #d500f9;
+    -unity-background-image-tint-color: rgb(213, 0, 249);
 }
 
 .combo-val-text {
-    color: #ff2a6d;
+    color: rgb(255, 42, 109);
     -unity-font-style: bold;
-    font-size: 14px;
+    font-size: 28px;
     letter-spacing: 1px;
 }
 
 .combo-badge.mult-tier-2x .combo-val-text {
-    color: #ffd700;
+    color: rgb(255, 215, 0);
     text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
 }
 
 .combo-badge.mult-tier-3x .combo-val-text {
-    color: #ff8c00;
+    color: rgb(255, 140, 0);
     text-shadow: 0 0 8px rgba(255, 140, 0, 0.8);
 }
 
 .combo-badge.mult-tier-4x .combo-val-text {
-    color: #ff1744;
+    color: rgb(255, 23, 68);
     text-shadow: 0 0 8px rgba(255, 23, 68, 0.8);
 }
 
 .combo-badge.mult-tier-5x .combo-val-text {
-    color: #d500f9;
+    color: rgb(213, 0, 249);
     text-shadow: 0 0 8px rgba(213, 0, 249, 0.8);
 }
 
-/* Scorecard Modal */
 .scorecard-card {
-    width: 480px;
-    background-color: #151928;
+    width: 840px;
+    background-color: rgb(21, 25, 40);
     border-radius: 28px;
     border-width: 1.5px;
     border-color: rgba(33, 212, 253, 0.4);
     padding: 28px 24px;
     align-items: center;
+    padding-top: 16px;
+    padding-right: 16px;
+    padding-bottom: 16px;
+    padding-left: 16px;
+    margin-top: 16px;
+    margin-right: 16px;
+    margin-bottom: 16px;
+    margin-left: 16px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
 }
 
 .scorecard-title {
     font-size: 26px;
-    color: #21d4fd;
+    color: rgb(33, 212, 253);
     letter-spacing: 2px;
     margin-bottom: 12px;
 }
@@ -1247,10 +1618,10 @@
 }
 
 .scorecard-star {
-    width: 48px;
-    height: 48px;
+    width: 64px;
+    height: 64px;
     margin: 0 8px;
-    background-image: url("project://database/Assets/UI/Icons/TX_Medal_Gold.png?fileID=21300000&guid=3a8e99e033fb9404285d85c8f74e64f7&type=3#TX_Medal_Gold");
+    background-image: url("project://database/Assets/UI/Icons/TX_Medal_Gold.png?fileID=21300000&guid=49e1ff47be1e4d7449ce42ffe621b576&type=3#TX_Medal_Gold");
     transition-property: scale, opacity;
     transition-duration: 0.3s;
 }
@@ -1258,13 +1629,13 @@
 .star-empty {
     opacity: 0.2;
     scale: 0.85;
-    -unity-background-image-tint-color: #64748b;
+    -unity-background-image-tint-color: rgb(100, 116, 139);
 }
 
 .star-earned {
-    opacity: 1.0;
+    opacity: 1;
     scale: 1.15;
-    -unity-background-image-tint-color: #ffd700;
+    -unity-background-image-tint-color: rgb(255, 215, 0);
 }
 
 .scorecard-table {
@@ -1274,62 +1645,81 @@
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.08);
     padding: 16px 18px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    margin-top: 16px;
+    margin-right: 16px;
+    margin-left: 16px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
 .scorecard-row {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 16px;
+    margin-top: 16px;
+    margin-right: 16px;
+    margin-left: 16px;
+    padding-top: 8px;
+    padding-right: 8px;
+    padding-bottom: 8px;
+    padding-left: 8px;
 }
 
 .scorecard-row-label {
-    font-size: 14px;
-    color: #94a3b8;
+    font-size: 28px;
+    color: rgb(148, 163, 184);
 }
 
 .scorecard-row-val {
-    font-size: 15px;
+    font-size: 30px;
     -unity-font-style: bold;
-    color: #f1f5f9;
+    color: rgb(241, 245, 249);
 }
 
 .val-combo {
-    color: #ff2a6d;
+    color: rgb(255, 42, 109);
 }
 
 .val-time {
-    color: #38bdf8;
+    color: rgb(56, 189, 248);
 }
 
 .val-bonus {
-    color: #ffd700;
+    color: rgb(255, 215, 0);
 }
 
 .val-flawless {
-    color: #4ade80;
+    color: rgb(74, 222, 128);
 }
 
 .scorecard-total-row {
     border-top-width: 1px;
     border-top-color: rgba(255, 255, 255, 0.15);
-    padding-top: 10px;
-    margin-top: 6px;
-    margin-bottom: 0;
+    padding-top: 8px;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    padding-right: 8px;
+    padding-bottom: 8px;
+    padding-left: 8px;
+    margin-right: 16px;
+    margin-left: 16px;
 }
 
 .scorecard-total-label {
-    font-size: 16px;
+    font-size: 32px;
     -unity-font-style: bold;
-    color: #ffffff;
+    color: rgb(255, 255, 255);
     letter-spacing: 1px;
 }
 
 .scorecard-total-val {
-    font-size: 22px;
+    font-size: 44px;
     -unity-font-style: bold;
-    color: #ffd700;
+    color: rgb(255, 215, 0);
 }
 
 .scorecard-btn-row {
@@ -1341,6 +1731,422 @@
 .scorecard-action-btn {
     flex-grow: 1;
     margin: 0 5px;
-    height: 46px;
+    height: 128px;
+    font-size: 28px;
+    margin-top: 6px;
+    margin-right: 12px;
+    margin-bottom: 6px;
+    margin-left: 12px;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+}
+
+.credits-card {
+    width: 840px;
+}
+
+.credit-highlight {
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: rgb(255, 59, 86);
+    letter-spacing: 2px;
+    align-self: center;
+    margin-bottom: 6px;
+    text-shadow: 0 0 10px rgba(255, 59, 86, 0.7);
+}
+
+.credit-body {
+    font-size: 13px;
+    color: rgb(148, 163, 184);
+    align-self: center;
+    margin-bottom: 8px;
+    -unity-text-align: middle-center;
+}
+
+.credit-bold {
+    -unity-font-style: bold;
+    color: rgb(203, 213, 225);
     font-size: 14px;
+}
+
+.credit-author {
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(33, 212, 253);
+    align-self: center;
+    margin-bottom: 18px;
+}
+
+.credit-links-container {
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.credit-link-btn {
+    height: 96px;
+    border-radius: 14px;
+    border-width: 1px;
+    border-color: rgba(33, 212, 253, 0.35);
+    background-color: rgba(33, 212, 253, 0.08);
+    color: rgb(33, 212, 253);
+    font-size: 15px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 20px;
+    padding-right: 16px;
+    margin-bottom: 10px;
+    scale: 1 1;
+    transition-property: scale, background-color, border-color;
+    transition-duration: 0.2s, 0.15s, 0.15s;
+    transition-timing-function: ease-out-back;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+}
+
+.credit-link-btn:hover {
+    scale: 1.03 1.03;
+    background-color: rgba(33, 212, 253, 0.25);
+    border-color: rgb(33, 212, 253);
+    color: rgb(255, 255, 255);
+}
+
+.credit-link-btn:active {
+    scale: 0.96 0.96;
+}
+
+.credit-icon {
+    width: 48px;
+    height: 48px;
+    margin-right: 12px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.icon-mail {
+    background-image: url("project://database/Assets/UI/Icons/TX_Icon_Mail.png?fileID=21300000&guid=ebe29a6576d52b24ebc63caee9636561&type=3#TX_Icon_Mail");
+    -unity-background-image-tint-color: rgb(33, 212, 253);
+}
+
+.icon-web {
+    background-image: url("project://database/Assets/UI/Icons/TX_Icon_Web.png?fileID=21300000&guid=baee02911da2ea94cab2866cf0239bef&type=3#TX_Icon_Web");
+    -unity-background-image-tint-color: rgb(33, 212, 253);
+}
+
+.icon-linkedin {
+    background-image: url("project://database/Assets/UI/Icons/TX_Icon_LinkedIn.png?fileID=21300000&guid=4b5ac813a7fbda241b71c7f7874d0123&type=3#TX_Icon_LinkedIn");
+    -unity-background-image-tint-color: rgb(33, 212, 253);
+}
+
+.icon-github {
+    background-image: url("project://database/Assets/UI/Icons/TX_Icon_GitHub.png?fileID=21300000&guid=95f1dbecc80c4d94eb42252450d30de2&type=3#TX_Icon_GitHub");
+    -unity-background-image-tint-color: rgb(33, 212, 253);
+}
+
+.credit-btn-text {
+    color: rgb(255, 255, 255);
+    font-size: 24px;
+    -unity-font-style: bold;
+}
+
+.credit-footnote {
+    font-size: 26px;
+    color: rgb(100, 116, 139);
+    align-self: center;
+    margin-bottom: 10px;
+}
+
+.level-modal-card {
+    width: 840px;
+    max-height: 94%;
+    background-color: rgb(13, 18, 34);
+    border-width: 1.5px;
+    border-color: rgba(33, 212, 253, 0.45);
+    border-radius: 30px;
+    padding: 24px 20px 20px 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+}
+
+.level-modal-title {
+    font-size: 52px;
+    color: rgb(255, 255, 255);
+    letter-spacing: 3px;
+    margin-bottom: 2px;
+    align-self: center;
+}
+
+.level-modal-subtitle {
+    font-size: 32px;
+    color: rgb(126, 143, 168);
+    margin-bottom: 8px;
+    align-self: center;
+}
+
+.cyan-pill-divider {
+    width: 100%;
+    height: 3px;
+    background-color: rgb(33, 212, 253);
+    border-radius: 2px;
+    align-self: center;
+    margin-bottom: 14px;
+    box-shadow: 0 0 8px rgb(33, 212, 253);
+}
+
+.level-grid-scroll-view {
+    height: 540px;
+    margin-bottom: 12px;
+}
+
+.level-grid-scroll-view #unity-content-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.level-grid-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.level-grid-card {
+    width: 240px;
+    height: 200px;
+    margin-bottom: 16px;
+    border-radius: 16px;
+    border-width: 1.5px;
+    border-color: rgba(33, 212, 253, 0.28);
+    background-color: rgba(18, 25, 45, 0.85);
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    transition-property: scale, border-color, box-shadow, background-color;
+    transition-duration: 0.18s;
+    margin-top: 16px;
+    margin-right: 8px;
+    margin-left: 8px;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+}
+
+.level-grid-card:hover {
+    scale: 1.05 1.05;
+    border-color: rgb(33, 212, 253);
+    background-color: rgba(26, 36, 64, 0.95);
+}
+
+.level-card-selected {
+    border-color: rgb(255, 59, 141);
+    background-color: rgba(33, 212, 253, 0.12);
+    box-shadow: 0 0 18px rgba(255, 59, 141, 0.55), inset 0 0 10px rgba(33, 212, 253, 0.25);
+    scale: 1.04 1.04;
+}
+
+.level-card-num {
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: rgb(255, 255, 255);
+    margin-bottom: 2px;
+}
+
+.level-card-stars-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2px;
+}
+
+.card-star {
+    font-size: 13px;
+    margin: 0 1px;
+}
+
+.star-active {
+    color: rgb(255, 215, 0);
+}
+
+.star-inactive {
+    color: rgba(148, 163, 184, 0.3);
+}
+
+.level-card-time {
+    font-size: 20px;
+    color: rgb(126, 143, 168);
+    -unity-font-style: bold;
+}
+
+.level-card-locked {
+    opacity: 0.55;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.level-card-lock-icon {
+    font-size: 18px;
+    color: rgb(126, 143, 168);
+    margin-bottom: 2px;
+}
+
+.level-card-locked-label {
+    font-size: 10px;
+    color: rgb(100, 116, 139);
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}
+
+.level-preview-card {
+    width: 100%;
+    min-height: 140px;
+    flex-direction: row;
+    background-color: rgba(10, 15, 28, 0.98);
+    border-width: 1px;
+    border-color: rgba(33, 212, 253, 0.3);
+    border-radius: 18px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+}
+
+.level-preview-thumb {
+    width: 160px;
+    height: 320px;
+    border-radius: 12px;
+    background-color: rgba(6, 9, 18, 0.9);
+    border-width: 1px;
+    border-color: rgba(255, 59, 141, 0.35);
+    margin-right: 6px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    margin-left: 6px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+}
+
+.preview-details {
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+.preview-level-tag {
+    font-size: 20px;
+    letter-spacing: 1.5px;
+    color: rgb(126, 143, 168);
+    -unity-font-style: bold;
+    margin-bottom: 1px;
+}
+
+.preview-level-name {
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: rgb(255, 255, 255);
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.preview-level-desc {
+    font-size: 20px;
+    color: rgb(148, 163, 184);
+    white-space: normal;
+    margin-bottom: 6px;
+}
+
+.preview-chips-row {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: auto;
+}
+
+.preview-chip {
+    flex-grow: 1;
+    margin: 0 3px;
+    height: 144px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    align-items: center;
+    justify-content: center;
+    padding: 2px 4px;
+    margin-top: 6px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+    margin-left: 6px;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+}
+
+.chip-val {
+    font-size: 20px;
+    -unity-font-style: bold;
+}
+
+.val-diff {
+    color: rgb(255, 170, 0);
+}
+
+.val-stars {
+    color: rgb(255, 215, 0);
+}
+
+.val-time {
+    color: rgb(33, 212, 253);
+}
+
+.chip-label {
+    font-size: 16px;
+    color: rgb(100, 116, 139);
+    letter-spacing: 0.5px;
+}
+
+.level-play-action-btn {
+    height: 128px;
+    border-radius: 26px;
+    background-color: rgb(255, 59, 119);
+    border-color: rgb(33, 212, 253);
+    color: rgb(255, 255, 255);
+    font-size: 32px;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    box-shadow: 0 0 16px rgba(255, 59, 119, 0.5);
+}
+
+.level-play-action-btn:hover {
+    background-color: rgb(255, 84, 142);
+    border-color: rgb(255, 255, 255);
+    scale: 1.03 1.03;
 }

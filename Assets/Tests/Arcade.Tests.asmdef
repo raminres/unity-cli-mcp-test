@@ -3,6 +3,8 @@
     "rootNamespace": "Arcade.Tests",
     "references": [
         "Arcade.Gameplay",
+        "Unity.Localization",
+        "Unity.Localization.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

@@ -18,9 +18,13 @@ namespace Arcade.UI
 
         [Header("Breathing Room (Extra Safe Margins)")]
         [Tooltip("Extra margin percentage added on top of the physical hardware safe area.")]
-        [Range(0f, 15f)] [SerializeField] private float extraTopPercent = 3.5f;
+        [Range(0f, 15f)] [SerializeField] private float extraTopPercent = 4.5f;
         [Range(0f, 15f)] [SerializeField] private float extraBottomPercent = 2.5f;
         [Range(0f, 15f)] [SerializeField] private float extraSidePercent = 2.0f;
+
+        public float ExtraTopPercent => extraTopPercent;
+        public float ExtraBottomPercent => extraBottomPercent;
+        public float ExtraSidePercent => extraSidePercent;
 
         [Header("Editor Simulation")]
         [SerializeField] private bool simulateInEditor = true;
@@ -105,10 +109,11 @@ namespace Arcade.UI
 
             if (root == null) return;
 
-            // Target the actual content container (hud-root / root-container / first child)
+            // Target the actual content container (prefer dedicated safe-area-content, top-bar, or main-menu-content)
+            // to allow full-screen root containers and modal backdrops to remain edge-to-edge
             targetElement = !string.IsNullOrEmpty(targetContainerName)
                 ? root.Q(targetContainerName) ?? root
-                : (root.Q("hud-root") ?? root.Q("root-container") ?? (root.childCount > 0 ? root[0] : root));
+                : (root.Q("safe-area-content") ?? root.Q("top-bar") ?? root.Q("main-menu-content") ?? root.Q("hud-root") ?? root.Q("root-container") ?? (root.childCount > 0 ? root[0] : root));
 
             if (targetElement == null) targetElement = root;
 
@@ -136,19 +141,29 @@ namespace Arcade.UI
 
             var (leftPct, rightPct, topPct, bottomPct) = CalculateInsets(safeArea, screenW, screenH, extraSidePercent, extraTopPercent, extraBottomPercent);
 
-            // Apply padding to target container element (e.g. hud-root) so all child bars and banners shift down below notch
+            // Apply padding to target container element (e.g. safe-area-content or top-bar)
             targetElement.style.paddingLeft = Length.Percent(leftPct);
             targetElement.style.paddingRight = Length.Percent(rightPct);
             targetElement.style.paddingTop = Length.Percent(topPct);
             targetElement.style.paddingBottom = Length.Percent(bottomPct);
 
             // If targetElement is a child of root, reset root's padding so layout isn't duplicated
+            // and root remains 100% full bleed for edge-to-edge modal backdrops
             if (targetElement != root)
             {
                 root.style.paddingLeft = Length.Percent(0);
                 root.style.paddingRight = Length.Percent(0);
                 root.style.paddingTop = Length.Percent(0);
                 root.style.paddingBottom = Length.Percent(0);
+            }
+
+            var fullBleedRoot = root.Q("hud-root") ?? root.Q("root-container");
+            if (fullBleedRoot != null && targetElement != fullBleedRoot)
+            {
+                fullBleedRoot.style.paddingLeft = Length.Percent(0);
+                fullBleedRoot.style.paddingRight = Length.Percent(0);
+                fullBleedRoot.style.paddingTop = Length.Percent(0);
+                fullBleedRoot.style.paddingBottom = Length.Percent(0);
             }
         }
 

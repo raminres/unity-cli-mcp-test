@@ -12,4 +12,6 @@ EditorBuildSettings:
     path: Assets/Scenes/LV_BlockBreaker.unity
     guid: ba80f31a4bb2b5e44b97a131308c1f12
   m_configObjects:
+    com.unity.addressableassets: {fileID: 11400000, guid: 6e46bcac876f1e54f9d883c81d5d6c98, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+    com.unity.localization.settings: {fileID: 11400000, guid: a9257e0002288eb47b5fcabc4635b908, type: 2}

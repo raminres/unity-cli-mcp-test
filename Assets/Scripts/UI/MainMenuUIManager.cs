@@ -52,22 +52,54 @@ namespace Arcade.UI
 
         // Level Select controls
         private readonly System.Collections.Generic.List<Button> menuLevelTabButtons = new System.Collections.Generic.List<Button>();
+        private Label menuLevelTag;
+        private Label menuLevelDiff;
         private Label menuLevelName;
         private Label menuLevelDesc;
         private Label menuLevelStars;
         private Label menuLevelBestTime;
+        private VisualElement levelPreviewThumb;
         private int selectedLevelNumber = 1;
 
         // Options controls
         private Slider sliderVolume;
         private Toggle toggleMute;
+        private Slider sliderMusicVolume;
+        private Toggle toggleMusicMute;
+        private Button btnLangEn;
+        private Button btnLangTr;
         private Button btnToggleFps;
+
+        [Header("Audio Toggle Icons")]
+        [SerializeField] private Sprite volumeUpSprite;
+        [SerializeField] private Sprite volumeMuteSprite;
+
+        // Localized Labels
+        private Label labelSettingLang;
+        private Label labelSettingSfx;
+        private Label labelSettingSfxMute;
+        private Label labelSettingMusic;
+        private Label labelSettingMusicMute;
+        private Label labelSettingFps;
+        private Label modalTitleSettings;
+        private Label modalTitleSelectLevel;
+        private Label modalSubSelectLevel;
+        private Label modalTitleCredits;
+        private Label labelDiffSubtitle;
+        private Label labelStarsSubtitle;
+        private Label labelTimeSubtitle;
 
         private int targetFps = 60;
 
         private void Awake()
         {
             panelRenderer = GetComponent<PanelRenderer>();
+#if UNITY_EDITOR
+            if (volumeUpSprite == null)
+                volumeUpSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Volume_Up.png");
+            if (volumeMuteSprite == null)
+                volumeMuteSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Volume_Mute.png");
+#endif
         }
 
         private void Start()
@@ -184,6 +216,9 @@ namespace Arcade.UI
             if (btnCreditGithub != null) btnCreditGithub.clicked -= OpenGitHub;
 
             if (btnToggleFps != null) btnToggleFps.clicked -= ToggleFpsSetting;
+            if (btnLangEn != null) btnLangEn.clicked -= HandleLangEnClicked;
+            if (btnLangTr != null) btnLangTr.clicked -= HandleLangTrClicked;
+            LocalizationManager.OnLanguageChanged -= UpdateLocalizedTexts;
 
             menuLevelTabButtons.Clear();
         }
@@ -220,7 +255,7 @@ namespace Arcade.UI
             btnCreditGithub = root.Q<Button>("btn-credit-github");
 
             menuLevelTabButtons.Clear();
-            var tabsContainer = root.Q<VisualElement>(className: "level-tabs-container");
+            var tabsContainer = root.Q<VisualElement>(className: "level-grid-container") ?? root.Q<VisualElement>(className: "level-tabs-container");
             if (tabsContainer != null)
             {
                 tabsContainer.Clear();
@@ -229,23 +264,71 @@ namespace Arcade.UI
                 {
                     int lvlNum = i + 1;
                     int stars = HighScoreManager.GetLevelStars(lvlNum);
-                    string starSuffix = stars > 0 ? $" ({stars}★)" : "";
-                    var btn = new Button { text = $"LVL {lvlNum}{starSuffix}" };
-                    btn.AddToClassList("level-tab-btn");
-                    tabsContainer.Add(btn);
-                    menuLevelTabButtons.Add(btn);
-                    btn.clicked += () => SelectLevel(lvlNum);
+                    float bestTime = HighScoreManager.GetLevelBestTime(lvlNum);
+
+                    var cardBtn = new Button();
+                    cardBtn.AddToClassList("level-grid-card");
+                    cardBtn.AddToClassList("level-tab-btn");
+
+                    var numLbl = new Label(lvlNum.ToString());
+                    numLbl.AddToClassList("level-card-num");
+                    numLbl.pickingMode = PickingMode.Ignore;
+                    cardBtn.Add(numLbl);
+
+                    var starsRow = new VisualElement();
+                    starsRow.AddToClassList("level-card-stars-row");
+                    starsRow.pickingMode = PickingMode.Ignore;
+                    for (int s = 0; s < 3; s++)
+                    {
+                        var star = new Label("★");
+                        star.AddToClassList("card-star");
+                        star.AddToClassList(s < stars ? "star-active" : "star-inactive");
+                        star.pickingMode = PickingMode.Ignore;
+                        starsRow.Add(star);
+                    }
+                    cardBtn.Add(starsRow);
+
+                    var timeLbl = new Label(bestTime > 0f ? HighScoreManager.FormatTime(bestTime) : "--:--");
+                    timeLbl.AddToClassList("level-card-time");
+                    timeLbl.pickingMode = PickingMode.Ignore;
+                    cardBtn.Add(timeLbl);
+
+                    tabsContainer.Add(cardBtn);
+                    menuLevelTabButtons.Add(cardBtn);
+                    int captureLvl = lvlNum;
+                    cardBtn.clicked += () => SelectLevel(captureLvl);
                 }
             }
 
+            menuLevelTag = root.Q<Label>("menu-level-tag");
+            menuLevelDiff = root.Q<Label>("menu-level-diff");
             menuLevelName = root.Q<Label>("menu-level-name");
             menuLevelDesc = root.Q<Label>("menu-level-desc");
             menuLevelStars = root.Q<Label>("menu-level-stars");
             menuLevelBestTime = root.Q<Label>("menu-level-best-time");
+            levelPreviewThumb = root.Q<VisualElement>("level-preview-thumb");
 
             sliderVolume = root.Q<Slider>("slider-volume");
             toggleMute = root.Q<Toggle>("toggle-mute");
+            sliderMusicVolume = root.Q<Slider>("slider-music-volume");
+            toggleMusicMute = root.Q<Toggle>("toggle-music-mute");
+            btnLangEn = root.Q<Button>("btn-lang-en");
+            btnLangTr = root.Q<Button>("btn-lang-tr");
             btnToggleFps = root.Q<Button>("btn-toggle-fps");
+
+            labelSettingLang = root.Q<Label>("label-setting-lang");
+            labelSettingSfx = root.Q<Label>("label-setting-sfx");
+            labelSettingSfxMute = root.Q<Label>("label-setting-sfx-mute");
+            labelSettingMusic = root.Q<Label>("label-setting-music");
+            labelSettingMusicMute = root.Q<Label>("label-setting-music-mute");
+            labelSettingFps = root.Q<Label>("label-setting-fps");
+            modalTitleSettings = root.Q<Label>("modal-title-settings");
+            modalTitleSelectLevel = root.Q<Label>("modal-title-select-level");
+            modalSubSelectLevel = root.Q<Label>("modal-sub-select-level");
+            modalTitleCredits = root.Q<Label>("modal-title-credits");
+            labelDiffSubtitle = root.Q<Label>("label-diff-subtitle");
+            labelStarsSubtitle = root.Q<Label>("label-stars-subtitle");
+            labelTimeSubtitle = root.Q<Label>("label-time-subtitle");
 
             if (btnNewGame != null) btnNewGame.clicked += HandleNewGameClicked;
             if (btnLevelSelect != null) btnLevelSelect.clicked += ShowLevelModal;
@@ -259,6 +342,9 @@ namespace Arcade.UI
             if (btnStartSelectedLevel != null) btnStartSelectedLevel.clicked += HandleStartSelectedLevel;
 
             if (btnCloseOptions != null) btnCloseOptions.clicked += HideOptions;
+            if (btnLangEn != null) btnLangEn.clicked += HandleLangEnClicked;
+            if (btnLangTr != null) btnLangTr.clicked += HandleLangTrClicked;
+
             if (btnCloseCredits != null) btnCloseCredits.clicked += HideCredits;
             if (btnCloseHighscores != null) btnCloseHighscores.clicked += HideHighScoresModal;
             if (btnResetHighscores != null) btnResetHighscores.clicked += HandleResetHighScores;
@@ -284,10 +370,33 @@ namespace Arcade.UI
                 {
                     if (ArcadeAudioManager.Instance != null)
                         ArcadeAudioManager.Instance.IsMuted = evt.newValue;
+                    UpdateToggleMuteIcon(toggleMute, evt.newValue);
+                });
+            }
+
+            if (sliderMusicVolume != null)
+            {
+                sliderMusicVolume.RegisterValueChangedCallback(evt =>
+                {
+                    if (ArcadeAudioManager.Instance != null)
+                        ArcadeAudioManager.Instance.MusicVolume = evt.newValue;
+                });
+            }
+
+            if (toggleMusicMute != null)
+            {
+                toggleMusicMute.RegisterValueChangedCallback(evt =>
+                {
+                    if (ArcadeAudioManager.Instance != null)
+                        ArcadeAudioManager.Instance.IsMusicMuted = evt.newValue;
+                    UpdateToggleMuteIcon(toggleMusicMute, evt.newValue);
                 });
             }
 
             if (btnToggleFps != null) btnToggleFps.clicked += ToggleFpsSetting;
+
+            LocalizationManager.OnLanguageChanged += UpdateLocalizedTexts;
+            UpdateLocalizedTexts();
         }
 
         private void InitializeValues()
@@ -302,7 +411,17 @@ namespace Arcade.UI
             if (ArcadeAudioManager.Instance != null)
             {
                 if (sliderVolume != null) sliderVolume.value = ArcadeAudioManager.Instance.Volume;
-                if (toggleMute != null) toggleMute.value = ArcadeAudioManager.Instance.IsMuted;
+                if (toggleMute != null)
+                {
+                    toggleMute.value = ArcadeAudioManager.Instance.IsMuted;
+                    UpdateToggleMuteIcon(toggleMute, ArcadeAudioManager.Instance.IsMuted);
+                }
+                if (sliderMusicVolume != null) sliderMusicVolume.value = ArcadeAudioManager.Instance.MusicVolume;
+                if (toggleMusicMute != null)
+                {
+                    toggleMusicMute.value = ArcadeAudioManager.Instance.IsMusicMuted;
+                    UpdateToggleMuteIcon(toggleMusicMute, ArcadeAudioManager.Instance.IsMusicMuted);
+                }
             }
 
             selectedLevelNumber = PlayerPrefs.GetInt("Arcade_SelectedLevel", 1);
@@ -311,6 +430,68 @@ namespace Arcade.UI
             targetFps = PlayerPrefs.GetInt("Arcade_TargetFPS", 60);
             Application.targetFrameRate = targetFps;
             if (btnToggleFps != null) btnToggleFps.text = $"{targetFps} FPS";
+
+            UpdateLocalizedTexts();
+        }
+
+        private void HandleLangEnClicked()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            LocalizationManager.SetLanguage(GameLanguage.English);
+        }
+
+        private void HandleLangTrClicked()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            LocalizationManager.SetLanguage(GameLanguage.Turkish);
+        }
+
+        private void UpdateLocalizedTexts()
+        {
+            bool isTr = LocalizationManager.CurrentLanguage == GameLanguage.Turkish;
+            if (btnLangEn != null)
+            {
+                if (!isTr) btnLangEn.AddToClassList("lang-btn-active");
+                else btnLangEn.RemoveFromClassList("lang-btn-active");
+            }
+            if (btnLangTr != null)
+            {
+                if (isTr) btnLangTr.AddToClassList("lang-btn-active");
+                else btnLangTr.RemoveFromClassList("lang-btn-active");
+            }
+
+            if (btnNewGame != null) btnNewGame.text = LocalizationManager.Get("menu_start_new", "START NEW GAME");
+            if (btnLevelSelect != null) btnLevelSelect.text = LocalizationManager.Get("menu_select_level", "SELECT LEVEL");
+            if (btnContinue != null) btnContinue.text = LocalizationManager.Get("menu_continue", "CONTINUE");
+            if (btnHighscores != null) btnHighscores.text = LocalizationManager.Get("menu_high_scores", "HIGH SCORES");
+            if (btnHowToPlay != null) btnHowToPlay.text = LocalizationManager.Get("menu_how_to_play", "HOW TO PLAY");
+            if (btnOptions != null) btnOptions.text = LocalizationManager.Get("menu_options", "OPTIONS");
+            if (btnCredits != null) btnCredits.text = LocalizationManager.Get("menu_credits", "CREDITS");
+
+            if (btnStartSelectedLevel != null) btnStartSelectedLevel.text = LocalizationManager.Get("level_play_btn", "PLAY LEVEL");
+            if (btnCloseLevelModal != null) btnCloseLevelModal.text = LocalizationManager.Get("btn_back", "BACK");
+            if (btnCloseOptions != null) btnCloseOptions.text = LocalizationManager.Get("btn_back", "BACK");
+            if (btnCloseCredits != null) btnCloseCredits.text = LocalizationManager.Get("btn_back", "BACK");
+            if (btnCloseHighscores != null) btnCloseHighscores.text = LocalizationManager.Get("btn_back", "BACK");
+            if (btnCloseHowToPlay != null) btnCloseHowToPlay.text = LocalizationManager.Get("btn_back", "BACK");
+            if (btnResetHighscores != null) btnResetHighscores.text = LocalizationManager.Get("btn_reset_scores", "RESET SCORES");
+
+            if (modalTitleSettings != null) modalTitleSettings.text = LocalizationManager.Get("settings_title", "SETTINGS");
+            if (labelSettingLang != null) labelSettingLang.text = LocalizationManager.Get("settings_language", "Language");
+            if (labelSettingSfx != null) labelSettingSfx.text = LocalizationManager.Get("settings_sfx_vol", "SFX Volume");
+            if (labelSettingSfxMute != null) labelSettingSfxMute.text = LocalizationManager.Get("settings_sfx_mute", "Mute SFX");
+            if (labelSettingMusic != null) labelSettingMusic.text = LocalizationManager.Get("settings_music_vol", "Music Volume");
+            if (labelSettingMusicMute != null) labelSettingMusicMute.text = LocalizationManager.Get("settings_music_mute", "Mute Music");
+            if (labelSettingFps != null) labelSettingFps.text = LocalizationManager.Get("settings_target_fps", "Target Frame Rate");
+
+            if (modalTitleSelectLevel != null) modalTitleSelectLevel.text = LocalizationManager.Get("level_select_title", "SELECT LEVEL");
+            if (modalSubSelectLevel != null) modalSubSelectLevel.text = LocalizationManager.Get("level_select_subtitle", "Choose your next challenge");
+            if (labelDiffSubtitle != null) labelDiffSubtitle.text = LocalizationManager.Get("level_difficulty", "DIFFICULTY");
+            if (labelStarsSubtitle != null) labelStarsSubtitle.text = "STARS";
+            if (labelTimeSubtitle != null) labelTimeSubtitle.text = LocalizationManager.Get("level_best_time", "BEST TIME");
+            if (modalTitleCredits != null) modalTitleCredits.text = LocalizationManager.Get("credits_title", "CREDITS");
+
+            SelectLevel(selectedLevelNumber, false);
         }
 
         private void SelectLevel(int levelNumber, bool playSound = true)
@@ -321,9 +502,15 @@ namespace Arcade.UI
             for (int i = 0; i < menuLevelTabButtons.Count; i++)
             {
                 if (i + 1 == levelNumber)
+                {
                     menuLevelTabButtons[i].AddToClassList("level-tab-active");
+                    menuLevelTabButtons[i].AddToClassList("level-card-selected");
+                }
                 else
+                {
                     menuLevelTabButtons[i].RemoveFromClassList("level-tab-active");
+                    menuLevelTabButtons[i].RemoveFromClassList("level-card-selected");
+                }
             }
 
             var config = GetLevelConfig(levelNumber);
@@ -338,6 +525,30 @@ namespace Arcade.UI
                 if (menuLevelDesc != null) menuLevelDesc.text = "Arcade block breaker challenge.";
             }
 
+            if (menuLevelTag != null)
+            {
+                menuLevelTag.text = $"LEVEL {levelNumber}";
+            }
+
+            if (menuLevelDiff != null)
+            {
+                if (levelNumber <= 4)
+                {
+                    menuLevelDiff.text = LocalizationManager.Get("diff_easy", "EASY");
+                    menuLevelDiff.style.color = new StyleColor(new Color(0.15f, 0.91f, 0.52f));
+                }
+                else if (levelNumber <= 10)
+                {
+                    menuLevelDiff.text = LocalizationManager.Get("diff_medium", "MEDIUM");
+                    menuLevelDiff.style.color = new StyleColor(new Color(1f, 0.67f, 0f));
+                }
+                else
+                {
+                    menuLevelDiff.text = LocalizationManager.Get("diff_hard", "HARD");
+                    menuLevelDiff.style.color = new StyleColor(new Color(1f, 0.23f, 0.34f));
+                }
+            }
+
             int levelStars = HighScoreManager.GetLevelStars(levelNumber);
             float bestTime = HighScoreManager.GetLevelBestTime(levelNumber);
             if (menuLevelStars != null)
@@ -349,7 +560,7 @@ namespace Arcade.UI
             }
             if (menuLevelBestTime != null)
             {
-                menuLevelBestTime.text = $"BEST: {HighScoreManager.FormatTime(bestTime)}";
+                menuLevelBestTime.text = bestTime > 0 ? HighScoreManager.FormatTime(bestTime) : "--:--";
             }
         }
 
@@ -533,5 +744,27 @@ namespace Arcade.UI
             PlayerPrefs.Save();
             if (btnToggleFps != null) btnToggleFps.text = $"{targetFps} FPS";
         }
+
+        public void UpdateToggleMuteIcon(Toggle toggle, bool isMuted)
+        {
+            if (toggle == null) return;
+            var checkmark = toggle.Q(className: "unity-toggle__checkmark");
+            if (checkmark != null)
+            {
+                if (isMuted)
+                {
+                    if (volumeMuteSprite != null)
+                        checkmark.style.backgroundImage = new StyleBackground(volumeMuteSprite);
+                    checkmark.style.unityBackgroundImageTintColor = new StyleColor(new Color(1f, 0.231f, 0.337f, 1f)); // #ff3b56
+                }
+                else
+                {
+                    if (volumeUpSprite != null)
+                        checkmark.style.backgroundImage = new StyleBackground(volumeUpSprite);
+                    checkmark.style.unityBackgroundImageTintColor = new StyleColor(new Color(0.13f, 0.83f, 0.99f, 1f)); // #21d4fd
+                }
+            }
+        }
     }
 }
+
