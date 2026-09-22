@@ -7,7 +7,7 @@ This file provides foundational mandates, architectural maps, key mathematical c
 ## 1. Project Specs & Key Paths
 - **Product Name / Bundle ID**: `BlockBreaker` / `com.RaminRasulzade.BlockBreaker`
 - **Unity Version**: Unity 6 (`6000.6.0f1`), Universal Render Pipeline (`URP 17.6.0`)
-- **Active Branch**: `feature/brick-prefabs` (Git LFS enabled)
+- **Active Branch**: `feature/device-ui-improvements` (Git LFS enabled)
 - **Main Scenes**:
   1. `Assets/Scenes/LV_BlockBreaker_MainMenu.unity` (Build Index 0, Main Menu & Start Scene configured via `PlayModeSceneSetup.cs`)
   2. `Assets/Scenes/LV_BlockBreaker.unity` (Build Index 1, Primary Gameplay Arena)
@@ -17,8 +17,9 @@ This file provides foundational mandates, architectural maps, key mathematical c
   - Prefabs: `Assets/Prefabs/` (100% prefab-driven suite: Arena, Paddle, Balls, Blocks, Powerups)
   - Materials: `Assets/Materials/BlockBreaker/` (`MT_Master_PBR_URP.mat` master, `MI_*` instances)
   - Settings: `Assets/Settings/` (Levels `SO_Level_01` to `SO_Level_15`, `SO_PowerupIcons.asset`, URP Profiles)
+  - Localization: `Assets/Localization/` (`Locales/`, `Tables/`, `LocalizationSettings.asset`)
   - UI Assets: `Assets/UI/` (UXML, USS, Fonts, Icons)
-  - Tests: `Assets/Tests/` (Assembly: `Arcade.Tests.asmdef`, 251 EditMode NUnit unit & integration tests)
+  - Tests: `Assets/Tests/` (Assembly: `Arcade.Tests.asmdef`, 263 EditMode NUnit unit & integration tests)
 
 ---
 
@@ -30,6 +31,7 @@ This file provides foundational mandates, architectural maps, key mathematical c
   - Textures: `TX_*` (`TX_*_BaseColor`, `TX_*_Normal`, `TX_*_Emissive`)
   - Audio: `AU_*` (e.g. `AU_Pop`, `AU_Break`, `AU_Powerup`, `AU_Shield_Impact`, `AU_Game_Over`)
   - ScriptableObjects: `SO_*` (e.g. `SO_Level_*.asset`, `SO_PowerupIcons.asset`)
+  - Localization: `Assets/Localization/Tables/ArcadeTable.asset` (`ArcadeTable_en.asset`, `ArcadeTable_tr.asset`)
   - Prefabs: `PF_*` under `Assets/Prefabs/`
   - Presets: `PR_*` under `Assets/Presets/`
 - **Warning Suppression**: NEVER suppress/disable compiler warnings, use hacks, or bypass type systems.
@@ -105,7 +107,15 @@ This file provides foundational mandates, architectural maps, key mathematical c
 - **Main Menu Scene (`LV_BlockBreaker_MainMenu.unity`)**:
   - `UI_MainMenu` has transparent `.root-container` (no solid background or `.bg-glow`), revealing the 3D scene's `PF_Background` quad.
   - Camera position ($Z = -32\text{f}$), FOV ($38^\circ$), Global Volume Bloom, and `ResponsiveCameraController` matched 1:1 with gameplay.
-- **UI Toolkit**: Unity 6 `PanelRenderer` on `UI_HUD` and `UI_MainMenu`. Safe area insets handled by `SafeAreaController.cs`. Sprites managed via `SO_PowerupIcons.asset`.
+- **UI Toolkit & Screen Harmonization**:
+  - Unity 6 `PanelRenderer` on `UI_HUD` and `UI_MainMenu` with iPhone portrait reference resolution (`1170x2532`).
+  - **Menu Parity**: Pause Menu sub-screens (How to Play, Credits, Level Select, and Options) match Main Menu in layout structure, fonts, button styling, and responsive proportions.
+  - **Custom Animated Mute Toggles**: Both Main Menu and In-Game Pause Options panels feature custom checkmark toggles for SFX and Music sliders (`68px × 68px`). Toggles dynamically switch between speaker/mute icons with glowing cyan (`#21d4fd`) and crimson (`#ff3b56`) tints.
+  - Safe area insets handled by `SafeAreaController.cs`. Sprites managed via `SO_PowerupIcons.asset`.
+- **Unity Localization Tables (`com.unity.localization` 1.5.13)**:
+  - Multi-language StringTableCollection `ArcadeTable.asset` under `Assets/Localization/Tables/` containing English (`en`) and Turkish (`tr`) locales.
+  - Generable via `Assets/Editor/SetupLocalizationTables.cs` (`Tools > Arcade > Setup Localization Tables`).
+  - `LocalizationManager.cs` retrieves translations directly from active `StringTable` with zero-overhead dictionary fallback.
 
 ---
 
@@ -133,13 +143,15 @@ Use this architectural lookup table to locate subsystems, classes, and responsib
 | **Game Coordinator** | `Assets/Scripts/Core/ArcadeGameManager.cs` | Scene Coordinator GameObject | Lives, score multiplier combos, clutch countdown, hyper-beam railgun sequence, victory freeze, scorecard popup. |
 | **Responsive Camera** | `Assets/Scripts/Core/ResponsiveCameraController.cs` | Main Camera in both scenes | Calculates distance required to fit $23 \times 32.5$ arena across any device aspect ratio (16:9, 9:16, 19.5:9). |
 | **Audio Engine** | `Assets/Scripts/Audio/ArcadeAudioManager.cs` | `AudioManager` persistent GameObject | Plays custom SFX (`AU_*`) with algorithmic fallback synthesis (pops, cracks, chimes, sirens). |
-| **UI HUD & Menu** | `Assets/Scripts/UI/BlockBreakerHUD.cs`<br>`Assets/Scripts/UI/MainMenuUIManager.cs`<br>`Assets/Scripts/UI/SafeAreaController.cs` | `Assets/UI/BlockBreakerHUD.uxml`<br>`Assets/UI/MainMenuUI.uxml` | Unity 6 PanelRenderer HUD dashboard pods, transparent main menu overlay, mobile notch/Dynamic Island insets. |
+| **Localization** | `Assets/Scripts/Core/LocalizationManager.cs` | `Assets/Localization/Tables/ArcadeTable.asset` | Unity Localization Tables (`com.unity.localization`), multi-locale table queries (`en`/`tr`), fallback dictionary. |
+| **Localization Tool** | `Assets/Editor/SetupLocalizationTables.cs` | Menu: `Tools/Arcade/Setup Localization Tables` | Generates and populates StringTableCollection, Locales, and setting assets. |
+| **UI HUD & Menu** | `Assets/Scripts/UI/BlockBreakerHUD.cs`<br>`Assets/Scripts/UI/MainMenuUIManager.cs`<br>`Assets/Scripts/UI/ArcadeUIManager.cs`<br>`Assets/Scripts/UI/SafeAreaController.cs` | `Assets/UI/BlockBreakerHUD.uxml`<br>`Assets/UI/MainMenuUI.uxml` | Unity 6 PanelRenderer HUD dashboard pods, transparent main menu overlay, menu options parity, custom mute toggles, safe-area insets. |
 | **Scene Generator** | `Assets/Editor/SetupBlockBreakerScenes.cs` | Menu: `Tools/Arcade/Setup All Block Breaker Scenes` | Completely generates and saves `LV_BlockBreaker_MainMenu.unity` and `LV_BlockBreaker.unity` from prefabs. |
 
 ---
 
 ## 10. Testing & Verification Command
-All logic, boundaries, prefabs, hazards, and scene setups are strictly verified by **251 automated EditMode NUnit tests**. To execute:
+All logic, boundaries, prefabs, hazards, scene setups, and localization tables are strictly verified by **263 automated EditMode NUnit tests**. To execute:
 ```bash
 unity cmd run_tests --mode editor --timeout 90
 ```

@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Localization;
+using UnityEngine.Localization.Settings;
+using UnityEngine.Localization.Tables;
 
 namespace Arcade.Core
 {
@@ -11,8 +14,9 @@ namespace Arcade.Core
     }
 
     /// <summary>
-    /// Centralized lightweight localization manager providing English and Turkish translations
-    /// for all HUD elements, main menu navigation, modals, and gameplay banners.
+    /// Centralized localization manager driven by Unity Localization Tables (com.unity.localization).
+    /// Retrieves strings dynamically from ArcadeTable StringTables for English and Turkish,
+    /// enabling direct editing via Unity's Localization Tables window and inspector.
     /// Persists language preference in PlayerPrefs and triggers OnLanguageChanged.
     /// </summary>
     public static class LocalizationManager
@@ -20,6 +24,10 @@ namespace Arcade.Core
         private const string PrefKey = "Arcade_Language";
         private static GameLanguage currentLanguage = GameLanguage.English;
         private static bool isInitialized = false;
+
+        private static StringTable enTable;
+        private static StringTable trTable;
+        private static bool tablesLoaded = false;
 
         public static event Action OnLanguageChanged;
 
@@ -36,7 +44,25 @@ namespace Arcade.Core
             }
         }
 
-        private static readonly Dictionary<string, (string en, string tr)> Strings = new Dictionary<string, (string, string)>
+        public static StringTable EnglishTable
+        {
+            get
+            {
+                EnsureInitialized();
+                return enTable;
+            }
+        }
+
+        public static StringTable TurkishTable
+        {
+            get
+            {
+                EnsureInitialized();
+                return trTable;
+            }
+        }
+
+        private static readonly Dictionary<string, (string en, string tr)> FallbackStrings = new Dictionary<string, (string, string)>
         {
             // Main Menu
             { "menu_start_new", ("START NEW GAME", "YENİ OYUN BAŞLAT") },
@@ -101,8 +127,31 @@ namespace Arcade.Core
             { "guide_p4", ("• Expander: Widens paddle.\n• Multipliers: 2X-5X bonus points.\n• Shield: Defensive kinetic barrier.\n• Multi-Ball: 3 balls active!\n• Laser Blaster: Twin cannons pierce brick rows!\n• Bombs: Radial detonation explodes neighbors!", "• Genişletici: Raketi büyütür.\n• Çarpanlar: 2X-5X bonus puan.\n• Kalkan: Koruyucu kinetik bariyer.\n• Çoklu Top: 3 top aynı anda sahada!\n• Lazer: Blok sıralarını delen ikiz toplar!\n• Bomba: Etrafındaki komşu blokları patlatır!") }
         };
 
+        public static void LoadTables()
+        {
+#if UNITY_EDITOR
+            if (enTable == null)
+                enTable = UnityEditor.AssetDatabase.LoadAssetAtPath<StringTable>("Assets/Localization/Tables/ArcadeTable_en.asset");
+            if (trTable == null)
+                trTable = UnityEditor.AssetDatabase.LoadAssetAtPath<StringTable>("Assets/Localization/Tables/ArcadeTable_tr.asset");
+#endif
+            tablesLoaded = enTable != null && trTable != null;
+        }
+
+        public static void SetTables(StringTable englishTable, StringTable turkishTable)
+        {
+            enTable = englishTable;
+            trTable = turkishTable;
+            tablesLoaded = enTable != null && trTable != null;
+        }
+
         private static void EnsureInitialized()
         {
+            if (!tablesLoaded)
+            {
+                LoadTables();
+            }
+
             if (isInitialized) return;
             string savedLang = PlayerPrefs.GetString(PrefKey, "English");
             if (Enum.TryParse<GameLanguage>(savedLang, true, out var parsed))
@@ -125,16 +174,39 @@ namespace Arcade.Core
             currentLanguage = language;
             PlayerPrefs.SetString(PrefKey, language.ToString());
             PlayerPrefs.Save();
+
+#if UNITY_EDITOR
+            try
+            {
+                string localePath = language == GameLanguage.Turkish ? "Assets/Localization/Locales/tr.asset" : "Assets/Localization/Locales/en.asset";
+                var locale = UnityEditor.AssetDatabase.LoadAssetAtPath<Locale>(localePath);
+                if (locale != null) LocalizationSettings.SelectedLocale = locale;
+            }
+            catch { }
+#endif
+
             OnLanguageChanged?.Invoke();
         }
 
         public static string Get(string key, string fallback = "")
         {
             EnsureInitialized();
-            if (Strings.TryGetValue(key, out var pair))
+
+            var activeTable = currentLanguage == GameLanguage.Turkish ? trTable : enTable;
+            if (activeTable != null)
+            {
+                var entry = activeTable.GetEntry(key);
+                if (entry != null && !string.IsNullOrEmpty(entry.Value))
+                {
+                    return entry.Value;
+                }
+            }
+
+            if (FallbackStrings.TryGetValue(key, out var pair))
             {
                 return currentLanguage == GameLanguage.Turkish ? pair.tr : pair.en;
             }
+
             return string.IsNullOrEmpty(fallback) ? key : fallback;
         }
     }

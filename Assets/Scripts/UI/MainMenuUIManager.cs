@@ -70,6 +70,10 @@ namespace Arcade.UI
         private Button btnLangTr;
         private Button btnToggleFps;
 
+        [Header("Audio Toggle Icons")]
+        [SerializeField] private Sprite volumeUpSprite;
+        [SerializeField] private Sprite volumeMuteSprite;
+
         // Localized Labels
         private Label labelSettingLang;
         private Label labelSettingSfx;
@@ -90,6 +94,12 @@ namespace Arcade.UI
         private void Awake()
         {
             panelRenderer = GetComponent<PanelRenderer>();
+#if UNITY_EDITOR
+            if (volumeUpSprite == null)
+                volumeUpSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Volume_Up.png");
+            if (volumeMuteSprite == null)
+                volumeMuteSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icons/TX_Volume_Mute.png");
+#endif
         }
 
         private void Start()
@@ -360,6 +370,7 @@ namespace Arcade.UI
                 {
                     if (ArcadeAudioManager.Instance != null)
                         ArcadeAudioManager.Instance.IsMuted = evt.newValue;
+                    UpdateToggleMuteIcon(toggleMute, evt.newValue);
                 });
             }
 
@@ -378,6 +389,7 @@ namespace Arcade.UI
                 {
                     if (ArcadeAudioManager.Instance != null)
                         ArcadeAudioManager.Instance.IsMusicMuted = evt.newValue;
+                    UpdateToggleMuteIcon(toggleMusicMute, evt.newValue);
                 });
             }
 
@@ -399,9 +411,17 @@ namespace Arcade.UI
             if (ArcadeAudioManager.Instance != null)
             {
                 if (sliderVolume != null) sliderVolume.value = ArcadeAudioManager.Instance.Volume;
-                if (toggleMute != null) toggleMute.value = ArcadeAudioManager.Instance.IsMuted;
+                if (toggleMute != null)
+                {
+                    toggleMute.value = ArcadeAudioManager.Instance.IsMuted;
+                    UpdateToggleMuteIcon(toggleMute, ArcadeAudioManager.Instance.IsMuted);
+                }
                 if (sliderMusicVolume != null) sliderMusicVolume.value = ArcadeAudioManager.Instance.MusicVolume;
-                if (toggleMusicMute != null) toggleMusicMute.value = ArcadeAudioManager.Instance.IsMusicMuted;
+                if (toggleMusicMute != null)
+                {
+                    toggleMusicMute.value = ArcadeAudioManager.Instance.IsMusicMuted;
+                    UpdateToggleMuteIcon(toggleMusicMute, ArcadeAudioManager.Instance.IsMusicMuted);
+                }
             }
 
             selectedLevelNumber = PlayerPrefs.GetInt("Arcade_SelectedLevel", 1);
@@ -724,5 +744,27 @@ namespace Arcade.UI
             PlayerPrefs.Save();
             if (btnToggleFps != null) btnToggleFps.text = $"{targetFps} FPS";
         }
+
+        public void UpdateToggleMuteIcon(Toggle toggle, bool isMuted)
+        {
+            if (toggle == null) return;
+            var checkmark = toggle.Q(className: "unity-toggle__checkmark");
+            if (checkmark != null)
+            {
+                if (isMuted)
+                {
+                    if (volumeMuteSprite != null)
+                        checkmark.style.backgroundImage = new StyleBackground(volumeMuteSprite);
+                    checkmark.style.unityBackgroundImageTintColor = new StyleColor(new Color(1f, 0.231f, 0.337f, 1f)); // #ff3b56
+                }
+                else
+                {
+                    if (volumeUpSprite != null)
+                        checkmark.style.backgroundImage = new StyleBackground(volumeUpSprite);
+                    checkmark.style.unityBackgroundImageTintColor = new StyleColor(new Color(0.13f, 0.83f, 0.99f, 1f)); // #21d4fd
+                }
+            }
+        }
     }
 }
+

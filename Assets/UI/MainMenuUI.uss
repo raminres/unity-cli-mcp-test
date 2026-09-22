@@ -34,12 +34,12 @@
 }
 
 .title-highlight {
-    color: #ff3b56;
+    color: rgb(255, 59, 86);
     text-shadow: 0 0 15px rgba(255, 59, 86, 0.6);
 }
 
 .title-main {
-    color: #21d4fd;
+    color: rgb(33, 212, 253);
     text-shadow: 0 0 15px rgba(33, 212, 253, 0.6);
     margin-top: -10px;
 }
@@ -47,29 +47,32 @@
 .subtitle {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 16px;
-    color: #8fa0c0;
+    font-size: 48px;
+    color: rgb(143, 160, 192);
     letter-spacing: 3px;
     margin-top: 8px;
 }
 
 .menu-card {
-    width: 410px;
+    width: 840px;
     background-color: rgba(22, 28, 44, 0.88);
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.12);
     border-radius: 28px;
     padding: 28px 24px;
     align-items: stretch;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
-/* Bouncy Arcade Buttons */
 .arcade-button {
-    height: 64px;
+    height: 128px;
     border-radius: 18px;
     border-width: 1.5px;
-    margin-bottom: 14px;
-    font-size: 21px;
+    margin-bottom: 16px;
+    font-size: 32px;
     -unity-font-style: bold;
     letter-spacing: 1.5px;
     align-items: center;
@@ -78,6 +81,17 @@
     transition-property: scale, background-color, border-color, translate;
     transition-duration: 0.25s, 0.15s, 0.15s, 0.25s;
     transition-timing-function: ease-out-back;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    margin-top: 16px;
+    margin-right: 16px;
+    margin-left: 16px;
 }
 
 .arcade-button:hover {
@@ -95,41 +109,41 @@
 }
 
 .primary-btn {
-    background-color: #ff3b56;
-    border-color: #ff6e82;
-    color: #ffffff;
+    background-color: rgb(255, 59, 86);
+    border-color: rgb(255, 110, 130);
+    color: rgb(255, 255, 255);
 }
 
 .primary-btn:hover {
-    background-color: #ff546c;
-    border-color: #ffffff;
+    background-color: rgb(255, 84, 108);
+    border-color: rgb(255, 255, 255);
 }
 
 .primary-btn:active {
-    background-color: #d81e3a;
-    border-color: #ff3b56;
+    background-color: rgb(216, 30, 58);
+    border-color: rgb(255, 59, 86);
 }
 
 .secondary-btn {
-    background-color: #21d4fd;
-    border-color: #6ee3ff;
-    color: #0c0d16;
+    background-color: rgb(33, 212, 253);
+    border-color: rgb(110, 227, 255);
+    color: rgb(12, 13, 22);
 }
 
 .secondary-btn:hover {
-    background-color: #55e3ff;
-    border-color: #ffffff;
+    background-color: rgb(85, 227, 255);
+    border-color: rgb(255, 255, 255);
 }
 
 .secondary-btn:active {
-    background-color: #0bb5dc;
-    border-color: #21d4fd;
+    background-color: rgb(11, 181, 220);
+    border-color: rgb(33, 212, 253);
 }
 
 .default-btn {
     background-color: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.15);
-    color: #e2e8f0;
+    color: rgb(226, 232, 240);
 }
 
 .default-btn:hover {
@@ -141,7 +155,6 @@
     background-color: rgba(255, 255, 255, 0.04);
 }
 
-/* Modals */
 .modal-backdrop {
     position: absolute;
     left: 0;
@@ -155,7 +168,6 @@
     justify-content: center;
 }
 
-/* Custom Sleek Scroller */
 .unity-scroller #unity-low-button,
 .unity-scroller #unity-high-button {
     display: none;
@@ -185,7 +197,7 @@
 }
 
 .unity-scroller--vertical .unity-base-slider__dragger:hover {
-    background-color: #21d4fd;
+    background-color: rgb(33, 212, 253);
 }
 
 .modal-hidden {
@@ -193,20 +205,24 @@
 }
 
 .modal-card {
-    width: 420px;
-    background-color: #171c2c;
+    width: 840px;
+    background-color: rgb(23, 28, 44);
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.16);
     border-radius: 28px;
     padding: 32px 28px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
 .modal-title {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 28px;
+    font-size: 54px;
     -unity-font-style: bold;
-    color: #ffffff;
+    color: rgb(255, 255, 255);
     letter-spacing: 2px;
     align-self: center;
     margin-bottom: 18px;
@@ -220,32 +236,37 @@
 }
 
 .setting-label {
-    font-size: 17px;
-    color: #cbd5e1;
+    font-size: 32px;
+    color: rgb(203, 213, 225);
 }
 
 .setting-slider {
-    width: 170px;
+    width: 210px;
+    height: 64px;
 }
 
 .fps-btn {
-    width: 110px;
-    height: 42px;
+    width: 160px;
+    height: 108px;
     border-radius: 12px;
-    background-color: #252e46;
+    background-color: rgb(37, 46, 70);
     border-color: rgba(255, 255, 255, 0.2);
-    color: #21d4fd;
+    color: rgb(33, 212, 253);
     -unity-font-style: bold;
-    font-size: 16px;
+    font-size: 24px;
     scale: 1 1;
     transition-property: scale, background-color;
     transition-duration: 0.2s;
     transition-timing-function: ease-out-back;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
 .fps-btn:hover {
     scale: 1.08 1.08;
-    background-color: #2e3a58;
+    background-color: rgb(46, 58, 88);
     transition-timing-function: ease-out-back;
 }
 
@@ -262,63 +283,66 @@
 .credit-highlight {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 19px;
+    font-size: 28px;
     -unity-font-style: bold;
-    color: #21d4fd;
+    color: rgb(33, 212, 253);
     margin-bottom: 12px;
     align-self: center;
 }
 
 .credit-body {
-    font-size: 16px;
-    color: #94a3b8;
+    font-size: 24px;
+    color: rgb(148, 163, 184);
     margin-bottom: 7px;
     align-self: center;
 }
 
-/* Level Select Modal Extensions */
 .modal-card-wide {
-    width: 510px;
+    width: 640px;
 }
 
 .level-modal-card {
-    width: 440px;
+    width: 840px;
     max-height: 94%;
-    background-color: #0d1222;
+    background-color: rgb(13, 18, 34);
     border-width: 1.5px;
     border-color: rgba(33, 212, 253, 0.45);
     border-radius: 30px;
     padding: 24px 20px 20px 20px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
 .level-modal-title {
-    font-size: 26px;
-    color: #ffffff;
+    font-size: 52px;
+    color: rgb(255, 255, 255);
     letter-spacing: 3px;
     margin-bottom: 2px;
     align-self: center;
 }
 
 .level-modal-subtitle {
-    font-size: 14px;
-    color: #7e8fa8;
+    font-size: 32px;
+    color: rgb(126, 143, 168);
     margin-bottom: 8px;
     align-self: center;
 }
 
 .cyan-pill-divider {
-    width: 50px;
+    width: 100%;
     height: 3px;
-    background-color: #21d4fd;
+    background-color: rgb(33, 212, 253);
     border-radius: 2px;
     align-self: center;
     margin-bottom: 14px;
-    box-shadow: 0 0 8px #21d4fd;
+    box-shadow: 0 0 8px rgb(33, 212, 253);
 }
 
 .level-grid-scroll-view {
-    height: 255px;
+    height: 540px;
     margin-bottom: 12px;
 }
 
@@ -336,9 +360,9 @@
 }
 
 .level-grid-card {
-    width: 31%;
-    height: 84px;
-    margin-bottom: 10px;
+    width: 240px;
+    height: 200px;
+    margin-bottom: 16px;
     border-radius: 16px;
     border-width: 1.5px;
     border-color: rgba(33, 212, 253, 0.28);
@@ -348,16 +372,23 @@
     padding: 4px;
     transition-property: scale, border-color, box-shadow, background-color;
     transition-duration: 0.18s;
+    margin-top: 16px;
+    margin-right: 8px;
+    margin-left: 8px;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
 }
 
 .level-grid-card:hover {
     scale: 1.05 1.05;
-    border-color: #21d4fd;
+    border-color: rgb(33, 212, 253);
     background-color: rgba(26, 36, 64, 0.95);
 }
 
 .level-card-selected {
-    border-color: #ff3b8d;
+    border-color: rgb(255, 59, 141);
     background-color: rgba(33, 212, 253, 0.12);
     box-shadow: 0 0 18px rgba(255, 59, 141, 0.55), inset 0 0 10px rgba(33, 212, 253, 0.25);
     scale: 1.04 1.04;
@@ -366,9 +397,9 @@
 .level-card-num {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 22px;
+    font-size: 36px;
     -unity-font-style: bold;
-    color: #ffffff;
+    color: rgb(255, 255, 255);
     margin-bottom: 2px;
 }
 
@@ -385,7 +416,7 @@
 }
 
 .star-active {
-    color: #ffd700;
+    color: rgb(255, 215, 0);
 }
 
 .star-inactive {
@@ -393,8 +424,8 @@
 }
 
 .level-card-time {
-    font-size: 11px;
-    color: #7e8fa8;
+    font-size: 20px;
+    color: rgb(126, 143, 168);
     -unity-font-style: bold;
 }
 
@@ -405,13 +436,13 @@
 
 .level-card-lock-icon {
     font-size: 18px;
-    color: #7e8fa8;
+    color: rgb(126, 143, 168);
     margin-bottom: 2px;
 }
 
 .level-card-locked-label {
     font-size: 10px;
-    color: #64748b;
+    color: rgb(100, 116, 139);
     -unity-font-style: bold;
     letter-spacing: 1px;
 }
@@ -426,18 +457,29 @@
     border-radius: 18px;
     padding: 10px 12px;
     margin-bottom: 12px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
 .level-preview-thumb {
-    width: 86px;
-    height: 118px;
+    width: 160px;
+    height: 320px;
     border-radius: 12px;
     background-color: rgba(6, 9, 18, 0.9);
     border-width: 1px;
     border-color: rgba(255, 59, 141, 0.35);
-    margin-right: 12px;
+    margin-right: 6px;
     align-items: center;
     justify-content: center;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    margin-left: 6px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
 .preview-details {
@@ -446,9 +488,9 @@
 }
 
 .preview-level-tag {
-    font-size: 10px;
+    font-size: 20px;
     letter-spacing: 1.5px;
-    color: #7e8fa8;
+    color: rgb(126, 143, 168);
     -unity-font-style: bold;
     margin-bottom: 1px;
 }
@@ -458,14 +500,14 @@
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     font-size: 16px;
     -unity-font-style: bold;
-    color: #ffffff;
+    color: rgb(255, 255, 255);
     letter-spacing: 0.5px;
     margin-bottom: 2px;
 }
 
 .preview-level-desc {
-    font-size: 11px;
-    color: #94a3b8;
+    font-size: 20px;
+    color: rgb(148, 163, 184);
     white-space: normal;
     margin-bottom: 6px;
 }
@@ -479,7 +521,7 @@
 .preview-chip {
     flex-grow: 1;
     margin: 0 3px;
-    height: 28px;
+    height: 144px;
     background-color: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     border-width: 1px;
@@ -487,38 +529,50 @@
     align-items: center;
     justify-content: center;
     padding: 2px 4px;
+    margin-top: 6px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+    margin-left: 6px;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
 .chip-val {
-    font-size: 11px;
+    font-size: 20px;
     -unity-font-style: bold;
 }
 
 .val-diff {
-    color: #ffaa00;
+    color: rgb(255, 170, 0);
 }
 
 .val-stars {
-    color: #ffd700;
+    color: rgb(255, 215, 0);
 }
 
 .val-time {
-    color: #21d4fd;
+    color: rgb(33, 212, 253);
 }
 
 .chip-label {
-    font-size: 8px;
-    color: #64748b;
+    font-size: 16px;
+    color: rgb(100, 116, 139);
     letter-spacing: 0.5px;
 }
 
 .level-play-action-btn {
-    height: 52px;
+    height: 128px;
     border-radius: 26px;
-    background-color: #ff3b77;
-    border-color: #21d4fd;
-    color: #ffffff;
-    font-size: 18px;
+    background-color: rgb(255, 59, 119);
+    border-color: rgb(33, 212, 253);
+    color: rgb(255, 255, 255);
+    font-size: 32px;
     -unity-font-style: bold;
     letter-spacing: 2px;
     margin-bottom: 8px;
@@ -526,15 +580,13 @@
 }
 
 .level-play-action-btn:hover {
-    background-color: #ff548e;
-    border-color: #ffffff;
+    background-color: rgb(255, 84, 142);
+    border-color: rgb(255, 255, 255);
     scale: 1.03 1.03;
 }
 
-
-/* Leaderboard & High Scores Modal */
 .leaderboard-card {
-    width: 530px;
+    width: 840px;
 }
 
 .leaderboard-table {
@@ -543,7 +595,7 @@
 }
 
 .score-row {
-    height: 44px;
+    height: 80px;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
@@ -551,36 +603,70 @@
     border-radius: 12px;
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.07);
-    margin-bottom: 5px;
+    margin-bottom: 6px;
     padding: 0 16px;
+    width: 85%;
+    align-self: center;
+    margin-top: 6px;
+    margin-right: 6px;
+    margin-left: 6px;
+    padding-top: 12px;
+    padding-right: 12px;
+    padding-bottom: 12px;
+    padding-left: 12px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
 .row-gold {
     background-color: rgba(255, 215, 0, 0.12);
     border-color: rgba(255, 215, 0, 0.45);
+    width: 100%;
+    height: 100px;
+    margin-top: 12px;
+    margin-right: 12px;
+    margin-bottom: 6px;
+    margin-left: 12px;
 }
 
 .row-silver {
-    background-color: rgba(226, 232, 240, 0.10);
+    background-color: rgba(226, 232, 240, 0.1);
     border-color: rgba(226, 232, 240, 0.38);
+    width: 95%;
+    height: 100px;
+    margin-top: 6px;
+    margin-right: 12px;
+    margin-bottom: 6px;
+    margin-left: 12px;
 }
 
 .row-bronze {
-    background-color: rgba(205, 127, 50, 0.10);
+    background-color: rgba(205, 127, 50, 0.1);
     border-color: rgba(205, 127, 50, 0.38);
+    width: 90%;
+    height: 100px;
+    margin-top: 6px;
+    margin-right: 12px;
+    margin-bottom: 12px;
+    margin-left: 12px;
 }
 
 .rank-badge-pod {
     flex-direction: row;
     align-items: center;
-    width: 78px;
+    width: 160px;
 }
 
 .medal-icon {
-    width: 26px;
-    height: 26px;
-    margin-right: 7px;
+    width: 64px;
+    height: 64px;
+    margin-right: 0;
     -unity-background-scale-mode: scale-to-fit;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 0;
 }
 
 .icon-gold {
@@ -596,56 +682,59 @@
 }
 
 .rank-label {
-    font-size: 16px;
+    font-size: 32px;
     -unity-font-style: bold;
 }
 
 .label-gold {
-    color: #ffd700;
+    color: rgb(255, 215, 0);
 }
 
 .label-silver {
-    color: #e2e8f0;
+    color: rgb(226, 232, 240);
 }
 
 .label-bronze {
-    color: #cd7f32;
+    color: rgb(205, 127, 50);
 }
 
 .rank-num-label {
-    width: 78px;
-    font-size: 15px;
+    width: 120px;
+    font-size: 30px;
     -unity-font-style: bold;
-    color: #94a3b8;
+    color: rgb(148, 163, 184);
 }
 
 .score-row-value {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 18px;
+    font-size: 32px;
     -unity-font-style: bold;
-    color: #ffffff;
+    color: rgb(255, 255, 255);
     letter-spacing: 1px;
 }
 
 .val-gold {
-    color: #ffd700;
+    color: rgb(255, 215, 0);
     text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+    font-size: 36px;
 }
 
 .val-silver {
-    color: #e2e8f0;
+    color: rgb(226, 232, 240);
     text-shadow: 0 0 8px rgba(226, 232, 240, 0.6);
+    font-size: 36px;
 }
 
 .val-bronze {
-    color: #cd7f32;
+    color: rgb(205, 127, 50);
     text-shadow: 0 0 8px rgba(205, 127, 50, 0.6);
+    font-size: 36px;
 }
 
 .score-row-date {
-    font-size: 13px;
-    color: #64748b;
+    font-size: 26px;
+    color: rgb(100, 116, 139);
     width: 92px;
     -unity-text-align: middle-right;
 }
@@ -653,28 +742,30 @@
 .warning-btn {
     background-color: rgba(225, 29, 72, 0.18);
     border-color: rgba(244, 63, 94, 0.6);
-    color: #fb7185;
+    color: rgb(251, 113, 133);
 }
 
 .warning-btn:hover {
-    background-color: #e11d48;
-    border-color: #ffffff;
-    color: #ffffff;
+    background-color: rgb(225, 29, 72);
+    border-color: rgb(255, 255, 255);
+    color: rgb(255, 255, 255);
 }
 
 .warning-btn:active {
-    background-color: #be123c;
+    background-color: rgb(190, 18, 60);
 }
 
-/* How To Play Modal */
 .how-to-play-card {
-    width: 550px;
+    width: 840px;
     max-height: 660px;
 }
 
 .guide-scroll {
     max-height: 490px;
-    margin-bottom: 14px;
+    margin-bottom: 6px;
+    margin-top: 6px;
+    margin-right: 6px;
+    margin-left: 6px;
 }
 
 .guide-card {
@@ -683,34 +774,44 @@
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.1);
     padding: 16px;
-    margin-bottom: 12px;
+    margin-bottom: 6px;
+    margin-top: 6px;
+    margin-right: 6px;
+    margin-left: 6px;
+    padding-top: 12px;
+    padding-right: 12px;
+    padding-bottom: 12px;
+    padding-left: 12px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
 .guide-heading {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 16px;
+    font-size: 32px;
     -unity-font-style: bold;
-    color: #21d4fd;
+    color: rgb(33, 212, 253);
     letter-spacing: 1px;
     margin-bottom: 7px;
 }
 
 .guide-text {
-    font-size: 14px;
-    color: #cbd5e1;
+    font-size: 28px;
+    color: rgb(203, 213, 225);
     white-space: normal;
 }
 
-/* Credits Modal Interactive Links */
 .credits-card {
-    width: 530px;
+    width: 840px;
 }
 
 .credit-author {
-    font-size: 17px;
+    font-size: 32px;
     -unity-font-style: bold;
-    color: #21d4fd;
+    color: rgb(33, 212, 253);
     align-self: center;
     margin-bottom: 18px;
 }
@@ -721,12 +822,12 @@
 }
 
 .credit-link-btn {
-    height: 52px;
+    height: 96px;
     border-radius: 14px;
     border-width: 1px;
     border-color: rgba(33, 212, 253, 0.35);
     background-color: rgba(33, 212, 253, 0.08);
-    color: #21d4fd;
+    color: rgb(33, 212, 253);
     font-size: 15px;
     -unity-font-style: bold;
     letter-spacing: 0.5px;
@@ -740,13 +841,17 @@
     transition-property: scale, background-color, border-color;
     transition-duration: 0.2s, 0.15s, 0.15s;
     transition-timing-function: ease-out-back;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
 }
 
 .credit-link-btn:hover {
     scale: 1.03 1.03;
     background-color: rgba(33, 212, 253, 0.25);
-    border-color: #21d4fd;
-    color: #ffffff;
+    border-color: rgb(33, 212, 253);
+    color: rgb(255, 255, 255);
 }
 
 .credit-link-btn:active {
@@ -755,39 +860,38 @@
 }
 
 .credit-icon {
-    width: 24px;
-    height: 24px;
+    width: 48px;
+    height: 48px;
     margin-right: 12px;
     -unity-background-scale-mode: scale-to-fit;
 }
 
 .icon-mail {
-    background-image: url("project://database/Assets/UI/Icons/TX_Icon_Mail.png?fileID=21300000&guid=ebe29a6576d52b24ebc63caee9636561&type=3#TX_Icon_Mail_0");
-    -unity-background-image-tint-color: #21d4fd;
+    background-image: url("project://database/Assets/UI/Icons/TX_Icon_Mail.png?fileID=21300000&guid=ebe29a6576d52b24ebc63caee9636561&type=3#TX_Icon_Mail");
+    -unity-background-image-tint-color: rgb(33, 212, 253);
 }
 
 .icon-web {
-    background-image: url("project://database/Assets/UI/Icons/TX_Icon_Web.png?fileID=21300000&guid=baee02911da2ea94cab2866cf0239bef&type=3#TX_Icon_Web_0");
-    -unity-background-image-tint-color: #21d4fd;
+    background-image: url("project://database/Assets/UI/Icons/TX_Icon_Web.png?fileID=21300000&guid=baee02911da2ea94cab2866cf0239bef&type=3#TX_Icon_Web");
+    -unity-background-image-tint-color: rgb(33, 212, 253);
 }
 
 .icon-linkedin {
-    background-image: url("project://database/Assets/UI/Icons/TX_Icon_LinkedIn.png?fileID=21300000&guid=4b5ac813a7fbda241b71c7f7874d0123&type=3#TX_Icon_LinkedIn_0");
-    -unity-background-image-tint-color: #21d4fd;
+    background-image: url("project://database/Assets/UI/Icons/TX_Icon_LinkedIn.png?fileID=21300000&guid=4b5ac813a7fbda241b71c7f7874d0123&type=3#TX_Icon_LinkedIn");
+    -unity-background-image-tint-color: rgb(33, 212, 253);
 }
 
 .icon-github {
-    background-image: url("project://database/Assets/UI/Icons/TX_Icon_GitHub.png?fileID=21300000&guid=95f1dbecc80c4d94eb42252450d30de2&type=3#TX_Icon_GitHub_0");
-    -unity-background-image-tint-color: #21d4fd;
+    background-image: url("project://database/Assets/UI/Icons/TX_Icon_GitHub.png?fileID=21300000&guid=95f1dbecc80c4d94eb42252450d30de2&type=3#TX_Icon_GitHub");
+    -unity-background-image-tint-color: rgb(33, 212, 253);
 }
 
 .credit-btn-text {
-    color: #ffffff;
-    font-size: 14px;
+    color: rgb(255, 255, 255);
+    font-size: 24px;
     -unity-font-style: bold;
 }
 
-/* Language selector buttons in Options modal */
 .setting-lang-group {
     flex-direction: row;
     align-items: center;
@@ -795,22 +899,31 @@
 
 .lang-btn {
     width: 68px;
-    height: 38px;
+    height: 68px;
     border-radius: 12px;
     background-color: rgba(255, 255, 255, 0.08);
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.15);
-    color: #94a3b8;
+    color: rgb(148, 163, 184);
     font-size: 14px;
     -unity-font-style: bold;
-    margin-left: 8px;
+    margin-left: 6px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    padding-left: 6px;
-    padding-right: 6px;
+    padding-left: 0;
+    padding-right: 0;
     transition-property: background-color, border-color, color, scale;
     transition-duration: 0.15s;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 6px;
+    margin-right: 6px;
+    margin-bottom: 6px;
 }
 
 .lang-btn:hover {
@@ -819,29 +932,32 @@
 }
 
 .lang-btn-active {
-    background-color: #21d4fd;
-    border-color: #6ee3ff;
-    color: #080a14;
+    background-color: rgb(33, 212, 253);
+    border-color: rgb(110, 227, 255);
+    color: rgb(8, 10, 20);
 }
 
 .flag-icon {
-    width: 20px;
-    height: 14px;
-    margin-right: 5px;
+    width: 64px;
+    height: 64px;
+    margin-right: 0;
     border-radius: 2px;
     -unity-background-scale-mode: scale-to-fit;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 0;
 }
 
 .flag-gb {
-    background-image: url("project://database/Assets/UI/Icons/TX_Flag_GB.png?fileID=21300000&guid=edb8ea2efda138f478df74c1eb804bca&type=3#TX_Flag_GB_0");
+    background-image: url("project://database/Assets/UI/Icons/TX_Flag_GB.png?fileID=21300000&guid=edb8ea2efda138f478df74c1eb804bca&type=3#TX_Flag_GB");
 }
 
 .flag-tr {
-    background-image: url("project://database/Assets/UI/Icons/TX_Flag_TR.png?fileID=21300000&guid=fb59304eb0b2d6847ad8f39291a43817&type=3#TX_Flag_TR_0");
+    background-image: url("project://database/Assets/UI/Icons/TX_Flag_TR.png?fileID=21300000&guid=fb59304eb0b2d6847ad8f39291a43817&type=3#TX_Flag_TR");
 }
 
 .lang-btn-text {
-    font-size: 13px;
+    font-size: 0;
     -unity-font-style: bold;
     color: inherit;
     margin: 0;
@@ -849,8 +965,61 @@
 }
 
 .credit-footnote {
-    font-size: 13px;
-    color: #64748b;
+    font-size: 26px;
+    color: rgb(100, 116, 139);
     align-self: center;
     margin-bottom: 10px;
 }
+
+.setting-toggle {
+    height: 102px;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    justify-content: center;
+}
+
+.setting-toggle .unity-toggle__input {
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.setting-toggle .unity-toggle__checkmark {
+    width: 68px;
+    height: 68px;
+    border-radius: 14px;
+    border-width: 2px;
+    border-color: rgba(33, 212, 253, 0.45);
+    background-color: rgba(33, 212, 253, 0.12);
+    -unity-background-scale-mode: scale-to-fit;
+    background-image: url("project://database/Assets/UI/Icons/TX_Volume_Up.png?fileID=21300000&guid=9b70a43178d3e484aaa75e906b4ade94&type=3#TX_Volume_Up");
+    -unity-background-image-tint-color: rgb(33, 212, 253);
+    scale: 1 1;
+    transition-property: scale, background-color, border-color, -unity-background-image-tint-color;
+    transition-duration: 0.2s, 0.15s, 0.15s, 0.2s;
+    transition-timing-function: ease-out-back;
+}
+
+.setting-toggle:hover .unity-toggle__checkmark,
+.setting-toggle > .unity-toggle__input:hover > .unity-toggle__checkmark {
+    scale: 1.1 1.1;
+    border-color: rgb(33, 212, 253);
+    background-color: rgba(33, 212, 253, 0.25);
+}
+
+.setting-toggle:checked .unity-toggle__checkmark,
+.setting-toggle > .unity-toggle__input:checked > .unity-toggle__checkmark {
+    border-color: rgba(255, 59, 86, 0.55);
+    background-color: rgba(255, 59, 86, 0.16);
+    background-image: url("project://database/Assets/UI/Icons/TX_Volume_Mute.png?fileID=21300000&guid=19323d3393a6acb4c9810de7a485552e&type=3#TX_Volume_Mute");
+    -unity-background-image-tint-color: rgb(255, 59, 86);
+}
+
+.setting-toggle:checked:hover .unity-toggle__checkmark,
+.setting-toggle > .unity-toggle__input:checked:hover > .unity-toggle__checkmark {
+    scale: 1.1 1.1;
+    border-color: rgb(255, 84, 108);
+    background-color: rgba(255, 59, 86, 0.3);
+    -unity-background-image-tint-color: rgb(255, 110, 130);
+}
+

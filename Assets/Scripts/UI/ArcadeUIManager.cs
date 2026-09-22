@@ -49,6 +49,8 @@ namespace Arcade.UI
         private VisualElement levelSettingsModal;
         private VisualElement highscoresModal;
         private VisualElement howToPlayModal;
+        private VisualElement creditsModal;
+        private VisualElement levelModal;
 
         // Modal Labels & Buttons
         private Label clearScoreLabel;
@@ -80,9 +82,11 @@ namespace Arcade.UI
         private Button btnReplayLevel;
 
         private Button btnResume;
+        private Button btnLevelSelectPause;
         private Button btnHighscoresPause;
         private Button btnHowToPlayPause;
         private Button btnLevelSettingsPause;
+        private Button btnCreditsPause;
         private Button btnRestartPause;
         private Button btnMenuPause;
         private Button btnNextLevel;
@@ -92,6 +96,26 @@ namespace Arcade.UI
         private Button btnCloseHighscores;
         private Button btnResetHighscores;
         private Button btnCloseHowToPlay;
+        private Button btnCloseCredits;
+        private Button btnCloseLevelModal;
+        private Button btnStartSelectedLevel;
+
+        // Credit links
+        private Button btnCreditEmail;
+        private Button btnCreditWebsite;
+        private Button btnCreditLinkedin;
+        private Button btnCreditGithub;
+
+        // Level Select controls
+        private readonly System.Collections.Generic.List<Button> menuLevelTabButtons = new System.Collections.Generic.List<Button>();
+        private Label menuLevelTag;
+        private Label menuLevelDiff;
+        private Label menuLevelName;
+        private Label menuLevelDesc;
+        private Label menuLevelStars;
+        private Label menuLevelBestTime;
+        private VisualElement levelPreviewThumb;
+        private int selectedLevelNumber = 1;
 
         // Options controls
         private Slider sliderVolume;
@@ -114,6 +138,12 @@ namespace Arcade.UI
         private Label labelSettingMusic;
         private Label labelSettingMusicMute;
         private Label labelSettingFps;
+        private Label modalTitleCredits;
+        private Label modalTitleSelectLevel;
+        private Label modalSubSelectLevel;
+        private Label labelDiffSubtitle;
+        private Label labelStarsSubtitle;
+        private Label labelTimeSubtitle;
 
         // Level Settings controls
         private readonly System.Collections.Generic.List<Button> hudLevelTabButtons = new System.Collections.Generic.List<Button>();
@@ -409,11 +439,23 @@ namespace Arcade.UI
             if (btnQuickPause != null) btnQuickPause.clicked -= HandleQuickPauseClicked;
 
             if (btnResume != null) btnResume.clicked -= HandleResumeClicked;
+            if (btnLevelSelectPause != null) btnLevelSelectPause.clicked -= ShowLevelModal;
             if (btnHighscoresPause != null) btnHighscoresPause.clicked -= ShowHighScores;
             if (btnHowToPlayPause != null) btnHowToPlayPause.clicked -= ShowHowToPlay;
             if (btnLevelSettingsPause != null) btnLevelSettingsPause.clicked -= ShowLevelSettings;
+            if (btnCreditsPause != null) btnCreditsPause.clicked -= ShowCredits;
             if (btnRestartPause != null) btnRestartPause.clicked -= HandleRestartClicked;
             if (btnMenuPause != null) btnMenuPause.clicked -= HandleMenuClicked;
+
+            if (btnCloseCredits != null) btnCloseCredits.clicked -= HideCredits;
+            if (btnCloseLevelModal != null) btnCloseLevelModal.clicked -= HideLevelModal;
+            if (btnStartSelectedLevel != null) btnStartSelectedLevel.clicked -= HandleStartSelectedLevel;
+
+            if (btnCreditEmail != null) btnCreditEmail.clicked -= OpenEmail;
+            if (btnCreditWebsite != null) btnCreditWebsite.clicked -= OpenWebsite;
+            if (btnCreditLinkedin != null) btnCreditLinkedin.clicked -= OpenLinkedIn;
+            if (btnCreditGithub != null) btnCreditGithub.clicked -= OpenGitHub;
+            menuLevelTabButtons.Clear();
 
             if (btnNextLevel != null) btnNextLevel.clicked -= HandleNextLevelClicked;
             if (btnClearMenu != null) btnClearMenu.clicked -= HandleMenuClicked;
@@ -687,15 +729,19 @@ namespace Arcade.UI
             levelSettingsModal = root.Q<VisualElement>("level-settings-modal");
             highscoresModal = root.Q<VisualElement>("highscores-modal");
             howToPlayModal = root.Q<VisualElement>("how-to-play-modal");
+            creditsModal = root.Q<VisualElement>("credits-modal");
+            levelModal = root.Q<VisualElement>("level-modal");
 
             clearScoreLabel = root.Q<Label>("clear-score-label");
             overScoreLabel = root.Q<Label>("over-score-label");
             overHighLabel = root.Q<Label>("over-high-label");
 
             btnResume = root.Q<Button>("btn-resume");
+            btnLevelSelectPause = root.Q<Button>("btn-level-select-pause") ?? root.Q<Button>("btn-level-settings-pause");
             btnHighscoresPause = root.Q<Button>("btn-highscores-pause");
             btnHowToPlayPause = root.Q<Button>("btn-how-to-play-pause");
             btnLevelSettingsPause = root.Q<Button>("btn-level-settings-pause");
+            btnCreditsPause = root.Q<Button>("btn-credits-pause");
             btnRestartPause = root.Q<Button>("btn-restart-pause");
             btnMenuPause = root.Q<Button>("btn-menu-pause");
             btnNextLevel = root.Q<Button>("btn-next-level");
@@ -705,6 +751,76 @@ namespace Arcade.UI
             btnCloseHighscores = root.Q<Button>("btn-close-highscores");
             btnResetHighscores = root.Q<Button>("btn-reset-highscores");
             btnCloseHowToPlay = root.Q<Button>("btn-close-how-to-play");
+            btnCloseCredits = root.Q<Button>("btn-close-credits");
+            btnCloseLevelModal = root.Q<Button>("btn-close-level-modal");
+            btnStartSelectedLevel = root.Q<Button>("btn-start-selected-level");
+
+            btnCreditEmail = root.Q<Button>("btn-credit-email");
+            btnCreditWebsite = root.Q<Button>("btn-credit-website");
+            btnCreditLinkedin = root.Q<Button>("btn-credit-linkedin");
+            btnCreditGithub = root.Q<Button>("btn-credit-github");
+
+            menuLevelTabButtons.Clear();
+            var levelGridContainer = levelModal != null ? levelModal.Q<VisualElement>(className: "level-grid-container") : null;
+            if (levelGridContainer != null)
+            {
+                levelGridContainer.Clear();
+                if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
+                int totalLevels = levelGenerator != null ? levelGenerator.TotalLevels : 15;
+                for (int i = 0; i < totalLevels; i++)
+                {
+                    int lvlNum = i + 1;
+                    int stars = HighScoreManager.GetLevelStars(lvlNum);
+                    float bestTime = HighScoreManager.GetLevelBestTime(lvlNum);
+
+                    var cardBtn = new Button();
+                    cardBtn.AddToClassList("level-grid-card");
+                    cardBtn.AddToClassList("level-tab-btn");
+
+                    var numLbl = new Label(lvlNum.ToString());
+                    numLbl.AddToClassList("level-card-num");
+                    numLbl.pickingMode = PickingMode.Ignore;
+                    cardBtn.Add(numLbl);
+
+                    var starsRow = new VisualElement();
+                    starsRow.AddToClassList("level-card-stars-row");
+                    starsRow.pickingMode = PickingMode.Ignore;
+                    for (int s = 0; s < 3; s++)
+                    {
+                        var star = new Label("★");
+                        star.AddToClassList("card-star");
+                        star.AddToClassList(s < stars ? "star-active" : "star-inactive");
+                        star.pickingMode = PickingMode.Ignore;
+                        starsRow.Add(star);
+                    }
+                    cardBtn.Add(starsRow);
+
+                    var timeLbl = new Label(bestTime > 0f ? HighScoreManager.FormatTime(bestTime) : "--:--");
+                    timeLbl.AddToClassList("level-card-time");
+                    timeLbl.pickingMode = PickingMode.Ignore;
+                    cardBtn.Add(timeLbl);
+
+                    levelGridContainer.Add(cardBtn);
+                    menuLevelTabButtons.Add(cardBtn);
+                    int captureLvl = lvlNum;
+                    cardBtn.clicked += () => SelectLevel(captureLvl);
+                }
+            }
+
+            menuLevelTag = root.Q<Label>("menu-level-tag");
+            menuLevelDiff = root.Q<Label>("menu-level-diff");
+            menuLevelName = root.Q<Label>("menu-level-name");
+            menuLevelDesc = root.Q<Label>("menu-level-desc");
+            menuLevelStars = root.Q<Label>("menu-level-stars");
+            menuLevelBestTime = root.Q<Label>("menu-level-best-time");
+            levelPreviewThumb = root.Q<VisualElement>("level-preview-thumb");
+
+            modalTitleCredits = root.Q<Label>("modal-title-credits");
+            modalTitleSelectLevel = root.Q<Label>("modal-title-select-level");
+            modalSubSelectLevel = root.Q<Label>("modal-sub-select-level");
+            labelDiffSubtitle = root.Q<Label>("label-diff-subtitle");
+            labelStarsSubtitle = root.Q<Label>("label-stars-subtitle");
+            labelTimeSubtitle = root.Q<Label>("label-time-subtitle");
 
             sliderVolume = root.Q<Slider>("slider-volume");
             toggleMute = root.Q<Toggle>("toggle-mute");
@@ -712,7 +828,7 @@ namespace Arcade.UI
             toggleMusicMute = root.Q<Toggle>("toggle-music-mute");
             btnLangEn = root.Q<Button>("btn-lang-en");
             btnLangTr = root.Q<Button>("btn-lang-tr");
-            btnFps = root.Q<Button>("btn-fps");
+            btnFps = root.Q<Button>("btn-toggle-fps") ?? root.Q<Button>("btn-fps");
             btnCloseOptions = root.Q<Button>("btn-close-options");
             btnOptionsPause = root.Q<Button>("btn-options-pause");
 
@@ -767,12 +883,23 @@ namespace Arcade.UI
 
             // Wire modal buttons
             if (btnResume != null) btnResume.clicked += HandleResumeClicked;
+            if (btnLevelSelectPause != null) btnLevelSelectPause.clicked += ShowLevelModal;
             if (btnOptionsPause != null) btnOptionsPause.clicked += ShowOptions;
             if (btnHighscoresPause != null) btnHighscoresPause.clicked += ShowHighScores;
             if (btnHowToPlayPause != null) btnHowToPlayPause.clicked += ShowHowToPlay;
-            if (btnLevelSettingsPause != null) btnLevelSettingsPause.clicked += ShowLevelSettings;
+            if (btnCreditsPause != null) btnCreditsPause.clicked += ShowCredits;
+            if (btnLevelSettingsPause != null && btnLevelSettingsPause != btnLevelSelectPause) btnLevelSettingsPause.clicked += ShowLevelSettings;
             if (btnRestartPause != null) btnRestartPause.clicked += HandleRestartClicked;
             if (btnMenuPause != null) btnMenuPause.clicked += HandleMenuClicked;
+
+            if (btnCloseCredits != null) btnCloseCredits.clicked += HideCredits;
+            if (btnCloseLevelModal != null) btnCloseLevelModal.clicked += HideLevelModal;
+            if (btnStartSelectedLevel != null) btnStartSelectedLevel.clicked += HandleStartSelectedLevel;
+
+            if (btnCreditEmail != null) btnCreditEmail.clicked += OpenEmail;
+            if (btnCreditWebsite != null) btnCreditWebsite.clicked += OpenWebsite;
+            if (btnCreditLinkedin != null) btnCreditLinkedin.clicked += OpenLinkedIn;
+            if (btnCreditGithub != null) btnCreditGithub.clicked += OpenGitHub;
 
             if (btnNextLevel != null) btnNextLevel.clicked += HandleNextLevelClicked;
             if (btnClearMenu != null) btnClearMenu.clicked += HandleMenuClicked;
@@ -823,6 +950,7 @@ namespace Arcade.UI
                 {
                     if (ArcadeAudioManager.Instance != null)
                         ArcadeAudioManager.Instance.IsMusicMuted = evt.newValue;
+                    UpdateToggleMuteIcon(toggleMusicMute, evt.newValue);
                 });
             }
 
@@ -1051,7 +1179,11 @@ namespace Arcade.UI
                 if (sliderVolume != null) sliderVolume.value = ArcadeAudioManager.Instance.Volume;
                 if (toggleMute != null) toggleMute.value = ArcadeAudioManager.Instance.IsMuted;
                 if (sliderMusicVolume != null) sliderMusicVolume.value = ArcadeAudioManager.Instance.MusicVolume;
-                if (toggleMusicMute != null) toggleMusicMute.value = ArcadeAudioManager.Instance.IsMusicMuted;
+                if (toggleMusicMute != null)
+                {
+                    toggleMusicMute.value = ArcadeAudioManager.Instance.IsMusicMuted;
+                    UpdateToggleMuteIcon(toggleMusicMute, ArcadeAudioManager.Instance.IsMusicMuted);
+                }
                 UpdateMuteButtonIcon();
             }
 
@@ -1099,8 +1231,20 @@ namespace Arcade.UI
             if (labelSettingFps != null) labelSettingFps.text = LocalizationManager.Get("settings_target_fps", "Target Frame Rate");
             if (btnCloseOptions != null) btnCloseOptions.text = LocalizationManager.Get("btn_back", "BACK");
             if (btnResume != null) btnResume.text = LocalizationManager.Get("btn_resume", "RESUME");
+            if (btnLevelSelectPause != null) btnLevelSelectPause.text = LocalizationManager.Get("menu_select_level", "SELECT LEVEL");
+            if (btnCreditsPause != null) btnCreditsPause.text = LocalizationManager.Get("menu_credits", "CREDITS");
             if (btnRestartPause != null) btnRestartPause.text = LocalizationManager.Get("btn_restart", "RESTART LEVEL");
             if (btnMenuPause != null) btnMenuPause.text = LocalizationManager.Get("btn_main_menu", "MAIN MENU");
+
+            if (modalTitleCredits != null) modalTitleCredits.text = LocalizationManager.Get("credits_title", "CREDITS");
+            if (modalTitleSelectLevel != null) modalTitleSelectLevel.text = LocalizationManager.Get("level_select_title", "SELECT LEVEL");
+            if (modalSubSelectLevel != null) modalSubSelectLevel.text = LocalizationManager.Get("level_select_subtitle", "Choose your next challenge");
+            if (labelDiffSubtitle != null) labelDiffSubtitle.text = LocalizationManager.Get("level_difficulty", "DIFFICULTY");
+            if (labelStarsSubtitle != null) labelStarsSubtitle.text = "STARS";
+            if (labelTimeSubtitle != null) labelTimeSubtitle.text = LocalizationManager.Get("level_best_time", "BEST TIME");
+            if (btnStartSelectedLevel != null) btnStartSelectedLevel.text = LocalizationManager.Get("level_play_btn", "PLAY LEVEL");
+            if (btnCloseCredits != null) btnCloseCredits.text = LocalizationManager.Get("btn_back", "BACK");
+            if (btnCloseLevelModal != null) btnCloseLevelModal.text = LocalizationManager.Get("btn_back", "BACK");
         }
 
         public void UpdateScoreDisplay(int currentScore, int delta)
@@ -1985,8 +2129,13 @@ namespace Arcade.UI
 
         public void UpdateToggleMuteIcon(bool isMuted)
         {
-            if (toggleMute == null) return;
-            var checkmark = toggleMute.Q(className: "unity-toggle__checkmark");
+            UpdateToggleMuteIcon(toggleMute, isMuted);
+        }
+
+        public void UpdateToggleMuteIcon(Toggle toggle, bool isMuted)
+        {
+            if (toggle == null) return;
+            var checkmark = toggle.Q(className: "unity-toggle__checkmark");
             if (checkmark != null)
             {
                 if (isMuted)
@@ -2445,10 +2594,171 @@ namespace Arcade.UI
             }
         }
 
+        public void ShowCredits()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            if (pauseModal != null) pauseModal.AddToClassList("modal-hidden");
+            if (creditsModal != null) creditsModal.RemoveFromClassList("modal-hidden");
+
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
+        }
+
+        public void HideCredits()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            if (creditsModal != null) creditsModal.AddToClassList("modal-hidden");
+
+            if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State == GameState.Paused && pauseModal != null)
+            {
+                pauseModal.RemoveFromClassList("modal-hidden");
+            }
+
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.SuppressLaunch(0.35f);
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
+        }
+
+        public void ShowLevelModal()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
+
+            int currentLvl = 1;
+            if (ArcadeGameManager.Instance != null)
+            {
+                currentLvl = ArcadeGameManager.Instance.CurrentLevel;
+            }
+            else if (levelGenerator != null && levelGenerator.CurrentConfig != null)
+            {
+                currentLvl = levelGenerator.CurrentConfig.LevelNumber;
+            }
+            selectedLevelNumber = currentLvl;
+            SelectLevel(selectedLevelNumber, false);
+
+            if (pauseModal != null) pauseModal.AddToClassList("modal-hidden");
+            if (levelModal != null) levelModal.RemoveFromClassList("modal-hidden");
+
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
+        }
+
+        public void HideLevelModal()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            if (levelModal != null) levelModal.AddToClassList("modal-hidden");
+
+            if (ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State == GameState.Paused && pauseModal != null)
+            {
+                pauseModal.RemoveFromClassList("modal-hidden");
+            }
+
+            if (Arcade.Input.ArcadeInputHandler.Instance != null)
+            {
+                Arcade.Input.ArcadeInputHandler.Instance.SuppressLaunch(0.35f);
+                Arcade.Input.ArcadeInputHandler.Instance.ResetTouchState();
+            }
+        }
+
+        private void SelectLevel(int levelNumber, bool playSound = true)
+        {
+            if (playSound && ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            selectedLevelNumber = levelNumber;
+
+            for (int i = 0; i < menuLevelTabButtons.Count; i++)
+            {
+                if (i + 1 == levelNumber)
+                {
+                    menuLevelTabButtons[i].AddToClassList("level-tab-active");
+                    menuLevelTabButtons[i].AddToClassList("level-card-selected");
+                }
+                else
+                {
+                    menuLevelTabButtons[i].RemoveFromClassList("level-tab-active");
+                    menuLevelTabButtons[i].RemoveFromClassList("level-card-selected");
+                }
+            }
+
+            if (levelGenerator == null) levelGenerator = FindAnyObjectByType<LevelGenerator>();
+            LevelConfiguration config = levelGenerator != null ? levelGenerator.GetLevelConfig(levelNumber) : null;
+            if (config != null)
+            {
+                if (menuLevelName != null) menuLevelName.text = config.LevelName;
+                if (menuLevelDesc != null) menuLevelDesc.text = config.Description;
+            }
+            else
+            {
+                if (menuLevelName != null) menuLevelName.text = $"Level {levelNumber}";
+                if (menuLevelDesc != null) menuLevelDesc.text = "Arcade block breaker challenge.";
+            }
+
+            if (menuLevelTag != null)
+            {
+                menuLevelTag.text = $"LEVEL {levelNumber}";
+            }
+
+            if (menuLevelDiff != null)
+            {
+                if (levelNumber <= 4)
+                {
+                    menuLevelDiff.text = LocalizationManager.Get("diff_easy", "EASY");
+                    menuLevelDiff.style.color = new StyleColor(new Color(0.15f, 0.91f, 0.52f));
+                }
+                else if (levelNumber <= 10)
+                {
+                    menuLevelDiff.text = LocalizationManager.Get("diff_medium", "MEDIUM");
+                    menuLevelDiff.style.color = new StyleColor(new Color(1f, 0.67f, 0f));
+                }
+                else
+                {
+                    menuLevelDiff.text = LocalizationManager.Get("diff_hard", "HARD");
+                    menuLevelDiff.style.color = new StyleColor(new Color(1f, 0.23f, 0.34f));
+                }
+            }
+
+            int levelStars = HighScoreManager.GetLevelStars(levelNumber);
+            float bestTime = HighScoreManager.GetLevelBestTime(levelNumber);
+            if (menuLevelStars != null)
+            {
+                string starStr = "";
+                for (int s = 0; s < 3; s++) starStr += s < levelStars ? "★" : "☆";
+                menuLevelStars.text = starStr;
+                menuLevelStars.style.color = levelStars > 0 ? new StyleColor(new Color(1f, 0.843f, 0f, 1f)) : new StyleColor(new Color(0.6f, 0.65f, 0.75f, 0.4f));
+            }
+            if (menuLevelBestTime != null)
+            {
+                menuLevelBestTime.text = bestTime > 0 ? HighScoreManager.FormatTime(bestTime) : "--:--";
+            }
+        }
+
+        private void HandleStartSelectedLevel()
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            Time.timeScale = 1f;
+            PlayerPrefs.SetInt("Arcade_LoadSavedGameOnStart", 0);
+            PlayerPrefs.SetInt("Arcade_SelectedLevel", selectedLevelNumber);
+            PlayerPrefs.Save();
+            ArcadeGameManager.ClearSavedGame();
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+        }
+
+        private void OpenEmail() => Application.OpenURL("mailto:ramin.rasulzade@gmail.com");
+        private void OpenWebsite() => Application.OpenURL("https://raminrasulzade.com");
+        private void OpenLinkedIn() => Application.OpenURL("https://linkedin.com/in/ramin-rasulzade");
+        private void OpenGitHub() => Application.OpenURL("https://github.com/raminres");
+
         public bool IsAnyModalVisible()
         {
             return (optionsModal != null && !optionsModal.ClassListContains("modal-hidden")) ||
                    (levelSettingsModal != null && !levelSettingsModal.ClassListContains("modal-hidden")) ||
+                   (levelModal != null && !levelModal.ClassListContains("modal-hidden")) ||
+                   (creditsModal != null && !creditsModal.ClassListContains("modal-hidden")) ||
                    (pauseModal != null && !pauseModal.ClassListContains("modal-hidden")) ||
                    (gameOverModal != null && !gameOverModal.ClassListContains("modal-hidden")) ||
                    (levelClearModal != null && !levelClearModal.ClassListContains("modal-hidden")) ||

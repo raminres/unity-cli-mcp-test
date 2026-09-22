@@ -2,7 +2,7 @@
 
 [![Unity Version](https://img.shields.io/badge/Unity-6%20(6000.6.0f1)-black.svg?style=flat&logo=unity)](https://unity.com/)
 [![Render Pipeline](https://img.shields.io/badge/Render%20Pipeline-URP-blue.svg)](https://unity.com/srp/universal-render-pipeline)
-[![Automated Tests](https://img.shields.io/badge/Tests-251%2F251%20Passing%20(100%25)-brightgreen.svg)]()
+[![Automated Tests](https://img.shields.io/badge/Tests-263%2F263%20Passing%20(100%25)-brightgreen.svg)]()
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%20(Swift)%20%7C%20WebGPU%20%7C%20PC-purple.svg)]()
 [![Git LFS](https://img.shields.io/badge/Git-LFS%20Enabled-orange.svg)](https://git-lfs.github.com/)
 [![AI Integration](https://img.shields.io/badge/AI%20Assistant-Google%20Antigravity-green.svg)]()
@@ -25,6 +25,7 @@ Acts as a production testbed for **Google Antigravity**, **Unity MCP (Model Cont
 - **Physical Shield Wall**: Deployed at arena bottom ($Y = -7.6\text{f}$) with tween scale overshoot. Bounces balls upward ($\ge 35^\circ$) and features anti-trap one-way upward passthrough.
 - **Clutch Hyper-Beam Railgun**: When 1 brick remains, a 12s countdown ($10\times \to 1\times$) begins. If time expires, an emergency vertical hyper-beam surges from paddle to ceiling, clearing the stage.
 - **Hybrid Scoring**: Unreturned volley combo multipliers ($1\times \to 5\times$), multi-ball score multipliers ($2\times/3\times$), compound bomb cascades, and speed/flawless scorecard bonuses.
+- **Bilingual Localization & Options Parity**: Unity Localization Tables (`com.unity.localization`) support English and Turkish with instant runtime switching. Full UI parity between Main Menu and In-Game Pause options, featuring custom animated checkmark mute toggles with cyan/crimson audio feedback.
 
 ---
 
@@ -80,7 +81,8 @@ The campaign features 15 ScriptableObject levels (`SO_Level_01` through `SO_Leve
   - `Balls/`: `PF_Ball_Standard` (decoupled visual sphere, TrailRenderer, and BallController).
   - `Blocks/`: `PF_Block_Base`, `PF_Block_Red`, `PF_Block_Green`, `PF_Block_Blue`, `PF_Block_Bomb`, `PF_Block_Glass` (4 modular child sockets: `brick`, `brick frost`, `brick special`, `brick vfx`).
   - `Powerups/`: `PF_Drop_Powerup` (cyan capsule), `PF_Drop_Hazard` (crimson diamond).
-- **UI Toolkit**: Native Unity 6 `PanelRenderer` with `SafeAreaController` handling iPhone notches and Dynamic Island insets.
+- **UI Toolkit & Screen Harmonization**: Native Unity 6 `PanelRenderer` scaled for iPhone portrait reference resolution (`1170x2532`). Features 1:1 design parity across Main Menu and Pause Menu sub-screens, custom animated checkmark mute toggles for SFX and Music (`68px × 68px`) with cyan/crimson audio feedback, and `SafeAreaController` handling mobile device insets.
+- **Unity Localization Tables (`com.unity.localization` 1.5.13)**: Multi-language `StringTableCollection` under `Assets/Localization/Tables/` supporting English (`en`) and Turkish (`tr`). Localized strings can be modified dynamically via Unity Editor table windows without code changes, backed by an instant-access fallback dictionary.
 - **Rendering & VFX**: Zero-allocation `MaterialPropertyBlock` pooling under `_Pool_VFX` with frame-0 shader prewarming for stutter-free execution on Apple Metal, DX12, Vulkan, and WebGPU.
 - **Audio Engine**: `ArcadeAudioManager.cs` with custom SFX and automatic procedural synthesizer fallback.
 
@@ -88,7 +90,7 @@ The campaign features 15 ScriptableObject levels (`SO_Level_01` through `SO_Leve
 
 ## 🧪 Automated Testing
 
-The project includes **251 automated NUnit EditMode tests** covering physics deflection math, boundary clamps, powerup & hazard lifecycles, diamond falling geometries, shield wall mechanics, modular prefab hierarchies, anti-trap passthrough, and UI bindings:
+The project includes **263 automated NUnit EditMode tests** covering physics deflection math, boundary clamps, powerup & hazard lifecycles, diamond falling geometries, shield wall mechanics, modular prefab hierarchies, anti-trap passthrough, UI menu parity, custom mute toggles, and localization tables:
 
 ```bash
 unity cmd run_tests --mode editor
