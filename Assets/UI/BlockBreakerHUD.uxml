@@ -4,13 +4,10 @@
         
         <!-- Top HUD Pods Container -->
         <ui:VisualElement name="top-bar" class="top-bar">
-            <!-- Left Pod: Lives Indicator -->
-            <ui:VisualElement name="lives-container" class="lives-container hud-pod lives-pod">
-                <ui:VisualElement name="life-pip-1" class="life-pip pip-active" />
-                <ui:VisualElement name="life-pip-2" class="life-pip pip-active" />
-                <ui:VisualElement name="life-pip-3" class="life-pip pip-active" />
-                <ui:VisualElement name="life-pip-4" class="life-pip pip-hidden" />
-                <ui:VisualElement name="life-pip-5" class="life-pip pip-hidden" />
+            <!-- Left Pod: Compact Lives Indicator -->
+            <ui:VisualElement name="lives-container" class="lives-container hud-pod lives-compact-pod">
+                <ui:VisualElement name="life-heart-icon" class="life-compact-heart" />
+                <ui:Label name="lives-count-label" text="x3" class="lives-compact-text" />
             </ui:VisualElement>
 
             <!-- Center Pod: Current Score & Floating Delta Pop -->
@@ -25,15 +22,9 @@
                 <ui:Label name="timer-label" text="00:00" class="timer-main" />
             </ui:VisualElement>
 
-            <!-- Right Pod: Quick Action Buttons (Mute, Settings, Pause) -->
-            <ui:VisualElement name="quick-controls" class="quick-controls hud-pod controls-pod">
-                <ui:Button name="btn-quick-mute" text="" class="quick-btn" tooltip="Toggle SFX Mute">
-                    <ui:VisualElement name="icon-quick-mute" class="quick-btn-icon icon-volume-mute" picking-mode="Ignore" />
-                </ui:Button>
-                <ui:Button name="btn-quick-options" text="" class="quick-btn" tooltip="Settings">
-                    <ui:VisualElement name="icon-quick-options" class="quick-btn-icon icon-settings" picking-mode="Ignore" />
-                </ui:Button>
-                <ui:Button name="btn-quick-pause" text="" class="quick-btn" tooltip="Pause Game">
+            <!-- Right Pod: Single Sleek Pause Pod -->
+            <ui:VisualElement name="quick-controls" class="quick-controls hud-pod pause-pod">
+                <ui:Button name="btn-quick-pause" text="" class="quick-btn pause-quick-btn" tooltip="Pause Game">
                     <ui:VisualElement name="icon-quick-pause" class="quick-btn-icon icon-pause" picking-mode="Ignore" />
                 </ui:Button>
             </ui:VisualElement>
@@ -97,7 +88,10 @@
 
         <!-- Center Prompt Banner (Visible before ball launch) -->
         <ui:VisualElement name="launch-banner" class="launch-banner" picking-mode="Ignore">
-            <ui:Label text="PRESS UP ARROW OR TAP TO LAUNCH" class="launch-text" picking-mode="Ignore" />
+            <ui:VisualElement class="launch-arrow-left" picking-mode="Ignore" />
+            <ui:VisualElement class="launch-finger-icon" picking-mode="Ignore" />
+            <ui:VisualElement class="launch-arrow-right" picking-mode="Ignore" />
+            <ui:Label name="launch-text" text="TAP TO LAUNCH" class="launch-text" picking-mode="Ignore" />
         </ui:VisualElement>
 
         <!-- Center Level Cleared Celebratory Banner (Visible during level clear transition) -->
@@ -111,6 +105,7 @@
             <ui:VisualElement class="modal-card pause-card">
                 <ui:Label text="PAUSED" class="modal-title" />
                 <ui:Button name="btn-resume" text="RESUME" class="arcade-btn btn-primary" />
+                <ui:Button name="btn-options-pause" text="OPTIONS" class="arcade-btn btn-default" />
                 <ui:Button name="btn-highscores-pause" text="HIGH SCORES" class="arcade-btn btn-default" />
                 <ui:Button name="btn-how-to-play-pause" text="HOW TO PLAY" class="arcade-btn btn-default" />
                 <ui:Button name="btn-level-settings-pause" text="LEVEL SETTINGS" class="arcade-btn btn-secondary" />
@@ -317,20 +312,44 @@
         <!-- In-Game Options Modal -->
         <ui:VisualElement name="options-modal" class="modal-backdrop modal-hidden">
             <ui:VisualElement class="modal-card">
-                <ui:Label text="SETTINGS" class="modal-title" />
+                <ui:Label name="modal-title-settings" text="SETTINGS" class="modal-title" />
                 
                 <ui:VisualElement class="setting-row">
-                    <ui:Label text="SFX Volume" class="setting-label" />
+                    <ui:Label name="label-setting-lang" text="Language" class="setting-label" />
+                    <ui:VisualElement class="setting-lang-group">
+                        <ui:Button name="btn-lang-en" class="lang-btn lang-btn-active">
+                            <ui:VisualElement class="flag-icon flag-gb" picking-mode="Ignore" />
+                            <ui:Label text="EN" class="lang-btn-text" picking-mode="Ignore" />
+                        </ui:Button>
+                        <ui:Button name="btn-lang-tr" class="lang-btn">
+                            <ui:VisualElement class="flag-icon flag-tr" picking-mode="Ignore" />
+                            <ui:Label text="TR" class="lang-btn-text" picking-mode="Ignore" />
+                        </ui:Button>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label name="label-setting-sfx" text="SFX Volume" class="setting-label" />
                     <ui:Slider name="slider-volume" low-value="0" high-value="1" value="0.8" class="setting-slider" />
                 </ui:VisualElement>
 
                 <ui:VisualElement class="setting-row">
-                    <ui:Label text="Mute SFX" class="setting-label" />
+                    <ui:Label name="label-setting-sfx-mute" text="Mute SFX" class="setting-label" />
                     <ui:Toggle name="toggle-mute" class="setting-toggle" />
                 </ui:VisualElement>
 
                 <ui:VisualElement class="setting-row">
-                    <ui:Label text="Target Frame Rate" class="setting-label" />
+                    <ui:Label name="label-setting-music" text="Music Volume" class="setting-label" />
+                    <ui:Slider name="slider-music-volume" low-value="0" high-value="1" value="0.7" class="setting-slider" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label name="label-setting-music-mute" text="Mute Music" class="setting-label" />
+                    <ui:Toggle name="toggle-music-mute" class="setting-toggle" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label name="label-setting-fps" text="Target Frame Rate" class="setting-label" />
                     <ui:Button name="btn-fps" text="60 FPS" class="fps-btn" />
                 </ui:VisualElement>
 

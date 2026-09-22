@@ -1,43 +1,64 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="MainMenuUI.uss" />
     <ui:VisualElement name="root-container" class="root-container">
-        <!-- Title Section -->
-        <ui:VisualElement name="header-container" class="header-container">
-            <ui:Label text="BLOCK" class="game-title title-highlight" />
-            <ui:Label text="BREAKER" class="game-title title-main" />
-            <ui:Label text="3D ARCADE RETRO-MODERN" class="subtitle" />
-        </ui:VisualElement>
+        <!-- Main Menu Content Wrapper (Safe Area Insets Target) -->
+        <ui:VisualElement name="main-menu-content" class="main-menu-content">
+            <!-- Title Section -->
+            <ui:VisualElement name="header-container" class="header-container">
+                <ui:Label text="BLOCK" class="game-title title-highlight" />
+                <ui:Label text="BREAKER" class="game-title title-main" />
+                <ui:Label text="3D ARCADE RETRO-MODERN" class="subtitle" />
+            </ui:VisualElement>
 
-        <!-- Main Buttons Container -->
-        <ui:VisualElement name="menu-card" class="menu-card">
-            <ui:Button name="btn-new-game" text="START NEW GAME" class="arcade-button primary-btn" />
-            <ui:Button name="btn-level-select" text="SELECT LEVEL" class="arcade-button secondary-btn" />
-            <ui:Button name="btn-continue" text="CONTINUE" class="arcade-button default-btn" />
-            <ui:Button name="btn-highscores" text="HIGH SCORES" class="arcade-button default-btn" />
-            <ui:Button name="btn-how-to-play" text="HOW TO PLAY" class="arcade-button default-btn" />
-            <ui:Button name="btn-options" text="OPTIONS" class="arcade-button default-btn" />
-            <ui:Button name="btn-credits" text="CREDITS" class="arcade-button default-btn" />
+            <!-- Main Buttons Container -->
+            <ui:VisualElement name="menu-card" class="menu-card">
+                <ui:Button name="btn-new-game" text="START NEW GAME" class="arcade-button primary-btn" />
+                <ui:Button name="btn-level-select" text="SELECT LEVEL" class="arcade-button secondary-btn" />
+                <ui:Button name="btn-continue" text="CONTINUE" class="arcade-button default-btn" />
+                <ui:Button name="btn-highscores" text="HIGH SCORES" class="arcade-button default-btn" />
+                <ui:Button name="btn-how-to-play" text="HOW TO PLAY" class="arcade-button default-btn" />
+                <ui:Button name="btn-options" text="OPTIONS" class="arcade-button default-btn" />
+                <ui:Button name="btn-credits" text="CREDITS" class="arcade-button default-btn" />
+            </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- Level Select Modal (Hidden by default) -->
         <ui:VisualElement name="level-modal" class="modal-backdrop modal-hidden">
-            <ui:VisualElement class="modal-card modal-card-wide">
-                <ui:Label text="SELECT LEVEL" class="modal-title" />
+            <ui:VisualElement class="modal-card level-modal-card">
+                <ui:Label name="modal-title-select-level" text="SELECT LEVEL" class="modal-title level-modal-title" />
+                <ui:Label name="modal-sub-select-level" text="Choose your next challenge" class="level-modal-subtitle" />
+                <ui:VisualElement class="cyan-pill-divider" />
 
-                <!-- Level Tabs ScrollView -->
-                <ui:ScrollView class="level-tabs-scroll-view">
-                    <ui:VisualElement name="menu-level-tabs-container" class="level-tabs-container" />
+                <!-- 3-Column Level Grid ScrollView -->
+                <ui:ScrollView name="level-grid-scroll-view" class="level-grid-scroll-view">
+                    <ui:VisualElement name="menu-level-tabs-container" class="level-grid-container" />
                 </ui:ScrollView>
 
-                <ui:Label name="menu-level-name" text="Level 1: Classic Inverted" class="level-name-display" />
-                <ui:Label name="menu-level-desc" text="Classic 3-tier block setup with Red on bottom, Green in middle, and Blue on top. Features random x2 multiplier and paddle expander blocks." class="level-desc-display" />
-
-                <ui:VisualElement class="level-stats-pod">
-                    <ui:Label name="menu-level-stars" text="★★★" class="level-stars-display" />
-                    <ui:Label name="menu-level-best-time" text="BEST TIME: --:--" class="level-time-display" />
+                <!-- Selected Level Preview Card -->
+                <ui:VisualElement class="level-preview-card">
+                    <ui:VisualElement name="level-preview-thumb" class="level-preview-thumb" />
+                    <ui:VisualElement class="preview-details">
+                        <ui:Label name="menu-level-tag" text="LEVEL 1" class="preview-level-tag" />
+                        <ui:Label name="menu-level-name" text="Level 1: Classic Inverted" class="preview-level-name" />
+                        <ui:Label name="menu-level-desc" text="Classic 3-tier block setup with Red on bottom, Green in middle, and Blue on top." class="preview-level-desc" />
+                        <ui:VisualElement class="preview-chips-row">
+                            <ui:VisualElement class="preview-chip chip-diff">
+                                <ui:Label name="menu-level-diff" text="EASY" class="chip-val val-diff" />
+                                <ui:Label name="label-diff-subtitle" text="DIFFICULTY" class="chip-label" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="preview-chip chip-stars">
+                                <ui:Label name="menu-level-stars" text="★★★" class="chip-val val-stars" />
+                                <ui:Label name="label-stars-subtitle" text="STARS" class="chip-label" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="preview-chip chip-time">
+                                <ui:Label name="menu-level-best-time" text="BEST TIME: --:--" class="chip-val val-time" />
+                                <ui:Label name="label-time-subtitle" text="BEST TIME" class="chip-label" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                 </ui:VisualElement>
 
-                <ui:Button name="btn-start-selected-level" text="PLAY LEVEL" class="arcade-button primary-btn modal-action-btn" />
+                <ui:Button name="btn-start-selected-level" text="PLAY LEVEL" class="arcade-button primary-btn level-play-action-btn" />
                 <ui:Button name="btn-close-level-modal" text="BACK" class="arcade-button default-btn modal-close-btn" />
             </ui:VisualElement>
         </ui:VisualElement>
@@ -149,20 +170,44 @@
         <!-- Options Modal (Hidden by default) -->
         <ui:VisualElement name="options-modal" class="modal-backdrop modal-hidden">
             <ui:VisualElement class="modal-card">
-                <ui:Label text="SETTINGS" class="modal-title" />
+                <ui:Label name="modal-title-settings" text="SETTINGS" class="modal-title" />
                 
                 <ui:VisualElement class="setting-row">
-                    <ui:Label text="SFX Volume" class="setting-label" />
+                    <ui:Label name="label-setting-lang" text="Language" class="setting-label" />
+                    <ui:VisualElement class="setting-lang-group">
+                        <ui:Button name="btn-lang-en" class="lang-btn lang-btn-active">
+                            <ui:VisualElement class="flag-icon flag-gb" picking-mode="Ignore" />
+                            <ui:Label text="EN" class="lang-btn-text" picking-mode="Ignore" />
+                        </ui:Button>
+                        <ui:Button name="btn-lang-tr" class="lang-btn">
+                            <ui:VisualElement class="flag-icon flag-tr" picking-mode="Ignore" />
+                            <ui:Label text="TR" class="lang-btn-text" picking-mode="Ignore" />
+                        </ui:Button>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label name="label-setting-sfx" text="SFX Volume" class="setting-label" />
                     <ui:Slider name="slider-volume" low-value="0" high-value="1" value="0.8" class="setting-slider" />
                 </ui:VisualElement>
 
                 <ui:VisualElement class="setting-row">
-                    <ui:Label text="Mute SFX" class="setting-label" />
+                    <ui:Label name="label-setting-sfx-mute" text="Mute SFX" class="setting-label" />
                     <ui:Toggle name="toggle-mute" class="setting-toggle" />
                 </ui:VisualElement>
 
                 <ui:VisualElement class="setting-row">
-                    <ui:Label text="Target Frame Rate" class="setting-label" />
+                    <ui:Label name="label-setting-music" text="Music Volume" class="setting-label" />
+                    <ui:Slider name="slider-music-volume" low-value="0" high-value="1" value="0.7" class="setting-slider" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label name="label-setting-music-mute" text="Mute Music" class="setting-label" />
+                    <ui:Toggle name="toggle-music-mute" class="setting-toggle" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label name="label-setting-fps" text="Target Frame Rate" class="setting-label" />
                     <ui:Button name="btn-toggle-fps" text="60 FPS" class="fps-btn" />
                 </ui:VisualElement>
 
@@ -173,20 +218,32 @@
         <!-- Credits Modal (Hidden by default) -->
         <ui:VisualElement name="credits-modal" class="modal-backdrop modal-hidden">
             <ui:VisualElement class="modal-card modal-card-wide credits-card">
-                <ui:Label text="CREDITS" class="modal-title" />
+                <ui:Label name="modal-title-credits" text="CREDITS" class="modal-title" />
                 <ui:Label text="BLOCK BREAKER" class="credit-highlight" />
                 <ui:Label text="Engineered with Unity MCP • Gemini • Antigravity" class="credit-body credit-bold" />
-                <ui:Label text="Developed by Ramin Rasulzade" class="credit-author" />
+                <ui:Label name="credit-author" text="Developed by Ramin Rasulzade" class="credit-author" />
 
                 <!-- Interactive Clickable Links -->
                 <ui:VisualElement class="credit-links-container">
-                    <ui:Button name="btn-credit-email" text="✉  ramin.rasulzade@gmail.com" class="credit-link-btn" />
-                    <ui:Button name="btn-credit-website" text="🌐  raminrasulzade.com" class="credit-link-btn" />
-                    <ui:Button name="btn-credit-linkedin" text="🔗  linkedin.com/in/ramin-rasulzade" class="credit-link-btn" />
-                    <ui:Button name="btn-credit-github" text="🐙  github.com/raminres" class="credit-link-btn" />
+                    <ui:Button name="btn-credit-email" class="credit-link-btn">
+                        <ui:VisualElement class="credit-icon icon-mail" picking-mode="Ignore" />
+                        <ui:Label text="ramin.rasulzade@gmail.com" class="credit-btn-text" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:Button name="btn-credit-website" class="credit-link-btn">
+                        <ui:VisualElement class="credit-icon icon-web" picking-mode="Ignore" />
+                        <ui:Label text="raminrasulzade.com" class="credit-btn-text" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:Button name="btn-credit-linkedin" class="credit-link-btn">
+                        <ui:VisualElement class="credit-icon icon-linkedin" picking-mode="Ignore" />
+                        <ui:Label text="linkedin.com/in/ramin-rasulzade" class="credit-btn-text" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:Button name="btn-credit-github" class="credit-link-btn">
+                        <ui:VisualElement class="credit-icon icon-github" picking-mode="Ignore" />
+                        <ui:Label text="github.com/raminres" class="credit-btn-text" picking-mode="Ignore" />
+                    </ui:Button>
                 </ui:VisualElement>
 
-                <ui:Label text="Unity 6000.6 (URP) • Apple Metal • WebGPU" class="credit-footnote" />
+                <ui:Label name="credit-footnote" text="Unity 6000.6 (URP) • Apple Metal • WebGPU" class="credit-footnote" />
                 <ui:Button name="btn-close-credits" text="BACK" class="arcade-button primary-btn modal-close-btn" />
             </ui:VisualElement>
         </ui:VisualElement>

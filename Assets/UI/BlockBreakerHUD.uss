@@ -42,6 +42,68 @@
     justify-content: flex-start;
 }
 
+.lives-compact-pod {
+    height: 56px;
+    padding-left: 14px;
+    padding-right: 16px;
+    justify-content: center;
+    align-items: center;
+    border-color: rgba(255, 59, 86, 0.35);
+    box-shadow: 0 0 14px rgba(255, 59, 86, 0.18);
+    transition-property: scale;
+    transition-duration: 0.12s;
+}
+
+.life-compact-heart {
+    width: 26px;
+    height: 26px;
+    margin-right: 6px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Heart_Fill.png?fileID=21300000&guid=5c78b93fab88e17459882a82ea8a4a6f&type=3#TX_Heart_Fill");
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: #ff3b56;
+}
+
+.lives-compact-text {
+    -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
+    font-size: 21px;
+    -unity-font-style: bold;
+    color: #ffffff;
+    letter-spacing: 1.2px;
+    text-shadow: 0 0 8px rgba(255, 59, 86, 0.6);
+}
+
+/* Right Pod: Single Sleek Pause Pod */
+.pause-pod {
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    border-radius: 28px;
+    border-color: rgba(33, 212, 253, 0.3);
+    box-shadow: 0 0 12px rgba(33, 212, 253, 0.18);
+    transition-property: scale, border-color;
+    transition-duration: 0.15s;
+}
+
+.pause-pod:hover {
+    scale: 1.08 1.08;
+    border-color: #21d4fd;
+}
+
+.pause-quick-btn {
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    border-width: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 28px;
+    margin: 0;
+    padding: 0;
+}
+
 /* Center Pod: Score */
 .score-pod {
     padding-left: 24px;
@@ -482,27 +544,61 @@
 /* Launch Banner */
 .launch-banner {
     position: absolute;
-    bottom: 130px;
+    bottom: 22%;
     align-self: center;
-    background-color: rgba(33, 212, 253, 0.15);
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(14, 20, 36, 0.88);
     border-width: 1.5px;
-    border-color: rgba(33, 212, 253, 0.45);
-    border-radius: 20px;
-    padding: 14px 32px;
+    border-color: rgba(33, 212, 253, 0.55);
+    border-radius: 24px;
+    padding: 10px 22px;
+    box-shadow: 0 0 16px rgba(33, 212, 253, 0.25);
     pointer-events: none;
+    transition-property: scale, opacity;
+    transition-duration: 0.25s;
 }
 
 .launch-banner-hidden {
     display: none;
+    opacity: 0;
+    scale: 0.8 0.8;
+}
+
+.launch-arrow-left {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Icon_Arrow_Left.png?fileID=21300000&guid=a8825fa6e09212041956a6ff878e0074&type=3#TX_Icon_Arrow_Left_0");
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: #21d4fd;
+}
+
+.launch-finger-icon {
+    width: 26px;
+    height: 26px;
+    margin-right: 8px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Icon_Finger.png?fileID=21300000&guid=c1e43c38002c30947a94159bae08bf2b&type=3#TX_Icon_Finger_0");
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: #ffffff;
+}
+
+.launch-arrow-right {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    background-image: url("project://database/Assets/UI/Icons/TX_Icon_Arrow_Right.png?fileID=21300000&guid=790e375755a510b4aa7f9e846be910c8&type=3#TX_Icon_Arrow_Right_0");
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: #21d4fd;
 }
 
 .launch-text {
     -unity-font: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
     -unity-font-definition: url("project://database/Assets/UI/Fonts/FT_Montserrat.ttf?fileID=12800000&guid=a40a993daa5255e4e87cad89b720cf04&type=3#FT_Montserrat");
-    font-size: 18px;
+    font-size: 16px;
     -unity-font-style: bold;
-    color: #ffffff;
-    letter-spacing: 2px;
+    color: #21d4fd;
+    letter-spacing: 1.5px;
     text-shadow: 0 0 10px rgba(33, 212, 253, 0.8);
 }
 
@@ -558,12 +654,110 @@
 /* Modals */
 .modal-backdrop {
     position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(8, 10, 18, 0.85);
+    background-color: rgba(6, 9, 20, 0.88);
     align-items: center;
     justify-content: center;
     pointer-events: auto;
+}
+
+/* Language selector buttons */
+.setting-lang-group {
+    flex-direction: row;
+    align-items: center;
+}
+
+.lang-btn {
+    width: 68px;
+    height: 38px;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #94a3b8;
+    font-size: 14px;
+    -unity-font-style: bold;
+    margin-left: 8px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding-left: 6px;
+    padding-right: 6px;
+    transition-property: background-color, border-color, color, scale;
+    transition-duration: 0.15s;
+}
+
+.lang-btn:hover {
+    scale: 1.05 1.05;
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.lang-btn-active {
+    background-color: #21d4fd;
+    border-color: #6ee3ff;
+    color: #080a14;
+}
+
+.flag-icon {
+    width: 20px;
+    height: 14px;
+    margin-right: 5px;
+    border-radius: 2px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.flag-gb {
+    background-image: url("project://database/Assets/UI/Icons/TX_Flag_GB.png?fileID=21300000&guid=edb8ea2efda138f478df74c1eb804bca&type=3#TX_Flag_GB_0");
+}
+
+.flag-tr {
+    background-image: url("project://database/Assets/UI/Icons/TX_Flag_TR.png?fileID=21300000&guid=fb59304eb0b2d6847ad8f39291a43817&type=3#TX_Flag_TR_0");
+}
+
+.lang-btn-text {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: inherit;
+    margin: 0;
+    padding: 0;
+}
+
+/* Custom Sleek Scroller */
+.unity-scroller #unity-low-button,
+.unity-scroller #unity-high-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.unity-scroller--vertical {
+    width: 8px;
+    margin-right: 2px;
+}
+
+.unity-scroller--vertical .unity-base-slider__tracker {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-width: 0;
+    border-radius: 4px;
+    width: 6px;
+}
+
+.unity-scroller--vertical .unity-base-slider__dragger {
+    background-color: rgba(33, 212, 253, 0.55);
+    border-width: 0;
+    border-radius: 4px;
+    width: 6px;
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+
+.unity-scroller--vertical .unity-base-slider__dragger:hover {
+    background-color: #21d4fd;
 }
 
 .modal-hidden {

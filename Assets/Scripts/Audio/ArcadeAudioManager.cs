@@ -15,6 +15,8 @@ namespace Arcade.Audio
         [Header("Audio Settings")]
         [Range(0f, 1f)] [SerializeField] private float sfxVolume = 0.8f;
         [SerializeField] private bool isMuted = false;
+        [Range(0f, 1f)] [SerializeField] private float musicVolume = 0.7f;
+        [SerializeField] private bool isMusicMuted = false;
 
         [Header("Audio Clips (AU_*)")]
         [SerializeField] private AudioClip clipPop;            // AU_Pop.mp3 (paddle and wall bounces)
@@ -63,6 +65,7 @@ namespace Arcade.Audio
                 sfxVolume = Mathf.Clamp01(value);
                 PlayerPrefs.SetFloat("Arcade_SFX_Volume", sfxVolume);
                 PlayerPrefs.Save();
+                OnVolumeChanged?.Invoke(sfxVolume);
             }
         }
 
@@ -74,11 +77,38 @@ namespace Arcade.Audio
                 isMuted = value;
                 PlayerPrefs.SetInt("Arcade_SFX_Muted", isMuted ? 1 : 0);
                 PlayerPrefs.Save();
+                OnMuteToggled?.Invoke(isMuted);
+            }
+        }
+
+        public float MusicVolume
+        {
+            get => musicVolume;
+            set
+            {
+                musicVolume = Mathf.Clamp01(value);
+                PlayerPrefs.SetFloat("Arcade_Music_Volume", musicVolume);
+                PlayerPrefs.Save();
+                OnMusicVolumeChanged?.Invoke(musicVolume);
+            }
+        }
+
+        public bool IsMusicMuted
+        {
+            get => isMusicMuted;
+            set
+            {
+                isMusicMuted = value;
+                PlayerPrefs.SetInt("Arcade_Music_Muted", isMusicMuted ? 1 : 0);
+                PlayerPrefs.Save();
+                OnMusicMuteToggled?.Invoke(isMusicMuted);
             }
         }
 
         public event Action<bool> OnMuteToggled;
         public event Action<float> OnVolumeChanged;
+        public event Action<bool> OnMusicMuteToggled;
+        public event Action<float> OnMusicVolumeChanged;
 
         private void Awake()
         {
@@ -98,6 +128,8 @@ namespace Arcade.Audio
 
             sfxVolume = PlayerPrefs.GetFloat("Arcade_SFX_Volume", 0.8f);
             isMuted = PlayerPrefs.GetInt("Arcade_SFX_Muted", 0) == 1;
+            musicVolume = PlayerPrefs.GetFloat("Arcade_Music_Volume", 0.7f);
+            isMusicMuted = PlayerPrefs.GetInt("Arcade_Music_Muted", 0) == 1;
 
             LoadClipsIfEmpty();
         }

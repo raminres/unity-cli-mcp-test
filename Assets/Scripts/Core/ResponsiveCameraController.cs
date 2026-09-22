@@ -63,9 +63,17 @@ namespace Arcade.Core
             }
             lastAspectRatio = currentAspect;
 
+            float extraVerticalPad = 0f;
+            // On tablet aspect ratios (e.g. iPad Mini ~0.656, iPad 4:3 ~0.75), add vertical clearance
+            // so the top arena wall sits with comfortable breathing room safely below the top HUD pods.
+            if (currentAspect >= 0.58f)
+            {
+                extraVerticalPad = Mathf.Lerp(6.0f, 9.5f, Mathf.Clamp01((currentAspect - 0.58f) / 0.25f));
+            }
+
             float requiredDistance = CalculateRequiredDistance(
                 boundsSize.x + paddingMargin,
-                boundsSize.y + paddingMargin,
+                boundsSize.y + paddingMargin + extraVerticalPad,
                 targetCamera.fieldOfView,
                 currentAspect
             );

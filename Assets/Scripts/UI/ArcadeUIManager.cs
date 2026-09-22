@@ -96,8 +96,24 @@ namespace Arcade.UI
         // Options controls
         private Slider sliderVolume;
         private Toggle toggleMute;
+        private Slider sliderMusicVolume;
+        private Toggle toggleMusicMute;
+        private Button btnLangEn;
+        private Button btnLangTr;
         private Button btnFps;
         private Button btnCloseOptions;
+        private Button btnOptionsPause;
+
+        // Localized Labels
+        private Label livesCountLabel;
+        private Label launchText;
+        private Label modalTitleSettings;
+        private Label labelSettingLang;
+        private Label labelSettingSfx;
+        private Label labelSettingSfxMute;
+        private Label labelSettingMusic;
+        private Label labelSettingMusicMute;
+        private Label labelSettingFps;
 
         // Level Settings controls
         private readonly System.Collections.Generic.List<Button> hudLevelTabButtons = new System.Collections.Generic.List<Button>();
@@ -285,6 +301,25 @@ namespace Arcade.UI
             {
                 EnsureInitialized();
             }
+
+            UpdateLaunchBannerPosition();
+        }
+
+        private void UpdateLaunchBannerPosition()
+        {
+            if (launchBanner == null || launchBanner.ClassListContains("launch-banner-hidden")) return;
+            if (launchBanner.style.display == DisplayStyle.None) return;
+
+            Camera cam = Camera.main;
+            if (cam != null && root != null && root.panel != null)
+            {
+                // Project world position directly above paddle (paddle is at Y = -6.0)
+                Vector3 worldTarget = new Vector3(0f, -3.6f, 0f);
+                Vector3 screenPt = cam.WorldToScreenPoint(worldTarget);
+                Vector2 panelPt = RuntimePanelUtils.ScreenToPanel(root.panel, new Vector2(screenPt.x, Screen.height - screenPt.y));
+                launchBanner.style.top = panelPt.y;
+                launchBanner.style.bottom = StyleKeyword.Auto;
+            }
         }
 
         public void EnsureInitialized()
@@ -410,6 +445,8 @@ namespace Arcade.UI
             if (btnCloseHowToPlay != null) btnCloseHowToPlay.clicked -= HideHowToPlay;
 
             if (btnFps != null) btnFps.clicked -= ToggleFpsSetting;
+            if (btnOptionsPause != null) btnOptionsPause.clicked -= ShowOptions;
+            LocalizationManager.OnLanguageChanged -= UpdateLocalizedTexts;
             hudLevelTabButtons.Clear();
 
             if (btnApplyLevel != null) btnApplyLevel.clicked -= ApplyLevelSettingsAndRestart;
@@ -671,8 +708,24 @@ namespace Arcade.UI
 
             sliderVolume = root.Q<Slider>("slider-volume");
             toggleMute = root.Q<Toggle>("toggle-mute");
+            sliderMusicVolume = root.Q<Slider>("slider-music-volume");
+            toggleMusicMute = root.Q<Toggle>("toggle-music-mute");
+            btnLangEn = root.Q<Button>("btn-lang-en");
+            btnLangTr = root.Q<Button>("btn-lang-tr");
             btnFps = root.Q<Button>("btn-fps");
             btnCloseOptions = root.Q<Button>("btn-close-options");
+            btnOptionsPause = root.Q<Button>("btn-options-pause");
+
+            livesCountLabel = root.Q<Label>("lives-count-label");
+            launchText = root.Q<Label>("launch-text");
+
+            modalTitleSettings = root.Q<Label>("modal-title-settings");
+            labelSettingLang = root.Q<Label>("label-setting-lang");
+            labelSettingSfx = root.Q<Label>("label-setting-sfx");
+            labelSettingSfxMute = root.Q<Label>("label-setting-sfx-mute");
+            labelSettingMusic = root.Q<Label>("label-setting-music");
+            labelSettingMusicMute = root.Q<Label>("label-setting-music-mute");
+            labelSettingFps = root.Q<Label>("label-setting-fps");
 
             // Level Settings controls
             levelNameLabel = root.Q<Label>("level-name-label");
@@ -714,6 +767,7 @@ namespace Arcade.UI
 
             // Wire modal buttons
             if (btnResume != null) btnResume.clicked += HandleResumeClicked;
+            if (btnOptionsPause != null) btnOptionsPause.clicked += ShowOptions;
             if (btnHighscoresPause != null) btnHighscoresPause.clicked += ShowHighScores;
             if (btnHowToPlayPause != null) btnHowToPlayPause.clicked += ShowHowToPlay;
             if (btnLevelSettingsPause != null) btnLevelSettingsPause.clicked += ShowLevelSettings;
@@ -728,6 +782,9 @@ namespace Arcade.UI
             if (btnOverMenu != null) btnOverMenu.clicked += HandleMenuClicked;
 
             if (btnCloseOptions != null) btnCloseOptions.clicked += HideOptions;
+            if (btnLangEn != null) btnLangEn.clicked += () => SetLanguage(GameLanguage.English);
+            if (btnLangTr != null) btnLangTr.clicked += () => SetLanguage(GameLanguage.Turkish);
+
             if (btnCloseHighscores != null) btnCloseHighscores.clicked += HideHighScores;
             if (btnResetHighscores != null) btnResetHighscores.clicked += HandleResetHighScores;
             if (btnCloseHowToPlay != null) btnCloseHowToPlay.clicked += HideHowToPlay;
@@ -750,6 +807,27 @@ namespace Arcade.UI
                     UpdateMuteButtonIcon();
                 });
             }
+
+            if (sliderMusicVolume != null)
+            {
+                sliderMusicVolume.RegisterValueChangedCallback(evt =>
+                {
+                    if (ArcadeAudioManager.Instance != null)
+                        ArcadeAudioManager.Instance.MusicVolume = evt.newValue;
+                });
+            }
+
+            if (toggleMusicMute != null)
+            {
+                toggleMusicMute.RegisterValueChangedCallback(evt =>
+                {
+                    if (ArcadeAudioManager.Instance != null)
+                        ArcadeAudioManager.Instance.IsMusicMuted = evt.newValue;
+                });
+            }
+
+            LocalizationManager.OnLanguageChanged += UpdateLocalizedTexts;
+            UpdateLocalizedTexts();
 
             if (btnFps != null) btnFps.clicked += ToggleFpsSetting;
 
@@ -972,8 +1050,12 @@ namespace Arcade.UI
             {
                 if (sliderVolume != null) sliderVolume.value = ArcadeAudioManager.Instance.Volume;
                 if (toggleMute != null) toggleMute.value = ArcadeAudioManager.Instance.IsMuted;
+                if (sliderMusicVolume != null) sliderMusicVolume.value = ArcadeAudioManager.Instance.MusicVolume;
+                if (toggleMusicMute != null) toggleMusicMute.value = ArcadeAudioManager.Instance.IsMusicMuted;
                 UpdateMuteButtonIcon();
             }
+
+            UpdateLocalizedTexts();
 
             UpdatePauseButtonIcon(ArcadeGameManager.Instance != null && ArcadeGameManager.Instance.State == GameState.Paused);
 
@@ -987,6 +1069,40 @@ namespace Arcade.UI
             }
         }
 
+        private void SetLanguage(GameLanguage lang)
+        {
+            if (ArcadeAudioManager.Instance != null) ArcadeAudioManager.Instance.PlayButtonPress();
+            LocalizationManager.SetLanguage(lang);
+        }
+
+        private void UpdateLocalizedTexts()
+        {
+            bool isTr = LocalizationManager.CurrentLanguage == GameLanguage.Turkish;
+            if (btnLangEn != null)
+            {
+                if (!isTr) btnLangEn.AddToClassList("lang-btn-active");
+                else btnLangEn.RemoveFromClassList("lang-btn-active");
+            }
+            if (btnLangTr != null)
+            {
+                if (isTr) btnLangTr.AddToClassList("lang-btn-active");
+                else btnLangTr.RemoveFromClassList("lang-btn-active");
+            }
+
+            if (launchText != null) launchText.text = LocalizationManager.Get("hud_tap_launch", "TAP TO LAUNCH");
+            if (modalTitleSettings != null) modalTitleSettings.text = LocalizationManager.Get("settings_title", "SETTINGS");
+            if (labelSettingLang != null) labelSettingLang.text = LocalizationManager.Get("settings_language", "Language");
+            if (labelSettingSfx != null) labelSettingSfx.text = LocalizationManager.Get("settings_sfx_vol", "SFX Volume");
+            if (labelSettingSfxMute != null) labelSettingSfxMute.text = LocalizationManager.Get("settings_sfx_mute", "Mute SFX");
+            if (labelSettingMusic != null) labelSettingMusic.text = LocalizationManager.Get("settings_music_vol", "Music Volume");
+            if (labelSettingMusicMute != null) labelSettingMusicMute.text = LocalizationManager.Get("settings_music_mute", "Mute Music");
+            if (labelSettingFps != null) labelSettingFps.text = LocalizationManager.Get("settings_target_fps", "Target Frame Rate");
+            if (btnCloseOptions != null) btnCloseOptions.text = LocalizationManager.Get("btn_back", "BACK");
+            if (btnResume != null) btnResume.text = LocalizationManager.Get("btn_resume", "RESUME");
+            if (btnRestartPause != null) btnRestartPause.text = LocalizationManager.Get("btn_restart", "RESTART LEVEL");
+            if (btnMenuPause != null) btnMenuPause.text = LocalizationManager.Get("btn_main_menu", "MAIN MENU");
+        }
+
         public void UpdateScoreDisplay(int currentScore, int delta)
         {
             if (scoreLabel != null) scoreLabel.text = $"SCORE: {currentScore}";
@@ -996,6 +1112,11 @@ namespace Arcade.UI
 
         public void UpdateLivesDisplay(int lives)
         {
+            if (livesCountLabel != null)
+            {
+                livesCountLabel.text = $"x{lives}";
+            }
+
             if (lifePips == null) return;
             for (int i = 0; i < lifePips.Length; i++)
             {
