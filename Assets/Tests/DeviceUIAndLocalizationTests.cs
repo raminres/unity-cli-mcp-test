@@ -424,6 +424,44 @@ namespace Arcade.Tests
             Object.DestroyImmediate(menuObj);
             Object.DestroyImmediate(hudObj);
         }
+
+        [Test]
+        public void PauseModal_LiquidGlassStyles_AreScopedAndPresent()
+        {
+            var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+            var root = uxml.CloneTree();
+
+            var pauseModal = root.Q<VisualElement>("pause-modal");
+            Assert.IsNotNull(pauseModal, "pause-modal must exist.");
+
+            var pauseCard = pauseModal.Q<VisualElement>(className: "pause-card");
+            Assert.IsNotNull(pauseCard, "pause-card must exist in pause-modal.");
+            Assert.IsTrue(pauseCard.ClassListContains("modal-card"), "pause-card should also have modal-card class.");
+
+            // Verify children buttons exist
+            Assert.IsNotNull(pauseCard.Q<Button>("btn-resume"), "btn-resume must exist.");
+            Assert.IsNotNull(pauseCard.Q<Button>("btn-level-select-pause"), "btn-level-select-pause must exist.");
+            Assert.IsNotNull(pauseCard.Q<Button>("btn-options-pause"), "btn-options-pause must exist.");
+
+            // Verify stylesheet contains scoped liquid glass rules
+            var uss = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/UI/BlockBreakerHUD.uss");
+            Assert.IsNotNull(uss, "BlockBreakerHUD.uss must exist.");
+            var ussText = System.IO.File.ReadAllText("Assets/UI/BlockBreakerHUD.uss");
+
+            Assert.IsTrue(ussText.Contains("#pause-modal.modal-backdrop"), "USS must contain scoped #pause-modal backdrop styling.");
+            Assert.IsTrue(ussText.Contains(".pause-card {"), "USS must contain .pause-card styling.");
+            Assert.IsTrue(ussText.Contains("rgba(14, 20, 36, 0.68)"), "pause-card must have translucent tinted glass background.");
+            Assert.IsTrue(ussText.Contains(".pause-card .btn-primary"), "pause-card must have scoped glass primary button.");
+            Assert.IsTrue(ussText.Contains(".pause-card .btn-secondary"), "pause-card must have scoped glass secondary button.");
+            Assert.IsTrue(ussText.Contains(".pause-card .btn-default"), "pause-card must have scoped glass default button.");
+
+            // Verify other modals do not use pause-card class
+            var highscoresModal = root.Q<VisualElement>("highscores-modal");
+            Assert.IsNotNull(highscoresModal);
+            Assert.IsNull(highscoresModal.Q<VisualElement>(className: "pause-card"), "highscores-modal must NOT use pause-card class.");
+        }
     }
 }
+
 

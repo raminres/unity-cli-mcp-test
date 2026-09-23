@@ -1248,13 +1248,142 @@
     margin-top: 16px;
 }
 
+/* =========================================================================
+   LIQUID GLASS PROTOTYPE: PAUSE MODAL ONLY (Scoped Visual Prototype)
+   ========================================================================= */
+
+#pause-modal.modal-backdrop {
+    background-color: rgba(6, 9, 20, 0.65);
+}
+
 .pause-card {
     width: 840px;
-    border-top-width: 4px;
-    border-right-width: 4px;
-    border-bottom-width: 4px;
-    border-left-width: 4px;
+    background-color: rgba(14, 20, 36, 0.68);
+    border-radius: 36px;
+    border-top-left-radius: 36px;
+    border-top-right-radius: 36px;
+    border-bottom-right-radius: 36px;
+    border-bottom-left-radius: 36px;
+    border-top-width: 2.5px;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 1.5px;
+    border-top-color: rgba(255, 255, 255, 0.55);
+    border-left-color: rgba(255, 255, 255, 0.22);
+    border-right-color: rgba(255, 255, 255, 0.12);
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.7), 0 0 35px rgba(33, 212, 253, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    padding: 36px 32px;
 }
+
+.pause-card .modal-title {
+    color: rgb(255, 255, 255);
+    letter-spacing: 4px;
+    text-shadow: 0 0 16px rgba(33, 212, 253, 0.6), 0 3px 6px rgba(0, 0, 0, 0.7);
+    margin-bottom: 20px;
+}
+
+.pause-card .arcade-btn {
+    height: 116px;
+    border-radius: 20px;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    margin-left: 10px;
+    margin-right: 10px;
+    letter-spacing: 1.8px;
+    font-size: 30px;
+}
+
+/* Glass Primary Button (Resume): Glowing Ruby/Coral Liquid Glass */
+.pause-card .btn-primary {
+    background-color: rgba(255, 59, 86, 0.48);
+    border-top-width: 2px;
+    border-left-width: 1.5px;
+    border-right-width: 1.5px;
+    border-bottom-width: 1px;
+    border-top-color: rgba(255, 195, 205, 0.8);
+    border-left-color: rgba(255, 110, 130, 0.5);
+    border-right-color: rgba(255, 110, 130, 0.3);
+    border-bottom-color: rgba(255, 59, 86, 0.2);
+    color: rgb(255, 255, 255);
+    box-shadow: 0 8px 24px rgba(255, 59, 86, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    text-shadow: 0 0 10px rgba(255, 59, 86, 0.7);
+}
+
+.pause-card .btn-primary:hover {
+    background-color: rgba(255, 75, 100, 0.65);
+    border-top-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 10px 30px rgba(255, 59, 86, 0.55), 0 0 20px rgba(255, 110, 130, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    scale: 1.03 1.03;
+}
+
+.pause-card .btn-primary:active {
+    background-color: rgba(216, 30, 58, 0.6);
+    scale: 0.96 0.96;
+}
+
+/* Glass Secondary Button (Select Level): Glowing Emerald/Cyan Liquid Glass */
+.pause-card .btn-secondary {
+    background-color: rgba(38, 232, 133, 0.35);
+    border-top-width: 2px;
+    border-left-width: 1.5px;
+    border-right-width: 1.5px;
+    border-bottom-width: 1px;
+    border-top-color: rgba(200, 255, 230, 0.8);
+    border-left-color: rgba(110, 245, 178, 0.5);
+    border-right-color: rgba(110, 245, 178, 0.3);
+    border-bottom-color: rgba(38, 232, 133, 0.2);
+    color: rgb(255, 255, 255);
+    box-shadow: 0 8px 24px rgba(38, 232, 133, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    text-shadow: 0 0 10px rgba(38, 232, 133, 0.6);
+}
+
+.pause-card .btn-secondary:hover {
+    background-color: rgba(50, 245, 145, 0.52);
+    border-top-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 10px 30px rgba(38, 232, 133, 0.5), 0 0 20px rgba(110, 245, 178, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    scale: 1.03 1.03;
+}
+
+.pause-card .btn-secondary:active {
+    background-color: rgba(23, 190, 103, 0.55);
+    scale: 0.96 0.96;
+}
+
+/* Glass Default Buttons (Options, Highscores, Credits, Restart, Main Menu): Frosted Cut Crystal */
+.pause-card .btn-default {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-top-width: 1.5px;
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.32);
+    border-left-color: rgba(255, 255, 255, 0.14);
+    border-right-color: rgba(255, 255, 255, 0.08);
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+    color: rgb(226, 232, 240);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.pause-card .btn-default:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+    border-top-color: rgba(255, 255, 255, 0.6);
+    border-left-color: rgba(33, 212, 253, 0.4);
+    border-right-color: rgba(33, 212, 253, 0.3);
+    color: rgb(255, 255, 255);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 14px rgba(33, 212, 253, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    scale: 1.03 1.03;
+}
+
+.pause-card .btn-default:active {
+    background-color: rgba(255, 255, 255, 0.03);
+    scale: 0.96 0.96;
+}
+
 
 .leaderboard-card {
     width: 840px;
