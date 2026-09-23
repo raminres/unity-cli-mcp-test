@@ -1,6 +1,6 @@
 # BlockBreaker: Game Design Document (GDD)
 
-**Version**: 4.2  
+**Version**: 4.3  
 **Project**: BlockBreaker (`com.RaminRasulzade.BlockBreaker`)  
 **Engine**: Unity 6 (`6000.6.0f1`), Universal Render Pipeline (`URP 17.6.0`)  
 
@@ -15,7 +15,7 @@
 2. **Tactile Differentiation**: Bricks behave physically based on color (dampen, boost, scatter).
 3. **Escalating Challenge**: Positive buffs balance against tumbling hazard debuffs and environmental hazards.
 4. **Dual-Layer Feedback**: Floating world-space popups and clean HUD dashboard pods provide immediate mechanical feedback.
-5. **Cross-Platform Delivery**: High-performance execution on PC and iOS with notch / Dynamic Island safe-area adaptation.
+5. **Cross-Platform Delivery**: High-performance execution on PC and iOS with notch / Dynamic Island safe-area adaptation, system gesture deferral, and tactile 3D extruded controls.
 
 ---
 
@@ -108,9 +108,9 @@ Dense layouts (11–14 columns, $13.75\text{u}–17.5\text{u}$ span) with side b
 
 | Level | Name | Archetype | Grid | Blocks | Speed | Paddle | Highlights & Hazards | Par | 3-Star |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :--- | :---: | :---: |
-| **1** | First Flight | `Pyramid` | $11 \times 6$ | 42 | 0.92x | 5.5u | Warmup, Expander, 0 hazards | 35s | 1,200 |
-| **2** | Glass & Gold | `Diamond` | $12 \times 6$ | 42 | 0.96x | 5.0u | 2X, Glass, Expander, 1x Shortener | 40s | 1,800 |
-| **3** | Twin Pillars | `Pillars` | $13 \times 6$ | 42 | 1.00x | 5.0u | Bombs, Laser, 1x Paddle Slower, 1x Ball Slower | 45s | 2,400 |
+| **1** | First Flight | `Pyramid` | $11 \times 6$ | 42 | 0.92x | 5.5u | Warmup, +20% enlarged blocks (1.20u), Expander, 0 hazards | 35s | 1,200 |
+| **2** | Glass & Gold | `Diamond` | $12 \times 6$ | 42 | 0.96x | 5.0u | +20% enlarged blocks (1.20u), 2X, Glass, Expander, 1x Shortener | 40s | 1,800 |
+| **3** | Twin Pillars | `Pillars` | $13 \times 6$ | 42 | 1.00x | 5.0u | +20% enlarged blocks (1.20u), Bombs, Laser, 1x Paddle Slower, 1x Ball Slower | 45s | 2,400 |
 | **4** | Kinetic Shield | `Shield` | $13 \times 6$ | 62 | 1.04x | 5.0u | Shield, Heart, 1x Brick Freezer, 1x Ball Shrink | 50s | 3,200 |
 | **5** | Multi-Ball Ring | `HollowBox` | $13 \times 6$ | 34 | 1.08x | 5.0u | Multi-Ball, Shield, 1x Paddle Freezer | 45s | 3,800 |
 | **6** | Royal Crown | `Crown` | $13 \times 6$ | 70 | 1.12x | 4.8u | 3X, Laser, Multi-Ball, 4x hazards | 60s | 5,000 |
@@ -134,6 +134,12 @@ Dense layouts (11–14 columns, $13.75\text{u}–17.5\text{u}$ span) with side b
 - **Modular Prefab Architecture**: 100% prefab-driven (`Assets/Prefabs/` for `Arena/`, `Paddle/`, `Balls/`, `Blocks/`, `Powerups/`), eliminating runtime procedural primitives (`GameObject.CreatePrimitive`).
 - **UI Toolkit & Screen Harmonization**:
   - Unity 6 `PanelRenderer` HUD and Main Menu scaled to mobile portrait resolution (`1170x2532`).
+  - **Mobile Safe Area & Dynamic Island Adaptation**: `SafeAreaController.cs` calculates Yoga width-relative percentage insets (`CalculateYogaInsets`), preventing Dynamic Island and notch occlusion on iPhone 15/15 Pro in physical builds and Unity Device Simulator. `#safe-area-content` wraps top bar dashboard pods and powerup rows, while modals maintain full-bleed coverage.
+  - **Touch Ergonomics & System Gesture Deferral**: `PlayerSettings.iOS.deferSystemGesturesMode = UnityEngine.iOS.SystemGestureDeferMode.All` configures iOS to require a deliberate double-swipe for Home bar navigation, preventing edge gesture drops. Input position clamps to $Y \ge 4\text{px}$ and a minimal, transparent touch guideline (`#touch-guideline`, `opacity: 0.16`, `pickingMode: Ignore`) sits comfortably above the iOS Home bar indicator.
+  - **Tactile 3D Extruded Gradient Design System**:
+    - Discarded transparent/liquid glass in favor of solid opaque obsidian navy backgrounds (`rgb(18, 24, 40)`) with 4 procedural vertical gradient sprites in `Assets/UI/Textures/Gradients/` (`TX_Grad_Card_Bg`, `TX_Grad_Ruby_Btn`, `TX_Grad_Emerald_Btn`, `TX_Grad_Titanium_Btn`).
+    - Mechanical 3D extruded button geometry: resting 7px bottom shelf (`border-bottom-width: 7px;`), 2px top/side bevels, and active physical depression (`translate: 0 5px; border-bottom-width: 2px; border-top-width: 4px;`).
+    - Propagated across all modal cards (`.modal-card`, `.level-modal-card`, `.scorecard-card`) and button styles (`.arcade-btn`, `.arcade-button`, `.btn-primary`, `.btn-secondary`, `.btn-default`, `.warning-btn`) across both Main Menu and Gameplay HUD.
   - **Menu Parity**: In-Game Pause Menu sub-screens (How to Play, Credits, Level Select, Options) match Main Menu in layout structure, fonts, button styling, and responsive proportions.
   - **Custom Animated Mute Toggles**: Both Main Menu and In-Game Pause Options panels feature custom checkmark toggles for SFX and Music sliders (`68px × 68px`). Toggles dynamically switch between speaker/mute icons with glowing cyan (`#21d4fd`) and crimson (`#ff3b56`) tints.
   - Main Menu features transparent root container with unified camera framing ($Z = -32\text{f}$) and Bloom. Sprites bound via `SO_PowerupIcons.asset`. Inset management via `SafeAreaController.cs`.
@@ -143,4 +149,4 @@ Dense layouts (11–14 columns, $13.75\text{u}–17.5\text{u}$ span) with side b
   - Dynamic runtime lookup through `LocalizationManager.cs` with synchronous fallback dictionary for offline/unit test resilience.
 - **Audio Engine**: `ArcadeAudioManager.cs` with custom clips (`AU_`) and procedural synthesizer fallback.
 - **Controls**: Desktop (mouse 1:1 or A/D / Arrow keys, Space launch), Mobile (touch drag paddle, tap launch).
-- **Tests**: 263 EditMode unit and integration tests via `unity cmd run_tests --mode editor`.
+- **Tests**: 270 EditMode unit and integration tests via `unity cmd run_tests --mode editor`.
