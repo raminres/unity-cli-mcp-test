@@ -1,7 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/BlockBreakerHUD.uss?fileID=7433441132597879392&amp;guid=d9e32c29aa4aec84999245c32d7b51d4&amp;type=3#BlockBreakerHUD"/>
     <ui:VisualElement name="hud-root" class="hud-root">
-        <ui:VisualElement name="top-bar" class="top-bar">
+        <ui:VisualElement name="safe-area-content" picking-mode="Ignore" class="safe-area-content">
+            <ui:VisualElement name="top-bar" class="top-bar">
             <ui:VisualElement name="lives-container" class="lives-container hud-pod lives-compact-pod">
                 <ui:VisualElement name="life-heart-icon" class="life-compact-heart"/>
                 <ui:Label name="lives-count-label" text="x3" class="lives-compact-text"/>
@@ -72,12 +73,14 @@
                 <ui:Label name="paddle-freeze-timer-label" text="1s" class="powerup-timer-label powerdown-timer-label"/>
             </ui:VisualElement>
         </ui:VisualElement>
+        </ui:VisualElement>
         <ui:VisualElement name="launch-banner" picking-mode="Ignore" class="launch-banner" style="bottom: 25%;">
             <ui:VisualElement picking-mode="Ignore" class="launch-arrow-left"/>
             <ui:VisualElement picking-mode="Ignore" class="launch-finger-icon"/>
             <ui:VisualElement picking-mode="Ignore" class="launch-arrow-right"/>
             <ui:Label name="launch-text" text="TAP TO LAUNCH" picking-mode="Ignore" class="launch-text"/>
         </ui:VisualElement>
+        <ui:VisualElement name="touch-guideline" picking-mode="Ignore" class="touch-guideline"/>
         <ui:VisualElement name="level-clear-banner" picking-mode="Ignore" class="level-clear-banner level-clear-banner-hidden">
             <ui:Label name="level-clear-banner-text" text="LEVEL CLEARED!" picking-mode="Ignore" class="level-clear-banner-text"/>
             <ui:Label name="level-clear-banner-subtext" text="STAGE COMPLETE!" picking-mode="Ignore" class="level-clear-banner-subtext"/>

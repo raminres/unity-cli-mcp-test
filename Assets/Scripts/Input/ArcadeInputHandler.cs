@@ -61,6 +61,8 @@ namespace Arcade.Input
             isDragging = true;
         }
 
+        private Arcade.BlockBreaker.PaddleController cachedPaddle;
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -71,6 +73,10 @@ namespace Arcade.Input
 
             Instance = this;
             mainCam = Camera.main;
+
+#if UNITY_IOS || UNITY_VISIONOS
+            UnityEngine.iOS.Device.deferSystemGesturesMode = UnityEngine.iOS.SystemGestureDeferMode.All;
+#endif
         }
 
         private void OnDestroy()
@@ -207,6 +213,7 @@ namespace Arcade.Input
 
             if (pointerDown)
             {
+                screenPos.y = Mathf.Max(screenPos.y, 4f);
                 touchStartScreenPos = screenPos;
                 touchStartTime = Time.unscaledTime;
                 isDragging = false;
@@ -230,11 +237,15 @@ namespace Arcade.Input
                 }
 
                 // Cache initial paddle position
-                var paddle = FindAnyObjectByType<Arcade.BlockBreaker.PaddleController>();
-                touchStartPaddleX = paddle != null ? paddle.transform.position.x : 0f;
+                if (cachedPaddle == null)
+                {
+                    cachedPaddle = FindAnyObjectByType<Arcade.BlockBreaker.PaddleController>();
+                }
+                touchStartPaddleX = cachedPaddle != null ? cachedPaddle.transform.position.x : 0f;
             }
             else if (pointerHeld && !touchStartedOverUI)
             {
+                screenPos.y = Mathf.Max(screenPos.y, 4f);
                 float screenDist = Vector2.Distance(screenPos, touchStartScreenPos);
                 if (!isDragging && screenDist > dragDeadzonePixels)
                 {

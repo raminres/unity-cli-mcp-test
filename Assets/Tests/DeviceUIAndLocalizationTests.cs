@@ -173,6 +173,66 @@ namespace Arcade.Tests
         }
 
         [Test]
+        public void SafeAreaController_CalculateYogaInsets_ComputesWidthRelativePercentagesAccurately()
+        {
+            // iPhone 15 Pro resolution: 1179 x 2556
+            // Dynamic Island cutout: 177px, bottom home indicator: 102px
+            float screenW = 1179f;
+            float screenH = 2556f;
+            float topInset = 177f;
+            float bottomInset = 102f;
+            Rect safeArea = new Rect(0f, bottomInset, screenW, screenH - (topInset + bottomInset));
+
+            var (left, right, top, bottom) = SafeAreaController.CalculateYogaInsets(safeArea, screenW, screenH, extraSide: 0f, extraTop: 4.5f, extraBottom: 2.5f);
+
+            Assert.AreEqual(0f, left, 0.01f);
+            Assert.AreEqual(0f, right, 0.01f);
+            Assert.AreEqual((bottomInset / screenW) * 100f + 2.5f, bottom, 0.01f);
+            Assert.AreEqual((topInset / screenW) * 100f + 4.5f, top, 0.01f);
+        }
+
+        [Test]
+        public void BlockBreakerHUD_UXML_WrapsTopBarInSafeAreaContent()
+        {
+            var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+
+            var root = uxml.Instantiate();
+            var safeAreaContent = root.Q("safe-area-content");
+            Assert.IsNotNull(safeAreaContent, "BlockBreakerHUD.uxml must contain 'safe-area-content' wrapper.");
+
+            var topBar = safeAreaContent.Q("top-bar");
+            Assert.IsNotNull(topBar, "'top-bar' must be inside 'safe-area-content'.");
+
+            var powerupContainer = safeAreaContent.Q("powerup-status-container");
+            Assert.IsNotNull(powerupContainer, "'powerup-status-container' must be inside 'safe-area-content'.");
+
+            // Modals must remain outside safe-area-content for 100% full-bleed backdrop coverage
+            var pauseModal = root.Q("pause-modal");
+            Assert.IsNotNull(pauseModal, "pause-modal must exist in visual tree.");
+            Assert.IsNull(safeAreaContent.Q("pause-modal"), "pause-modal must NOT be inside safe-area-content (must remain full bleed).");
+        }
+
+        [Test]
+        public void BlockBreakerHUD_UXML_ContainsMinimalTouchGuidelineWithIgnorePicking()
+        {
+            var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+
+            var root = uxml.Instantiate();
+            var guideline = root.Q("touch-guideline");
+            Assert.IsNotNull(guideline, "BlockBreakerHUD.uxml must contain 'touch-guideline' visual element.");
+            Assert.AreEqual(PickingMode.Ignore, guideline.pickingMode, "touch-guideline must have pickingMode=Ignore so it never blocks gameplay input.");
+        }
+
+        [Test]
+        public void PlayerSettings_iOS_DefersSystemGesturesModeToPreventInputLoss()
+        {
+            Assert.AreEqual(UnityEngine.iOS.SystemGestureDeferMode.All, UnityEditor.PlayerSettings.iOS.deferSystemGesturesMode,
+                "PlayerSettings.iOS.deferSystemGesturesMode must be set to All so iOS does not swallow bottom edge drag inputs.");
+        }
+
+        [Test]
         public void CustomIcons_AllRequiredPngAssetsExistOnDisk()
         {
             string[] requiredIcons = new string[]

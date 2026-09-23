@@ -552,6 +552,7 @@ namespace Arcade.Editor
             };
 
             EditorBuildSettings.scenes = scenes;
+            PlayerSettings.iOS.deferSystemGesturesMode = UnityEngine.iOS.SystemGestureDeferMode.All;
             AssetDatabase.SaveAssets();
         }
 
