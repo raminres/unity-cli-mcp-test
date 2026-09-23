@@ -2774,7 +2774,13 @@ namespace Arcade.UI
             {
                 Vector2 panelPos = RuntimePanelUtils.ScreenToPanel(root.panel, screenPos);
                 VisualElement picked = root.panel.Pick(panelPos);
-                if (picked != null && picked != root && picked.name != "hud-root")
+                if (picked != null && picked != root && 
+                    picked.name != "hud-root" && 
+                    picked.name != "safe-area-content" && 
+                    picked.name != "root-container" && 
+                    picked.name != "main-menu-content" &&
+                    picked.name != "touch-guideline" &&
+                    picked.pickingMode != PickingMode.Ignore)
                 {
                     return true;
                 }

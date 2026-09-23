@@ -1,4 +1,5 @@
 using Arcade.Audio;
+using Arcade.BlockBreaker;
 using Arcade.Core;
 using Arcade.UI;
 using NUnit.Framework;
@@ -170,6 +171,66 @@ namespace Arcade.Tests
             Assert.AreEqual(4.5f, controller.ExtraTopPercent, "Extra top percent should default to 4.5% for Dynamic Island clearance.");
 
             Object.DestroyImmediate(go);
+        }
+
+        [Test]
+        public void SafeAreaController_CalculateYogaInsets_ComputesWidthRelativePercentagesAccurately()
+        {
+            // iPhone 15 Pro resolution: 1179 x 2556
+            // Dynamic Island cutout: 177px, bottom home indicator: 102px
+            float screenW = 1179f;
+            float screenH = 2556f;
+            float topInset = 177f;
+            float bottomInset = 102f;
+            Rect safeArea = new Rect(0f, bottomInset, screenW, screenH - (topInset + bottomInset));
+
+            var (left, right, top, bottom) = SafeAreaController.CalculateYogaInsets(safeArea, screenW, screenH, extraSide: 0f, extraTop: 4.5f, extraBottom: 2.5f);
+
+            Assert.AreEqual(0f, left, 0.01f);
+            Assert.AreEqual(0f, right, 0.01f);
+            Assert.AreEqual((bottomInset / screenW) * 100f + 2.5f, bottom, 0.01f);
+            Assert.AreEqual((topInset / screenW) * 100f + 4.5f, top, 0.01f);
+        }
+
+        [Test]
+        public void BlockBreakerHUD_UXML_WrapsTopBarInSafeAreaContent()
+        {
+            var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+
+            var root = uxml.Instantiate();
+            var safeAreaContent = root.Q("safe-area-content");
+            Assert.IsNotNull(safeAreaContent, "BlockBreakerHUD.uxml must contain 'safe-area-content' wrapper.");
+
+            var topBar = safeAreaContent.Q("top-bar");
+            Assert.IsNotNull(topBar, "'top-bar' must be inside 'safe-area-content'.");
+
+            var powerupContainer = safeAreaContent.Q("powerup-status-container");
+            Assert.IsNotNull(powerupContainer, "'powerup-status-container' must be inside 'safe-area-content'.");
+
+            // Modals must remain outside safe-area-content for 100% full-bleed backdrop coverage
+            var pauseModal = root.Q("pause-modal");
+            Assert.IsNotNull(pauseModal, "pause-modal must exist in visual tree.");
+            Assert.IsNull(safeAreaContent.Q("pause-modal"), "pause-modal must NOT be inside safe-area-content (must remain full bleed).");
+        }
+
+        [Test]
+        public void BlockBreakerHUD_UXML_ContainsMinimalTouchGuidelineWithIgnorePicking()
+        {
+            var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+
+            var root = uxml.Instantiate();
+            var guideline = root.Q("touch-guideline");
+            Assert.IsNotNull(guideline, "BlockBreakerHUD.uxml must contain 'touch-guideline' visual element.");
+            Assert.AreEqual(PickingMode.Ignore, guideline.pickingMode, "touch-guideline must have pickingMode=Ignore so it never blocks gameplay input.");
+        }
+
+        [Test]
+        public void PlayerSettings_iOS_DefersSystemGesturesModeToPreventInputLoss()
+        {
+            Assert.AreEqual(UnityEngine.iOS.SystemGestureDeferMode.All, UnityEditor.PlayerSettings.iOS.deferSystemGesturesMode,
+                "PlayerSettings.iOS.deferSystemGesturesMode must be set to All so iOS does not swallow bottom edge drag inputs.");
         }
 
         [Test]
@@ -364,6 +425,101 @@ namespace Arcade.Tests
             Object.DestroyImmediate(menuObj);
             Object.DestroyImmediate(hudObj);
         }
+
+        [Test]
+        public void PauseModal_ExtrudedGradientStyles_AreScopedAndPresent()
+        {
+            var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
+            Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
+            var root = uxml.CloneTree();
+
+            var pauseModal = root.Q<VisualElement>("pause-modal");
+            Assert.IsNotNull(pauseModal, "pause-modal must exist.");
+
+            var pauseCard = pauseModal.Q<VisualElement>(className: "pause-card");
+            Assert.IsNotNull(pauseCard, "pause-card must exist in pause-modal.");
+            Assert.IsTrue(pauseCard.ClassListContains("modal-card"), "pause-card should also have modal-card class.");
+
+            // Verify children buttons exist
+            Assert.IsNotNull(pauseCard.Q<Button>("btn-resume"), "btn-resume must exist.");
+            Assert.IsNotNull(pauseCard.Q<Button>("btn-level-select-pause"), "btn-level-select-pause must exist.");
+            Assert.IsNotNull(pauseCard.Q<Button>("btn-options-pause"), "btn-options-pause must exist.");
+
+            // Verify stylesheet contains scoped extruded 3D gradient rules
+            var uss = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/UI/BlockBreakerHUD.uss");
+            Assert.IsNotNull(uss, "BlockBreakerHUD.uss must exist.");
+            var ussText = System.IO.File.ReadAllText("Assets/UI/BlockBreakerHUD.uss");
+
+            Assert.IsTrue(ussText.Contains("#pause-modal.modal-backdrop"), "USS must contain scoped #pause-modal backdrop styling.");
+            Assert.IsTrue(ussText.Contains(".pause-card {"), "USS must contain .pause-card styling.");
+            Assert.IsTrue(ussText.Contains("rgb(18, 24, 40)"), "pause-card must have solid opaque background.");
+            Assert.IsTrue(ussText.Contains("TX_Grad_Card_Bg.png"), "pause-card must use card gradient texture.");
+            Assert.IsTrue(ussText.Contains("border-bottom-width: 7px;"), "arcade-btn must have 3D extruded shelf.");
+            Assert.IsTrue(ussText.Contains(".pause-card .btn-primary"), "pause-card must have scoped primary button.");
+            Assert.IsTrue(ussText.Contains("TX_Grad_Ruby_Btn.png"), "primary button must use ruby gradient texture.");
+            Assert.IsTrue(ussText.Contains(".pause-card .btn-secondary"), "pause-card must have scoped secondary button.");
+            Assert.IsTrue(ussText.Contains("TX_Grad_Emerald_Btn.png"), "secondary button must use emerald gradient texture.");
+            Assert.IsTrue(ussText.Contains(".pause-card .btn-default"), "pause-card must have scoped default button.");
+            Assert.IsTrue(ussText.Contains("TX_Grad_Titanium_Btn.png"), "default button must use titanium gradient texture.");
+
+            // Verify other modals do not use pause-card class
+            var highscoresModal = root.Q<VisualElement>("highscores-modal");
+            Assert.IsNotNull(highscoresModal);
+            Assert.IsNull(highscoresModal.Q<VisualElement>(className: "pause-card"), "highscores-modal must NOT use pause-card class.");
+        }
+
+        [Test]
+        public void Step4_FirstThreeLevels_HaveEnlargedBlockScale_AndValidWallClearance()
+        {
+            // First 3 levels have +20% block scale (1.20f) for beginner onboarding & touch comfort
+            for (int i = 1; i <= 3; i++)
+            {
+                var config = AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i:D2}.asset");
+                Assert.IsNotNull(config, $"SO_Level_{i:D2} must exist.");
+                Assert.AreEqual(1.20f, config.BlockSize, 0.001f, $"Level {i} must have +20% enlarged block size of 1.20f.");
+                
+                // Arena walls are at X = +/- 10.25. Base block mesh half-width is 1.15f / 2 = 0.575f.
+                float scaledHalfWidth = (1.15f * config.BlockSize) * 0.5f;
+                float halfGridSpan = (config.Columns - 1) * config.HorizontalSpacing * 0.5f;
+                float maxBlockX = halfGridSpan + scaledHalfWidth;
+
+                // Wall clearance must be strictly greater than 1.0 unit
+                float wallX = 10.25f;
+                float clearance = wallX - maxBlockX;
+                Assert.Greater(clearance, 1.0f, $"Level {i} outer block edge (X={maxBlockX:F2}) must maintain > 1.0u clearance to wall (X={wallX}). Clearance was {clearance:F2}u.");
+            }
+
+            // Levels 4 through 15 retain standard 1.0f scale
+            for (int i = 4; i <= 15; i++)
+            {
+                var config = AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i:D2}.asset");
+                Assert.IsNotNull(config, $"SO_Level_{i:D2} must exist.");
+                Assert.AreEqual(1.00f, config.BlockSize, 0.001f, $"Level {i} must retain standard block size of 1.00f.");
+            }
+        }
+
+        [Test]
+        public void Step3_UIPropagation_ModalsAndButtons_HaveExtrudedStylesAndOpaqueGradients()
+        {
+            // Verify MainMenuUI.uss propagation
+            var mainMenuUss = System.IO.File.ReadAllText("Assets/UI/MainMenuUI.uss");
+            Assert.IsTrue(mainMenuUss.Contains(".modal-card {"), "MainMenuUI.uss must define .modal-card.");
+            Assert.IsTrue(mainMenuUss.Contains(".level-modal-card {"), "MainMenuUI.uss must define .level-modal-card.");
+            Assert.IsTrue(mainMenuUss.Contains("TX_Grad_Card_Bg.png"), "MainMenuUI.uss must use card gradient texture.");
+            Assert.IsTrue(mainMenuUss.Contains("border-bottom-width: 7px;"), "MainMenuUI.uss arcade-button must have 7px extruded shelf.");
+            Assert.IsTrue(mainMenuUss.Contains("TX_Grad_Ruby_Btn.png"), "MainMenuUI.uss must use ruby button gradient.");
+            Assert.IsTrue(mainMenuUss.Contains("TX_Grad_Emerald_Btn.png"), "MainMenuUI.uss must use emerald button gradient.");
+            Assert.IsTrue(mainMenuUss.Contains("TX_Grad_Titanium_Btn.png"), "MainMenuUI.uss must use titanium button gradient.");
+
+            // Verify BlockBreakerHUD.uss propagation
+            var hudUss = System.IO.File.ReadAllText("Assets/UI/BlockBreakerHUD.uss");
+            Assert.IsTrue(hudUss.Contains(".modal-card {"), "BlockBreakerHUD.uss must define .modal-card.");
+            Assert.IsTrue(hudUss.Contains(".level-modal-card {"), "BlockBreakerHUD.uss must define .level-modal-card.");
+            Assert.IsTrue(hudUss.Contains(".scorecard-card {"), "BlockBreakerHUD.uss must define .scorecard-card.");
+            Assert.IsTrue(hudUss.Contains(".warning-btn {"), "BlockBreakerHUD.uss must define .warning-btn.");
+            Assert.IsTrue(hudUss.Contains("border-bottom-width: 6px;"), "Modals must have 6px bottom beveled border.");
+        }
     }
 }
+
 
