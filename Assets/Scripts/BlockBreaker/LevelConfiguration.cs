@@ -521,6 +521,9 @@ namespace Arcade.BlockBreaker
         }
 
         // Runtime setters for editable modal & scripts
+        public void SetBlockSize(float val) => blockSize = Mathf.Clamp(val, 0.5f, 2.5f);
+        public void SetHorizontalSpacing(float val) => horizontalSpacing = Mathf.Clamp(val, 0.5f, 3.0f);
+        public void SetVerticalSpacing(float val) => verticalSpacing = Mathf.Clamp(val, 0.5f, 3.0f);
         public void SetLayoutType(LevelLayoutType type) => layoutType = type;
         public void SetCustomLayout(string layout)
         {

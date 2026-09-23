@@ -19,9 +19,9 @@ MonoBehaviour:
   colorPattern: 0
   columns: 11
   rowsPerTier: 2
-  blockSize: 1
-  horizontalSpacing: 1.25
-  verticalSpacing: 1.3
+  blockSize: 1.2
+  horizontalSpacing: 1.5
+  verticalSpacing: 1.55
   startCenterY: 15.5
   includeSideFlanks: 1
   customLayout: 

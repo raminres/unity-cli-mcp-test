@@ -42,7 +42,8 @@ namespace Arcade.Editor
                 mult2x: 0, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 0, glass: 0, heart: 0, shield: 0, multiBall: 0,
                 laser: 0, customLayout: null, shieldDuration: 10f,
                 parTime: 35f, timeBonusMax: 2500, starThresholds: new[] { 500, 1200, 2200 },
-                paddleShorteners: 0, paddleSlowers: 0, brickFreezers: 0, ballSizeDecreasers: 0, ballSlowers: 0, paddleFreezers: 0);
+                paddleShorteners: 0, paddleSlowers: 0, brickFreezers: 0, ballSizeDecreasers: 0, ballSlowers: 0, paddleFreezers: 0,
+                blockSize: 1.20f, horizontalSpacing: 1.50f, verticalSpacing: 1.55f);
 
             // Level 2: Glass & Gold (Diamond)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_02.asset", 2, "Level 2: Glass & Gold",
@@ -51,7 +52,8 @@ namespace Arcade.Editor
                 mult2x: 1, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 0, glass: 2, heart: 0, shield: 0, multiBall: 0,
                 laser: 0, customLayout: null, shieldDuration: 10f,
                 parTime: 40f, timeBonusMax: 3000, starThresholds: new[] { 800, 1800, 3200 },
-                paddleShorteners: 1, paddleSlowers: 0, brickFreezers: 0, ballSizeDecreasers: 0, ballSlowers: 0, paddleFreezers: 0);
+                paddleShorteners: 1, paddleSlowers: 0, brickFreezers: 0, ballSizeDecreasers: 0, ballSlowers: 0, paddleFreezers: 0,
+                blockSize: 1.20f, horizontalSpacing: 1.45f, verticalSpacing: 1.55f);
 
             // Level 3: Twin Pillars (Pillars)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_03.asset", 3, "Level 3: Twin Pillars",
@@ -60,7 +62,8 @@ namespace Arcade.Editor
                 mult2x: 2, mult3x: 0, mult4x: 0, mult5x: 0, expanders: 1, bombs: 2, glass: 0, heart: 0, shield: 0, multiBall: 0,
                 laser: 1, customLayout: null, shieldDuration: 10f,
                 parTime: 45f, timeBonusMax: 3000, starThresholds: new[] { 1200, 2600, 4200 },
-                paddleShorteners: 0, paddleSlowers: 1, brickFreezers: 0, ballSizeDecreasers: 0, ballSlowers: 1, paddleFreezers: 0);
+                paddleShorteners: 0, paddleSlowers: 1, brickFreezers: 0, ballSizeDecreasers: 0, ballSlowers: 1, paddleFreezers: 0,
+                blockSize: 1.20f, horizontalSpacing: 1.40f, verticalSpacing: 1.55f);
 
             // Level 4: Kinetic Shield (Shield)
             CreateOrConfigureLevel("Assets/Settings/Levels/SO_Level_04.asset", 4, "Level 4: Kinetic Shield",
@@ -187,7 +190,8 @@ namespace Arcade.Editor
             int laser = 0, string customLayout = null, float shieldDuration = 10f,
             float parTime = 40f, int timeBonusMax = 3000, int[] starThresholds = null,
             int paddleShorteners = 0, int paddleSlowers = 0, int brickFreezers = 0,
-            int ballSizeDecreasers = 0, int ballSlowers = 0, int paddleFreezers = 0)
+            int ballSizeDecreasers = 0, int ballSlowers = 0, int paddleFreezers = 0,
+            float blockSize = 1.0f, float horizontalSpacing = 1.25f, float verticalSpacing = 1.3f)
         {
             var config = AssetDatabase.LoadAssetAtPath<LevelConfiguration>(path);
             if (config == null)
@@ -204,9 +208,9 @@ namespace Arcade.Editor
             so.FindProperty("layoutType").enumValueIndex = (int)layoutType;
             so.FindProperty("columns").intValue = cols;
             so.FindProperty("rowsPerTier").intValue = rowsPerTier;
-            so.FindProperty("blockSize").floatValue = 1.0f;
-            so.FindProperty("horizontalSpacing").floatValue = 1.25f;
-            so.FindProperty("verticalSpacing").floatValue = 1.3f;
+            so.FindProperty("blockSize").floatValue = blockSize;
+            so.FindProperty("horizontalSpacing").floatValue = horizontalSpacing;
+            so.FindProperty("verticalSpacing").floatValue = verticalSpacing;
             so.FindProperty("startCenterY").floatValue = 15.5f;
             var flankProp = so.FindProperty("includeSideFlanks");
             if (flankProp != null) flankProp.boolValue = true;

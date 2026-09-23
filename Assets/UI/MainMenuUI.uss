@@ -55,104 +55,145 @@
 
 .menu-card {
     width: 840px;
-    background-color: rgba(22, 28, 44, 0.88);
-    border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.12);
-    border-radius: 28px;
-    padding: 28px 24px;
+    background-color: rgb(18, 24, 40);
+    background-image: url("project://database/Assets/UI/Textures/Gradients/TX_Grad_Card_Bg.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    border-radius: 32px;
+    border-top-left-radius: 32px;
+    border-top-right-radius: 32px;
+    border-bottom-right-radius: 32px;
+    border-bottom-left-radius: 32px;
+    border-top-width: 3px;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 6px;
+    border-top-color: rgb(75, 95, 140);
+    border-left-color: rgb(40, 52, 80);
+    border-right-color: rgb(40, 52, 80);
+    border-bottom-color: rgb(12, 16, 26);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(33, 212, 253, 0.12), inset 0 2px 0 rgba(255, 255, 255, 0.18);
+    padding: 34px 28px;
     align-items: stretch;
-    border-top-width: 4px;
-    border-right-width: 4px;
-    border-bottom-width: 4px;
-    border-left-width: 4px;
 }
 
-.arcade-button {
-    height: 128px;
+.arcade-button,
+.arcade-btn {
+    height: 112px;
     border-radius: 18px;
-    border-width: 1.5px;
-    margin-bottom: 16px;
-    font-size: 32px;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    border-bottom-right-radius: 18px;
+    border-bottom-left-radius: 18px;
+    margin-top: 7px;
+    margin-bottom: 9px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 30px;
     -unity-font-style: bold;
-    letter-spacing: 1.5px;
+    letter-spacing: 1.8px;
     align-items: center;
     justify-content: center;
     scale: 1 1;
-    transition-property: scale, background-color, border-color, translate;
-    transition-duration: 0.25s, 0.15s, 0.15s, 0.25s;
+    -unity-background-scale-mode: stretch-to-fill;
+    border-top-width: 2px;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 7px;
+    transition-property: scale, translate, border-bottom-width, border-top-width, box-shadow;
+    transition-duration: 0.15s, 0.08s, 0.08s, 0.08s, 0.15s;
     transition-timing-function: ease-out-back;
-    border-top-width: 4px;
-    border-right-width: 4px;
-    border-bottom-width: 4px;
-    border-left-width: 4px;
-    border-top-left-radius: 16px;
-    border-top-right-radius: 16px;
-    border-bottom-right-radius: 16px;
-    border-bottom-left-radius: 16px;
-    margin-top: 16px;
-    margin-right: 16px;
-    margin-left: 16px;
 }
 
-.arcade-button:hover {
-    scale: 1.05 1.05;
+.arcade-button:hover,
+.arcade-btn:hover {
+    scale: 1.02 1.02;
     translate: 0 -2px;
-    transition-duration: 0.22s;
+    border-bottom-width: 9px;
+    transition-duration: 0.15s;
     transition-timing-function: ease-out-back;
 }
 
-.arcade-button:active {
-    scale: 0.92 0.92;
-    translate: 0 3px;
-    transition-duration: 0.08s;
+.arcade-button:active,
+.arcade-btn:active {
+    scale: 0.98 0.98;
+    translate: 0 5px;
+    border-top-width: 4px;
+    border-bottom-width: 2px;
+    transition-duration: 0.06s;
     transition-timing-function: ease-in-out;
 }
 
-.primary-btn {
-    background-color: rgb(255, 59, 86);
-    border-color: rgb(255, 110, 130);
+.primary-btn,
+.btn-primary {
+    background-color: rgb(226, 32, 68);
+    background-image: url("project://database/Assets/UI/Textures/Gradients/TX_Grad_Ruby_Btn.png");
+    border-top-color: rgb(255, 140, 165);
+    border-left-color: rgb(200, 24, 56);
+    border-right-color: rgb(200, 24, 56);
+    border-bottom-color: rgb(125, 8, 30);
     color: rgb(255, 255, 255);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.65);
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.45), 0 10px 24px rgba(255, 59, 86, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.38);
 }
 
-.primary-btn:hover {
-    background-color: rgb(255, 84, 108);
-    border-color: rgb(255, 255, 255);
+.primary-btn:hover,
+.btn-primary:hover {
+    border-top-color: rgb(255, 185, 202);
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5), 0 14px 28px rgba(255, 59, 86, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.55);
 }
 
-.primary-btn:active {
-    background-color: rgb(216, 30, 58);
-    border-color: rgb(255, 59, 86);
+.primary-btn:active,
+.btn-primary:active {
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 3px 8px rgba(255, 59, 86, 0.25), inset 0 1px 0 rgba(0, 0, 0, 0.2);
 }
 
-.secondary-btn {
-    background-color: rgb(33, 212, 253);
-    border-color: rgb(110, 227, 255);
-    color: rgb(12, 13, 22);
+.secondary-btn,
+.btn-secondary {
+    background-color: rgb(28, 195, 110);
+    background-image: url("project://database/Assets/UI/Textures/Gradients/TX_Grad_Emerald_Btn.png");
+    border-top-color: rgb(150, 255, 198);
+    border-left-color: rgb(22, 165, 92);
+    border-right-color: rgb(22, 165, 92);
+    border-bottom-color: rgb(10, 95, 50);
+    color: rgb(255, 255, 255);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.65);
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.45), 0 10px 24px rgba(38, 232, 133, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.38);
 }
 
-.secondary-btn:hover {
-    background-color: rgb(85, 227, 255);
-    border-color: rgb(255, 255, 255);
+.secondary-btn:hover,
+.btn-secondary:hover {
+    border-top-color: rgb(195, 255, 222);
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5), 0 14px 28px rgba(38, 232, 133, 0.45), inset 0 2px 0 rgba(255, 255, 255, 0.55);
 }
 
-.secondary-btn:active {
-    background-color: rgb(11, 181, 220);
-    border-color: rgb(33, 212, 253);
+.secondary-btn:active,
+.btn-secondary:active {
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 3px 8px rgba(38, 232, 133, 0.2), inset 0 1px 0 rgba(0, 0, 0, 0.2);
 }
 
-.default-btn {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.15);
-    color: rgb(226, 232, 240);
+.default-btn,
+.btn-default {
+    background-color: rgb(36, 46, 68);
+    background-image: url("project://database/Assets/UI/Textures/Gradients/TX_Grad_Titanium_Btn.png");
+    border-top-color: rgb(90, 112, 158);
+    border-left-color: rgb(32, 40, 60);
+    border-right-color: rgb(32, 40, 60);
+    border-bottom-color: rgb(16, 21, 32);
+    color: rgb(230, 238, 250);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.75);
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.45), 0 8px 20px rgba(0, 0, 0, 0.55), inset 0 2px 0 rgba(255, 255, 255, 0.18);
 }
 
-.default-btn:hover {
-    background-color: rgba(255, 255, 255, 0.18);
-    border-color: rgba(255, 255, 255, 0.35);
+.default-btn:hover,
+.btn-default:hover {
+    border-top-color: rgb(125, 155, 215);
+    color: rgb(255, 255, 255);
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5), 0 12px 24px rgba(0, 0, 0, 0.65), 0 0 14px rgba(33, 212, 253, 0.2), inset 0 2px 0 rgba(255, 255, 255, 0.3);
 }
 
-.default-btn:active {
-    background-color: rgba(255, 255, 255, 0.04);
+.default-btn:active,
+.btn-default:active {
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(0, 0, 0, 0.3);
 }
 
 .modal-backdrop {
@@ -206,15 +247,25 @@
 
 .modal-card {
     width: 840px;
-    background-color: rgb(23, 28, 44);
-    border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.16);
-    border-radius: 28px;
-    padding: 32px 28px;
-    border-top-width: 4px;
-    border-right-width: 4px;
-    border-bottom-width: 4px;
-    border-left-width: 4px;
+    background-color: rgb(18, 24, 40);
+    background-image: url("project://database/Assets/UI/Textures/Gradients/TX_Grad_Card_Bg.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    border-radius: 32px;
+    border-top-left-radius: 32px;
+    border-top-right-radius: 32px;
+    border-bottom-right-radius: 32px;
+    border-bottom-left-radius: 32px;
+    border-top-width: 3px;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 6px;
+    border-top-color: rgb(75, 95, 140);
+    border-left-color: rgb(40, 52, 80);
+    border-right-color: rgb(40, 52, 80);
+    border-bottom-color: rgb(12, 16, 26);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(33, 212, 253, 0.12), inset 0 2px 0 rgba(255, 255, 255, 0.18);
+    padding: 34px 28px;
+    align-items: stretch;
 }
 
 .modal-title {
@@ -304,16 +355,24 @@
 .level-modal-card {
     width: 840px;
     max-height: 94%;
-    background-color: rgb(13, 18, 34);
-    border-width: 1.5px;
-    border-color: rgba(33, 212, 253, 0.45);
-    border-radius: 30px;
+    background-color: rgb(18, 24, 40);
+    background-image: url("project://database/Assets/UI/Textures/Gradients/TX_Grad_Card_Bg.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    border-radius: 32px;
+    border-top-left-radius: 32px;
+    border-top-right-radius: 32px;
+    border-bottom-right-radius: 32px;
+    border-bottom-left-radius: 32px;
+    border-top-width: 3px;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 6px;
+    border-top-color: rgb(75, 95, 140);
+    border-left-color: rgb(40, 52, 80);
+    border-right-color: rgb(40, 52, 80);
+    border-bottom-color: rgb(12, 16, 26);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(33, 212, 253, 0.12), inset 0 2px 0 rgba(255, 255, 255, 0.18);
     padding: 24px 20px 20px 20px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-    border-top-width: 4px;
-    border-right-width: 4px;
-    border-bottom-width: 4px;
-    border-left-width: 4px;
 }
 
 .level-modal-title {
@@ -740,19 +799,24 @@
 }
 
 .warning-btn {
-    background-color: rgba(225, 29, 72, 0.18);
-    border-color: rgba(244, 63, 94, 0.6);
-    color: rgb(251, 113, 133);
+    background-color: rgb(226, 32, 68);
+    background-image: url("project://database/Assets/UI/Textures/Gradients/TX_Grad_Ruby_Btn.png");
+    border-top-color: rgb(255, 140, 165);
+    border-left-color: rgb(200, 24, 56);
+    border-right-color: rgb(200, 24, 56);
+    border-bottom-color: rgb(125, 8, 30);
+    color: rgb(255, 255, 255);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.65);
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.45), 0 10px 24px rgba(255, 59, 86, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.38);
 }
 
 .warning-btn:hover {
-    background-color: rgb(225, 29, 72);
-    border-color: rgb(255, 255, 255);
-    color: rgb(255, 255, 255);
+    border-top-color: rgb(255, 185, 202);
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5), 0 14px 28px rgba(255, 59, 86, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.55);
 }
 
 .warning-btn:active {
-    background-color: rgb(190, 18, 60);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 3px 8px rgba(255, 59, 86, 0.25), inset 0 1px 0 rgba(0, 0, 0, 0.2);
 }
 
 .how-to-play-card {

@@ -1,4 +1,5 @@
 using Arcade.Audio;
+using Arcade.BlockBreaker;
 using Arcade.Core;
 using Arcade.UI;
 using NUnit.Framework;
@@ -465,6 +466,58 @@ namespace Arcade.Tests
             var highscoresModal = root.Q<VisualElement>("highscores-modal");
             Assert.IsNotNull(highscoresModal);
             Assert.IsNull(highscoresModal.Q<VisualElement>(className: "pause-card"), "highscores-modal must NOT use pause-card class.");
+        }
+
+        [Test]
+        public void Step4_FirstThreeLevels_HaveEnlargedBlockScale_AndValidWallClearance()
+        {
+            // First 3 levels have +20% block scale (1.20f) for beginner onboarding & touch comfort
+            for (int i = 1; i <= 3; i++)
+            {
+                var config = AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i:D2}.asset");
+                Assert.IsNotNull(config, $"SO_Level_{i:D2} must exist.");
+                Assert.AreEqual(1.20f, config.BlockSize, 0.001f, $"Level {i} must have +20% enlarged block size of 1.20f.");
+                
+                // Arena walls are at X = +/- 10.25. Base block mesh half-width is 1.15f / 2 = 0.575f.
+                float scaledHalfWidth = (1.15f * config.BlockSize) * 0.5f;
+                float halfGridSpan = (config.Columns - 1) * config.HorizontalSpacing * 0.5f;
+                float maxBlockX = halfGridSpan + scaledHalfWidth;
+
+                // Wall clearance must be strictly greater than 1.0 unit
+                float wallX = 10.25f;
+                float clearance = wallX - maxBlockX;
+                Assert.Greater(clearance, 1.0f, $"Level {i} outer block edge (X={maxBlockX:F2}) must maintain > 1.0u clearance to wall (X={wallX}). Clearance was {clearance:F2}u.");
+            }
+
+            // Levels 4 through 15 retain standard 1.0f scale
+            for (int i = 4; i <= 15; i++)
+            {
+                var config = AssetDatabase.LoadAssetAtPath<LevelConfiguration>($"Assets/Settings/Levels/SO_Level_{i:D2}.asset");
+                Assert.IsNotNull(config, $"SO_Level_{i:D2} must exist.");
+                Assert.AreEqual(1.00f, config.BlockSize, 0.001f, $"Level {i} must retain standard block size of 1.00f.");
+            }
+        }
+
+        [Test]
+        public void Step3_UIPropagation_ModalsAndButtons_HaveExtrudedStylesAndOpaqueGradients()
+        {
+            // Verify MainMenuUI.uss propagation
+            var mainMenuUss = System.IO.File.ReadAllText("Assets/UI/MainMenuUI.uss");
+            Assert.IsTrue(mainMenuUss.Contains(".modal-card {"), "MainMenuUI.uss must define .modal-card.");
+            Assert.IsTrue(mainMenuUss.Contains(".level-modal-card {"), "MainMenuUI.uss must define .level-modal-card.");
+            Assert.IsTrue(mainMenuUss.Contains("TX_Grad_Card_Bg.png"), "MainMenuUI.uss must use card gradient texture.");
+            Assert.IsTrue(mainMenuUss.Contains("border-bottom-width: 7px;"), "MainMenuUI.uss arcade-button must have 7px extruded shelf.");
+            Assert.IsTrue(mainMenuUss.Contains("TX_Grad_Ruby_Btn.png"), "MainMenuUI.uss must use ruby button gradient.");
+            Assert.IsTrue(mainMenuUss.Contains("TX_Grad_Emerald_Btn.png"), "MainMenuUI.uss must use emerald button gradient.");
+            Assert.IsTrue(mainMenuUss.Contains("TX_Grad_Titanium_Btn.png"), "MainMenuUI.uss must use titanium button gradient.");
+
+            // Verify BlockBreakerHUD.uss propagation
+            var hudUss = System.IO.File.ReadAllText("Assets/UI/BlockBreakerHUD.uss");
+            Assert.IsTrue(hudUss.Contains(".modal-card {"), "BlockBreakerHUD.uss must define .modal-card.");
+            Assert.IsTrue(hudUss.Contains(".level-modal-card {"), "BlockBreakerHUD.uss must define .level-modal-card.");
+            Assert.IsTrue(hudUss.Contains(".scorecard-card {"), "BlockBreakerHUD.uss must define .scorecard-card.");
+            Assert.IsTrue(hudUss.Contains(".warning-btn {"), "BlockBreakerHUD.uss must define .warning-btn.");
+            Assert.IsTrue(hudUss.Contains("border-bottom-width: 6px;"), "Modals must have 6px bottom beveled border.");
         }
     }
 }
