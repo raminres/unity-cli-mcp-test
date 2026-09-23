@@ -426,7 +426,7 @@ namespace Arcade.Tests
         }
 
         [Test]
-        public void PauseModal_LiquidGlassStyles_AreScopedAndPresent()
+        public void PauseModal_ExtrudedGradientStyles_AreScopedAndPresent()
         {
             var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/BlockBreakerHUD.uxml");
             Assert.IsNotNull(uxml, "BlockBreakerHUD.uxml must exist.");
@@ -444,17 +444,22 @@ namespace Arcade.Tests
             Assert.IsNotNull(pauseCard.Q<Button>("btn-level-select-pause"), "btn-level-select-pause must exist.");
             Assert.IsNotNull(pauseCard.Q<Button>("btn-options-pause"), "btn-options-pause must exist.");
 
-            // Verify stylesheet contains scoped liquid glass rules
+            // Verify stylesheet contains scoped extruded 3D gradient rules
             var uss = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/UI/BlockBreakerHUD.uss");
             Assert.IsNotNull(uss, "BlockBreakerHUD.uss must exist.");
             var ussText = System.IO.File.ReadAllText("Assets/UI/BlockBreakerHUD.uss");
 
             Assert.IsTrue(ussText.Contains("#pause-modal.modal-backdrop"), "USS must contain scoped #pause-modal backdrop styling.");
             Assert.IsTrue(ussText.Contains(".pause-card {"), "USS must contain .pause-card styling.");
-            Assert.IsTrue(ussText.Contains("rgba(14, 20, 36, 0.68)"), "pause-card must have translucent tinted glass background.");
-            Assert.IsTrue(ussText.Contains(".pause-card .btn-primary"), "pause-card must have scoped glass primary button.");
-            Assert.IsTrue(ussText.Contains(".pause-card .btn-secondary"), "pause-card must have scoped glass secondary button.");
-            Assert.IsTrue(ussText.Contains(".pause-card .btn-default"), "pause-card must have scoped glass default button.");
+            Assert.IsTrue(ussText.Contains("rgb(18, 24, 40)"), "pause-card must have solid opaque background.");
+            Assert.IsTrue(ussText.Contains("TX_Grad_Card_Bg.png"), "pause-card must use card gradient texture.");
+            Assert.IsTrue(ussText.Contains("border-bottom-width: 7px;"), "arcade-btn must have 3D extruded shelf.");
+            Assert.IsTrue(ussText.Contains(".pause-card .btn-primary"), "pause-card must have scoped primary button.");
+            Assert.IsTrue(ussText.Contains("TX_Grad_Ruby_Btn.png"), "primary button must use ruby gradient texture.");
+            Assert.IsTrue(ussText.Contains(".pause-card .btn-secondary"), "pause-card must have scoped secondary button.");
+            Assert.IsTrue(ussText.Contains("TX_Grad_Emerald_Btn.png"), "secondary button must use emerald gradient texture.");
+            Assert.IsTrue(ussText.Contains(".pause-card .btn-default"), "pause-card must have scoped default button.");
+            Assert.IsTrue(ussText.Contains("TX_Grad_Titanium_Btn.png"), "default button must use titanium gradient texture.");
 
             // Verify other modals do not use pause-card class
             var highscoresModal = root.Q<VisualElement>("highscores-modal");
